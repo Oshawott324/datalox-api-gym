@@ -56,7 +56,7 @@ From the repo you want Datalox to manage, paste this into the agent chatbox and 
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git
+git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp
 cd datalox-trajectory-mcp
 bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
@@ -65,7 +65,9 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 
 This does two separate things:
 
-- `datalox-trajectory-mcp` is the source clone. It owns source-only scripts such as `bin/adopt-host-repo.sh`.
+- `https://github.com/Complexity-LLC/datalox-pack.git` is the current public source repo.
+- `datalox-trajectory-mcp` is the local source directory and package identity. Do not clone `https://github.com/Complexity-LLC/datalox-trajectory-mcp.git` unless that GitHub repo has been created or the existing repo has been renamed.
+- The source clone owns source-only scripts such as `bin/adopt-host-repo.sh`.
 - `$TARGET_REPO` is the user's current project. Adoption writes the Datalox instruction surfaces, core skills, notes, and `.datalox/install.json` there.
 
 For Claude instead of Codex, run:
@@ -78,8 +80,9 @@ If the source clone already exists, use it directly:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="/path/to/datalox-trajectory-mcp"
+PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
 cd "$PACK_REPO"
+git pull --ff-only
 bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json

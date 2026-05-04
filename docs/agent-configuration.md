@@ -116,12 +116,14 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git
+git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp
 cd datalox-trajectory-mcp
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
+
+`https://github.com/Complexity-LLC/datalox-pack.git` is the current public GitHub source repo. `datalox-trajectory-mcp` is the local checkout/package name. Do not use `https://github.com/Complexity-LLC/datalox-trajectory-mcp.git` until that GitHub repo exists.
 
 The source clone owns `bin/adopt-host-repo.sh`. The adopted host repo owns host-local shims such as `bin/setup-multi-agent.sh`, `bin/install-default-host-integrations.sh`, and `bin/disable-default-host-integrations.sh`.
 

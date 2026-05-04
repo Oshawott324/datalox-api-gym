@@ -422,7 +422,7 @@ describe("adoption scripts", () => {
     expect(parsedProbe.recommendedAction).toBe("explicit_adopt_from_source_pack");
     expect(parsedProbe.recoveryCommands).toEqual([
       `TARGET_REPO=${JSON.stringify(hostDir)}`,
-      "git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git",
+      "git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp",
       "cd datalox-trajectory-mcp",
       "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
     ]);

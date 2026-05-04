@@ -65,3 +65,5 @@
 - 2026-05-04T02:01:57.389Z | record_event | trace | maintain_datalox_pack | trace | agent-wiki/events/2026-05-04T02-01-57-382Z--added-an-agent-install-subsection-to-readme-md-for-installing-datalox-trajectory.json
 
 - 2026-05-04T02:14:32.755Z | record_event | trace | maintain_datalox_pack | trace | agent-wiki/events/2026-05-04T02-14-32-747Z--committed-and-pushed-the-trajectory-mcp-export-refocus-branch-to-the-configured-.json
+
+- 2026-05-04T02:28:05.690Z | record_event | trace | maintain_datalox_pack | trace | agent-wiki/events/2026-05-04T02-28-05-666Z--corrected-datalox-trajectory-mcp-install-instructions-to-use-the-reachable-publi.json

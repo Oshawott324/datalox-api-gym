@@ -67,20 +67,20 @@
     "hostRepoOwnsWrites": true
   },
   "distribution": {
-    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Complexity-LLC/datalox-pack.git && cd datalox-pack && bash bin/setup-multi-agent.sh claude && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
+    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp && cd datalox-trajectory-mcp && bash bin/setup-multi-agent.sh claude && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
     "multiAgentSetup": "bash bin/setup-multi-agent.sh claude",
     "friendlyEntryPoint": "START_HERE.md",
     "agentSetupPrompt": {
       "instruction": "Paste this into the agent chatbox from the repo you want Datalox to manage.",
       "commands": [
         "TARGET_REPO=\"$(pwd)\"",
-        "git clone https://github.com/Complexity-LLC/datalox-pack.git",
-        "cd datalox-pack",
+        "git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp",
+        "cd datalox-trajectory-mcp",
         "bash bin/setup-multi-agent.sh claude",
         "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
         "node bin/datalox.js status --repo \"$TARGET_REPO\" --json"
       ],
-      "sourcePackRole": "The datalox-pack source clone owns bin/adopt-host-repo.sh.",
+      "sourcePackRole": "The public GitHub source repo is datalox-pack; the local checkout/package identity is datalox-trajectory-mcp and it owns bin/adopt-host-repo.sh.",
       "targetRepoRole": "$TARGET_REPO is the user's current project and receives the Datalox install stamp, instruction surfaces, core skills, and notes."
     },
     "defaultBootstrapBundle": {

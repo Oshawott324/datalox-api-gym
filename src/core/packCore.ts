@@ -215,7 +215,8 @@ function resolvePackRootPath(): string {
 }
 
 const PACK_ROOT = resolvePackRootPath();
-const DEFAULT_PACK_URL = "https://github.com/Complexity-LLC/datalox-trajectory-mcp.git";
+const DEFAULT_PACK_URL = "https://github.com/Complexity-LLC/datalox-pack.git";
+const DEFAULT_PACK_CLONE_DIR = "datalox-trajectory-mcp";
 
 function shellDoubleQuote(value: string): string {
   return JSON.stringify(value);
@@ -224,8 +225,8 @@ function shellDoubleQuote(value: string): string {
 function buildExplicitAdoptionRecoveryCommands(repoPath: string): string[] {
   return [
     `TARGET_REPO=${shellDoubleQuote(repoPath)}`,
-    `git clone ${DEFAULT_PACK_URL}`,
-    "cd datalox-trajectory-mcp",
+    `git clone ${DEFAULT_PACK_URL} ${DEFAULT_PACK_CLONE_DIR}`,
+    `cd ${DEFAULT_PACK_CLONE_DIR}`,
     "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
   ];
 }
