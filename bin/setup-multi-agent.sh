@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Datalox Pack multi-agent setup
+# Datalox Trajectory MCP multi-agent setup
 # Compatibility shim for the CLI-first install flow.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

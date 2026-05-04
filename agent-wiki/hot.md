@@ -1,37 +1,38 @@
 # Agent Wiki Hot Cache
 
 - Project: Datalox Flow Cytometry Demo
-- Generated: 2026-04-12T15:44:44.213Z
+- Generated: 2026-05-04T02:01:57.396Z
 
 ## Recent Changes
 
-- 2026-04-12T10:31:16.866Z | patch_pattern | multi-agent bootstrap surfaces for repo_engineering | agent-wiki/patterns/repo-engineering-multi-agent-bootstrap-surfaces.md
-- 2026-04-12T10:31:16.870Z | patch_skill | repo-engineering.evolve-portable-pack linked 2 pattern doc(s) | skills/evolve-portable-pack/SKILL.md
-- 2026-04-12T14:45:55.278Z | lint_pack | pack lint found 10 issue(s) | agent-wiki/lint.md
-- 2026-04-12T15:10:51.523Z | lint_pack | pack lint completed with no blocking issues | agent-wiki/lint.md
-- 2026-04-12T15:44:44.193Z | lint_pack | pack lint completed with no blocking issues | agent-wiki/lint.md
+- 2026-05-03T14:45:33.649Z | lint_pack | pack lint completed with no blocking issues | agent-wiki/lint.md
+- 2026-05-03T14:45:57.609Z | record_event | implementation_result | maintain_datalox_pack | trace | agent-wiki/events/2026-05-03T14-45-57-588Z--implemented-mcp-first-debugging-trajectory-row-capture-and-deterministic-jsonl-e.json
+- 2026-05-03T15:21:21.007Z | lint_pack | pack lint completed with no blocking issues | agent-wiki/lint.md
+- 2026-05-03T15:22:07.047Z | record_event | implementation_result | maintain_datalox_pack | trace | agent-wiki/events/2026-05-03T15-22-07-038Z--renamed-package-install-identity-to-datalox-trajectory-mcp-and-split-lean-trajec.json
+- 2026-05-04T02:01:57.389Z | record_event | trace | maintain_datalox_pack | trace | agent-wiki/events/2026-05-04T02-01-57-382Z--added-an-agent-install-subsection-to-readme-md-for-installing-datalox-trajectory.json
 
 ## Recently Updated Skills
 
-- Evolve Portable Pack | repo_engineering | Use when changing the portable pack or agent guidance in this repo.
+- Capture Web Knowledge | web_capture | Use when analyzing a website's layout, tokens, and components into reusable repo knowledge.
+- Maintain Datalox Pack | repo_engineering | Use when changing the Datalox pack or agent guidance in this repo.
 - Review Ambiguous Viability Gate | flow_cytometry | Use when live/dead separation is ambiguous during viability gate review.
 
 ## Recently Updated Pages
 
-- comparison: Manual threshold shift vs exception review | agent-wiki/comparisons/manual-threshold-shift-vs-exception-review.md
-- comparison: Repo protocol vs loop bridge | agent-wiki/comparisons/repo-protocol-vs-loop-bridge.md
-- concept: Ambiguous viability gate review | agent-wiki/concepts/ambiguous-viability-gate-review.md
-- concept: Loop bridge | agent-wiki/concepts/loop-bridge.md
-- question: When should a new skill be created? | agent-wiki/questions/when-should-a-new-skill-be-created.md
-- question: When should QC escalate after viability review? | agent-wiki/questions/when-should-qc-escalate-after-viability-review.md
+- note: A diffusion-based framework for designing molecules in flexible protein pockets | agent-wiki/notes/pdf/diffusion-framework-designing-molecules-flexible-protein-pockets.md
+- note: Nucleotide-resolution mapping of regulatory elements via allelic readout of tiled base editing | agent-wiki/notes/pdf/nucleotide-resolution-regulatory-elements-tiled-base-editing.md
+- note: IL-7/IL-15/IL-21 cytokine-fusion scaffold generates highly functional CAR T cells enriched in long-lived T memory stem cells | agent-wiki/notes/pdf/il7-il15-il21-cytokine-fusion-scaffold-car-t-memory-stem-cells.md
+- note: Capture web knowledge | agent-wiki/notes/capture-web-knowledge.md
+- note: Use Datalox Through Host CLI | agent-wiki/notes/use-datalox-through-host-cli.md
+- note: Dead tail exception | agent-wiki/notes/dead-tail-exception.md
 
 ## Next Reads
 
-- agent-wiki/patterns/viability-gate-review.md
-- agent-wiki/patterns/dead-tail-exception.md
-- agent-wiki/questions/when-should-qc-escalate-after-viability-review.md
-- agent-wiki/sources/flow-cytometry-demo-notes.md
-- agent-wiki/meta/evolve-portable-pack.md
-- agent-wiki/concepts/loop-bridge.md
-- agent-wiki/questions/when-should-a-new-skill-be-created.md
+- Add follow-up notes or skills here when the PDF changes runtime behavior.
+- https://pmc.ncbi.nlm.nih.gov/articles/PMC13060587/
+- https://pmc.ncbi.nlm.nih.gov/articles/PMC13065808/
+- https://pmc.ncbi.nlm.nih.gov/articles/PMC12985740/
+- skills/capture-web-knowledge/SKILL.md
+- agent-wiki/notes/maintain-datalox-pack.md
 - agent-wiki/sources/portable-pack-design-notes.md
+- agent-wiki/notes/viability-gate-review.md

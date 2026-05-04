@@ -1,24 +1,36 @@
 # Project Overview
 
 The canonical product definition lives in [product-definition.md](./product-definition.md).
+The canonical dataset export schema lives in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md).
+The filesystem-backed orchestration protocol lives in [task-orchestration.md](./task-orchestration.md).
 
 Short version:
 
-- `datalox-pack` is a knowledge system for agents centered on reusable skills backed by grounded notes
-- the repo stays the source of truth for portable knowledge
-- the loop is `detect -> use -> record -> promote -> lint`
+- Datalox Trajectory Data is the primary B2B dataset/eval product.
+- Datalox MCP is the instrumentation, capture, labeling, verification, and export-control layer.
+- `datalox-pack` is the repo-local implementation package.
+- Existing skills and notes are legacy or internal guidance surfaces, not a second product loop.
+
+Primary product loop:
+
+```text
+agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus
+```
+
+Do not model this repo around legacy note/skill promotion. New product work should route through structured events and trajectory rows.
 
 The repo is centered on:
 
-- `skills/`
-- `agent-wiki/notes/`
 - `agent-wiki/events/`
+- `docs/trajectory-dataset-schema.md`
+- legacy/internal `skills/` and `agent-wiki/notes/` only where current host guidance still requires them
 
 Normal read path:
 
-1. detect the relevant skill
-2. read `skills/<name>/SKILL.md`
-3. follow the linked supporting notes
+1. read the product definition
+2. read the trajectory schema when export/data fields are involved
+3. record meaningful grounded events
+4. use existing skill/note guidance only where current host behavior still requires it
 
 Current source kinds:
 
@@ -26,9 +38,11 @@ Current source kinds:
 - `web`
 - `pdf`
 
-Current durable outputs:
+Current durable local outputs:
 
 - `skill`
 - `note`
+
+Trajectory dataset rows are export artifacts, not new repo-local knowledge page types. Use `debugging_trajectory.v1` from [trajectory-dataset-schema.md](./trajectory-dataset-schema.md). Do not add new product behavior to local note/skill promotion.
 
 Avoid expanding taxonomy unless real usage proves another generated page type is necessary.

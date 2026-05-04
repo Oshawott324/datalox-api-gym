@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "eventKind": "product_feedback",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "workflow": "product-direction",
+  "task": "Assess a proposed high-signal debugging trajectory dataset schema and initial customer target list for Datalox trajectory export.",
+  "step": "evaluate trajectory dataset schema and target companies",
+  "summary": "Reviewed the proposed dataset schema against the repo's canonical Datalox product boundary and current eval/agent company positioning. Key conclusion: the dataset idea is promising as an export layer, but should center reproducibility, provenance, verification, and Datalox skill/note linkage instead of raw reasoning traces.",
+  "observations": [
+    "Repo product definition says Datalox is a knowledge system for agents, with trace inputs promoted into notes and then skills, not a raw trace dump.",
+    "Existing trace artifact code captures task, signal, interpretation, action, matched skill, changed files, and outcome, which maps naturally to an export schema but lacks full reproducibility fields.",
+    "Current market sources show W&B Weave, LangSmith, Scale Labs, Labelbox, Humanloop, Replit, and Cursor all have adjacent eval/agent/data activity, but Humanloop docs contain conflicting status signals and coding-agent companies likely have stronger internal data advantages."
+  ],
+  "changedFiles": [],
+  "transcript": null,
+  "title": "Reviewed the proposed dataset schema against the repo's canonical Datalox product boundary and current eval/agent compa…",
+  "signal": "User asked whether a proposed schema and customer target plan is sound.",
+  "interpretation": "Useful direction, but the schema and GTM need tighter boundaries around eval utility, validation evidence, provenance, and buyer segmentation.",
+  "recommendedAction": "Define a schema_versioned JSONL export with repro, provenance, verification, skill/note linkage, failure attempts, and redaction/license metadata; start with 25 gold reproducible examples before broad outreach.",
+  "outcome": null,
+  "tags": [
+    "product",
+    "trajectory-export",
+    "dataset-schema",
+    "gtm",
+    "product-direction"
+  ],
+  "fingerprint": null,
+  "stabilityKey": "product-direction::assess-a-proposed-high-signal-debugging-trajectory-dataset-schema-and-initial-cu",
+  "adjudicationDecision": null,
+  "adjudicationSkillId": null,
+  "candidateSkills": [],
+  "explicitSkillId": null,
+  "matchedSkillId": null,
+  "matchedNotePaths": [],
+  "id": "2026-05-03T03-55-20-680Z--reviewed-the-proposed-dataset-schema-against-the-repo-s-canonical-datalox-produc",
+  "timestamp": "2026-05-03T03:55:20.680Z"
+}

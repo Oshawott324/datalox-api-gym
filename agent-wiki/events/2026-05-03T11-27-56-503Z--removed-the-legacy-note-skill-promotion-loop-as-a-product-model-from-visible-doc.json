@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "eventKind": "documentation_update",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "workflow": "repo_engineering",
+  "task": "Refocus TODO and relevant docs on one B2B trajectory dataset/eval pipeline instead of mixing it with the legacy trace-note-skill loop.",
+  "step": "remove dual-loop product framing",
+  "summary": "Removed the legacy note/skill promotion loop as a product model from visible docs and instruction surfaces, and made the canonical repo product pipeline agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus.",
+  "observations": [
+    "TODO.md now states the repo should converge on one debugging_trajectory.v1 product pipeline and treats skills/notes as legacy/internal during migration.",
+    "Product and onboarding docs point to docs/trajectory-dataset-schema.md as the canonical dataset row contract.",
+    "Agent instruction surfaces tell agents not to preserve legacy note/skill promotion as a second product loop and to route new product behavior through structured events and trajectory rows.",
+    "Search found no remaining old loop phrases such as trace -> note -> skill, supporting local loop, or better future action in the checked docs and instruction surfaces."
+  ],
+  "changedFiles": [
+    "TODO.md",
+    "docs/product-definition.md",
+    "docs/trajectory-dataset-schema.md",
+    "docs/project-overview.md",
+    "docs/agent-configuration.md",
+    "docs/automatic-enforcement-plan.md",
+    "README.md",
+    "START_HERE.md",
+    "DATALOX.md",
+    "WIKI.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    ".github/copilot-instructions.md",
+    ".cursor/rules/datalox-pack.mdc",
+    ".windsurf/rules/datalox-pack.md",
+    "package.json",
+    "package-lock.json",
+    "tests/adoptionScripts.test.ts",
+    "tests/agentConfig.test.ts"
+  ],
+  "transcript": null,
+  "title": "Removed the legacy note/skill promotion loop as a product model from visible docs and instruction surfaces, and made th…",
+  "signal": "TODO.md now states the repo should converge on one debugging_trajectory.v1 product pipeline and treats skills/notes as legacy/internal during migration.",
+  "interpretation": null,
+  "recommendedAction": null,
+  "outcome": "Updated docs and verified with npm run build, datalox lint --json, targeted Vitest files, and old-loop phrase search. Build passed. Datalox lint returned ok with existing warning-level wiki reference issues. Targeted Vitest rerun passed 13 tests.",
+  "tags": [
+    "docs",
+    "product-definition",
+    "trajectory-dataset",
+    "b2b",
+    "repo_engineering"
+  ],
+  "fingerprint": null,
+  "stabilityKey": "repo_engineering::refocus-todo-and-relevant-docs-on-one-b2b-trajectory-dataset-eval-pipeline-inste",
+  "adjudicationDecision": null,
+  "adjudicationSkillId": null,
+  "candidateSkills": [
+    {
+      "skillId": "repo-engineering.maintain-datalox-pack",
+      "displayName": "Maintain Datalox Pack",
+      "workflow": "repo_engineering",
+      "supportingNotes": [
+        {
+          "path": "agent-wiki/notes/maintain-datalox-pack.md",
+          "title": "Maintain Datalox Pack"
+        },
+        {
+          "path": "agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md",
+          "title": "Multi-agent bootstrap surfaces"
+        }
+      ],
+      "whyMatched": [
+        "workflow_match",
+        "primary_term_overlap",
+        "repo_hint_file_match"
+      ]
+    }
+  ],
+  "explicitSkillId": null,
+  "matchedSkillId": null,
+  "matchedNotePaths": [],
+  "id": "2026-05-03T11-27-56-503Z--removed-the-legacy-note-skill-promotion-loop-as-a-product-model-from-visible-doc",
+  "timestamp": "2026-05-03T11:27:56.503Z"
+}

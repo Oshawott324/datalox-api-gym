@@ -1,8 +1,11 @@
 ---
-description: Datalox pack rules for Cursor. Detect skills, use linked pattern docs, patch reusable knowledge, and keep control artifacts current.
+description: Datalox pack rules for Cursor. Use skills and linked notes, record grounded events, and keep trajectory export aligned with the schema.
 globs:
   - "skills/**/SKILL.md"
-  - ".datalox/**/*.md"
+  - "agent-wiki/**/*.md"
+  - "agent-wiki/events/**/*.json"
+  - "docs/product-definition.md"
+  - "docs/trajectory-dataset-schema.md"
   - "DATALOX.md"
   - "AGENTS.md"
 alwaysApply: true
@@ -10,16 +13,27 @@ alwaysApply: true
 
 # Datalox Pack
 
-Read `DATALOX.md` first.
+Read `docs/product-definition.md` and `DATALOX.md` first.
+
+Product boundary:
+
+- Datalox MCP is the product-facing instrumentation and control layer for desktop agents.
+- `datalox-trajectory-mcp` is the repo-local implementation package.
+- B2B trajectory data/evals are the primary product focus.
+- Do not keep legacy note/skill promotion as a second product loop in this repo.
+- Existing skills/notes are legacy or internal agent-guidance surfaces until migrated.
+- Lean, outcome-labeled `debugging_trajectory.v1` rows are the dataset/eval export product.
 
 On each loop:
 
-1. detect the best skill in `skills/`
-2. read linked pattern docs in `.datalox/patterns/`
-3. act using their signal, interpretation, and recommended action
-4. if you learn something reusable, patch the host repo and refresh:
-   - `.datalox/index.md`
-   - `.datalox/log.md`
-   - `.datalox/lint.md`
+1. read product/schema docs when trajectory export is involved
+2. record meaningful grounded events in `agent-wiki/events/`
+3. use `skills/` and linked notes only where current host guidance still requires them
+4. route new product behavior through structured events and trajectory rows
+5. refresh `agent-wiki/index.md`, `agent-wiki/log.md`, `agent-wiki/lint.md`, and `agent-wiki/hot.md`
+
+When touching trajectory recording, export gates, redaction states, or dataset fields, read `docs/trajectory-dataset-schema.md` first.
+
+Raw traces are not sellable data. Trajectory dataset rows are export artifacts, not repo-local knowledge page types.
 
 Preserve native Cursor behavior. Datalox is additive.

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-PACK_CACHE="${HOME}/.datalox/cache/datalox-pack"
+PACK_CACHE="${HOME}/.datalox/cache/datalox-trajectory-mcp"
 
 payload="$(cat)"
 

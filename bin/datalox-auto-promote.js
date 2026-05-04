@@ -229,7 +229,7 @@ function resolvePackRoot(args) {
     typeof args["pack-root"] === "string" ? args["pack-root"] : null,
     process.env.DATALOX_PACK_ROOT,
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."),
-    path.join(os.homedir(), ".datalox", "cache", "datalox-pack"),
+    path.join(os.homedir(), ".datalox", "cache", "datalox-trajectory-mcp"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {

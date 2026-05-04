@@ -55,12 +55,12 @@ describe("adoption scripts", () => {
     expect(await readFile(path.join(hostDir, "bin/claude-global-auto-promote.sh"), "utf8")).toContain("datalox-auto-promote.js");
     expect(await readFile(path.join(hostDir, "bin/datalox-claude.js"), "utf8")).toContain("\"claude\"");
     expect(await readFile(path.join(hostDir, "bin/datalox-codex.js"), "utf8")).toContain("\"codex\"");
-    expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox runtime root for datalox.js");
+    expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox Trajectory MCP runtime root for datalox.js");
     expect(await readFile(path.join(hostDir, "bin/datalox-wrap.js"), "utf8")).toContain("\"wrap\"");
     expect(await readFile(path.join(hostDir, "bin/disable-default-host-integrations.sh"), "utf8")).toContain("CLI-first disable flow");
     expect(await readFile(path.join(hostDir, "bin/install-default-host-integrations.sh"), "utf8")).toContain("Compatibility shim for the CLI-first install flow.");
-    expect(await readFile(path.join(hostDir, "bin/setup-multi-agent.sh"), "utf8")).toContain("Datalox Pack multi-agent setup");
-    expect(await readFile(path.join(hostDir, ".github/copilot-instructions.md"), "utf8")).toContain("portable Datalox pack");
+    expect(await readFile(path.join(hostDir, "bin/setup-multi-agent.sh"), "utf8")).toContain("Datalox Trajectory MCP multi-agent setup");
+    expect(await readFile(path.join(hostDir, ".github/copilot-instructions.md"), "utf8")).toContain("repo-local implementation package for Datalox MCP");
     expect(await readFile(path.join(hostDir, "skills/maintain-datalox-pack/SKILL.md"), "utf8")).toContain("Maintain Datalox Pack");
     expect(await readFile(path.join(hostDir, "skills/use-datalox-through-host-cli/SKILL.md"), "utf8")).toContain("Use Datalox Through Host CLI");
     expect(await readFile(path.join(hostDir, "agent-wiki/note.schema.md"), "utf8")).toContain("Action");
@@ -114,7 +114,7 @@ describe("adoption scripts", () => {
     expect(await readlink(path.join(homeDir, ".claude/skills/maintain-datalox-pack"))).toBe(path.join(repoRoot, "skills/maintain-datalox-pack"));
     expect(await readFile(path.join(homeDir, ".claude/skills/maintain-datalox-pack/SKILL.md"), "utf8")).toContain("Maintain Datalox Pack");
     expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/datalox-pack")]).status).not.toBe(0);
-    expect(await readlink(path.join(homeDir, ".datalox/cache/datalox-pack"))).toBe(repoRoot);
+    expect(await readlink(path.join(homeDir, ".datalox/cache/datalox-trajectory-mcp"))).toBe(repoRoot);
   }, 15000);
 
   it("lets an agent stop host integrations from an adopted repo", async () => {
@@ -161,7 +161,7 @@ describe("adoption scripts", () => {
     expect(spawnSync("test", ["-e", path.join(homeDir, ".local/bin/claude")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/hooks/datalox-auto-promote.sh")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/maintain-datalox-pack")]).status).not.toBe(0);
-    expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-pack")]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-trajectory-mcp")]).status).not.toBe(0);
     expect(await readFile(path.join(homeDir, ".claude/settings.json"), "utf8")).not.toContain("datalox-auto-promote.sh");
   }, 20000);
 
@@ -194,7 +194,7 @@ describe("adoption scripts", () => {
     const resolvedPackDir = await realpath(packDir);
     expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain(`PACK_ROOT="${resolvedPackDir}"`);
     expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain(`PACK_ROOT="${resolvedPackDir}"`);
-    expect(await readlink(path.join(homeDir, ".codex/skills/datalox-pack"))).toBe(path.join(resolvedPackDir, "skills"));
+    expect(await readlink(path.join(homeDir, ".codex/skills/datalox-trajectory-mcp"))).toBe(path.join(resolvedPackDir, "skills"));
     expect(await readlink(path.join(homeDir, ".claude/skills/maintain-datalox-pack"))).toBe(path.join(resolvedPackDir, "skills/maintain-datalox-pack"));
     expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/datalox-pack")]).status).not.toBe(0);
     expect(await readFile(path.join(homeDir, ".claude/hooks/datalox-auto-promote.sh"), "utf8")).toContain("datalox-auto-promote.js");
@@ -422,8 +422,8 @@ describe("adoption scripts", () => {
     expect(parsedProbe.recommendedAction).toBe("explicit_adopt_from_source_pack");
     expect(parsedProbe.recoveryCommands).toEqual([
       `TARGET_REPO=${JSON.stringify(hostDir)}`,
-      "git clone https://github.com/Complexity-LLC/datalox-pack.git",
-      "cd datalox-pack",
+      "git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git",
+      "cd datalox-trajectory-mcp",
       "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
     ]);
 

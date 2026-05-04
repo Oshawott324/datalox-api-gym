@@ -1061,7 +1061,7 @@ Use when changing the portable pack or agent guidance.
     expect(adoptResult.status).toBe(0);
     const adopted = JSON.parse(adoptResult.stdout);
     expect(adopted.copied.some((item: string) => item === "DATALOX.md")).toBe(true);
-    expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("durable outputs: `note`, `skill`");
+    expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("product export target: `debugging_trajectory.v1`");
     expect(await readFile(path.join(hostDir, "skills/maintain-datalox-pack/SKILL.md"), "utf8")).toContain("## Workflow");
   }, 20000);
 

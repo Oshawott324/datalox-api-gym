@@ -14,6 +14,153 @@ That doc now holds:
 - completed native Codex active-session provenance work
 - completed Claude Code surface provenance work
 
+## Trajectory Export Product Alignment
+
+- [x] Goal: converge this repo on one product pipeline for `debugging_trajectory.v1` dataset rows.
+  Implementation:
+  - keep the repo product pipeline as `agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+  - make Datalox MCP the first-class trajectory generation surface
+  - keep [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) as the row contract
+  - keep legacy `skill` and `note` promotion as internal host guidance only
+  - route all new export behavior through structured events and `debugging_trajectory.v1` rows
+  - do not add another repo-local knowledge page type
+  Pass criteria:
+  - product docs, agent instruction surfaces, and TODO agree on the single B2B trajectory export pipeline
+  - no product-facing doc reintroduces `trace -> note -> skill -> better future action` as a product loop
+  - new product work references `docs/trajectory-dataset-schema.md` before adding row fields
+
+- [x] Step 0: ship the MCP-first trajectory generation path as soon as possible.
+  Intent:
+  - let an agent produce `debugging_trajectory.v1` rows through Datalox MCP immediately after a debugging run
+  - keep the path separate from legacy `trace -> note -> skill` promotion
+  - optimize for a small number of high-quality rows now, not a broad data platform later
+  Implementation:
+  - add a dedicated MCP tool named `record_trajectory`
+  - input should be `repo_path` plus one `DebuggingTrajectoryV1` row object
+  - validate the row with `parseDebuggingTrajectoryV1`
+  - write a normal event under `agent-wiki/events/` with `eventKind: "trajectory_row"` and `payload.trajectoryRow`
+  - return `{ eventPath, trajectoryId, sellable, blockedReasons }`
+  - set or append `trajectoryRow.export.source_event_paths` to include the event path after write
+  - do not call `promote_gap`, `compileRecordedEvent`, note generation, or skill generation from this MCP tool
+  - if the row is valid but not sellable, still record it with `sellable: false`
+  - if the row is invalid, fail before writing an event and return field-level errors that another agent can fix
+  - add a short agent instruction snippet in docs: after a debugging run, build the row from observed task, context, steps, final fix, verification, and export gate, then call `record_trajectory`
+  Pass criteria:
+  - `record_trajectory` appears in the MCP tool list and can be called by an agent without using CLI wrappers
+  - a minimal row from [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) records successfully
+  - recorded events contain `payload.trajectoryRow.schema_version === "debugging_trajectory.v1"`
+  - the tool returns the repo-local event path and row id
+  - `export.allowed: false` records the row but returns `sellable: false`
+  - `export.redaction: "blocked"` records the row but returns `sellable: false`
+  - invalid row input creates no event file
+  - no `skills/` or `agent-wiki/notes/` files are created or modified by `record_trajectory`
+  - row recording works in a dirty worktree and does not require git clean state
+  - one smoke test records at least three synthetic debugging rows through the MCP tool and exports them to JSONL
+  - the smoke test uses local fixtures only: no paid model, no real desktop UI, no network
+
+- [x] Step 1: add a runtime schema module for the lean row.
+  Implementation:
+  - create `src/core/trajectorySchema.ts`
+  - define `DebuggingTrajectoryV1` from `docs/trajectory-dataset-schema.md`
+  - use a structured validator, preferably `zod`, for the exact required fields
+  - export `parseDebuggingTrajectoryV1(input)` for strict validation
+  - export `isSellableTrajectoryRow(row)` for the small export gate
+  - export `toTrajectoryJsonlLine(row)` so JSONL formatting is centralized
+  - reject unknown `schema_version`, missing required fields, empty `trajectory`, empty `final.fix_summary`, and invalid enum values
+  - treat `export.allowed: false` and `export.redaction: "blocked"` as non-sellable, not as schema-shape failures
+  Pass criteria:
+  - `tests/trajectorySchema.test.ts` covers the minimal valid example from the schema doc
+  - missing `task.prompt`, `trajectory`, `final.fix_summary`, `outcome`, or `export` fails validation
+  - `outcome.verification: "not_run"` and `"reviewed"` are accepted when explicitly set
+  - `export.allowed: false` validates as a row but fails `isSellableTrajectoryRow`
+  - `export.redaction: "blocked"` validates as a row but fails `isSellableTrajectoryRow`
+  - schema-doc JSON example parses in the test
+
+- [x] Step 2: add explicit trajectory row capture into recorded events.
+  Implementation:
+  - extend `recordTurnResult` input and shared CLI/MCP command metadata with an optional trajectory row source
+  - support one clear input path first: `--trajectory-row <json-file>` for CLI and `trajectoryRow` for MCP/native calls
+  - store valid row candidates inside the recorded event payload as `trajectoryRow`
+  - set `trajectoryRow.export.source_event_paths` to include the recorded event path after write
+  - do not infer a row from arbitrary `summary`, `observations`, or `transcript` prose
+  - if the row candidate is invalid, fail the record call with validator errors that an agent can fix
+  Pass criteria:
+  - recording with `--trajectory-row sample.json --json` writes an event containing `payload.trajectoryRow`
+  - invalid row input fails before writing an event
+  - source event paths include the event file that owns the row candidate
+  - existing `datalox record`, `patch`, `promote`, wrappers, and MCP tools continue to work without trajectory row input
+
+- [x] Step 3: add the trajectory export module.
+  Implementation:
+  - create `src/core/trajectoryExport.ts`
+  - read `agent-wiki/events/*.json` in deterministic timestamp/path order
+  - collect only explicit `payload.trajectoryRow` candidates
+  - validate every candidate with `parseDebuggingTrajectoryV1`
+  - write sellable rows to JSONL only when `isSellableTrajectoryRow(row)` passes
+  - return a structured report with counts: scanned events, candidate rows, exported rows, blocked rows, invalid rows
+  - include rejection reasons with event paths for agent repair
+  - keep detailed consent, license, provenance, and audit evidence in source events or curation systems, not required row fields
+  Pass criteria:
+  - export output is deterministic for the same event directory
+  - blocked rows are reported but not written to sellable JSONL
+  - invalid candidates fail the export unless `--allow-invalid` is explicitly added later
+  - duplicate `id` values fail export with both source event paths listed
+  - output contains one valid `DebuggingTrajectoryV1` object per line and no wrapper array
+
+- [x] Step 4: add the CLI surface.
+  Implementation:
+  - add `datalox export-trajectories --repo <path> --output <path> [--include-blocked-report <path>] [--json]`
+  - wire CLI logic through `src/core/trajectoryExport.ts`, not directly through `src/cli/main.ts`
+  - create parent directories for `--output`
+  - default output path can be `exports/trajectories/debugging_trajectory.v1.jsonl` only when `--output` is omitted
+  - print a concise agent-readable report in JSON mode
+  - do not mutate source events during export
+  Pass criteria:
+  - `node dist/src/cli/main.js export-trajectories --repo <fixture> --output <tmp>/rows.jsonl --json` exits 0 for valid fixtures
+  - command writes JSONL rows and a structured JSON report
+  - command exits nonzero with actionable errors for invalid candidates
+  - command exits 0 with `exportedRows: 0` when no candidates exist
+  - help text lists the new command
+
+- [x] Step 5: add curation packaging without burdening the agent.
+  Implementation:
+  - keep buyer-facing split, quality, and tags in optional `curation`
+  - add `--split <train|validation|test|eval>` only as an export-time override if needed
+  - never require agents to classify pattern taxonomies during normal debugging work
+  - keep curation rules deterministic and file-based
+  Pass criteria:
+  - rows without `curation` still export
+  - export-time split assignment does not rewrite source events
+  - curation metadata stays optional in schema tests
+
+- [x] Step 6: isolate legacy skill/note promotion from product export.
+  Implementation:
+  - identify all paths that still write or promote `skill` and `note`
+  - keep them available for host guidance while wrappers still need them
+  - prevent trajectory export code from depending on note/skill promotion output
+  - only include skill/note references when they already exist as optional curation tags or metadata
+  - document the eventual removal/isolation point after row capture replaces legacy promotion for product work
+  Pass criteria:
+  - exporter tests pass in a fixture repo with no `skills/` and no `agent-wiki/notes/`
+  - existing skill/note promotion tests still pass
+  - no trajectory schema required field references `skill`, `note`, or `knowledge_feedback`
+  - product docs keep note/skill promotion labeled as legacy/internal
+
+- [x] Step 7: add focused end-to-end fixtures and tests.
+  Implementation:
+  - add fixture events under test temp directories, not committed generated runtime output
+  - include one valid sellable row
+  - include one blocked row with `export.allowed: false`
+  - include one blocked row with `export.redaction: "blocked"`
+  - include one invalid candidate with a missing required field
+  - include one duplicate-id case
+  Pass criteria:
+  - `npm run build` passes
+  - `npx vitest run tests/trajectorySchema.test.ts tests/trajectoryExport.test.ts` passes
+  - existing focused wrapper/record tests still pass where touched
+  - `node dist/src/cli/main.js lint --repo . --json` remains `ok`
+  - no test requires real network, real desktop UI, or a paid model
+
 
 ## Refactor `agent-pack.mjs`
 
@@ -576,3 +723,6 @@ That doc now holds:
   4. Periodic maintenance compacts shared traces into repo-local notes and then repo-local skills.
   5. No cross-repo trace bleed occurs.
   6. `repo_only` mode keeps its current local-only behavior.
+
+
+officecli

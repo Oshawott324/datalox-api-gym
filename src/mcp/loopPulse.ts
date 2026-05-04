@@ -11,6 +11,11 @@ export interface LoopPulse {
   action_hint: string;
 }
 
+export interface LoopPulseOptions {
+  unavailableTools?: readonly string[];
+  fallbackRecommendedTool?: string | null;
+}
+
 async function exists(filePath: string): Promise<boolean> {
   try {
     await access(filePath);
@@ -57,6 +62,16 @@ function deriveLoopHint(command: string, result: unknown, state: {
             action_hint: "First grounded occurrence recorded. Promote only after the same signal repeats with strong evidence.",
           };
     }
+    case "record_trajectory":
+      return {
+        recommended_next_tool: "export_trajectories",
+        action_hint: "Trajectory row recorded. Export when the repo has enough verified rows for curation.",
+      };
+    case "export_trajectories":
+      return {
+        recommended_next_tool: null,
+        action_hint: "Trajectory export completed. Review blocked or rejected rows before sharing the JSONL corpus.",
+      };
     case "patch_knowledge":
       return {
         recommended_next_tool: "lint_pack",
@@ -110,6 +125,7 @@ export async function buildLoopPulse(input: {
   command: string;
   repoPath?: string;
   result: unknown;
+  options?: LoopPulseOptions;
 }): Promise<LoopPulse> {
   const repoPath = input.repoPath ? path.resolve(input.repoPath) : null;
   const hasAgentWiki = repoPath ? await exists(path.join(repoPath, "agent-wiki")) : false;
@@ -119,6 +135,10 @@ export async function buildLoopPulse(input: {
     hasAgentWiki,
     hasInstallStamp,
   });
+  const unavailableTools = new Set(input.options?.unavailableTools ?? []);
+  const recommendedNextTool = hint.recommended_next_tool && unavailableTools.has(hint.recommended_next_tool)
+    ? input.options?.fallbackRecommendedTool ?? null
+    : hint.recommended_next_tool;
 
   return {
     command: input.command,
@@ -126,7 +146,7 @@ export async function buildLoopPulse(input: {
     has_agent_wiki: hasAgentWiki,
     has_install_stamp: hasInstallStamp,
     has_hot_cache: hasHotCache,
-    recommended_next_tool: hint.recommended_next_tool,
+    recommended_next_tool: recommendedNextTool,
     action_hint: hint.action_hint,
   };
 }

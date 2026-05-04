@@ -7,6 +7,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { extractTraceSource } from "./sourceBundle.js";
 import { createRuntimeClient } from "./runtimeClient.js";
+import {
+  appendTrajectorySourceEventPath,
+  type DebuggingTrajectoryV1,
+  parseDebuggingTrajectoryV1,
+} from "./trajectorySchema.js";
 import { loadAgentConfig } from "../agent/loadAgentConfig.js";
 
 export type EventClass = "trace" | "candidate";
@@ -80,6 +85,7 @@ export interface RecordTurnResultInput {
   matchedNotePaths?: string[];
   sessionId?: string;
   hostKind?: string;
+  trajectoryRow?: unknown;
 }
 
 export interface PromoteGapInput extends RecordTurnResultInput {
@@ -209,7 +215,7 @@ function resolvePackRootPath(): string {
 }
 
 const PACK_ROOT = resolvePackRootPath();
-const DEFAULT_PACK_URL = "https://github.com/Complexity-LLC/datalox-pack.git";
+const DEFAULT_PACK_URL = "https://github.com/Complexity-LLC/datalox-trajectory-mcp.git";
 
 function shellDoubleQuote(value: string): string {
   return JSON.stringify(value);
@@ -219,7 +225,7 @@ function buildExplicitAdoptionRecoveryCommands(repoPath: string): string[] {
   return [
     `TARGET_REPO=${shellDoubleQuote(repoPath)}`,
     `git clone ${DEFAULT_PACK_URL}`,
-    "cd datalox-pack",
+    "cd datalox-trajectory-mcp",
     "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
   ];
 }
@@ -245,6 +251,7 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "bin/datalox-claude.js",
   "bin/datalox-codex.js",
   "bin/datalox-mcp.js",
+  "bin/datalox-pack-mcp.js",
   "bin/datalox.js",
   "bin/datalox-wrap.js",
   "bin/disable-default-host-integrations.sh",
@@ -349,6 +356,7 @@ interface RecordedEventPayload {
   summarizedAt?: string | null;
   maintenanceRollupKind?: string | null;
   maintenanceStatus?: string | null;
+  trajectoryRow?: DebuggingTrajectoryV1 | null;
 }
 
 function normalizePath(value: string): string {
@@ -837,7 +845,7 @@ async function resolvePackRoot(packSource?: string): Promise<string> {
   }
 
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cacheName = path.basename(packSource).replace(/\.git$/, "") || "datalox-pack";
+  const cacheName = path.basename(packSource).replace(/\.git$/, "") || "datalox-trajectory-mcp";
   const cachePath = path.join(cacheRoot, cacheName);
   await mkdir(cacheRoot, { recursive: true });
 
@@ -855,7 +863,7 @@ async function resolvePackRoot(packSource?: string): Promise<string> {
 
 async function ensureLocalPackCache(packRootPath: string): Promise<void> {
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cachePath = path.join(cacheRoot, "datalox-pack");
+  const cachePath = path.join(cacheRoot, "datalox-trajectory-mcp");
 
   if (path.resolve(packRootPath) === path.resolve(cachePath)) {
     return;
@@ -1104,6 +1112,9 @@ export async function patchKnowledge(input: PatchKnowledgeInput) {
 
 export async function recordTurnResult(input: RecordTurnResultInput) {
   const repoPath = resolveRepoPath(input.repoPath);
+  const trajectoryRow = input.trajectoryRow === undefined
+    ? undefined
+    : parseDebuggingTrajectoryV1(input.trajectoryRow);
   const legacy = await loadLegacyPackModule();
   const result = await legacy.recordTurnResult(
     {
@@ -1156,6 +1167,9 @@ export async function recordTurnResult(input: RecordTurnResultInput) {
         ...(input.matchedNotePaths !== undefined ? { matchedNotePaths: input.matchedNotePaths } : {}),
         ...(input.sessionId !== undefined ? { sessionId: input.sessionId ?? null } : {}),
         ...(input.hostKind !== undefined ? { hostKind: input.hostKind ?? null } : {}),
+        ...(trajectoryRow !== undefined
+          ? { trajectoryRow: appendTrajectorySourceEventPath(trajectoryRow, result.event.relativePath) }
+          : {}),
       }) ?? result.event.payload,
     },
   };

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "eventKind": "trace",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "workflow": "maintain_datalox_pack",
+  "task": "Update README.md with clear agent install instructions for datalox-trajectory-mcp / datalox-mcp without mixing legacy product loops.",
+  "step": "readme_agent_install",
+  "summary": "Added an Agent Install subsection to README.md for installing datalox-trajectory-mcp from a target repo, with Codex default, Claude variant, existing source checkout path, and the adopted repo local MCP entrypoint.",
+  "observations": [
+    "README Install now tells agents to clone datalox-trajectory-mcp, run setup-multi-agent.sh codex, adopt the target repo, and verify status.",
+    "README now documents node bin/datalox-mcp.js as the target repo local MCP command after adoption, while reserving datalox-mcp for PATH-installed or linked package use.",
+    "The edit preserves the B2B trajectory MCP product boundary and avoids adding legacy note/skill promotion as a product loop."
+  ],
+  "changedFiles": [
+    "README.md"
+  ],
+  "transcript": null,
+  "title": "Added an Agent Install subsection to README.md for installing datalox-trajectory-mcp from a target repo, with Codex def…",
+  "signal": "README Install now tells agents to clone datalox-trajectory-mcp, run setup-multi-agent.sh codex, adopt the target repo, and verify status.",
+  "interpretation": null,
+  "recommendedAction": "Keep package/install docs aligned with README when publishing or changing the MCP command surface.",
+  "outcome": "success",
+  "tags": [
+    "docs",
+    "install",
+    "mcp",
+    "trajectory_export",
+    "maintain_datalox_pack"
+  ],
+  "fingerprint": null,
+  "stabilityKey": "maintain_datalox_pack::update-readme-md-with-clear-agent-install-instructions-for-datalox-trajectory-mc",
+  "adjudicationDecision": null,
+  "adjudicationSkillId": null,
+  "candidateSkills": [],
+  "explicitSkillId": null,
+  "matchedSkillId": null,
+  "matchedNotePaths": [],
+  "id": "2026-05-04T02-01-57-382Z--added-an-agent-install-subsection-to-readme-md-for-installing-datalox-trajectory",
+  "timestamp": "2026-05-04T02:01:57.382Z"
+}

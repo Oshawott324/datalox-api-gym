@@ -1,15 +1,25 @@
 # Datalox
 
-This repo is a portable agent pack.
+This repo is the portable implementation package for Datalox Trajectory MCP.
 
-The runtime model is intentionally small:
+Datalox Trajectory Data is the primary product focus: lean, outcome-labeled debugging trajectories for coding-agent training and evaluation, captured through Datalox MCP.
+
+The capture taxonomy is intentionally small:
 
 - source kinds: `trace`, `web`, `pdf`
-- durable outputs: `note`, `skill`
+- product export target: `debugging_trajectory.v1`
 
-The loop is:
+The legacy pack loop is:
 
 `detect -> use -> record -> promote -> lint`
+
+Primary product loop:
+
+`agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+
+Do not keep legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until migrated or isolated behind the trajectory pipeline.
+
+Exported debugging trajectory rows must follow [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
 
 ## Read Order
 
@@ -17,32 +27,35 @@ On each loop:
 
 1. read `.datalox/manifest.json`
 2. read `.datalox/config.json`
-3. read `agent-wiki/hot.md` if it exists
-4. detect the best matching skill in `skills/`
-5. read the linked notes in that skill's `metadata.datalox.note_paths`
-6. follow `related` and `sources` only when the linked note says they matter
-7. act from the skill body plus the linked notes
+3. read `docs/product-definition.md` when it exists
+4. read `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, export, or data sale
+5. read `agent-wiki/hot.md` if it exists
+6. detect the best matching skill in `skills/`
+7. read the linked notes in that skill's `metadata.datalox.note_paths`
+8. follow `related` and `sources` only when the linked note says they matter
+9. act from the skill body plus the linked notes
 
 Host repo files override seed-pack files when both define the same knowledge.
 
 ## Knowledge Surfaces
 
-The main repo-local surfaces are:
+The main repo-local data surfaces are:
 
-- `skills/`
-- `agent-wiki/notes/`
 - `agent-wiki/events/`
+- `docs/trajectory-dataset-schema.md`
 - `agent-wiki/index.md`
 - `agent-wiki/log.md`
 - `agent-wiki/lint.md`
 - `agent-wiki/hot.md`
 
-Use `agent-wiki/notes/` for reusable local knowledge.
-Use `skills/` for reusable workflows.
+Use `agent-wiki/events/` for grounded event evidence that can feed trajectory export.
+Use `skills/` and `agent-wiki/notes/` only as legacy/internal host-guidance surfaces while migration is in progress.
 
-Legacy folders such as `patterns/`, `sources/`, `concepts/`, `comparisons/`, and `questions/` may still exist in older repos. Read them when present, but new automatic writes should go to `agent-wiki/notes/`.
+Legacy folders such as `patterns/`, `sources/`, `concepts/`, `comparisons/`, and `questions/` may still exist in older repos. Read them when present, but do not add new product behavior to those folders.
 
-## Promotion Rule
+## Legacy Promotion Rule
+
+The existing promotion machinery is legacy/internal for this trajectory-export repo. Do not build new product features around note/skill promotion.
 
 Promotion should stay simple:
 
@@ -73,6 +86,44 @@ When a skill links notes, use:
 
 - operational notes for action
 - source notes for grounding
+
+## Trajectory Dataset Rule
+
+Raw traces are not the dataset product.
+
+A trajectory export row is valid only when it follows [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) and includes:
+
+- schema version
+- problem and context
+- structured agent trajectory
+- final fix
+- verification status
+- outcome label
+- small export gate
+
+Do not treat a recorded event as sellable data when `export.allowed` is false or `export.redaction` is `blocked`. Detailed consent, license, and provenance evidence should live in source events or curation systems, not as required row fields.
+
+## Trajectory Recording
+
+After a coding-debugging run, the agent should build one lean `debugging_trajectory.v1` row from observed facts:
+
+- task prompt or problem statement
+- minimal context needed to understand the fix
+- concise user/agent/tool trajectory steps
+- final fix summary and changed files or patch
+- explicit outcome label and verification status
+- small export gate
+
+Then call MCP tool `record_trajectory` with `repo_path` and `trajectory_row`.
+
+`record_trajectory` writes a structured event under `agent-wiki/events/`, stores the row at `payload.trajectoryRow`, appends the owning event path to `trajectoryRow.export.source_event_paths`, and returns `{ eventPath, trajectoryId, sellable, blockedReasons }`.
+
+Do not call `promote_gap`, note generation, or skill generation for trajectory row capture. Rows that are valid but not exportable should still be recorded with `sellable: false`; invalid rows should be fixed by the agent and retried.
+
+CLI equivalents:
+
+- `datalox record-trajectory --repo . --trajectory-row row.json --json`
+- `datalox export-trajectories --repo . --output exports/trajectories/debugging_trajectory.v1.jsonl --json`
 
 ## Lint Rule
 
@@ -151,11 +202,18 @@ This uploads:
 
 ## MCP and CLI
 
-Preferred MCP tools:
+The install-facing `datalox-mcp` surface is intentionally small:
+
+- `record_trajectory`
+  Records one validated `debugging_trajectory.v1` row as a dataset candidate event without note or skill promotion.
+- `export_trajectories`
+  Exports sellable row candidates from recorded events into deterministic JSONL.
+
+The explicit legacy full-pack MCP surface is `datalox-pack-mcp`. Use it only for pack maintenance or legacy operations:
 
 - `resolve_loop`
 - `record_turn_result`
-  Writes a grounded `trace` by default. Use for receipts and audit history, not automatic knowledge promotion.
+  Writes a grounded `trace` by default. Use `trajectory_row` only when attaching an explicit row candidate to the receipt; do not infer rows from prose.
 - `promote_gap`
   Records a promotable `candidate` and runs the note/skill promotion ladder.
 - `lint_pack`
@@ -164,7 +222,7 @@ Preferred MCP tools:
 - `publish_web_capture`
 - `adopt_pack`
 
-CLI commands mirror the same operations.
+CLI commands mirror both surfaces. Product data work should prefer `record-trajectory` and `export-trajectories`.
 
 Core CLI commands emit JSON for agent consumption. Wrapper commands keep passthrough behavior by default; use `--json` there when you need a structured envelope instead of prompt or child-process output.
 
@@ -202,8 +260,8 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git
-cd datalox-pack
+git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git
+cd datalox-trajectory-mcp
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
@@ -211,7 +269,7 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 
 Source and target roles:
 
-- `datalox-pack` is the source clone and owns source-only scripts such as `bin/adopt-host-repo.sh`.
+- `datalox-trajectory-mcp` is the source clone and owns source-only scripts such as `bin/adopt-host-repo.sh`.
 - `$TARGET_REPO` is the user's current project and receives `.datalox/install.json`, instruction surfaces, core skills, and notes.
 - If a repo claims to be the source pack but lacks `bin/adopt-host-repo.sh`, clone a fresh source pack.
 

@@ -2,9 +2,9 @@
 set -euo pipefail
 
 HOST_REPO="${1:-}"
-PACK_REPO_URL="${2:-https://github.com/Complexity-LLC/datalox-pack.git}"
+PACK_REPO_URL="${2:-https://github.com/Complexity-LLC/datalox-trajectory-mcp.git}"
 CACHE_ROOT="${HOME}/.datalox/cache"
-PACK_CACHE="${CACHE_ROOT}/datalox-pack"
+PACK_CACHE="${CACHE_ROOT}/datalox-trajectory-mcp"
 
 if [ -z "$HOST_REPO" ]; then
   echo "Usage: bash bin/adopt-from-github.sh /path/to/host-repo [pack-repo-url]"

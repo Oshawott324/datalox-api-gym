@@ -73,6 +73,12 @@ const baseConfig = {
     requestTimeoutMs: 10000,
     endpoints: {
       compile: "/v1/runtime/compile",
+      guidance: "/v1/runtime/guidance",
+      publish: "/v1/skills/publish",
+      search: "/v1/skills/search",
+      install: "/v1/skills/:name/install",
+      ingest: "/v1/files/ingest",
+      register: "/v1/contributor/register",
     },
   },
   auth: {

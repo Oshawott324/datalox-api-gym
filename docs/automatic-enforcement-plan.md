@@ -2,6 +2,8 @@
 
 This document defines what "automatic enforcement" means for `datalox-pack`, what counts as supported, and the minimum implementation plan for this repo.
 
+The product-facing goal is Datalox Trajectory Data: lean, outcome-labeled debugging trajectories for coding-agent training and evaluation, captured through Datalox MCP.
+
 ## Target
 
 For this repo, automatic enforcement means:
@@ -12,9 +14,11 @@ For this repo, automatic enforcement means:
 
 Product boundary:
 
-- `pack` = portable protocol and durable knowledge
+- `Datalox Trajectory Data` = primary B2B dataset/eval product
+- `Datalox MCP` = product-facing instrumentation and control surface
+- `datalox-pack` = portable protocol, CLI, durable local knowledge, and adoption assets
 - `adapter` = host-specific enforcement
-- `MCP` = shared control surface, not the enforcement mechanism
+- `trajectory dataset` = verified export product defined by [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
 
 ## Non-Goals
 
@@ -198,7 +202,8 @@ Every `enforced` adapter should implement the same contract.
 1. Sanitize transcript and child output.
 2. Always record an event.
 3. Optionally run second-pass review.
-4. Only persist note or skill changes through provenance-backed write paths.
+4. Preserve enough structured evidence for later `debugging_trajectory.v1` export.
+5. Only persist note or skill changes through provenance-backed write paths.
 
 This contract should live centrally, not be reimplemented ad hoc in each host adapter.
 

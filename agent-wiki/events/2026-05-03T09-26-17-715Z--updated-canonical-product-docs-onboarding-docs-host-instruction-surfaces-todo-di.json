@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "eventKind": "doc_update",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "workflow": "repo_engineering",
+  "task": "Update relevant Datalox docs to reflect the clarified goal: desktop agent plus Datalox MCP records structured debugging trajectories for B2B dataset/eval sales, and add a canonical schema document to prevent drift.",
+  "step": "update product docs and schema contract",
+  "summary": "Updated canonical product docs, onboarding docs, host instruction surfaces, TODO direction, package metadata, and tests to align on Datalox MCP as desktop-agent instrumentation plus verified trajectory dataset export. Added docs/trajectory-dataset-schema.md as the canonical debugging_trajectory.v1 JSONL row contract.",
+  "observations": [
+    "docs/product-definition.md now states the commercial goal: users run a desktop agent, Datalox MCP records consented verified trajectories, and curated rows become datasets/evals for AI companies.",
+    "docs/trajectory-dataset-schema.md defines debugging_trajectory.v1 with task, source, data_rights, reproduction, context, agent_trace, failed_attempts, knowledge_used, solution, verification, outcome, generalization, and knowledge_feedback.",
+    "README, START_HERE, DATALOX, AGENTS, CLAUDE, GEMINI, WIKI, Cursor, Copilot, and Windsurf instruction surfaces now point to the schema when work touches trajectory recording/export/data sale.",
+    "Tests were updated for the new Copilot wording and to make the agent config test fixture include all required runtime endpoints."
+  ],
+  "changedFiles": [
+    "docs/product-definition.md",
+    "docs/trajectory-dataset-schema.md",
+    "README.md",
+    "START_HERE.md",
+    "DATALOX.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "WIKI.md",
+    ".github/copilot-instructions.md",
+    ".cursor/rules/datalox-pack.mdc",
+    ".windsurf/rules/datalox-pack.md",
+    "docs/project-overview.md",
+    "docs/agent-configuration.md",
+    "docs/automatic-enforcement-plan.md",
+    "TODO.md",
+    "package.json",
+    "package-lock.json",
+    "tests/adoptionScripts.test.ts",
+    "tests/agentConfig.test.ts"
+  ],
+  "transcript": null,
+  "title": "Updated canonical product docs, onboarding docs, host instruction surfaces, TODO direction, package metadata, and tests…",
+  "signal": "Product docs previously framed Datalox mainly as a local knowledge system; the clarified repo goal is B2B trajectory dataset export powered by desktop-agent usage.",
+  "interpretation": "The docs needed one canonical business definition plus one canonical schema contract so future agents do not drift between local-memory and dataset-export framings.",
+  "recommendedAction": "Next implementation step is a trajectory export command/module that reads Datalox events and emits JSONL rows validated against debugging_trajectory.v1.",
+  "outcome": "npm test passed: 13 test files, 122 tests. npm run build passed. Datalox lint returned ok:true with 24 existing warning-level note/reference issues.",
+  "tags": [
+    "docs",
+    "product-definition",
+    "trajectory-schema",
+    "datalox-mcp",
+    "dataset-export",
+    "repo_engineering"
+  ],
+  "fingerprint": null,
+  "stabilityKey": "repo_engineering::update-relevant-datalox-docs-to-reflect-the-clarified-goal-desktop-agent-plus-da",
+  "adjudicationDecision": null,
+  "adjudicationSkillId": null,
+  "candidateSkills": [
+    {
+      "skillId": "repo-engineering.maintain-datalox-pack",
+      "displayName": "Maintain Datalox Pack",
+      "workflow": "repo_engineering",
+      "supportingNotes": [
+        {
+          "path": "agent-wiki/notes/maintain-datalox-pack.md",
+          "title": "Maintain Datalox Pack"
+        },
+        {
+          "path": "agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md",
+          "title": "Multi-agent bootstrap surfaces"
+        }
+      ],
+      "whyMatched": [
+        "workflow_match",
+        "primary_term_overlap",
+        "repo_hint_file_match"
+      ]
+    }
+  ],
+  "explicitSkillId": null,
+  "matchedSkillId": null,
+  "matchedNotePaths": [],
+  "id": "2026-05-03T09-26-17-715Z--updated-canonical-product-docs-onboarding-docs-host-instruction-surfaces-todo-di",
+  "timestamp": "2026-05-03T09:26:17.715Z"
+}

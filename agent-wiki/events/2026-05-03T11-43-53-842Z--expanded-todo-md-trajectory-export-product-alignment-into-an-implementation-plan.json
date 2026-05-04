@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "eventKind": "documentation_update",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "workflow": "repo_engineering",
+  "task": "Extend the Trajectory Export Product Alignment TODO section with detailed implementation steps and pass criteria.",
+  "step": "extend trajectory export product alignment TODO",
+  "summary": "Expanded TODO.md Trajectory Export Product Alignment into an implementation plan covering runtime schema validation, explicit row capture, export module, CLI surface, curation packaging, legacy note/skill isolation, and focused tests.",
+  "observations": [
+    "TODO.md now specifies concrete target modules such as src/core/trajectorySchema.ts and src/core/trajectoryExport.ts.",
+    "Pass criteria define schema validation, sellable export gating, deterministic JSONL output, duplicate id handling, CLI behavior, and fixture-based tests.",
+    "The plan explicitly prevents heuristic row reconstruction from summary/observation/transcript prose; export should collect explicit payload.trajectoryRow candidates.",
+    "The plan keeps detailed consent, license, provenance, and audit evidence outside required training rows and treats skill/note references as optional curation metadata."
+  ],
+  "changedFiles": [
+    "TODO.md"
+  ],
+  "transcript": null,
+  "title": "Expanded TODO.md Trajectory Export Product Alignment into an implementation plan covering runtime schema validation, ex…",
+  "signal": "TODO.md now specifies concrete target modules such as src/core/trajectorySchema.ts and src/core/trajectoryExport.ts.",
+  "interpretation": null,
+  "recommendedAction": null,
+  "outcome": "Updated TODO.md and ran Datalox lint. Lint returned ok with existing warning-level wiki-reference issues.",
+  "tags": [
+    "docs",
+    "todo",
+    "trajectory-export",
+    "implementation-plan",
+    "pass-criteria",
+    "repo_engineering"
+  ],
+  "fingerprint": null,
+  "stabilityKey": "repo_engineering::extend-the-trajectory-export-product-alignment-todo-section-with-detailed-implem",
+  "adjudicationDecision": null,
+  "adjudicationSkillId": null,
+  "candidateSkills": [],
+  "explicitSkillId": null,
+  "matchedSkillId": null,
+  "matchedNotePaths": [],
+  "id": "2026-05-03T11-43-53-842Z--expanded-todo-md-trajectory-export-product-alignment-into-an-implementation-plan",
+  "timestamp": "2026-05-03T11:43:53.842Z"
+}

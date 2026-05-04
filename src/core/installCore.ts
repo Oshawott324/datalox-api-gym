@@ -310,7 +310,7 @@ function validFullPackRoot(candidate: string): boolean {
 
 async function ensureLocalPackCache(packRootPath: string): Promise<string> {
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cachePath = path.join(cacheRoot, "datalox-pack");
+  const cachePath = path.join(cacheRoot, "datalox-trajectory-mcp");
 
   if (path.resolve(packRootPath) === path.resolve(cachePath)) {
     return cachePath;
@@ -388,7 +388,7 @@ async function skillLinkSpecs(host: InstallHost, packRootPath: string): Promise<
   if (selected.has("codex")) {
     specs.push({
       target: skillsDir,
-      destination: path.join(os.homedir(), ".codex", "skills", "datalox-pack"),
+      destination: path.join(os.homedir(), ".codex", "skills", "datalox-trajectory-mcp"),
     });
   }
 
@@ -400,11 +400,11 @@ async function skillLinkSpecs(host: InstallHost, packRootPath: string): Promise<
     specs.push(
       {
         target: skillsDir,
-        destination: path.join(os.homedir(), ".opencode", "skills", "datalox-pack"),
+        destination: path.join(os.homedir(), ".opencode", "skills", "datalox-trajectory-mcp"),
       },
       {
         target: skillsDir,
-        destination: path.join(os.homedir(), ".gemini", "skills", "datalox-pack"),
+        destination: path.join(os.homedir(), ".gemini", "skills", "datalox-trajectory-mcp"),
       },
       {
         target: skillsDir,

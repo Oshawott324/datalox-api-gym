@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { z } from "zod";
 
 import {
@@ -9,13 +12,14 @@ import {
   recordTurnResult,
   resolveLoop,
 } from "../core/packCore.js";
+import { exportTrajectories, recordTrajectory } from "../core/trajectoryExport.js";
 import { capturePdfArtifact } from "../core/pdfCapture.js";
 import { publishWebCapture } from "../core/publishWebCapture.js";
 import { captureDesignFromUrl, captureWebArtifact } from "../core/webCapture.js";
 
 type CliArgsLike = Record<string, string | string[] | boolean> & { _: string[] };
 
-type SharedArgKind = "string" | "boolean" | "string[]" | "int" | "enum";
+type SharedArgKind = "string" | "boolean" | "string[]" | "int" | "enum" | "json";
 
 interface SharedArgOption {
   canonical: string;
@@ -385,6 +389,62 @@ const outputPathArg: SharedArgSpec = {
   mcpKey: "output_path",
 };
 
+const trajectoryOutputPathArg: SharedArgSpec = {
+  key: "outputPath",
+  description: "Optional output path for the JSONL trajectory export.",
+  kind: "string",
+  cliFlag: "output",
+  mcpKey: "output_path",
+};
+
+const trajectoryRowFileArg: SharedArgSpec = {
+  key: "trajectoryRowFile",
+  description: "Path to a JSON file containing one debugging_trajectory.v1 row.",
+  kind: "string",
+  cliFlag: "trajectory-row",
+};
+
+const requiredTrajectoryRowFileArg: SharedArgSpec = {
+  ...trajectoryRowFileArg,
+  cliRequired: true,
+};
+
+const trajectoryRowArg: SharedArgSpec = {
+  key: "trajectoryRow",
+  description: "One debugging_trajectory.v1 row object.",
+  kind: "json",
+  mcpKey: "trajectory_row",
+};
+
+const requiredTrajectoryRowArg: SharedArgSpec = {
+  ...trajectoryRowArg,
+  mcpRequired: true,
+};
+
+const blockedReportPathArg: SharedArgSpec = {
+  key: "blockedReportPath",
+  description: "Optional path for an export report that includes blocked trajectory rows.",
+  kind: "string",
+  cliFlag: "include-blocked-report",
+  mcpKey: "include_blocked_report",
+};
+
+const splitOptions = [
+  { canonical: "train", cli: "train" },
+  { canonical: "validation", cli: "validation" },
+  { canonical: "test", cli: "test" },
+  { canonical: "eval", cli: "eval" },
+] as const;
+
+const splitArg: SharedArgSpec = {
+  key: "split",
+  description: "Optional export-time curation split override.",
+  kind: "enum",
+  cliFlag: "split",
+  mcpKey: "split",
+  options: splitOptions,
+};
+
 const bucketArg: SharedArgSpec = {
   key: "bucket",
   description: "Optional target bucket.",
@@ -440,6 +500,12 @@ function maybeBoolean(value: unknown): boolean | undefined {
 
 function maybeNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function maybeUnknownObject(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
 
 function lastScalar(value: string | string[] | boolean | undefined): string | undefined {
@@ -514,6 +580,8 @@ function parseCliValue(spec: SharedArgSpec, value: string | string[] | boolean |
       return parseCliInt(spec, value);
     case "enum":
       return parseCliEnum(spec, value);
+    case "json":
+      return undefined;
     default:
       return undefined;
   }
@@ -547,6 +615,9 @@ function buildMcpArgSchema(spec: SharedArgSpec): z.ZodTypeAny {
       schema = z.enum(options as [string, ...string[]]);
       break;
     }
+    case "json":
+      schema = z.record(z.string(), z.unknown());
+      break;
     default:
       schema = z.unknown();
       break;
@@ -555,6 +626,26 @@ function buildMcpArgSchema(spec: SharedArgSpec): z.ZodTypeAny {
     schema = schema.optional();
   }
   return schema.describe(spec.description);
+}
+
+async function loadTrajectoryRowInput(input: Record<string, unknown>, required: boolean): Promise<unknown | undefined> {
+  const directRow = maybeUnknownObject(input.trajectoryRow);
+  if (directRow !== undefined) {
+    return directRow;
+  }
+  const trajectoryRowFile = maybeString(input.trajectoryRowFile);
+  if (trajectoryRowFile !== undefined) {
+    const repoPath = maybeString(input.repoPath);
+    const basePath = repoPath ? path.resolve(repoPath) : process.cwd();
+    const resolvedPath = path.isAbsolute(trajectoryRowFile)
+      ? trajectoryRowFile
+      : path.join(basePath, trajectoryRowFile);
+    return JSON.parse(await readFile(resolvedPath, "utf8"));
+  }
+  if (required) {
+    throw new Error("A debugging_trajectory.v1 row is required.");
+  }
+  return undefined;
 }
 
 const sharedCommandsInternal: SharedCommandSpec[] = [
@@ -649,6 +740,32 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
     },
   },
   {
+    cliCommand: "record-trajectory",
+    mcpTool: "record_trajectory",
+    description: "Record one validated debugging_trajectory.v1 row as a dataset candidate event without note or skill promotion.",
+    args: [repoPathArg, requiredTrajectoryRowFileArg, requiredTrajectoryRowArg],
+    async run(input) {
+      return recordTrajectory({
+        repoPath: maybeString(input.repoPath),
+        trajectoryRow: await loadTrajectoryRowInput(input, true),
+      });
+    },
+  },
+  {
+    cliCommand: "export-trajectories",
+    mcpTool: "export_trajectories",
+    description: "Export sellable debugging_trajectory.v1 rows from recorded events into deterministic JSONL.",
+    args: [repoPathArg, trajectoryOutputPathArg, blockedReportPathArg, splitArg],
+    async run(input) {
+      return exportTrajectories({
+        repoPath: maybeString(input.repoPath),
+        outputPath: maybeString(input.outputPath),
+        blockedReportPath: maybeString(input.blockedReportPath),
+        split: maybeString(input.split) as "train" | "validation" | "test" | "eval" | undefined,
+      });
+    },
+  },
+  {
     cliCommand: "record",
     mcpTool: "record_turn_result",
     description: "Record a grounded loop event before promoting it into wiki pages or skills.",
@@ -672,6 +789,8 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
       eventClassArg,
       adjudicationDecisionArg,
       adjudicationSkillIdArg,
+      trajectoryRowFileArg,
+      trajectoryRowArg,
     ],
     async run(input) {
       return recordTurnResult({
@@ -694,6 +813,7 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
         eventClass: maybeString(input.eventClass) as "trace" | "candidate" | undefined,
         adjudicationDecision: maybeString(input.adjudicationDecision),
         adjudicationSkillId: maybeString(input.adjudicationSkillId),
+        trajectoryRow: await loadTrajectoryRowInput(input, false),
       });
     },
   },

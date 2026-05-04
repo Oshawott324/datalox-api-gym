@@ -1,12 +1,14 @@
 {
-  "name": "datalox-pack",
+  "name": "datalox-trajectory-mcp",
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "Portable Datalox pack with repo-local skills and notes for agent loops.",
+  "description": "Trajectory-focused Datalox MCP for verified debugging trajectory data and eval export.",
   "bin": {
     "datalox": "./bin/datalox.js",
     "datalox-mcp": "./bin/datalox-mcp.js",
+    "datalox-trajectory-mcp": "./bin/datalox-mcp.js",
+    "datalox-pack-mcp": "./bin/datalox-pack-mcp.js",
     "datalox-claude": "./bin/datalox-claude.js",
     "datalox-codex": "./bin/datalox-codex.js",
     "datalox-wrap": "./bin/datalox-wrap.js"
@@ -23,7 +25,8 @@
     "demo:one-correction:replay": "node scripts/demo-one-correction-replay.mjs",
     "build": "tsc",
     "datalox": "node dist/src/cli/main.js",
-    "mcp:stdio": "node dist/src/mcp/server.js",
+    "mcp:stdio": "node dist/src/mcp/trajectoryServer.js",
+    "mcp:full": "node dist/src/mcp/server.js",
     "prepare": "tsc",
     "check": "tsc --noEmit",
     "pretest": "npm run build",

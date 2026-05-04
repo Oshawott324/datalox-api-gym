@@ -2,12 +2,20 @@
 
 This pack is for one simple outcome:
 
-your agent gets better after one correction, and you can see what it learned.
+Datalox records structured agent debugging work that can become verified B2B trajectory data.
 
-The main structure is:
+Primary product loop:
+
+`agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+
+This repo should not keep legacy note/skill promotion as a second product loop. Existing skills and notes are legacy or internal agent-guidance surfaces until the trajectory pipeline replaces or isolates them.
+
+Legacy/internal agent-guidance surfaces are:
 
 - `skill` first
 - linked `note` second
+
+The dataset row contract is [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
 
 ## Fastest Path
 
@@ -17,7 +25,8 @@ The main structure is:
    - detect the relevant `skill`
    - read `skills/<name>/SKILL.md`
    - follow the linked notes in `metadata.datalox.note_paths`
-4. Watch these files:
+4. For trajectory export or data-sale work, read `docs/trajectory-dataset-schema.md` before changing fields or wording.
+5. Watch these files:
    - `agent-wiki/index.md`
    - `agent-wiki/log.md`
    - `agent-wiki/lint.md`
@@ -26,8 +35,8 @@ The main structure is:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git
-cd datalox-pack
+git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git
+cd datalox-trajectory-mcp
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
@@ -37,7 +46,7 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 
 If this is a fresh session or a different agent entering the same repo, the canonical repo-local handoff is:
 
-`Use this repo's Datalox pack. Read AGENTS.md and DATALOX.md before acting.`
+`Use this repo's Datalox Trajectory MCP. Read AGENTS.md and DATALOX.md before acting.`
 
 On supported installed host paths such as enforced Codex, that handoff should already be automatic. If you want to confirm the current repo state, run:
 
@@ -56,15 +65,16 @@ On supported installed host paths such as enforced Codex, that handoff should al
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md` when it exists
-4. `DATALOX.md`
-5. `agent-wiki/hot.md` if it exists
-6. the selected `skills/<name>/SKILL.md`
-7. the linked notes for that skill
+4. `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, export, or data sale
+5. `DATALOX.md`
+6. `agent-wiki/hot.md` if it exists
+7. the selected `skills/<name>/SKILL.md`
+8. the linked notes for that skill
 
 ## One-Click Options
 
 - Full setup from the target repo:
-  `TARGET_REPO="$(pwd)" && git clone https://github.com/Complexity-LLC/datalox-pack.git && cd datalox-pack && bash bin/setup-multi-agent.sh claude && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
+  `TARGET_REPO="$(pwd)" && git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git && cd datalox-trajectory-mcp && bash bin/setup-multi-agent.sh claude && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
 - Adopt a target repo from an existing source-pack clone:
   `bash bin/adopt-host-repo.sh /path/to/host-repo`
 - Pull from GitHub and adopt:

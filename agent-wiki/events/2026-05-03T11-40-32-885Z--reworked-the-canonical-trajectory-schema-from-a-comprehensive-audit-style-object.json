@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "eventKind": "documentation_update",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "workflow": "repo_engineering",
+  "task": "Simplify the trajectory dataset schema so agents can realistically emit training-data rows without excessive burden.",
+  "step": "simplify trajectory dataset schema",
+  "summary": "Reworked the canonical trajectory schema from a comprehensive audit-style object into a lean training/eval row with required task, context, trajectory, final fix, outcome, and export gate fields.",
+  "observations": [
+    "docs/trajectory-dataset-schema.md now defines a small DebuggingTrajectoryV1 row whose required fields match the training unit: problem, context, trajectory, final fix, verification, and outcome.",
+    "Detailed consent, license, provenance, reproduction setup, knowledge feedback, and pattern taxonomy fields were moved out of the required row into source events, curation systems, or optional curation metadata.",
+    "Product docs and agent instruction surfaces now describe Datalox Trajectory Data as lean, outcome-labeled rows rather than compliance-heavy verified objects.",
+    "TODO.md validation tasks now focus on required training fields and the small export gate instead of forcing consent/data-rights and reproducibility fields into every row."
+  ],
+  "changedFiles": [
+    "docs/trajectory-dataset-schema.md",
+    "docs/product-definition.md",
+    "TODO.md",
+    "DATALOX.md",
+    "README.md",
+    "docs/agent-configuration.md",
+    "docs/project-overview.md",
+    "docs/automatic-enforcement-plan.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "WIKI.md",
+    ".github/copilot-instructions.md",
+    ".cursor/rules/datalox-pack.mdc",
+    ".windsurf/rules/datalox-pack.md"
+  ],
+  "transcript": null,
+  "title": "Reworked the canonical trajectory schema from a comprehensive audit-style object into a lean training/eval row with req…",
+  "signal": "docs/trajectory-dataset-schema.md now defines a small DebuggingTrajectoryV1 row whose required fields match the training unit: problem, context, trajectory, final fix, verification, and outcome.",
+  "interpretation": null,
+  "recommendedAction": null,
+  "outcome": "Updated schema and aligned docs. Verified with npm run build, JSON example parsing, and Datalox lint. Lint returned ok with existing warning-level wiki-reference issues.",
+  "tags": [
+    "docs",
+    "schema",
+    "trajectory-dataset",
+    "b2b",
+    "training-data",
+    "repo_engineering"
+  ],
+  "fingerprint": null,
+  "stabilityKey": "repo_engineering::simplify-the-trajectory-dataset-schema-so-agents-can-realistically-emit-training",
+  "adjudicationDecision": null,
+  "adjudicationSkillId": null,
+  "candidateSkills": [
+    {
+      "skillId": "repo-engineering.use-datalox-through-host-cli",
+      "displayName": "Use Datalox Through Host CLI",
+      "workflow": "repo_engineering",
+      "supportingNotes": [
+        {
+          "path": "agent-wiki/notes/use-datalox-through-host-cli.md",
+          "title": "Use Datalox Through Host CLI"
+        }
+      ],
+      "whyMatched": [
+        "workflow_match",
+        "primary_term_overlap"
+      ]
+    }
+  ],
+  "explicitSkillId": null,
+  "matchedSkillId": null,
+  "matchedNotePaths": [],
+  "id": "2026-05-03T11-40-32-885Z--reworked-the-canonical-trajectory-schema-from-a-comprehensive-audit-style-object",
+  "timestamp": "2026-05-03T11:40:32.885Z"
+}

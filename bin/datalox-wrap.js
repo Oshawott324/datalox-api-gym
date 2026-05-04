@@ -25,7 +25,7 @@ function resolveRuntimeRoot(root) {
   const candidates = [
     root,
     readInstallPackRoot(root),
-    path.join(os.homedir(), ".datalox", "cache", "datalox-pack"),
+    path.join(os.homedir(), ".datalox", "cache", "datalox-trajectory-mcp"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
@@ -35,7 +35,7 @@ function resolveRuntimeRoot(root) {
     }
   }
 
-  throw new Error("Unable to resolve Datalox runtime root for datalox-wrap.js");
+  throw new Error("Unable to resolve Datalox Trajectory MCP runtime root for datalox-wrap.js");
 }
 
 const runtimeRoot = resolveRuntimeRoot(repoRoot);

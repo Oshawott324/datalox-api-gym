@@ -1,119 +1,176 @@
 # Product Definition
 
-This is the canonical definition of what `datalox-pack` is.
+This is the canonical definition of what this repo is building.
 
-If other docs drift, this document wins.
+If other docs drift, this document wins. For the exported dataset row shape,
+[trajectory-dataset-schema.md](./trajectory-dataset-schema.md) wins.
 
 ## One-Sentence Definition
 
-`datalox-pack` is a knowledge system for agents that helps them build and use reusable skills backed by grounded notes when the environment itself does not provide enough feedback.
+Datalox Trajectory Data is a B2B dataset and eval product that uses Datalox MCP to turn agent debugging work into lean, outcome-labeled training rows.
+
+## Product Focus
+
+The repo should optimize for the B2B trajectory data and eval product.
+
+The repo product pipeline is:
+
+```text
+agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus
+```
+
+Do not preserve legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until they are migrated or isolated behind the trajectory pipeline.
+
+## Business Goal
+
+The commercial goal is to sell high-signal debugging trajectory datasets and eval corpora to AI companies.
+
+The operating model is:
+
+1. Users run an agent with Datalox MCP instrumentation enabled.
+2. Datalox MCP records structured events from debugging work.
+3. A small export gate and outcome label are applied.
+4. Valid episodes become `debugging_trajectory.v1` rows.
+5. Curated rows are packaged as datasets or eval corpora for coding-agent companies.
+
+The desktop or host agent is the source of agent runs. The B2B trajectory dataset is the product this repo should describe and implement first.
 
 ## Why This Exists
 
-Coding agents already get dense machine feedback from:
+AI companies need more than final answers or raw chat logs. For coding agents and debugging agents, the valuable unit is:
 
-- compiler errors
-- tests
-- linters
-- runtime failures
+```text
+problem -> context -> trajectory -> final fix -> verification -> outcome
+```
 
-Many other domains do not have an equivalent loop.
+That unit is useful for:
 
-In those domains, the agent often cannot tell:
+- coding-agent evals
+- debugging-agent regression suites
+- post-training data
+- tool-use analysis
+- failure-mode analysis
 
-- what went wrong
-- which correction matters
-- which pattern should be reused next time
-
-Datalox exists to help create that missing feedback loop.
+Datalox exists to capture that unit with enough structure and evidence that it can be useful to a B2B buyer without forcing agents to fill an audit-heavy schema during normal work.
 
 ## What We Are Building
 
-The product has two tightly connected parts:
+This repo builds one product pipeline with supporting infrastructure:
 
-1. A portable knowledge base for agents.
-2. The tooling that captures, promotes, retrieves, and applies that knowledge.
+1. **Datalox MCP**
+   Agent instrumentation, event capture, host adapters, outcome labeling, verification status, and export control.
+2. **Datalox Trajectory Data**
+   The B2B dataset/eval product: lean, outcome-labeled `debugging_trajectory.v1` records and curated corpora.
 
-The knowledge base is not a flat pile of memories. Its main durable forms are:
+Legacy repo-local skill and note surfaces may remain while the pack is being migrated, but they are not the product architecture for this repo.
 
-- `skill`
-  A reusable operational entrypoint or workflow the agent can invoke again.
-- `note`
-  A grounded local pattern, exception, rule, or evidence document that supports a skill or stands on its own until a reusable workflow emerges.
+The commercial export structure is:
 
-The normal structure is:
+- one lean trajectory row per meaningful debugging episode
+- schema defined in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
+- records include the problem, context, agent trajectory, final fix, outcome label, verification state, and a small export gate
 
-- agents detect the relevant `skill` first
-- that `skill` points to one or more supporting `notes`
-- the agent reads the linked notes before acting
+The agent capture structure is:
 
-Captures grounded in `trace`, `web`, or `pdf` sources feed that system. The tooling does the operational work around it:
+- agents or host adapters produce structured events
+- events preserve enough context, action, evidence, and verification material for export
+- valid events become trajectory rows after the row is labeled and export-blocking issues are handled
 
-- observe traces, artifacts, and corrections
-- record grounded evidence
-- promote repeated local patterns into `note`
-- promote repeated reusable workflows into `skill`
-- retrieve the right skill and linked notes at the right loop boundary
-- keep setup simple enough that the user's agent can do it
+The first-class capture surface is Datalox MCP:
+
+- `record_trajectory` records one explicit `debugging_trajectory.v1` row as `payload.trajectoryRow`
+- `export_trajectories` exports sellable row candidates from recorded events into JSONL
+- `record_turn_result` may carry an explicit trajectory row candidate, but it must not infer one from prose fields
+
+## Data Capture Rule
+
+Datalox should capture data only when it can preserve trust.
+
+Every exportable trajectory record must include:
+
+- explicit schema version
+- task prompt or problem statement
+- minimal context needed to understand the fix
+- concise agent-visible trajectory steps
+- final fix summary
+- outcome label
+- verification status
+- small export gate
+
+Raw chat logs are not the product. A record is useful only after it has been structured, verified, and labeled.
 
 ## Source Rules
 
-The knowledge system has two acquisition paths and they should stay distinct:
+The event capture and dataset export should stay direct:
 
-- `pdf` / `web` / other `source` inputs can create `evidence notes`
-- `trace` inputs can create `operational notes`
-- only repeated operational evidence should create or patch a `skill`
+- `trace` inputs record what happened during an agent run
+- `web` and `pdf` inputs provide source evidence
+- verified debugging episodes can become trajectory dataset rows
 
-A `skill` can link both kinds of notes:
+An exported trajectory can link:
 
-- operational notes for action
-- source notes for grounding
+- source event paths
+- changed files or patches
+- matched internal guidance ids when available
+- verification artifacts
 
 ## Product Boundary
 
-- `pack` = portable protocol and durable knowledge inside the repo
-- `adapter` = host-specific enforcement and automation
-- `MCP` = shared control surface, not the enforcement mechanism itself
+- `Datalox Trajectory Data` = primary B2B dataset/eval product.
+- `Datalox MCP` = instrumentation, capture, labeling, verification status, and export-control surface.
+- `Datalox Desktop` or a desktop agent = a capture client, not a separate product loop for this repo.
+- `datalox-trajectory-mcp` = repo-local implementation package, protocol, CLI, event capture, export, and remaining legacy guidance assets.
+- `adapter` = host-specific enforcement and automation.
 
-## How Knowledge Should Emerge
+MCP availability alone is not enforcement. Enforced host wrappers still matter because they inject guidance before the child run and can record after it.
+
+## How Knowledge And Data Should Emerge
 
 Datalox should not be a raw log dump and should not be generic vector memory.
 
-The intended progression is:
+The export progression is primary:
 
-- `trace` = what happened
-- `candidate` = a grounded reusable pattern worth watching
-- `note` = repeated grounded local knowledge
-- `skill` = repeated reusable workflow that can point to one or more notes
+```text
+agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus
+```
+
+Legacy note/skill promotion should be treated as internal behavior in this repo. New product work should route through structured events and trajectory rows.
 
 The system should prefer:
 
 - provenance-aware capture
-- high-quality promotion
-- agent-readable outputs
+- explicit export blocking when data cannot be sold
+- outcome-labeled rows
+- exportable structured rows
+- simple agent-readable capture outputs
 - low-human-setup operation
 
 ## What We Are Not Building
 
 We are not building:
 
-- a coding-only compiler-feedback product
 - a generic chat memory blob
+- a raw desktop surveillance stream
 - a hidden server-only memory layer that agents cannot inspect
 - a human-first wiki with agent support added later
+- a consumer data marketplace sold directly to end users
+- an unlabeled collection of traces with no outcome or export gate
+- a parallel local skill/note product loop inside this trajectory export repo
 
 ## Stable Product Sentence
 
 Use this sentence when describing the project:
 
-> Datalox is a knowledge system for agents that turns traces, artifacts, and corrections into reusable skills backed by grounded notes when the environment itself does not provide enough feedback.
+> Datalox Trajectory Data provides lean, outcome-labeled debugging trajectories for coding-agent training and evaluation, captured through Datalox MCP.
 
 ## Repo Rule
 
 When repo docs talk about Datalox, they should stay consistent with this definition:
 
-- skills first, linked notes second
-- knowledge base plus tooling, not a flat memory blob
-- tooling around capture/promotion/retrieval after the skill-note structure
-- missing feedback loops as the reason the product exists
+- B2B trajectory data/evals are the primary product focus
+- Datalox MCP is the instrumentation, capture, labeling, verification, and export-control layer
+- `datalox-trajectory-mcp` is the repo-local implementation package
+- legacy note/skill promotion is not a product loop for this repo
+- raw traces are not the product
+- exported dataset rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
 - agent-first operation and setup

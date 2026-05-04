@@ -2,12 +2,21 @@
 
 The agent-facing contract is intentionally small.
 
-## Main Model
+Product boundary:
+
+- Datalox MCP is the product-facing instrumentation and control layer.
+- `datalox-trajectory-mcp` is the repo-local implementation package.
+- B2B trajectory data/evals are the primary product focus.
+- Do not keep legacy note/skill promotion as a second product loop in this repo.
+- Existing skills/notes are legacy or internal agent-guidance surfaces until migrated.
+- Lean, outcome-labeled trajectory export creates the dataset/eval asset.
+
+## Legacy/Internal Guidance Model
 
 - `skill` = the primary reusable workflow entrypoint
 - `note` = grounded supporting knowledge that a skill can point to
 
-Normal agent behavior should be:
+Current legacy guidance behavior may still be:
 
 1. detect the relevant skill
 2. read `skills/<name>/SKILL.md`
@@ -34,17 +43,20 @@ agent-wiki/
 
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
-3. `agent-wiki/hot.md`
-4. selected `skills/<name>/SKILL.md`
-5. linked `metadata.datalox.note_paths`
+3. `docs/product-definition.md`
+4. `docs/trajectory-dataset-schema.md` when touching trajectory recording, export, or data sale
+5. `agent-wiki/hot.md`
+6. selected `skills/<name>/SKILL.md`
+7. linked `metadata.datalox.note_paths`
 
 ## Write Rule
 
-New automatic writes should go to:
+New product writes should go to:
 
-- `skills/`
-- `agent-wiki/notes/`
 - `agent-wiki/events/`
+- trajectory JSONL export artifacts that follow `debugging_trajectory.v1`
+
+Legacy skill/note writes may still happen for current host guidance, but new product work should not depend on them.
 
 Legacy supporting folders may still be readable during migration, but they are no longer the primary surface.
 
@@ -56,10 +68,30 @@ Concrete source kinds only:
 - `web`
 - `pdf`
 
-## Durable Outputs
+## Product Export Target
 
-- `skill`
-- `note`
+- `debugging_trajectory.v1`
+
+Legacy `skill` and `note` outputs may still exist for current host guidance, but new product work should target trajectory rows. Trajectory dataset rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md), not introduce another repo-local knowledge page type.
+
+## Trajectory Export
+
+The exported debugging trajectory row is:
+
+```text
+problem -> context -> trajectory -> final fix -> verification -> outcome
+```
+
+Before treating an event as exportable data, ensure the row has:
+
+- explicit schema version
+- task prompt or problem statement
+- minimal context
+- concise trajectory steps
+- final fix summary
+- verification status
+- outcome label
+- small export gate
 
 ## Capture
 
@@ -84,8 +116,8 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git
-cd datalox-pack
+git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git
+cd datalox-trajectory-mcp
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json

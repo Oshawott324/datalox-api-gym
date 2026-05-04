@@ -1,20 +1,30 @@
-# datalox-pack
+# datalox-trajectory-mcp
 
-`datalox-pack` is a repo-local knowledge and skill layer for agents.
+`datalox-trajectory-mcp` is the trajectory-focused repo-local implementation package for Datalox MCP.
 
-The main model is:
+Datalox Trajectory Data is the primary product focus: lean, outcome-labeled debugging trajectories for coding-agent training and evaluation, captured through Datalox MCP.
+
+Primary product loop:
+
+`agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+
+This repo should not carry a second product loop around legacy note/skill promotion. Existing skills and notes are legacy or internal agent-guidance surfaces until migrated or isolated behind the trajectory pipeline.
+
+Legacy/internal agent-guidance surfaces are:
 
 - `skill` = reusable workflow entrypoint
 - `note` = grounded supporting knowledge a skill can point to
 
-It keeps the model small:
+Keep the capture taxonomy small:
 
 - source kinds: `trace`, `web`, `pdf`
-- durable outputs: `note`, `skill`
+- product export target: `debugging_trajectory.v1`
 
-The loop is:
+The legacy pack loop is:
 
 `detect -> use -> record -> promote -> lint`
+
+The exported dataset schema is canonical in [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). Product language should follow [docs/product-definition.md](docs/product-definition.md).
 
 ## What It Writes
 
@@ -33,34 +43,57 @@ agent-wiki/
 
 Use:
 
-- `skills/` for reusable workflows
-- `agent-wiki/notes/` for reusable local knowledge that already includes rule, evidence, and examples
+- `agent-wiki/events/` for structured evidence that can feed trajectory export
+- `skills/` and `agent-wiki/notes/` for legacy or internal agent guidance while migration is in progress
+
+Raw traces are not the product. A sellable dataset row must be a lean training example with a labeled outcome, verification status, and small export gate according to [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
 
 ## Install
 
-From the repo you want Datalox to manage, paste this into the agent chatbox and send it:
+### Agent Install
+
+From the repo you want Datalox to manage, paste this into the agent chatbox and send it. The agent should run it from the target repo root.
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git
-cd datalox-pack
-bash bin/setup-multi-agent.sh claude
+git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git
+cd datalox-trajectory-mcp
+bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
 This does two separate things:
 
-- `datalox-pack` is the source clone. It owns source-only scripts such as `bin/adopt-host-repo.sh`.
+- `datalox-trajectory-mcp` is the source clone. It owns source-only scripts such as `bin/adopt-host-repo.sh`.
 - `$TARGET_REPO` is the user's current project. Adoption writes the Datalox instruction surfaces, core skills, notes, and `.datalox/install.json` there.
 
-For Codex instead of Claude, use:
+For Claude instead of Codex, run:
 
 ```bash
+bash bin/setup-multi-agent.sh claude
+```
+
+If the source clone already exists, use it directly:
+
+```bash
+TARGET_REPO="$(pwd)"
+PACK_REPO="/path/to/datalox-trajectory-mcp"
+cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
+bash bin/adopt-host-repo.sh "$TARGET_REPO"
+node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
 If the host repo already has `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md`, adoption preserves that file and injects a small Datalox adapter instead of skipping the Datalox entrypoint entirely.
+
+After adoption, the target repo has a local MCP entrypoint:
+
+```bash
+node bin/datalox-mcp.js
+```
+
+Use `datalox-mcp` only when the package has also been installed or linked onto `PATH`.
 
 Fresh adopted repos now receive only the core bootstrap bundle by default:
 
@@ -76,7 +109,7 @@ They do not receive unrelated example or domain seed knowledge such as:
 - `agent-wiki/notes/pdf/*`
 - `agent-wiki/notes/web/*`
 
-Or from GitHub:
+Direct adoption from GitHub is also available:
 
 ```bash
 bash bin/adopt-from-github.sh /path/to/your-project
@@ -101,7 +134,7 @@ node dist/src/cli/main.js status --repo . --json
 For a fresh session or a different agent entering the same repo, the canonical repo-local instruction is:
 
 ```text
-Use this repo's Datalox pack. Read AGENTS.md and DATALOX.md before acting.
+Use this repo's Datalox Trajectory MCP. Read AGENTS.md and DATALOX.md before acting.
 ```
 
 On supported installed host paths such as enforced Codex, that handoff should already be automatic. If the host only sees repo instructions or MCP tools, use the instruction above explicitly and then verify the current state with:
@@ -163,24 +196,33 @@ export DATALOX_DEFAULT_POST_RUN_MODE=off
 
 ## MCP
 
-Primary MCP tools:
+The install-facing MCP surface is intentionally small:
 
-- `resolve_loop`
-- `record_turn_result`
-  Records a grounded `trace` by default.
-- `promote_gap`
-  Records a promotable `candidate` and runs the note/skill promotion ladder.
-- `lint_pack`
-- `capture_web_artifact`
-- `capture_pdf_artifact`
-- `publish_web_capture`
-- `adopt_pack`
+- `record_trajectory`
+  Records one validated `debugging_trajectory.v1` row as a dataset candidate event.
+- `export_trajectories`
+  Exports sellable row candidates from recorded events into deterministic JSONL.
 
-Start the server with:
+Start the trajectory MCP server with:
 
 ```bash
+datalox-mcp
+```
+
+For local source-tree testing, use:
+
+```bash
+node dist/src/mcp/trajectoryServer.js
+```
+
+The legacy full pack MCP remains available only when explicitly requested:
+
+```bash
+datalox-pack-mcp
 node dist/src/mcp/server.js
 ```
+
+Use the legacy full server for pack maintenance, adoption, capture, lint, and note/skill promotion tools. Use the trajectory server for dataset capture/export.
 
 ## Promotion Rules
 
@@ -253,13 +295,19 @@ This uploads:
 Keep the pack minimal:
 
 - `trace`, `web`, and `pdf` are the only concrete source kinds
-- `note` and `skill` are the only durable generated outputs
+- `debugging_trajectory.v1` rows are the product export target
+- legacy `note` and `skill` outputs should not drive new product features
+- verified trajectory rows are export artifacts, not repo-local knowledge page types
 - fresh adopted repos should start from the core bootstrap bundle, not the full seed corpus
 - read legacy supporting folders when they already exist, but do not generate new knowledge into them
+- keep the training row small; store detailed consent, license, redaction, and provenance evidence in source events or curation systems
 
 ## Docs
 
 - [DATALOX.md](DATALOX.md)
+- [docs/product-definition.md](docs/product-definition.md)
+- [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md)
+- [docs/task-orchestration.md](docs/task-orchestration.md)
 - [docs/agent-configuration.md](docs/agent-configuration.md)
 - [docs/automatic-enforcement-plan.md](docs/automatic-enforcement-plan.md)
 - [docs/project-overview.md](docs/project-overview.md)

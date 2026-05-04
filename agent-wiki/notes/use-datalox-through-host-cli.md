@@ -8,8 +8,8 @@ related:
 sources:
   - agent-wiki/sources/portable-pack-design-notes.md
 usage:
-  read_count: 13
-  last_read_at: 2026-05-01T10:58:28.224Z
+  read_count: 16
+  last_read_at: 2026-05-03T14:41:40.680Z
   apply_count: 0
   last_applied_at: 
   evidence_count: 0
