@@ -32,7 +32,13 @@ MCP availability is not enforcement. The enforceable path should stay a thin wra
 
 ## Recommended Action
 
-If MCP is available in the active session, call `resolve_loop` before acting and `record_turn_result` after meaningful grounded outcomes. Prefer `datalox codex` for enforceable Codex `exec` flows and `datalox claude` for enforceable Claude prompt runs. Otherwise use `datalox wrap command` with `__DATALOX_PROMPT__` or the `DATALOX_PROMPT` environment variable.
+If MCP is available in the active session, call `resolve_loop` before acting. For buyer-facing trajectory dataset capture after coding/debugging work, prefer MCP tool `record_trajectory` with a complete `debugging_trajectory.v1` row.
+
+If MCP is not available, write the row JSON and run `datalox record-trajectory --repo <repo> --trajectory-row <row.json> --json`. The row must stand alone: `context.relevant_files[].before` and `after` must contain exact minimal code snippets from the changed source, not prose summaries or repository-path pointers. Put explanation in notes, trajectory messages, or final explanation fields.
+
+Use `record_turn_result` or `datalox record` only for legacy/internal guidance maintenance when no explicit trajectory row/session event is being captured. If `record_trajectory` or `record-trajectory` returns `qualityDowngraded: true`, repair the row before treating it as `curation.quality: "use"` or exporting it as training-grade data.
+
+Prefer `datalox codex` for enforceable Codex `exec` flows and `datalox claude` for enforceable Claude prompt runs. Otherwise use `datalox wrap command` with `__DATALOX_PROMPT__` or the `DATALOX_PROMPT` environment variable.
 
 ## Examples
 
@@ -40,6 +46,7 @@ If MCP is available in the active session, call `resolve_loop` before acting and
 - A native Codex chat with MCP tools but no `DATALOX_ACTIVE_WRAPPER=codex` sentinel
 - A Claude Code session with Stop-hook and native skill links installed but no `DATALOX_ACTIVE_WRAPPER=claude` sentinel
 - A generic CLI agent that accepts a prompt argument but exposes no hook surface
+- A CLI-only post-run capture that writes `row.json` and calls `datalox record-trajectory --repo . --trajectory-row row.json --json`
 
 ## Evidence
 

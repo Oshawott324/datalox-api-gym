@@ -15,6 +15,7 @@ import {
   recordTrajectory,
   TrajectoryExportError,
 } from "../src/core/trajectoryExport.js";
+import { repairTrajectory } from "../src/core/trajectoryRepair.js";
 
 const repoRoot = process.cwd();
 const builtCliPath = path.join(repoRoot, "dist", "src", "cli", "main.js");
@@ -100,6 +101,26 @@ function makeProseSnippetUseRow(id: string) {
           path: "src/example.ts",
           before: "The previous code called the value directly.",
           after: "The new code guards the optional value before calling it.",
+        },
+      ],
+    },
+    curation: {
+      quality: "use",
+      tags: ["synthetic"],
+    },
+  };
+}
+
+function makePlaceholderSnippetUseRow(id: string) {
+  return {
+    ...makeRow(id),
+    context: {
+      error: "TypeError: undefined is not a function",
+      relevant_files: [
+        {
+          path: "src/example.ts",
+          before: "function run(value) {\n  value();\n}",
+          after: "function run(value) {\n  ...\n  if (value) value();\n}",
         },
       ],
     },
@@ -547,11 +568,11 @@ describe("trajectory recording and export", () => {
       now: new Date("2026-05-03T10:01:00.000Z"),
     });
 
-    await expect(exportTrajectories({ repoPath: tempDir, outputPath: "out/rows.jsonl" }))
+    await expect(exportTrajectories({ repoPath: tempDir, outputPath: "out/rows.jsonl", quality: "use" }))
       .rejects
       .toBeInstanceOf(TrajectoryExportError);
     try {
-      await exportTrajectories({ repoPath: tempDir, outputPath: "out/rows.jsonl" });
+      await exportTrajectories({ repoPath: tempDir, outputPath: "out/rows.jsonl", quality: "use" });
       throw new Error("Expected duplicate export failure");
     } catch (error) {
       expect(error).toBeInstanceOf(TrajectoryExportError);
@@ -565,6 +586,173 @@ describe("trajectory recording and export", () => {
         ]),
       });
     }
+  });
+
+  it("exports only the final use row from a repair chain", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-export-repair-chain-"));
+    tempDirs.push(tempDir);
+
+    const original = await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: makeProseSnippetUseRow("repair-chain"),
+      now: new Date("2026-05-03T10:00:00.000Z"),
+    });
+    const firstRepair = await repairTrajectory({
+      repoPath: tempDir,
+      eventPath: original.eventPath,
+      trajectoryRow: makePlaceholderSnippetUseRow("repair-chain"),
+      now: new Date("2026-05-03T10:01:00.000Z"),
+    });
+    const secondRepair = await repairTrajectory({
+      repoPath: tempDir,
+      eventPath: firstRepair.repairEventPath,
+      trajectoryRow: makePlaceholderSnippetUseRow("repair-chain"),
+      now: new Date("2026-05-03T10:02:00.000Z"),
+    });
+    const finalRepair = await repairTrajectory({
+      repoPath: tempDir,
+      eventPath: secondRepair.repairEventPath,
+      trajectoryRow: makeRow("repair-chain"),
+      now: new Date("2026-05-03T10:03:00.000Z"),
+    });
+
+    const report = await exportTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use-repaired.jsonl",
+      blockedReportPath: "out/use-repaired-report.json",
+      quality: "use",
+    });
+    const rows = (await readFile(path.join(tempDir, "out", "use-repaired.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    const blockedReport = JSON.parse(await readFile(path.join(tempDir, "out", "use-repaired-report.json"), "utf8"));
+
+    expect(report).toMatchObject({
+      candidateRows: 4,
+      exportedRows: 1,
+      blockedRows: 3,
+      duplicateRows: 0,
+    });
+    expect(rows.map((row) => row.id)).toEqual(["repair-chain"]);
+    expect(rows[0].export.source_event_paths).toContain(finalRepair.repairEventPath);
+    expect(rows[0].metadata.datalox_repaired_from_event_path).toBe(secondRepair.repairEventPath);
+    expect(blockedReport.rejectedRows).toEqual([
+      expect.objectContaining({
+        eventPath: original.eventPath,
+        trajectoryId: "repair-chain",
+        reason: "superseded_by_repair",
+        detail: { repaired_by_event_path: firstRepair.repairEventPath },
+      }),
+      expect.objectContaining({
+        eventPath: firstRepair.repairEventPath,
+        trajectoryId: "repair-chain",
+        reason: "superseded_by_repair",
+        detail: { repaired_by_event_path: secondRepair.repairEventPath },
+      }),
+      expect.objectContaining({
+        eventPath: secondRepair.repairEventPath,
+        trajectoryId: "repair-chain",
+        reason: "superseded_by_repair",
+        detail: { repaired_by_event_path: finalRepair.repairEventPath },
+      }),
+    ]);
+  });
+
+  it("does not let a missing repair pointer mask unrelated duplicate ids", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-export-missing-repair-"));
+    tempDirs.push(tempDir);
+
+    await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: makeRow("missing-repair-duplicate"),
+      now: new Date("2026-05-03T10:00:00.000Z"),
+    });
+    await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: {
+        ...makeRow("missing-repair-duplicate"),
+        metadata: {
+          datalox_repaired_from_event_path: ".datalox/events/trajectory-rows/missing.json",
+        },
+      },
+      now: new Date("2026-05-03T10:01:00.000Z"),
+    });
+
+    try {
+      await exportTrajectories({ repoPath: tempDir, outputPath: "out/rows.jsonl", quality: "use" });
+      throw new Error("Expected duplicate export failure");
+    } catch (error) {
+      expect(error).toBeInstanceOf(TrajectoryExportError);
+      const report = (error as TrajectoryExportError).report;
+      expect(report.duplicateRows).toBe(2);
+      expect(report.rejectedRows).toEqual([
+        expect.objectContaining({
+          trajectoryId: "missing-repair-duplicate",
+          reason: "duplicate_id",
+        }),
+        expect.objectContaining({
+          trajectoryId: "missing-repair-duplicate",
+          reason: "duplicate_id",
+        }),
+      ]);
+    }
+  });
+
+  it("exports a .datalox repair instead of the superseded legacy source row", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-export-legacy-repair-"));
+    tempDirs.push(tempDir);
+    const legacyRelativePath = path.join(
+      LEGACY_EVENTS_RELATIVE_DIR,
+      "2026-05-03T10-00-00-000Z--legacy-repair.json",
+    );
+    await mkdir(path.join(tempDir, LEGACY_EVENTS_RELATIVE_DIR), { recursive: true });
+    await writeFile(
+      path.join(tempDir, legacyRelativePath),
+      JSON.stringify({
+        timestamp: "2026-05-03T10:00:00.000Z",
+        trajectoryRow: makeRow("legacy-repair"),
+      }, null, 2),
+    );
+    const repair = await repairTrajectory({
+      repoPath: tempDir,
+      eventPath: legacyRelativePath,
+      trajectoryRow: makeRow("legacy-repair"),
+      now: new Date("2026-05-03T10:01:00.000Z"),
+    });
+
+    const report = await exportTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use-legacy-repair.jsonl",
+      quality: "use",
+    });
+    const rows = (await readFile(path.join(tempDir, "out", "use-legacy-repair.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+
+    expect(report).toMatchObject({
+      candidateRows: 2,
+      exportedRows: 1,
+      blockedRows: 1,
+      duplicateRows: 0,
+      rejectedRows: [
+        expect.objectContaining({
+          eventPath: legacyRelativePath,
+          trajectoryId: "legacy-repair",
+          reason: "superseded_by_repair",
+          detail: { repaired_by_event_path: repair.repairEventPath },
+        }),
+      ],
+    });
+    expect(repair.repairEventPath).toContain(`${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: "legacy-repair",
+      metadata: {
+        datalox_repaired_from_event_path: legacyRelativePath,
+      },
+    });
   });
 
   it("records rows through the built CLI and exports them", async () => {

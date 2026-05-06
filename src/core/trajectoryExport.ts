@@ -31,6 +31,11 @@ const DEFAULT_EXPORT_RELATIVE_PATH = path.join(
 
 type JsonObject = Record<string, unknown>;
 export type TrajectoryExportQuality = "use" | "needs_review" | "discard";
+type ValidTrajectoryCandidate = {
+  eventPath: string;
+  row: DebuggingTrajectoryV1;
+  index: number;
+};
 
 export interface RecordedTrajectoryEventPayload {
   relativePath: string;
@@ -193,10 +198,7 @@ export async function exportTrajectories(
     : undefined;
   const eventPayloads = await readRecordedTrajectoryEventPayloads(repoRoot);
   const rejectedRows: TrajectoryExportRejectedRow[] = [];
-  const validRows: Array<{
-    eventPath: string;
-    row: DebuggingTrajectoryV1;
-  }> = [];
+  const validRows: ValidTrajectoryCandidate[] = [];
 
   for (const eventPayload of eventPayloads) {
     if (eventPayload.malformedError !== undefined) {
@@ -215,6 +217,7 @@ export async function exportTrajectories(
       validRows.push({
         eventPath: eventPayload.relativePath,
         row: parseDebuggingTrajectoryV1(rowInput),
+        index: validRows.length,
       });
     } catch (error) {
       rejectedRows.push({
@@ -242,18 +245,11 @@ export async function exportTrajectories(
     throw new TrajectoryExportError("Trajectory export failed: invalid trajectory rows found.", baseReport);
   }
 
-  const duplicateRows = findDuplicateRows(validRows);
-  if (duplicateRows.length > 0) {
-    const report = {
-      ...baseReport,
-      duplicateRows: duplicateRows.length,
-      rejectedRows: duplicateRows,
-    };
-    throw new TrajectoryExportError("Trajectory export failed: duplicate trajectory row ids found.", report);
-  }
+  const repairSelection = selectRepairLineageExportCandidates(repoRoot, validRows);
+  rejectedRows.push(...repairSelection.rejectedRows);
 
-  const exportRows: DebuggingTrajectoryV1[] = [];
-  for (const candidate of validRows) {
+  const exportCandidates: ValidTrajectoryCandidate[] = [];
+  for (const candidate of repairSelection.candidates) {
     const blockers = getTrajectorySellableBlockers(candidate.row);
     if (blockers.length > 0) {
       rejectedRows.push({
@@ -292,9 +288,27 @@ export async function exportTrajectories(
         continue;
       }
     }
-    exportRows.push(applySplitOverride(candidate.row, input.split));
+    exportCandidates.push(candidate);
   }
 
+  const duplicateRows = findDuplicateRows(exportCandidates);
+  if (duplicateRows.length > 0) {
+    const report = buildReport({
+      repoRoot,
+      outputAbsolutePath,
+      blockedReportAbsolutePath,
+      scannedEvents: eventPayloads.length,
+      candidateRows: validRows.length,
+      exportedRows: 0,
+      blockedRows: rejectedRows.length + duplicateRows.length,
+      invalidRows: 0,
+      duplicateRows: duplicateRows.length,
+      rejectedRows: [...rejectedRows, ...duplicateRows],
+    });
+    throw new TrajectoryExportError("Trajectory export failed: duplicate trajectory row ids found.", report);
+  }
+
+  const exportRows = exportCandidates.map((candidate) => applySplitOverride(candidate.row, input.split));
   const output = exportRows.map(serializeTrajectoryJsonlRow).join("\n");
   await mkdir(path.dirname(outputAbsolutePath), { recursive: true });
   await writeFile(outputAbsolutePath, output.length > 0 ? `${output}\n` : "", "utf8");
@@ -422,10 +436,67 @@ function isRecordedTrajectoryEventPath(relativePath: string): boolean {
   ));
 }
 
-function findDuplicateRows(
-  validRows: Array<{ eventPath: string; row: DebuggingTrajectoryV1 }>,
-): TrajectoryExportRejectedRow[] {
-  const byId = new Map<string, Array<{ eventPath: string; row: DebuggingTrajectoryV1 }>>();
+function selectRepairLineageExportCandidates(
+  repoRoot: string,
+  validRows: ValidTrajectoryCandidate[],
+): {
+  candidates: ValidTrajectoryCandidate[];
+  rejectedRows: TrajectoryExportRejectedRow[];
+} {
+  const byEventPath = new Map(validRows.map((candidate) => [candidate.eventPath, candidate]));
+  const supersededBy = new Map<string, string>();
+
+  for (const candidate of validRows) {
+    const repairedFrom = getRepairedFromEventPath(repoRoot, candidate.row);
+    if (!repairedFrom) {
+      continue;
+    }
+    const repairedCandidate = byEventPath.get(repairedFrom);
+    if (!repairedCandidate) {
+      continue;
+    }
+    if (repairedCandidate.index >= candidate.index) {
+      continue;
+    }
+    if (repairedCandidate.row.id !== candidate.row.id) {
+      continue;
+    }
+    supersededBy.set(repairedCandidate.eventPath, candidate.eventPath);
+  }
+
+  const rejectedRows = validRows
+    .filter((candidate) => supersededBy.has(candidate.eventPath))
+    .map((candidate) => ({
+      eventPath: candidate.eventPath,
+      trajectoryId: candidate.row.id,
+      reason: "superseded_by_repair",
+      detail: {
+        repaired_by_event_path: supersededBy.get(candidate.eventPath),
+      },
+    }));
+
+  return {
+    candidates: validRows.filter((candidate) => !supersededBy.has(candidate.eventPath)),
+    rejectedRows,
+  };
+}
+
+function getRepairedFromEventPath(repoRoot: string, row: DebuggingTrajectoryV1): string | undefined {
+  const repairedFrom = getObject(row.metadata).datalox_repaired_from_event_path;
+  if (typeof repairedFrom !== "string" || repairedFrom.trim().length === 0) {
+    return undefined;
+  }
+
+  const resolved = path.isAbsolute(repairedFrom) ? repairedFrom : path.join(repoRoot, repairedFrom);
+  const relativePath = path.relative(repoRoot, resolved);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    return undefined;
+  }
+  return normalizeRelativePath(relativePath);
+}
+
+function findDuplicateRows(validRows: ValidTrajectoryCandidate[]): TrajectoryExportRejectedRow[] {
+  const byId = new Map<string, ValidTrajectoryCandidate[]>();
   for (const candidate of validRows) {
     const existing = byId.get(candidate.row.id) ?? [];
     existing.push(candidate);

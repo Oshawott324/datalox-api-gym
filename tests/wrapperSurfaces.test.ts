@@ -1779,6 +1779,10 @@ EOF
     expect(await readFile(path.join(hostDir, "bin", "datalox-claude.js"), "utf8")).toContain("\"claude\"");
     expect(await readFile(path.join(hostDir, "bin", "datalox-codex.js"), "utf8")).toContain("\"codex\"");
     expect(await readFile(path.join(hostDir, "bin", "datalox-wrap.js"), "utf8")).toContain("\"wrap\"");
-    expect(await readFile(path.join(hostDir, "skills", "use-datalox-through-host-cli", "SKILL.md"), "utf8")).toContain("Use Datalox Through Host CLI");
+    const hostCliSkill = await readFile(path.join(hostDir, "skills", "use-datalox-through-host-cli", "SKILL.md"), "utf8");
+    expect(hostCliSkill).toContain("Use Datalox Through Host CLI");
+    expect(hostCliSkill).toContain("datalox record-trajectory");
+    expect(hostCliSkill).toContain("qualityDowngraded");
+    expect(hostCliSkill).not.toContain("Use `record_turn_result` after meaningful grounded outcomes.");
   }, 10000);
 });

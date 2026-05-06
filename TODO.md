@@ -513,6 +513,196 @@ That doc now holds:
   - `npm run check` passes
   - `git diff --check` passes
 
+- [ ] Step 8.8: design and implement `agent_task_trajectory.v1` for mixed-domain task episodes.
+  Intent:
+  - support real agent episodes that mix coding, shell commands, docs, spreadsheets, web/PDF evidence, analysis, and domain workflows in one task
+  - avoid mutating `debugging_trajectory.v1` or adding ad hoc fields such as `context.code_snippets`
+  - keep one generic trajectory envelope with strict domain-specific evidence blocks
+  - make the schema useful for B2B session-derived training/eval data outside pure coding/debugging
+  Schema boundary:
+  - `debugging_trajectory.v1` remains the narrow coding/debugging row and keeps its current strict shape
+  - `agent_task_trajectory.v1` is a new row schema, not a silent variant of `debugging_trajectory.v1`
+  - generic does not mean arbitrary JSON: `evidence_blocks[]` must be a discriminated union with known `type` values and strict per-type fields
+  - `task.domain` can be a string because real work is mixed, but `task.workflows[]` should name the concrete workflow labels when known
+  - every exported row must still be standalone: evidence blocks carry the minimal before/after, command, document, measurement, or source evidence needed to understand the task without opening the original repo/session
+  Proposed envelope:
+  ```ts
+  type AgentTaskTrajectoryV1 = {
+    schema_version: "agent_task_trajectory.v1";
+    id: string;
+    created_at: string;
+    task: {
+      domain: string;
+      prompt: string;
+      workflows?: string[];
+      environment?: string;
+    };
+    context?: {
+      problem?: string;
+      notes?: string[];
+    };
+    evidence_blocks: AgentTaskEvidenceBlockV1[];
+    trajectory: Array<{
+      role: "user" | "agent" | "tool";
+      content: string;
+      tool?: string;
+      command?: string;
+      exit_code?: number;
+      artifacts_changed?: string[];
+    }>;
+    final: {
+      summary: string;
+      changed_artifacts?: string[];
+      explanation?: string;
+    };
+    outcome: {
+      label: "success" | "failure" | "partial";
+      verification: "passed" | "failed" | "not_run" | "reviewed";
+      evidence?: string;
+    };
+    export: {
+      allowed: boolean;
+      redaction: "none_needed" | "applied" | "blocked";
+      source_event_paths?: string[];
+    };
+    curation?: {
+      quality?: "use" | "needs_review" | "discard";
+      tags?: string[];
+      split?: "train" | "validation" | "test" | "eval";
+      notes?: string;
+    };
+    metadata?: Record<string, unknown>;
+  };
+  ```
+  Initial evidence block types:
+  - `code_change`
+    - fields: `type`, `path`, optional `language`, optional `symbol`, `before`, `after`, optional `patch`, optional `reason`
+    - requires either exact `before` plus `after`, or a compact exact `patch`
+  - `command_result`
+    - fields: `type`, `command`, `exit_code`, `result_summary`, optional `evidence`, optional `artifact_paths`
+    - requires a non-empty command, numeric exit code, and concrete result summary
+  - `document_change`
+    - fields: `type`, `artifact`, optional `format`, `before`, `after`, optional `section`, optional `reason`
+    - for docs, slides, contracts, protocols, or markdown where source evidence is textual
+  - `spreadsheet_change`
+    - fields: `type`, `artifact`, optional `sheet`, optional `range`, `before`, `after`, optional `formula`, optional `validation`
+    - for tabular edits, formulas, CSV/XLSX transformations, or financial/model sheets
+  - `data_analysis`
+    - fields: `type`, `artifact`, `question`, `method`, `result`, optional `input_summary`, optional `code_ref`, optional `validation`
+    - for analysis tasks where the evidence is method/result, not a file diff
+  - `lab_workflow`
+    - fields: `type`, `workflow`, optional `assay`, `measurement_context`, `before`, `after`, optional `criteria`, optional `validation`
+    - for biotech/lab episodes such as gating, sample QC, protocol interpretation, or assay review
+  - `source_reference`
+    - fields: `type`, `source_kind: "web" | "pdf" | "local_file"`, `title`, optional `source_path`, optional `url`, `excerpt`, `relevance`
+    - for compact evidence excerpts; source links are provenance, not the only payload
+  Implementation:
+  - create `docs/agent-task-trajectory-schema.md`
+    - state that this is the generic mixed-domain derivative row
+    - explicitly say `debugging_trajectory.v1` is unchanged and still preferred for pure coding/debugging rows
+    - include one mixed coding + command example and one non-code domain example
+    - document that `context.code_snippets` is not part of either schema; code evidence belongs in a `code_change` evidence block or in `debugging_trajectory.v1.context.relevant_files`
+  - create `src/core/agentTaskTrajectorySchema.ts`
+    - define strict zod schemas for `AgentTaskTrajectoryV1` and each evidence block type
+    - export `parseAgentTaskTrajectoryV1`, `isSellableAgentTaskTrajectoryRow`, and `toAgentTaskTrajectoryJsonlLine`
+    - reject unknown top-level fields and unknown evidence block fields
+    - reject unknown evidence block `type` values
+  - create `src/core/agentTaskTrajectoryExport.ts`
+    - record events under `.datalox/events/agent-task-trajectories/`
+    - read only `.datalox/events/agent-task-trajectories/*.json` for the new export path
+    - write one `agent_task_trajectory.v1` JSON object per JSONL line
+    - keep source events immutable and repair by writing linked corrected events later
+  - add CLI and MCP surfaces:
+    - `record-agent-task-trajectory`
+    - `export-agent-task-trajectories`
+    - optional later: `grade-agent-task-trajectories`
+    - do not reuse `record_trajectory` for this schema; keep names explicit so agents do not mix row contracts
+  - add deterministic grade/readiness checks before buyer export:
+    - non-empty `evidence_blocks`
+    - every evidence block has type-specific concrete evidence
+    - code/document/spreadsheet/lab before/after fields are not prose-only placeholders
+    - source_reference excerpts cannot be only a URL/path
+    - command_result evidence names the command, exit code, and observed result
+    - export blockers are honored
+    - token budgets flag oversized patches, excerpts, and metadata
+  - update product docs after the schema exists:
+    - `docs/product-definition.md` should describe `agent_task_trajectory.v1` as the mixed-domain derivative row
+    - `docs/trajectory-dataset-schema.md` should remain the canonical narrow debugging row and link to the generic schema only as a separate contract
+    - `README.md` / `DATALOX.md` should tell agents to pick the narrow debugging schema for pure code-debugging and the generic schema for mixed-domain episodes
+  - add fixtures and tests only; no live model calls, network, or desktop UI
+  Pass criteria:
+  - `debugging_trajectory.v1` validation remains unchanged and still rejects unknown `context.code_snippets`
+  - a valid `agent_task_trajectory.v1` row with both `code_change` and `command_result` evidence validates and records under `.datalox/events/agent-task-trajectories/`
+  - a valid non-code row with `lab_workflow` and `source_reference` evidence validates without requiring code fields
+  - empty `evidence_blocks` is rejected
+  - unknown evidence block `type` is rejected
+  - unknown fields inside an evidence block are rejected
+  - `source_reference` with only a URL/path and no excerpt/relevance fails readiness grading
+  - `code_change` evidence with prose-only before/after fails readiness grading
+  - export excludes `export.allowed: false` and `redaction: "blocked"` rows
+  - export is deterministic for the same `.datalox/events/agent-task-trajectories/` directory
+  - `record_trajectory` and `export-trajectories` behavior for `debugging_trajectory.v1` does not change
+  - no new `agent-wiki/events/` product writes are introduced
+  - focused tests pass:
+    - `npx vitest run tests/agentTaskTrajectorySchema.test.ts tests/agentTaskTrajectoryExport.test.ts tests/trajectorySchema.test.ts tests/trajectoryExport.test.ts`
+  - `npm run check` passes
+  - `git diff --check` passes
+
+- [x] Step 8.9: make trajectory export repair-lineage aware before duplicate-id rejection.
+  Intent:
+  - allow `repair_trajectory` to keep immutable evidence events without breaking buyer-facing export
+  - keep hard duplicate detection for unrelated same-id rows
+  - ensure `export-trajectories --quality use` exports the final accepted repair, not every failed repair attempt
+  - make stale installed-pack mismatches visible when diagnosing trajectory capture/export behavior
+  Problem signal:
+  - one task can legitimately produce multiple events with the same `trajectoryRow.id`:
+    - original row downgraded to `needs_review`
+    - one or more repair attempts also downgraded
+    - final repaired row graded `curation.quality: "use"`
+  - current export checks duplicate ids before quality filtering and training-grade filtering
+  - result: `export-trajectories --quality use` fails on duplicate ids even when only the final repaired row is exportable
+  - observed dogfood case:
+    - `/Users/yifanjin/datalox-ui-v3-china/.datalox/events/trajectory-rows/2026-05-06T13-46-15-112Z--trajectory-traj-skill-schema-driven-trading-no-inference-20260506.json`
+    - `/Users/yifanjin/datalox-ui-v3-china/.datalox/events/trajectory-rows/2026-05-06T13-46-41-076Z--trajectory-traj-skill-schema-driven-trading-no-inference-20260506.json`
+    - `/Users/yifanjin/datalox-ui-v3-china/.datalox/events/trajectory-rows/2026-05-06T13-47-24-263Z--trajectory-traj-skill-schema-driven-trading-no-inference-20260506.json`
+    - `/Users/yifanjin/datalox-ui-v3-china/.datalox/events/trajectory-rows/2026-05-06T13-47-52-647Z--trajectory-traj-skill-schema-driven-trading-no-inference-20260506.json`
+  Root causes:
+  - `repair_trajectory` writes a new immutable event with the same `trajectoryRow.id` and `metadata.datalox_repaired_from_event_path`
+  - `exportTrajectories` calls duplicate detection before applying `--quality use` and before deterministic `gradeTrajectoryRow`
+  - an installed target repo can have stale `datalox-trajectory-mcp` CLI code, making the active capture/export surface unclear
+  Implementation:
+  - update `src/core/trajectoryExport.ts`
+    - keep schema validation before any filtering
+    - build a repair-lineage index from `metadata.datalox_repaired_from_event_path`
+    - treat rows referenced by a later repair event as superseded for export-candidate selection
+    - apply export blockers, requested curation-quality filter, and `--quality use` deterministic grade filter before duplicate-id failure
+    - run duplicate-id failure only against remaining export candidates
+    - keep duplicate-id failure for unrelated same-id rows that are not connected by repair lineage
+    - include rejected superseded rows in the report with a stable reason such as `superseded_by_repair`
+    - keep deterministic ordering by event timestamp/path
+  - update `tests/trajectoryExport.test.ts`
+    - fixture: original `needs_review` row plus repaired `use` row with same id exports only the repaired row under `--quality use`
+    - fixture: original row plus multiple failed repairs plus final `use` row exports only the final row
+    - fixture: two unrelated `use` rows with the same id still fail duplicate detection
+    - fixture: repair lineage pointing to a missing event does not silently mask unrelated duplicates
+    - fixture: export report lists superseded repair-chain rows with source event paths
+  - update CLI/status diagnostics if needed
+    - status should make the active pack root and installed pack commit/source obvious enough for agents to spot stale target installs
+    - README should recommend checking `node datalox-trajectory-mcp/bin/datalox.js status --repo <target> --json` and command availability after install/update
+  Pass criteria:
+  - `export-trajectories --quality use` succeeds for a repair chain where only the final repaired row grades `use`
+  - exported JSONL contains exactly one row for a repaired trajectory id: the latest non-superseded row that passes quality and grade filters
+  - `needs_review` original rows and failed repair attempts do not block buyer-facing `--quality use` export
+  - unrelated same-id `use` rows still fail with `duplicate_id`
+  - reports include stable rejection reasons for `quality_filter`, `training_grade_filter`, and `superseded_by_repair`
+  - legacy `agent-wiki/events` rows remain readable but are not selected over a newer `.datalox/events/trajectory-rows` repair
+  - focused tests pass:
+    - `npx vitest run tests/trajectoryExport.test.ts`
+  - dogfood command succeeds after patch:
+    - `node bin/datalox.js export-trajectories --repo /Users/yifanjin/datalox-ui-v3-china --quality use --output /tmp/ui-v3-china-use.jsonl --json`
+  - `npm run check` passes
+  - `git diff --check` passes
+
 
 ## Refactor `agent-pack.mjs`
 

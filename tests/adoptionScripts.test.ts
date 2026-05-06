@@ -62,9 +62,16 @@ describe("adoption scripts", () => {
     expect(await readFile(path.join(hostDir, "bin/setup-multi-agent.sh"), "utf8")).toContain("Datalox Trajectory MCP multi-agent setup");
     expect(await readFile(path.join(hostDir, ".github/copilot-instructions.md"), "utf8")).toContain("repo-local implementation package for Datalox MCP");
     expect(await readFile(path.join(hostDir, "skills/maintain-datalox-pack/SKILL.md"), "utf8")).toContain("Maintain Datalox Pack");
-    expect(await readFile(path.join(hostDir, "skills/use-datalox-through-host-cli/SKILL.md"), "utf8")).toContain("Use Datalox Through Host CLI");
+    const hostCliSkill = await readFile(path.join(hostDir, "skills/use-datalox-through-host-cli/SKILL.md"), "utf8");
+    expect(hostCliSkill).toContain("Use Datalox Through Host CLI");
+    expect(hostCliSkill).toContain("datalox record-trajectory");
+    expect(hostCliSkill).toContain("context.relevant_files[].before");
+    expect(hostCliSkill).not.toContain("Use `record_turn_result` after meaningful grounded outcomes.");
     expect(await readFile(path.join(hostDir, "agent-wiki/note.schema.md"), "utf8")).toContain("Action");
-    expect(await readFile(path.join(hostDir, "agent-wiki/notes/use-datalox-through-host-cli.md"), "utf8")).toContain("thin wrapper");
+    const hostCliNote = await readFile(path.join(hostDir, "agent-wiki/notes/use-datalox-through-host-cli.md"), "utf8");
+    expect(hostCliNote).toContain("thin wrapper");
+    expect(hostCliNote).toContain("datalox record-trajectory");
+    expect(hostCliNote).toContain("qualityDowngraded");
     expect(await readFile(path.join(hostDir, ".datalox/install.json"), "utf8")).toContain("\"installMode\": \"manual\"");
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills/github")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills/ordercli")]).status).not.toBe(0);
