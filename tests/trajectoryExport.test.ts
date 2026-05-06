@@ -10,6 +10,8 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   exportTrajectories,
+  LEGACY_EVENTS_RELATIVE_DIR,
+  PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR,
   recordTrajectory,
   TrajectoryExportError,
 } from "../src/core/trajectoryExport.js";
@@ -49,14 +51,18 @@ function makeRow(id: string) {
       {
         role: "agent",
         content: "Inspected the failing call site and found an unchecked optional value.",
-        tool: "shell",
-        command: "npm test",
-        exit_code: 1,
       },
       {
         role: "agent",
         content: "Added an explicit guard before invoking the value.",
         files_changed: ["src/example.ts"],
+      },
+      {
+        role: "tool",
+        content: "npm test passed: 3 tests, 0 failed.",
+        tool: "shell",
+        command: "npm test",
+        exit_code: 0,
       },
     ],
     final: {
@@ -68,7 +74,7 @@ function makeRow(id: string) {
       label: "success",
       verification: "passed",
       command: "npm test",
-      evidence: "Tests passed.",
+      evidence: "npm test passed: 3 tests, 0 failed.",
     },
     export: {
       allowed: true,
@@ -80,6 +86,26 @@ function makeRow(id: string) {
     },
     metadata: {
       verified_by: "agent",
+    },
+  };
+}
+
+function makeProseSnippetUseRow(id: string) {
+  return {
+    ...makeRow(id),
+    context: {
+      error: "TypeError: undefined is not a function",
+      relevant_files: [
+        {
+          path: "src/example.ts",
+          before: "The previous code called the value directly.",
+          after: "The new code guards the optional value before calling it.",
+        },
+      ],
+    },
+    curation: {
+      quality: "use",
+      tags: ["synthetic"],
     },
   };
 }
@@ -192,12 +218,55 @@ describe("trajectory recording and export", () => {
       trajectoryId: "record-one",
       sellable: true,
       blockedReasons: [],
+      quality: "use",
+      deterministicPassed: true,
+      qualityDowngraded: false,
+      qualityDowngradeIssueCodes: [],
     });
     expect(event.eventKind).toBe("trajectory_row");
     expect(event.trajectoryRow.schema_version).toBe("debugging_trajectory.v1");
     expect(event.trajectoryRow.export.source_event_paths).toContain(result.eventPath);
+    expect(event.trajectoryRow.metadata.datalox_quality_downgraded_from).toBeUndefined();
+    expect(result.eventPath).toContain(`${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
+    expect(existsSync(path.join(tempDir, "agent-wiki", "events"))).toBe(false);
     expect(existsSync(path.join(tempDir, "agent-wiki", "notes"))).toBe(false);
     expect(existsSync(path.join(tempDir, "skills"))).toBe(false);
+  });
+
+  it("downgrades weak use rows at record time without dropping evidence", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-record-downgrade-"));
+    tempDirs.push(tempDir);
+
+    const result = await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: makeProseSnippetUseRow("record-downgraded"),
+      now: new Date("2026-05-03T10:00:00.000Z"),
+    });
+    const event = JSON.parse(await readFile(path.join(tempDir, result.eventPath), "utf8"));
+
+    expect(result).toMatchObject({
+      trajectoryId: "record-downgraded",
+      sellable: true,
+      quality: "needs_review",
+      deterministicPassed: false,
+      qualityDowngraded: true,
+      qualityDowngradeIssueCodes: expect.arrayContaining([
+        "prose_only_relevant_file",
+        "not_self_contained",
+      ]),
+    });
+    expect(event.trajectoryRow.curation.quality).toBe("needs_review");
+    expect(event.trajectoryRow.metadata).toMatchObject({
+      datalox_quality_downgraded_from: "use",
+      datalox_quality_downgrade_issue_codes: expect.arrayContaining([
+        "prose_only_relevant_file",
+        "not_self_contained",
+      ]),
+      datalox_quality_downgraded_at: "2026-05-03T10:00:00.000Z",
+    });
+    expect(event.trajectoryRow.context.relevant_files[0].before).toBe(
+      "The previous code called the value directly.",
+    );
   });
 
   it("rejects invalid rows before writing event files", async () => {
@@ -212,6 +281,7 @@ describe("trajectory recording and export", () => {
       .rejects
       .toThrow(/final\.fix_summary/);
     expect(existsSync(path.join(tempDir, "agent-wiki", "events"))).toBe(false);
+    expect(existsSync(path.join(tempDir, PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR))).toBe(false);
   });
 
   it("exports only sellable rows as deterministic JSONL and reports blocked rows", async () => {
@@ -271,12 +341,144 @@ describe("trajectory recording and export", () => {
     ]);
   });
 
+  it("filters export rows by curation quality", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-export-quality-"));
+    tempDirs.push(tempDir);
+
+    await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: makeRow("quality-use"),
+      now: new Date("2026-05-03T10:00:00.000Z"),
+    });
+    await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: {
+        ...makeRow("quality-review"),
+        curation: { quality: "needs_review", tags: ["synthetic"] },
+      },
+      now: new Date("2026-05-03T10:01:00.000Z"),
+    });
+
+    const report = await exportTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use-rows.jsonl",
+      quality: "use",
+    });
+    const lines = (await readFile(path.join(tempDir, "out", "use-rows.jsonl"), "utf8"))
+      .trim()
+      .split("\n");
+
+    expect(report).toMatchObject({
+      candidateRows: 2,
+      exportedRows: 1,
+      blockedRows: 1,
+      rejectedRows: [
+        expect.objectContaining({
+          trajectoryId: "quality-review",
+          reason: "quality_filter",
+          detail: {
+            required_quality: "use",
+            row_quality: "needs_review",
+          },
+        }),
+      ],
+    });
+    expect(lines.map((line) => JSON.parse(line).id)).toEqual(["quality-use"]);
+  });
+
+  it("exports only accepted standalone rows in buyer-facing quality-use fixtures", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-export-standalone-"));
+    tempDirs.push(tempDir);
+
+    await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: {
+        ...makeRow("standalone-use"),
+        export: {
+          allowed: true,
+          redaction: "none_needed",
+          source_event_paths: ["agent-wiki/events/source.json"],
+        },
+      },
+      now: new Date("2026-05-03T10:00:00.000Z"),
+    });
+    await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: {
+        ...makeProseSnippetUseRow("external-reference-review"),
+        final: {
+          fix_summary: "Added a guard before invoking the optional value.",
+          changed_files: ["src/example.ts"],
+          explanation: "The row is a repair candidate because snippets are prose.",
+        },
+      },
+      now: new Date("2026-05-03T10:01:00.000Z"),
+    });
+    await mkdir(path.join(tempDir, LEGACY_EVENTS_RELATIVE_DIR), { recursive: true });
+    await writeFile(
+      path.join(tempDir, LEGACY_EVENTS_RELATIVE_DIR, "2026-05-03T10-02-00-000Z--stale-use.json"),
+      JSON.stringify({
+        timestamp: "2026-05-03T10:02:00.000Z",
+        trajectoryRow: {
+          ...makeProseSnippetUseRow("stale-quality-use"),
+          final: {
+            fix_summary: "Added a guard before invoking the optional value.",
+            changed_files: ["src/example.ts"],
+            explanation: "See src/example.ts and source_event_paths for the actual patch.",
+          },
+        },
+      }, null, 2),
+    );
+
+    const report = await exportTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use-standalone.jsonl",
+      quality: "use",
+    });
+    const rows = (await readFile(path.join(tempDir, "out", "use-standalone.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+
+    expect(report).toMatchObject({
+      candidateRows: 3,
+      exportedRows: 1,
+      blockedRows: 2,
+      rejectedRows: [
+        expect.objectContaining({
+          trajectoryId: "external-reference-review",
+          reason: "quality_filter",
+          detail: expect.objectContaining({
+            required_quality: "use",
+            row_quality: "needs_review",
+          }),
+        }),
+        expect.objectContaining({
+          trajectoryId: "stale-quality-use",
+          reason: "training_grade_filter",
+          detail: expect.objectContaining({
+            issue_codes: expect.arrayContaining(["not_self_contained"]),
+          }),
+        }),
+      ],
+    });
+    expect(rows.map((row) => row.id)).toEqual(["standalone-use"]);
+    expect(rows[0].context.relevant_files[0]).toMatchObject({
+      path: "src/example.ts",
+      before: "value();",
+      after: "if (value) value();",
+    });
+    expect(rows[0].export.source_event_paths).toEqual(
+      expect.arrayContaining(["agent-wiki/events/source.json"]),
+    );
+  });
+
   it("fails export on invalid trajectory candidates", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-export-invalid-"));
     tempDirs.push(tempDir);
-    await mkdir(path.join(tempDir, "agent-wiki", "events"), { recursive: true });
+    await mkdir(path.join(tempDir, LEGACY_EVENTS_RELATIVE_DIR), { recursive: true });
     await writeFile(
-      path.join(tempDir, "agent-wiki", "events", "2026-05-03T10-00-00-000Z--bad.json"),
+      path.join(tempDir, LEGACY_EVENTS_RELATIVE_DIR, "2026-05-03T10-00-00-000Z--bad.json"),
       JSON.stringify({
         timestamp: "2026-05-03T10:00:00.000Z",
         trajectoryRow: {
@@ -295,6 +497,39 @@ describe("trajectory recording and export", () => {
           exportedRows: 0,
         },
       });
+  });
+
+  it("exports legacy trajectory rows from agent-wiki/events while new writes use .datalox", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-export-legacy-"));
+    tempDirs.push(tempDir);
+    await mkdir(path.join(tempDir, LEGACY_EVENTS_RELATIVE_DIR), { recursive: true });
+    await writeFile(
+      path.join(tempDir, LEGACY_EVENTS_RELATIVE_DIR, "2026-05-03T09-00-00-000Z--legacy.json"),
+      JSON.stringify({
+        timestamp: "2026-05-03T09:00:00.000Z",
+        trajectoryRow: makeRow("legacy-row"),
+      }, null, 2),
+    );
+    await recordTrajectory({
+      repoPath: tempDir,
+      trajectoryRow: makeRow("new-row"),
+      now: new Date("2026-05-03T10:00:00.000Z"),
+    });
+
+    const report = await exportTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/rows.jsonl",
+    });
+    const lines = (await readFile(path.join(tempDir, "out", "rows.jsonl"), "utf8"))
+      .trim()
+      .split("\n");
+
+    expect(report).toMatchObject({
+      scannedEvents: 2,
+      candidateRows: 2,
+      exportedRows: 2,
+    });
+    expect(lines.map((line) => JSON.parse(line).id)).toEqual(["legacy-row", "new-row"]);
   });
 
   it("fails export on duplicate trajectory ids with source paths", async () => {
@@ -325,8 +560,8 @@ describe("trajectory recording and export", () => {
       expect(report.rejectedRows).toHaveLength(2);
       expect(report.rejectedRows[0].detail).toMatchObject({
         duplicate_event_paths: expect.arrayContaining([
-          "agent-wiki/events/2026-05-03T10-00-00-000Z--trajectory-duplicate-id.json",
-          "agent-wiki/events/2026-05-03T10-01-00-000Z--trajectory-duplicate-id.json",
+          ".datalox/events/trajectory-rows/2026-05-03T10-00-00-000Z--trajectory-duplicate-id.json",
+          ".datalox/events/trajectory-rows/2026-05-03T10-01-00-000Z--trajectory-duplicate-id.json",
         ]),
       });
     }
@@ -350,6 +585,9 @@ describe("trajectory recording and export", () => {
     expect(JSON.parse(recordResult.stdout)).toMatchObject({
       trajectoryId: "cli-row",
       sellable: true,
+      quality: "use",
+      deterministicPassed: true,
+      qualityDowngraded: false,
     });
 
     const exportResult = runBuiltCli(repoRoot, [
@@ -366,7 +604,35 @@ describe("trajectory recording and export", () => {
     expect(JSON.parse(lines[0]).id).toBe("cli-row");
   });
 
-  it("attaches trajectory rows to existing record events through the built CLI", async () => {
+  it("prints downgrade feedback when the built CLI records a weak use row", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-cli-downgrade-"));
+    tempDirs.push(tempDir);
+    const rowPath = path.join(tempDir, "row.json");
+    await writeFile(rowPath, JSON.stringify(makeProseSnippetUseRow("cli-downgrade-row"), null, 2));
+
+    const recordResult = runBuiltCli(repoRoot, [
+      "record-trajectory",
+      "--repo",
+      tempDir,
+      "--trajectory-row",
+      rowPath,
+      "--json",
+    ]);
+
+    expect(recordResult.status).toBe(0);
+    const result = JSON.parse(recordResult.stdout);
+    expect(result).toMatchObject({
+      trajectoryId: "cli-downgrade-row",
+      quality: "needs_review",
+      deterministicPassed: false,
+      qualityDowngraded: true,
+      qualityDowngradeIssueCodes: expect.arrayContaining(["not_self_contained"]),
+    });
+    const event = JSON.parse(await readFile(path.join(tempDir, result.eventPath), "utf8"));
+    expect(event.trajectoryRow.curation.quality).toBe("needs_review");
+  });
+
+  it("records legacy record events and writes explicit trajectory rows to .datalox through the built CLI", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-cli-record-"));
     tempDirs.push(tempDir);
     await writeMinimalDataloxConfig(tempDir);
@@ -385,9 +651,19 @@ describe("trajectory recording and export", () => {
     ]);
 
     expect(recordResult.status).toBe(0);
-    const payload = JSON.parse(recordResult.stdout).event.payload;
-    expect(payload.trajectoryRow.id).toBe("record-cli-row");
-    expect(payload.trajectoryRow.export.source_event_paths).toContain(JSON.parse(recordResult.stdout).event.relativePath);
+    const result = JSON.parse(recordResult.stdout);
+    const payload = result.event.payload;
+    expect(payload.trajectoryRow).toBeUndefined();
+    expect(payload.trajectoryId).toBe("record-cli-row");
+    expect(payload.trajectoryEventPath).toContain(`${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
+    expect(result.trajectoryEvent.relativePath).toBe(payload.trajectoryEventPath);
+    expect(result.trajectoryEvent.payload.trajectoryRow.id).toBe("record-cli-row");
+    expect(result.trajectoryEvent.payload.trajectoryRow.export.source_event_paths).toEqual(
+      expect.arrayContaining([
+        result.event.relativePath,
+        result.trajectoryEvent.relativePath,
+      ]),
+    );
   });
 
   it("rejects invalid trajectory rows in existing record events before writing", async () => {
@@ -431,7 +707,12 @@ describe("trajectory recording and export", () => {
       await client.connect(transport);
       const tools = await client.listTools();
       const toolNames = tools.tools.map((tool) => tool.name);
-      expect(toolNames).toEqual(["record_trajectory", "export_trajectories"]);
+      expect(toolNames).toEqual([
+        "record_trajectory",
+        "export_trajectories",
+        "grade_trajectories",
+        "repair_trajectory",
+      ]);
       expect(toolNames).not.toEqual(
         expect.arrayContaining(["promote_gap", "patch_knowledge", "lint_pack", "capture_web_artifact", "adopt_pack"]),
       );
@@ -448,8 +729,21 @@ describe("trajectory recording and export", () => {
           trajectoryId: id,
           sellable: true,
           blockedReasons: [],
+          quality: "use",
+          deterministicPassed: true,
+          qualityDowngraded: false,
         });
       }
+      const gradeResult = await client.callTool({
+        name: "grade_trajectories",
+        arguments: {
+          repo_path: tempDir,
+        },
+      });
+      expect(extractStructuredResult(gradeResult)).toMatchObject({
+        scannedEvents: 3,
+        candidateRows: 3,
+      });
     } finally {
       await client.close();
     }
@@ -468,6 +762,39 @@ describe("trajectory recording and export", () => {
     expect(lines.map((line) => JSON.parse(line).id)).toEqual(["mcp-row-a", "mcp-row-b", "mcp-row-c"]);
   });
 
+  it("reports downgrade feedback through the MCP record_trajectory tool", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-mcp-downgrade-"));
+    tempDirs.push(tempDir);
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [builtMcpPath],
+      cwd: repoRoot,
+      stderr: "pipe",
+    });
+    const client = new Client({ name: "trajectory-downgrade-test-client", version: "1.0.0" }, { capabilities: {} });
+
+    try {
+      await client.connect(transport);
+      const result = await client.callTool({
+        name: "record_trajectory",
+        arguments: {
+          repo_path: tempDir,
+          trajectory_row: makeProseSnippetUseRow("mcp-downgrade-row"),
+        },
+      });
+
+      expect(extractStructuredResult(result)).toMatchObject({
+        trajectoryId: "mcp-downgrade-row",
+        quality: "needs_review",
+        deterministicPassed: false,
+        qualityDowngraded: true,
+        qualityDowngradeIssueCodes: expect.arrayContaining(["not_self_contained"]),
+      });
+    } finally {
+      await client.close();
+    }
+  });
+
   it("launches the install-facing datalox-mcp bin as the lean trajectory server", async () => {
     const transport = new StdioClientTransport({
       command: process.execPath,
@@ -480,7 +807,12 @@ describe("trajectory recording and export", () => {
     try {
       await client.connect(transport);
       const tools = await client.listTools();
-      expect(tools.tools.map((tool) => tool.name)).toEqual(["record_trajectory", "export_trajectories"]);
+      expect(tools.tools.map((tool) => tool.name)).toEqual([
+        "record_trajectory",
+        "export_trajectories",
+        "grade_trajectories",
+        "repair_trajectory",
+      ]);
     } finally {
       await client.close();
     }

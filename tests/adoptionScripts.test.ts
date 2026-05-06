@@ -106,9 +106,9 @@ describe("adoption scripts", () => {
     expect(install.status).toBe(0);
     expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain(`PACK_ROOT="${repoRoot}"`);
     expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain(`PACK_ROOT="${repoRoot}"`);
-    expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE:=review");
+    expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE:=trajectory");
     expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain("DATALOX_DEFAULT_REVIEW_MODEL:=gpt-5.4-mini");
-    expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE:=review");
+    expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE:=trajectory");
     expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain("DATALOX_DEFAULT_REVIEW_MODEL:=gpt-5.4-mini");
     expect(await readFile(path.join(homeDir, ".claude/hooks/datalox-auto-promote.sh"), "utf8")).toContain("datalox-auto-promote.js");
     expect(await readlink(path.join(homeDir, ".claude/skills/maintain-datalox-pack"))).toBe(path.join(repoRoot, "skills/maintain-datalox-pack"));

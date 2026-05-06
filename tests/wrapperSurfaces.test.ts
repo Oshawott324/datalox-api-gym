@@ -6,6 +6,8 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 
+import { PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR } from "../src/core/trajectoryExport.js";
+
 const repoRoot = process.cwd();
 const builtCliPath = path.join(repoRoot, "dist", "src", "cli", "main.js");
 
@@ -224,17 +226,9 @@ Use when live and dead populations are not cleanly separated during viability ga
     expect(parsed.workflow).toBe("flow_cytometry");
     expect(parsed.prompt).toContain("# Datalox Loop Guidance");
     expect(parsed.prompt).toContain("Need a gate recommendation");
-    expect(result.stderr).toContain("[datalox-wrap] record_only");
-    expect(await readFile(path.join(hostDir, "agent-wiki", "log.md"), "utf8")).toContain("record_event");
+    expect(result.stderr).toContain("[datalox-wrap] trajectory | missing_trajectory_row");
     const eventFiles = await readdir(path.join(hostDir, "agent-wiki", "events"));
-    expect(eventFiles.length).toBe(1);
-    const eventPayload = JSON.parse(
-      await readFile(path.join(hostDir, "agent-wiki", "events", eventFiles[0]), "utf8"),
-    );
-    expect(eventPayload.hostKind).toBe("generic");
-    expect(eventPayload.eventClass).toBe("trace");
-    expect(eventPayload.matchedSkillId).toBeNull();
-    expect(eventPayload.matchedNotePaths).toEqual([]);
+    expect(eventFiles.length).toBe(0);
     const noteFile = await readFile(path.join(hostDir, "agent-wiki", "notes", "viability-gate-review.md"), "utf8");
     expect(noteFile).toContain("usage:");
     expect(noteFile).not.toContain("apply_count: 1");
@@ -242,6 +236,75 @@ Use when live and dead populations are not cleanly separated during viability ga
     expect(readCountMatch).not.toBeNull();
     expect(Number.parseInt(readCountMatch?.[1] ?? "0", 10)).toBeGreaterThanOrEqual(1);
   }, 40000);
+
+  it("records an explicit trajectory row from the default wrapper post-run path", async () => {
+    const hostDir = await adoptHostRepo();
+    const script = [
+      "const fs = require('node:fs');",
+      "const path = require('node:path');",
+      "const repo = process.env.DATALOX_REPO_PATH;",
+      "const rowPath = path.join(repo, '.datalox/trajectory-rows/default-wrapper-row.json');",
+      "fs.mkdirSync(path.dirname(rowPath), { recursive: true });",
+      "fs.writeFileSync(rowPath, JSON.stringify({",
+      "schema_version: 'debugging_trajectory.v1',",
+      "id: 'traj_wrapper_default',",
+      "created_at: '2026-05-04T00:00:00.000Z',",
+      "task: { domain: 'coding_debugging', prompt: 'Fix the wrapper trajectory capture smoke test.', language: 'javascript', environment: 'nodejs' },",
+      "context: { error: 'legacy wrapper recorded a trace event instead of a trajectory row' },",
+      "trajectory: [",
+      "{ role: 'user', content: 'Requested wrapper trajectory capture.' },",
+      "{ role: 'agent', content: 'Wrote an explicit debugging_trajectory.v1 row file.' },",
+      "{ role: 'tool', content: 'Smoke command completed.', command: 'node -e <script>', exit_code: 0 }",
+      "],",
+      "final: { fix_summary: 'Record the explicit trajectory row supplied by the wrapped agent.', changed_files: [] },",
+      "outcome: { label: 'success', verification: 'passed', command: 'node -e <script>', evidence: 'Smoke command completed.' },",
+      "export: { allowed: true, redaction: 'none_needed' },",
+      "curation: { tags: ['wrapper', 'trajectory'] }",
+      "}));",
+      "process.stdout.write('trajectory row ready\\nDATALOX_TRAJECTORY_ROW_FILE: .datalox/trajectory-rows/default-wrapper-row.json');",
+    ].join(" ");
+    const result = spawnSync(
+      "node",
+      [
+        builtCliPath,
+        "wrap",
+        "command",
+        "--repo",
+        hostDir,
+        "--task",
+        "Fix the wrapper trajectory capture smoke test.",
+        "--workflow",
+        "coding_debugging",
+        "--prompt",
+        "Fix the wrapper trajectory capture smoke test.",
+        "--",
+        "node",
+        "-e",
+        script,
+        "__DATALOX_PROMPT__",
+      ],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe("trajectory row ready");
+    expect(result.stderr).toContain("[datalox-wrap] trajectory | trajectory_row");
+    const eventFiles = await readdir(path.join(hostDir, PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR));
+    expect(eventFiles.length).toBe(1);
+    const eventPayload = JSON.parse(
+      await readFile(path.join(hostDir, PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR, eventFiles[0]), "utf8"),
+    );
+    expect(eventPayload.eventKind).toBe("trajectory_row");
+    expect(eventPayload.trajectoryRow.schema_version).toBe("debugging_trajectory.v1");
+    expect(eventPayload.trajectoryRow.id).toBe("traj_wrapper_default");
+    expect(eventPayload.trajectoryRow.curation.quality).toBe("needs_review");
+    expect(eventPayload.trajectoryRow.export.source_event_paths).toContain(
+      `${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/${eventFiles[0]}`,
+    );
+  }, 20000);
 
   it("fails generic wrapped commands that do not expose a Datalox prompt placeholder", async () => {
     const hostDir = await adoptHostRepo();
@@ -275,7 +338,7 @@ Use when live and dead populations are not cleanly separated during viability ga
     expect(await readdir(path.join(hostDir, "agent-wiki", "events"))).toHaveLength(0);
   }, 20000);
 
-  it("records a raw wrapper event even when post-run compilation is turned off and no markers are emitted", async () => {
+  it("records a legacy wrapper event only when the record post-run mode is requested", async () => {
     const hostDir = await adoptHostRepo();
     const result = spawnSync(
       "node",
@@ -292,7 +355,7 @@ Use when live and dead populations are not cleanly separated during viability ga
         "--prompt",
         "Need a gate recommendation",
         "--post-run-mode",
-        "off",
+        "record",
         "--",
         "node",
         "-e",
@@ -417,6 +480,8 @@ EOF
         "repo_engineering",
         "--prompt",
         "Update the pack docs to mention wrappers.",
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--",
@@ -541,6 +606,8 @@ node -e 'process.stdout.write(JSON.stringify({args: process.argv.slice(1), skill
         "Run a generic command while Datalox has a hot backlog.",
         "--prompt",
         "Run a generic command.",
+        "--post-run-mode",
+        "record",
         "--",
         "node",
         "-e",
@@ -577,6 +644,8 @@ node -e 'process.stdout.write(JSON.stringify({args: process.argv.slice(1), skill
         "codex",
         "--repo",
         hostDir,
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--json",
@@ -619,6 +688,8 @@ EOF
         "codex",
         "--repo",
         hostDir,
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--json",
@@ -676,6 +747,8 @@ EOF
         "codex",
         "--repo",
         hostDir,
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--json",
@@ -735,6 +808,8 @@ EOF
         "codex",
         "--repo",
         hostDir,
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--json",
@@ -786,6 +861,8 @@ EOF
         "change portable pack loop bridge",
         "--workflow",
         "repo_engineering",
+        "--post-run-mode",
+        "record",
         "--claude-bin",
         fakeClaudePath,
         "--",
@@ -872,6 +949,8 @@ EOF
         "codex",
         "--repo",
         hostDir,
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--",
@@ -1001,6 +1080,8 @@ node -e 'process.stdout.write(JSON.stringify({args: process.argv.slice(1), skill
         "codex",
         "--repo",
         hostDir,
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--task",
@@ -1050,6 +1131,8 @@ node -e 'process.stdout.write(JSON.stringify({args: process.argv.slice(1), skill
         "codex",
         "--repo",
         hostDir,
+        "--post-run-mode",
+        "record",
         "--codex-bin",
         fakeCodexPath,
         "--",
@@ -1252,18 +1335,20 @@ EOF
           "repo_engineering",
           "--skill",
           "repo-engineering.use-datalox-through-host-cli",
+          "--post-run-mode",
+          "promote",
           "--prompt",
           "Debug repeated wrapper failure in unsupported host cli path",
-        "--",
-        "node",
-        "-e",
-        failingScript,
-        "__DATALOX_PROMPT__",
-      ],
-      {
-        cwd: repoRoot,
-        encoding: "utf8",
-      },
+          "--",
+          "node",
+          "-e",
+          failingScript,
+          "__DATALOX_PROMPT__",
+        ],
+        {
+          cwd: repoRoot,
+          encoding: "utf8",
+        },
       );
 
     const first = runFailure();

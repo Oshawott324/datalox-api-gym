@@ -2,20 +2,24 @@
 
 This pack is for one simple outcome:
 
-Datalox records structured agent debugging work that can become verified B2B trajectory data.
+Datalox records agent debugging sessions that can become approved B2B session data and compact trajectory/eval derivatives.
 
 Primary product loop:
 
-`agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+`agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows`
 
-This repo should not keep legacy note/skill promotion as a second product loop. Existing skills and notes are legacy or internal agent-guidance surfaces until the trajectory pipeline replaces or isolates them.
+This repo should not keep legacy note/skill promotion as a second product loop. Existing skills and notes are legacy or internal agent-guidance surfaces until the session/trajectory pipeline replaces or isolates them.
 
 Legacy/internal agent-guidance surfaces are:
 
 - `skill` first
 - linked `note` second
 
-The dataset row contract is [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
+The turn capture contract is [docs/agent-turn-schema.md](docs/agent-turn-schema.md). The compact trajectory row contract is [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
+
+User-facing capture copy:
+
+> Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
 
 ## Fastest Path
 
@@ -25,13 +29,16 @@ The dataset row contract is [docs/trajectory-dataset-schema.md](docs/trajectory-
    - detect the relevant `skill`
    - read `skills/<name>/SKILL.md`
    - follow the linked notes in `metadata.datalox.note_paths`
-4. For trajectory export or data-sale work, read `docs/trajectory-dataset-schema.md` before changing fields or wording.
+4. For session export, trajectory export, or data-sale work, read `docs/product-definition.md` first; read `docs/agent-turn-schema.md` before changing turn capture fields, and read `docs/trajectory-dataset-schema.md` before changing trajectory row fields or wording.
 5. Watch these files:
+   - `.datalox/events/`
+   - `.datalox/session-candidates/`
+   - `.datalox/approvals/`
    - `agent-wiki/index.md`
    - `agent-wiki/log.md`
    - `agent-wiki/lint.md`
    - `agent-wiki/hot.md`
-   - `agent-wiki/events/`
+   - `agent-wiki/events/` for legacy events only
 
 ```bash
 TARGET_REPO="$(pwd)"
@@ -57,6 +64,7 @@ On supported installed host paths such as enforced Codex, that handoff should al
 ## What You Should See
 
 - `skills/`: reusable workflows
+- `.datalox/events/`: new product capture data
 - `index.md`: what the agent currently knows
 - `log.md`: what it changed
 - `lint.md`: whether the pack is still healthy
@@ -67,11 +75,12 @@ On supported installed host paths such as enforced Codex, that handoff should al
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md` when it exists
-4. `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, export, or data sale
-5. `DATALOX.md`
-6. `agent-wiki/hot.md` if it exists
-7. the selected `skills/<name>/SKILL.md`
-8. the linked notes for that skill
+4. `docs/agent-turn-schema.md` when the work touches session capture, session export, or data sale
+5. `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, trajectory export, or data sale
+6. `DATALOX.md`
+7. `agent-wiki/hot.md` if it exists
+8. the selected `skills/<name>/SKILL.md`
+9. the linked notes for that skill
 
 ## One-Click Options
 
@@ -109,7 +118,7 @@ The user's agent can run `bash bin/setup-multi-agent.sh claude` once from the so
 - Claude:
   `claude --print "Update the onboarding docs."`
 
-The installed shims route those runs through Datalox automatically and default the second-pass reviewer to `review` mode with `gpt-5.4-mini`.
+The installed shims route those runs through Datalox automatically and default to `trajectory` capture mode. The wrapper records only an explicit `debugging_trajectory.v1` row supplied by the agent through `DATALOX_TRAJECTORY_ROW_FILE` or `DATALOX_TRAJECTORY_ROW`; default rows should be `curation.quality: "needs_review"` until accepted, and legacy review mode must be requested explicitly.
 
 That automation is only true on supported host adapter paths. If a host only sees repo instructions or MCP tools, Datalox is guidance-only until a wrapper, hook, or plugin owns the loop.
 

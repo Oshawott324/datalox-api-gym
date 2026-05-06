@@ -2,12 +2,14 @@
 
 This repo is the portable implementation package for Datalox Trajectory MCP.
 
-Datalox Trajectory Data is the primary product focus: lean, outcome-labeled debugging trajectories for coding-agent training and evaluation, captured through Datalox MCP.
+Datalox captures approved agent debugging sessions and derives lean, outcome-labeled trajectories for coding-agent training and evaluation.
 
 The capture taxonomy is intentionally small:
 
 - source kinds: `trace`, `web`, `pdf`
-- product export target: `debugging_trajectory.v1`
+- capture primitive: `agent_turn.v1`
+- source export target: approved anonymized session bundle
+- trajectory derivative target: `debugging_trajectory.v1`
 
 The legacy pack loop is:
 
@@ -15,11 +17,11 @@ The legacy pack loop is:
 
 Primary product loop:
 
-`agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+`agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows`
 
-Do not keep legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until migrated or isolated behind the trajectory pipeline.
+Do not keep legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until migrated or isolated behind the session/trajectory pipeline.
 
-Exported debugging trajectory rows must follow [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
+Per-turn session capture must follow [docs/agent-turn-schema.md](docs/agent-turn-schema.md). Exported debugging trajectory rows must follow [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
 
 ## Read Order
 
@@ -28,12 +30,13 @@ On each loop:
 1. read `.datalox/manifest.json`
 2. read `.datalox/config.json`
 3. read `docs/product-definition.md` when it exists
-4. read `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, export, or data sale
-5. read `agent-wiki/hot.md` if it exists
-6. detect the best matching skill in `skills/`
-7. read the linked notes in that skill's `metadata.datalox.note_paths`
-8. follow `related` and `sources` only when the linked note says they matter
-9. act from the skill body plus the linked notes
+4. read `docs/agent-turn-schema.md` when the work touches session capture, session export, or data sale
+5. read `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, trajectory export, or data sale
+6. read `agent-wiki/hot.md` if it exists
+7. detect the best matching skill in `skills/`
+8. read the linked notes in that skill's `metadata.datalox.note_paths`
+9. follow `related` and `sources` only when the linked note says they matter
+10. act from the skill body plus the linked notes
 
 Host repo files override seed-pack files when both define the same knowledge.
 
@@ -41,14 +44,20 @@ Host repo files override seed-pack files when both define the same knowledge.
 
 The main repo-local data surfaces are:
 
+- `.datalox/events/agent-turns/`
+- `.datalox/events/trajectory-rows/`
+- `.datalox/session-candidates/`
+- `.datalox/approvals/`
 - `agent-wiki/events/`
+- `docs/agent-turn-schema.md`
 - `docs/trajectory-dataset-schema.md`
 - `agent-wiki/index.md`
 - `agent-wiki/log.md`
 - `agent-wiki/lint.md`
 - `agent-wiki/hot.md`
 
-Use `agent-wiki/events/` for grounded event evidence that can feed trajectory export.
+Use `.datalox/events/` for new product capture data. `agent_turn.v1` events belong under `.datalox/events/agent-turns/`; `debugging_trajectory.v1` row events belong under `.datalox/events/trajectory-rows/`.
+Read `agent-wiki/events/` as the legacy event store only. Keep it readable for old traces and legacy note/skill maintenance, but do not use it as the future product store.
 Use `skills/` and `agent-wiki/notes/` only as legacy/internal host-guidance surfaces while migration is in progress.
 
 Legacy folders such as `patterns/`, `sources/`, `concepts/`, `comparisons/`, and `questions/` may still exist in older repos. Read them when present, but do not add new product behavior to those folders.
@@ -89,9 +98,23 @@ When a skill links notes, use:
 
 ## Trajectory Dataset Rule
 
-Raw traces are not the dataset product.
+Unapproved raw traces are not sellable data.
 
-A trajectory export row is valid only when it follows [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) and includes:
+The source data product is an approved anonymized agent session bundle. It should preserve:
+
+- `agent_turn.v1` source turn ids or event paths
+- prompts or task requests
+- agent-visible actions
+- tool calls and command results
+- file edits, diffs, or changed snippets
+- verification commands and outcomes
+- export/redaction status
+
+User-facing capture copy:
+
+> Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
+
+A trajectory export row is a compact derivative. It is valid only when it follows [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) and includes:
 
 - schema version
 - problem and context
@@ -101,7 +124,22 @@ A trajectory export row is valid only when it follows [docs/trajectory-dataset-s
 - outcome label
 - small export gate
 
-Do not treat a recorded event as sellable data when `export.allowed` is false or `export.redaction` is `blocked`. Detailed consent, license, and provenance evidence should live in source events or curation systems, not as required row fields.
+Do not treat a recorded event or derived row as sellable data when `export.allowed` is false or `export.redaction` is `blocked`. Detailed consent, license, and provenance evidence should live in source events or curation systems, not as required row fields.
+
+## Turn Recording
+
+`AgentTurnV1` is the simple capture primitive. It records one completed turn with
+the user prompt when safe, a short assistant summary, meaningful tool calls, file
+change summaries, verification evidence, and export/redaction status.
+
+Record turn data as structured `payload.agentTurn` events instead of storing full
+raw host session logs. Keep long command outputs, screenshots, full files, and
+long diffs path-linked by default. Do not store hidden reasoning, credentials, or
+base/system/developer instruction dumps as turn data.
+
+Approved session bundles are assembled from `agent_turn.v1` events. A
+`debugging_trajectory.v1` row is derived only when compact training/eval packaging
+is useful.
 
 ## Trajectory Recording
 
@@ -116,14 +154,29 @@ After a coding-debugging run, the agent should build one lean `debugging_traject
 
 Then call MCP tool `record_trajectory` with `repo_path` and `trajectory_row`.
 
-`record_trajectory` writes a structured event under `agent-wiki/events/`, stores the row at `payload.trajectoryRow`, appends the owning event path to `trajectoryRow.export.source_event_paths`, and returns `{ eventPath, trajectoryId, sellable, blockedReasons }`.
+`context.relevant_files[].before` and `after` must contain exact minimal code snippets, not prose summaries. Put prose in `context.notes`, `trajectory.content`, or `final.explanation`.
+
+`record_trajectory` writes a structured event under `.datalox/events/trajectory-rows/`, stores the row at `trajectoryRow`, appends the owning event path to `trajectoryRow.export.source_event_paths`, and returns `{ eventPath, trajectoryId, sellable, blockedReasons, quality, deterministicPassed, qualityDowngraded, qualityDowngradeIssueCodes }`.
+
+If a row claims `curation.quality: "use"` but deterministic training-grade checks fail, `record_trajectory` still records the valid evidence but stores it as `needs_review` with downgrade metadata. Repair the row with real code snippets, then use `repair_trajectory` to write a corrected linked event.
+
+Wrapper runs use the same explicit-row rule. For coding-debugging work, write the row to a repo-local file such as `.datalox/trajectory-rows/<stable-id>.json` and append:
+
+```text
+DATALOX_TRAJECTORY_ROW_FILE: .datalox/trajectory-rows/<stable-id>.json
+```
+
+The wrapper records that row in default `trajectory` mode. If the marker is absent, the wrapper records nothing instead of falling back to a legacy trace event. Default row capture should set `curation.quality: "needs_review"` unless a reviewer has already accepted the row.
 
 Do not call `promote_gap`, note generation, or skill generation for trajectory row capture. Rows that are valid but not exportable should still be recorded with `sellable: false`; invalid rows should be fixed by the agent and retried.
 
 CLI equivalents:
 
 - `datalox record-trajectory --repo . --trajectory-row row.json --json`
+- `datalox grade-trajectories --repo . --json`
+- `datalox repair-trajectory --repo . --event-path .datalox/events/trajectory-rows/bad-row.json --trajectory-row corrected-row.json --json`
 - `datalox export-trajectories --repo . --output exports/trajectories/debugging_trajectory.v1.jsonl --json`
+- `datalox export-trajectories --repo . --quality use --json`
 
 ## Lint Rule
 
@@ -208,6 +261,10 @@ The install-facing `datalox-mcp` surface is intentionally small:
   Records one validated `debugging_trajectory.v1` row as a dataset candidate event without note or skill promotion.
 - `export_trajectories`
   Exports sellable row candidates from recorded events into deterministic JSONL.
+- `grade_trajectories`
+  Grades recorded row candidates for training readiness without mutating events or writing notes/skills.
+- `repair_trajectory`
+  Records a corrected row as a new event linked to the original row event; it does not mutate the original evidence event.
 
 The explicit legacy full-pack MCP surface is `datalox-pack-mcp`. Use it only for pack maintenance or legacy operations:
 
@@ -222,7 +279,7 @@ The explicit legacy full-pack MCP surface is `datalox-pack-mcp`. Use it only for
 - `publish_web_capture`
 - `adopt_pack`
 
-CLI commands mirror both surfaces. Product data work should prefer `record-trajectory` and `export-trajectories`.
+CLI commands mirror both surfaces. Product data work should prefer `record-trajectory`, `grade-trajectories`, and `export-trajectories --quality use`.
 
 Core CLI commands emit JSON for agent consumption. Wrapper commands keep passthrough behavior by default; use `--json` there when you need a structured envelope instead of prompt or child-process output.
 
@@ -260,7 +317,7 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-trajectory-mcp.git
+git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp
 cd datalox-trajectory-mcp
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
@@ -269,7 +326,8 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 
 Source and target roles:
 
-- `datalox-trajectory-mcp` is the source clone and owns source-only scripts such as `bin/adopt-host-repo.sh`.
+- `https://github.com/Complexity-LLC/datalox-pack.git` is the current public source repo.
+- `datalox-trajectory-mcp` is the local source clone name and owns source-only scripts such as `bin/adopt-host-repo.sh`.
 - `$TARGET_REPO` is the user's current project and receives `.datalox/install.json`, instruction surfaces, core skills, and notes.
 - If a repo claims to be the source pack but lacks `bin/adopt-host-repo.sh`, clone a fresh source pack.
 
@@ -287,7 +345,7 @@ After setup, the user should keep using the host normally:
 - `codex exec "<prompt>"`
 - `claude --print "<prompt>"`
 
-The installed shims infer the repo from the current working directory and default post-run review to `review` with `gpt-5.4-mini`.
+The installed shims infer the repo from the current working directory and default post-run capture to `trajectory` mode. In that mode the wrapper records only an explicit `debugging_trajectory.v1` row supplied by the agent through `DATALOX_TRAJECTORY_ROW_FILE` or `DATALOX_TRAJECTORY_ROW`; it does not create legacy trace receipts from prose. Use `--post-run-mode review` only for explicit legacy guidance maintenance.
 
 Claude native skills are linked at the canonical personal-skill paths:
 

@@ -18,6 +18,7 @@ import {
 import { runClaudeWrapper } from "../adapters/claude/run.js";
 import { runCodexWrapper } from "../adapters/codex/run.js";
 import { runGenericWrapper } from "../adapters/generic/run.js";
+import type { WrapperPostRunMode } from "../adapters/shared.js";
 import { getSharedCliCommand, parseSharedCliInput } from "../surface/sharedCommands.js";
 import { parseCliArgs, toStringArray } from "./args.js";
 
@@ -57,16 +58,18 @@ function usage(): string {
     "  datalox resolve [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--limit <n>] [--include-content] [--json]",
     "  datalox retrieval sync [--repo <path>] [--json]",
     "  datalox record-trajectory [--repo <path>] --trajectory-row <json-file> [--json]",
-    "  datalox export-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--json]",
+    "  datalox export-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
+    "  datalox grade-trajectories [--repo <path>] [--event-path <event-json>] [--max-row-chars <n>] [--max-patch-chars <n>] [--max-snippet-chars <n>] [--max-metadata-chars <n>] [--json]",
+    "  datalox repair-trajectory [--repo <path>] --event-path <event-json> --trajectory-row <json-file> [--json]",
     "  datalox record [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--summary <summary>] [--observation <text>] [--changed-file <path>] [--transcript <text>] [--title <title>] [--signal <signal>] [--interpretation <text>] [--action <text>] [--outcome <text>] [--tag <tag>] [--event-kind <kind>] [--trajectory-row <json-file>] [--json]",
     "  datalox patch [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--summary <summary>] [--observation <text>] [--transcript <text>] [--title <title>] [--signal <signal>] [--interpretation <text>] [--action <text>] [--event-path <path>] [--session-id <id>] [--host-kind <kind>] [--admin-override] [--tag <tag>] [--json]",
     "  datalox promote [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--summary <summary>] [--observation <text>] [--changed-file <path>] [--transcript <text>] [--title <title>] [--signal <signal>] [--interpretation <text>] [--action <text>] [--outcome <text>] [--tag <tag>] [--event-kind <kind>] [--event-path <path>] [--session-id <id>] [--host-kind <kind>] [--admin-override] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--json]",
     "  datalox maintain [--repo <path>] [--max-events <n>] [--include-covered] [--min-note-occurrences <n>] [--min-skill-occurrences <n>] [--synthesize-skills] [--json]",
     "  datalox lint [--repo <path>] [--json]",
     "  datalox wrap prompt [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--json]",
-    "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|record|auto|promote|review>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
-    "  datalox claude [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|record|auto|promote|review>] [--review-model <model>] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--claude-bin <path>] [--json] [-- <claude args>]",
-    "  datalox codex [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|record|auto|promote|review>] [--review-model <model>] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--codex-bin <path>] [--json] [-- <codex exec args>]",
+    "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory|record|auto|promote|review>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
+    "  datalox claude [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory|record|auto|promote|review>] [--review-model <model>] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--claude-bin <path>] [--json] [-- <claude args>]",
+    "  datalox codex [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory|record|auto|promote|review>] [--review-model <model>] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--codex-bin <path>] [--json] [-- <codex exec args>]",
   ].join("\n");
 }
 
@@ -88,7 +91,7 @@ function parsePositiveInt(value: string | string[] | boolean | undefined): numbe
 
 function parsePostRunMode(
   value: string | string[] | boolean | undefined,
-): "off" | "record" | "auto" | "promote" | "review" | undefined {
+): WrapperPostRunMode | undefined {
   const raw = typeof value === "string"
     ? value
     : typeof process.env.DATALOX_DEFAULT_POST_RUN_MODE === "string"
@@ -97,6 +100,7 @@ function parsePostRunMode(
 
   switch (raw) {
     case "off":
+    case "trajectory":
     case "record":
     case "auto":
     case "promote":

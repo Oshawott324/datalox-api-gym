@@ -6,10 +6,12 @@ Product boundary:
 
 - Datalox MCP is the product-facing instrumentation and control layer.
 - `datalox-trajectory-mcp` is the repo-local implementation package.
-- B2B trajectory data/evals are the primary product focus.
+- Approved B2B session data and derived trajectory/evals are the primary product focus.
 - Do not keep legacy note/skill promotion as a second product loop in this repo.
 - Existing skills/notes are legacy or internal agent-guidance surfaces until migrated.
-- Lean, outcome-labeled trajectory export creates the dataset/eval asset.
+- `AgentTurnV1` is the simple per-turn capture primitive.
+- Approved anonymized sessions are the source dataset asset.
+- Lean, outcome-labeled trajectory export creates compact training/eval derivatives.
 
 ## Legacy/Internal Guidance Model
 
@@ -32,11 +34,16 @@ Current legacy guidance behavior may still be:
 skills/
 agent-wiki/
   notes/
-  events/
   index.md
   log.md
   lint.md
   hot.md
+.datalox/
+  events/
+    agent-turns/
+    trajectory-rows/
+  session-candidates/
+  approvals/
 ```
 
 ## Read Order
@@ -44,17 +51,26 @@ agent-wiki/
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md`
-4. `docs/trajectory-dataset-schema.md` when touching trajectory recording, export, or data sale
-5. `agent-wiki/hot.md`
-6. selected `skills/<name>/SKILL.md`
-7. linked `metadata.datalox.note_paths`
+4. `docs/agent-turn-schema.md` when touching session capture, session export, or data sale
+5. `docs/trajectory-dataset-schema.md` when touching trajectory recording, trajectory export, or data sale
+6. `agent-wiki/hot.md`
+7. selected `skills/<name>/SKILL.md`
+8. linked `metadata.datalox.note_paths`
 
 ## Write Rule
 
 New product writes should go to:
 
-- `agent-wiki/events/`
+- `.datalox/events/agent-turns/`
+- `.datalox/events/trajectory-rows/`
+- `.datalox/session-candidates/`
+- `.datalox/approvals/`
+- `agent_turn.v1` event payloads that follow [agent-turn-schema.md](./agent-turn-schema.md)
 - trajectory JSONL export artifacts that follow `debugging_trajectory.v1`
+
+`.datalox/events/` is the source product evidence surface. Turns can later be assembled into sessions, reviewed, anonymized, shared, or used to derive compact trajectory rows.
+
+`agent-wiki/events/` remains readable as a legacy trace/event store, but new product behavior should not write future session or trajectory data there.
 
 Legacy skill/note writes may still happen for current host guidance, but new product work should not depend on them.
 
@@ -68,15 +84,37 @@ Concrete source kinds only:
 - `web`
 - `pdf`
 
-## Product Export Target
+## Product Export Targets
 
-- `debugging_trajectory.v1`
+- `agent_turn.v1` as the capture primitive
+- approved anonymized session bundle
+- `debugging_trajectory.v1` as the compact trajectory derivative
 
-Legacy `skill` and `note` outputs may still exist for current host guidance, but new product work should target trajectory rows. Trajectory dataset rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md), not introduce another repo-local knowledge page type.
+Legacy `skill` and `note` outputs may still exist for current host guidance, but new product work should target captured turns, assembled sessions, and derived trajectory rows. Turn capture must follow [agent-turn-schema.md](./agent-turn-schema.md). Trajectory dataset rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md), not introduce another repo-local knowledge page type.
+
+## Session Capture
+
+Use this user-facing copy when a session is captured:
+
+> Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
+
+An exportable session bundle should preserve:
+
+- source `agent_turn.v1` ids or event paths
+- prompt or task request
+- agent-visible actions
+- tool calls and command results
+- file edits, diffs, or changed snippets
+- verification commands and outcomes
+- export/redaction gate
+
+Do not inline raw host session JSONL, hidden reasoning, credentials, full files,
+or long command output into turn events. Store long artifacts by path when they
+need to remain available for later review.
 
 ## Trajectory Export
 
-The exported debugging trajectory row is:
+The exported debugging trajectory row is the compact derivative:
 
 ```text
 problem -> context -> trajectory -> final fix -> verification -> outcome
@@ -144,3 +182,11 @@ To keep the wrapper but stop autonomous post-run review:
 
 - set `DATALOX_DEFAULT_POST_RUN_MODE=off`
 - or pass `--post-run-mode off`
+
+The default wrapper post-run mode is `trajectory`. It records only an explicit
+`debugging_trajectory.v1` row supplied by the agent through
+`DATALOX_TRAJECTORY_ROW_FILE` or `DATALOX_TRAJECTORY_ROW`. Legacy trace
+recording, promotion, and second-pass review require explicit `record`,
+`promote`, or `review` modes. Default trajectory rows should stay
+`curation.quality: "needs_review"` until deterministic grading and reviewer
+approval justify `quality: "use"`.

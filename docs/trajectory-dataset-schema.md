@@ -9,15 +9,20 @@ If other docs describe exported dataset rows differently, this document wins.
 
 The schema must be adopted by agents and buyers, so it stays small.
 
-The row is a training/eval example, not a complete audit log. Agents should be
-able to emit it from a normal debugging run without inventing fields, doing
-manual classification, or filling compliance-heavy objects.
+The row is a compact training/eval derivative, not the complete source session
+or audit log. `agent_turn.v1` events are the simple capture primitive. The
+captured session remains the source asset after turns are assembled with prompts,
+tool actions, file edits, verification results, and export/redaction evidence.
+Agents should be able to emit the row from a normal debugging run without
+inventing fields, doing manual classification, or filling compliance-heavy
+objects.
 
 ## Product Meaning
 
-The dataset product is not raw traces.
+The trajectory row product is not raw traces.
 
-The dataset product is:
+The source product can be an approved anonymized session bundle. The trajectory
+row product is:
 
 ```text
 high-signal debugging trajectories with labeled outcomes
@@ -30,6 +35,33 @@ problem -> context -> trajectory -> final fix -> verification -> outcome
 ```
 
 Use JSONL for bulk export: one `DebuggingTrajectoryV1` object per line.
+
+## Standalone Export Contract
+
+An exported trajectory row must be usable without access to the original repo,
+source event, or audit bundle. The JSONL line itself is the training/eval
+payload.
+
+Paths are provenance labels only:
+
+- `context.relevant_files[].path` identifies where an inline snippet came from.
+- `final.changed_files` identifies changed files.
+- `export.source_event_paths` links audit evidence and repair lineage.
+- artifact paths in `metadata` can point to optional review material.
+
+Those paths must not be required to understand the bug, edit, or verification.
+Put the minimal before/after code evidence inline in
+`context.relevant_files[].before` and `after`. Put compact diff hunks in
+`final.patch` when available, or use a concrete `final.explanation` grounded in
+the embedded snippets when no patch is available.
+
+Builder rule: `before` and `after` are code-evidence fields, not summary fields.
+If an agent only has prose, it should put that prose in `context.notes`,
+`trajectory.content`, or `final.explanation` and leave the row as
+`curation.quality: "needs_review"` until repaired.
+
+Optional source/audit bundles can be packaged separately for reproducibility,
+but the default `debugging_trajectory.v1` export contract is standalone JSONL.
 
 ## Required Row
 
@@ -219,8 +251,9 @@ belong here as optional tags, not required row structure.
     },
     {
       "role": "tool",
-      "content": "Tests passed.",
-      "command": "npm test",
+      "content": "tests/api.test.ts passed: 8 tests, 0 failed.",
+      "tool": "shell",
+      "command": "npm test -- tests/api.test.ts",
       "exit_code": 0
     }
   ],
@@ -232,13 +265,13 @@ belong here as optional tags, not required row structure.
   "outcome": {
     "label": "success",
     "verification": "passed",
-    "command": "npm test",
-    "evidence": "Tests passed."
+    "command": "npm test -- tests/api.test.ts",
+    "evidence": "tests/api.test.ts passed: 8 tests, 0 failed."
   },
   "export": {
     "allowed": true,
     "redaction": "none_needed",
-    "source_event_paths": ["agent-wiki/events/example.json"]
+    "source_event_paths": [".datalox/events/trajectory-rows/example.json"]
   },
   "curation": {
     "quality": "use",

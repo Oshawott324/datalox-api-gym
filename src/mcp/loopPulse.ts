@@ -64,8 +64,18 @@ function deriveLoopHint(command: string, result: unknown, state: {
     }
     case "record_trajectory":
       return {
-        recommended_next_tool: "export_trajectories",
-        action_hint: "Trajectory row recorded. Export when the repo has enough verified rows for curation.",
+        recommended_next_tool: "grade_trajectories",
+        action_hint: "Trajectory row recorded. Grade training readiness before buyer-facing export.",
+      };
+    case "grade_trajectories":
+      return {
+        recommended_next_tool: "repair_trajectory",
+        action_hint: "Trajectory grading completed. Repair rows with blocking diagnostics, or export curated rows with a quality filter when ready.",
+      };
+    case "repair_trajectory":
+      return {
+        recommended_next_tool: "grade_trajectories",
+        action_hint: "Corrected trajectory row recorded as a new event. Grade the repaired row before export.",
       };
     case "export_trajectories":
       return {

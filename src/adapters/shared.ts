@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import {
@@ -14,7 +15,10 @@ import {
   type RecordTurnResultInput,
   type ResolveLoopInput,
 } from "../core/packCore.js";
+import { recordTrajectory } from "../core/trajectoryExport.js";
 import { resolveSourceRoute } from "./sourceRoutes.js";
+
+export type WrapperPostRunMode = "off" | "trajectory" | "record" | "auto" | "promote" | "review";
 
 export interface LoopEnvelopeInput extends ResolveLoopInput {
   prompt?: string;
@@ -76,7 +80,7 @@ export interface WrapperPostRunInput {
   summary?: string;
   tags?: string[];
   eventKind?: string;
-  postRunMode?: "off" | "record" | "auto" | "promote" | "review";
+  postRunMode?: WrapperPostRunMode;
   minWikiOccurrences?: number;
   minSkillOccurrences?: number;
   sessionId?: string;
@@ -117,9 +121,13 @@ export interface WrapperReviewResult {
 }
 
 export interface WrapperPostRunResult {
-  mode: "off" | "record" | "promote" | "review";
-  trigger: "disabled" | "record_only" | "explicit_signal" | "failure_exit";
-  result: Awaited<ReturnType<typeof recordTurnResult>> | Awaited<ReturnType<typeof compileRecordedEvent>> | null;
+  mode: "off" | "trajectory" | "record" | "promote" | "review";
+  trigger: "disabled" | "missing_trajectory_row" | "trajectory_row" | "record_only" | "explicit_signal" | "failure_exit";
+  result:
+    | Awaited<ReturnType<typeof recordTrajectory>>
+    | Awaited<ReturnType<typeof recordTurnResult>>
+    | Awaited<ReturnType<typeof compileRecordedEvent>>
+    | null;
   review: WrapperReviewResult | null;
   backlog: Awaited<ReturnType<typeof getEventBacklogStatus>> | null;
   maintenance: Awaited<ReturnType<typeof runAutomaticMaintenance>> | null;
@@ -165,6 +173,8 @@ interface ParsedMarkers {
   interpretation?: string;
   recommendedAction?: string;
   eventKind?: string;
+  trajectoryRow?: unknown;
+  trajectoryRowFile?: string;
   observations: string[];
   tags: string[];
 }
@@ -796,6 +806,14 @@ export function renderWrappedPrompt(envelope: LoopEnvelope): string {
     ...renderCandidateSkills(envelope.guidance.candidateSkills),
     ...renderSupportingNotes(envelope.guidance.supportingNotes),
     ...renderBulletSection("Next reads", envelope.guidance.nextReads),
+    "# Datalox Trajectory Capture",
+    "For coding-debugging work, write one explicit `debugging_trajectory.v1` JSON row to a repo-local file after the fix or investigation is complete.",
+    "Use observed facts only: task prompt, minimal context, concise user/agent/tool steps, final fix, verification status, outcome label, and export gate.",
+    "Set `curation.quality` to `needs_review` by default; use `use` only when a reviewer has already accepted the row.",
+    "Do not infer a row from prose, hidden reasoning, or missing facts. If a row is not justified for this run, omit the marker.",
+    "When a row file exists, append this marker at the very end of your response:",
+    "- DATALOX_TRAJECTORY_ROW_FILE: .datalox/trajectory-rows/<stable-id>.json",
+    "",
     ...(shouldPreferNewSkill
       ? [
         "Promotion state:",
@@ -1019,6 +1037,12 @@ function parseMarkerLine(line: string, parsed: ParsedMarkers): boolean {
     case "EVENT_KIND":
       parsed.eventKind = value;
       return true;
+    case "TRAJECTORY_ROW":
+      parsed.trajectoryRow = JSON.parse(value);
+      return true;
+    case "TRAJECTORY_ROW_FILE":
+      parsed.trajectoryRowFile = value;
+      return true;
     case "OBSERVATION":
       parsed.observations.push(value);
       return true;
@@ -1063,6 +1087,8 @@ function mergeMarkers(left: ParsedMarkers, right: ParsedMarkers): ParsedMarkers 
     interpretation: left.interpretation ?? right.interpretation,
     recommendedAction: left.recommendedAction ?? right.recommendedAction,
     eventKind: left.eventKind ?? right.eventKind,
+    trajectoryRow: left.trajectoryRow ?? right.trajectoryRow,
+    trajectoryRowFile: left.trajectoryRowFile ?? right.trajectoryRowFile,
     observations: [...left.observations, ...right.observations],
     tags: [...left.tags, ...right.tags],
   };
@@ -1233,6 +1259,30 @@ export async function recordObservedTurnPayload(
   }
 
   return recorded;
+}
+
+async function loadTrajectoryRowMarker(
+  repoPath: string,
+  markers: ParsedMarkers,
+): Promise<unknown | null> {
+  if (markers.trajectoryRow !== undefined && markers.trajectoryRowFile !== undefined) {
+    throw new Error("Use either DATALOX_TRAJECTORY_ROW or DATALOX_TRAJECTORY_ROW_FILE, not both.");
+  }
+  if (markers.trajectoryRow !== undefined) {
+    return markers.trajectoryRow;
+  }
+  if (markers.trajectoryRowFile === undefined) {
+    return null;
+  }
+
+  const resolvedPath = path.isAbsolute(markers.trajectoryRowFile)
+    ? path.resolve(markers.trajectoryRowFile)
+    : path.resolve(repoPath, markers.trajectoryRowFile);
+  const relativePath = path.relative(repoPath, resolvedPath);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    throw new Error("DATALOX_TRAJECTORY_ROW_FILE must point inside the repo.");
+  }
+  return JSON.parse(await readFile(resolvedPath, "utf8"));
 }
 
 function renderReviewNotes(notes: LoopEnvelope["guidance"]["supportingNotes"]): string {
@@ -1470,7 +1520,7 @@ export async function finalizeWrappedRun(
   child: WrappedCommandResult | null,
   input: WrapperPostRunInput & { hostKind: string; reviewer?: WrapperReviewRunner | null },
 ): Promise<WrapperPostRunResult> {
-  const postRunMode = input.postRunMode ?? "auto";
+  const postRunMode = input.postRunMode ?? "trajectory";
   if (!child || !envelope.active) {
     return {
       mode: "off",
@@ -1482,9 +1532,45 @@ export async function finalizeWrappedRun(
     };
   }
 
+  if (postRunMode === "off") {
+    return {
+      mode: "off",
+      trigger: "disabled",
+      result: null,
+      review: null,
+      backlog: null,
+      maintenance: null,
+    };
+  }
   const sanitized = sanitizeWrappedCommandResult(child);
   const markers = sanitized.markers;
   const changedFiles = collectChangedFiles(envelope.repoPath);
+  if (postRunMode === "trajectory") {
+    const trajectoryRow = await loadTrajectoryRowMarker(envelope.repoPath, markers);
+    if (trajectoryRow === null) {
+      return {
+        mode: "trajectory",
+        trigger: "missing_trajectory_row",
+        result: null,
+        review: null,
+        backlog: null,
+        maintenance: null,
+      };
+    }
+    const recordedTrajectory = await recordTrajectory({
+      repoPath: envelope.repoPath,
+      trajectoryRow,
+    });
+    return {
+      mode: "trajectory",
+      trigger: "trajectory_row",
+      result: recordedTrajectory,
+      review: null,
+      backlog: null,
+      maintenance: null,
+    };
+  }
+
   const trigger = hasExplicitPromotionSignal(markers)
     ? "explicit_signal"
     : sanitized.child.exitCode !== 0
@@ -1558,7 +1644,7 @@ export async function finalizeWrappedRun(
     };
   }
 
-  const shouldCompile = postRunMode !== "off" && postRunMode !== "record";
+  const shouldCompile = postRunMode !== "record";
   const result = shouldCompile
     ? await compileRecordedEvent({
       repoPath: envelope.repoPath,

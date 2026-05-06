@@ -644,7 +644,7 @@ Inspect the current setup and continue with the next safe step.
         "--prompt",
         "Need the onboarding guidance.",
         "--post-run-mode",
-        "off",
+        "record",
         "--",
         "node",
         "-e",

@@ -13,6 +13,8 @@ import {
   resolveLoop,
 } from "../core/packCore.js";
 import { exportTrajectories, recordTrajectory } from "../core/trajectoryExport.js";
+import { gradeTrajectories } from "../core/trajectoryGrade.js";
+import { repairTrajectory } from "../core/trajectoryRepair.js";
 import { capturePdfArtifact } from "../core/pdfCapture.js";
 import { publishWebCapture } from "../core/publishWebCapture.js";
 import { captureDesignFromUrl, captureWebArtifact } from "../core/webCapture.js";
@@ -184,6 +186,12 @@ const eventPathArg: SharedArgSpec = {
   kind: "string",
   cliFlag: "event-path",
   mcpKey: "event_path",
+};
+
+const requiredEventPathArg: SharedArgSpec = {
+  ...eventPathArg,
+  cliRequired: true,
+  mcpRequired: true,
 };
 
 const sessionIdArg: SharedArgSpec = {
@@ -443,6 +451,57 @@ const splitArg: SharedArgSpec = {
   cliFlag: "split",
   mcpKey: "split",
   options: splitOptions,
+};
+
+const qualityOptions = [
+  { canonical: "use", cli: "use" },
+  { canonical: "needs_review", cli: "needs-review" },
+  { canonical: "discard", cli: "discard" },
+] as const;
+
+const qualityArg: SharedArgSpec = {
+  key: "quality",
+  description: "Optional curation quality filter.",
+  kind: "enum",
+  cliFlag: "quality",
+  mcpKey: "quality",
+  options: qualityOptions,
+};
+
+const maxRowCharsArg: SharedArgSpec = {
+  key: "maxRowChars",
+  description: "Maximum estimated JSON row chars before training readiness fails.",
+  kind: "int",
+  cliFlag: "max-row-chars",
+  mcpKey: "max_row_chars",
+  positive: true,
+};
+
+const maxPatchCharsArg: SharedArgSpec = {
+  key: "maxPatchChars",
+  description: "Maximum inline final.patch chars before training readiness fails.",
+  kind: "int",
+  cliFlag: "max-patch-chars",
+  mcpKey: "max_patch_chars",
+  positive: true,
+};
+
+const maxSnippetCharsArg: SharedArgSpec = {
+  key: "maxSnippetChars",
+  description: "Maximum inline relevant file snippet chars before training readiness fails.",
+  kind: "int",
+  cliFlag: "max-snippet-chars",
+  mcpKey: "max_snippet_chars",
+  positive: true,
+};
+
+const maxMetadataCharsArg: SharedArgSpec = {
+  key: "maxMetadataChars",
+  description: "Maximum inline metadata chars before training readiness fails.",
+  kind: "int",
+  cliFlag: "max-metadata-chars",
+  mcpKey: "max_metadata_chars",
+  positive: true,
 };
 
 const bucketArg: SharedArgSpec = {
@@ -755,13 +814,50 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
     cliCommand: "export-trajectories",
     mcpTool: "export_trajectories",
     description: "Export sellable debugging_trajectory.v1 rows from recorded events into deterministic JSONL.",
-    args: [repoPathArg, trajectoryOutputPathArg, blockedReportPathArg, splitArg],
+    args: [repoPathArg, trajectoryOutputPathArg, blockedReportPathArg, splitArg, qualityArg],
     async run(input) {
       return exportTrajectories({
         repoPath: maybeString(input.repoPath),
         outputPath: maybeString(input.outputPath),
         blockedReportPath: maybeString(input.blockedReportPath),
         split: maybeString(input.split) as "train" | "validation" | "test" | "eval" | undefined,
+        quality: maybeString(input.quality) as "use" | "needs_review" | "discard" | undefined,
+      });
+    },
+  },
+  {
+    cliCommand: "grade-trajectories",
+    mcpTool: "grade_trajectories",
+    description: "Grade recorded debugging_trajectory.v1 rows for training readiness without mutating events.",
+    args: [
+      repoPathArg,
+      eventPathArg,
+      maxRowCharsArg,
+      maxPatchCharsArg,
+      maxSnippetCharsArg,
+      maxMetadataCharsArg,
+    ],
+    async run(input) {
+      return gradeTrajectories({
+        repoPath: maybeString(input.repoPath),
+        eventPath: maybeString(input.eventPath),
+        maxRowChars: maybeNumber(input.maxRowChars),
+        maxPatchChars: maybeNumber(input.maxPatchChars),
+        maxSnippetChars: maybeNumber(input.maxSnippetChars),
+        maxMetadataChars: maybeNumber(input.maxMetadataChars),
+      });
+    },
+  },
+  {
+    cliCommand: "repair-trajectory",
+    mcpTool: "repair_trajectory",
+    description: "Record a corrected debugging_trajectory.v1 row as a new event linked to the original row event.",
+    args: [repoPathArg, requiredEventPathArg, requiredTrajectoryRowFileArg, requiredTrajectoryRowArg],
+    async run(input) {
+      return repairTrajectory({
+        repoPath: maybeString(input.repoPath),
+        eventPath: maybeString(input.eventPath) ?? "",
+        trajectoryRow: await loadTrajectoryRowInput(input, true),
       });
     },
   },

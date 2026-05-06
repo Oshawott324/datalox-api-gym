@@ -7,10 +7,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { extractTraceSource } from "./sourceBundle.js";
 import { createRuntimeClient } from "./runtimeClient.js";
+import { recordTrajectory } from "./trajectoryExport.js";
 import {
-  appendTrajectorySourceEventPath,
   type DebuggingTrajectoryV1,
   parseDebuggingTrajectoryV1,
+  withDefaultTrajectoryCurationQuality,
 } from "./trajectorySchema.js";
 import { loadAgentConfig } from "../agent/loadAgentConfig.js";
 
@@ -1115,7 +1116,7 @@ export async function recordTurnResult(input: RecordTurnResultInput) {
   const repoPath = resolveRepoPath(input.repoPath);
   const trajectoryRow = input.trajectoryRow === undefined
     ? undefined
-    : parseDebuggingTrajectoryV1(input.trajectoryRow);
+    : withDefaultTrajectoryCurationQuality(parseDebuggingTrajectoryV1(input.trajectoryRow));
   const legacy = await loadLegacyPackModule();
   const result = await legacy.recordTurnResult(
     {
@@ -1143,8 +1144,34 @@ export async function recordTurnResult(input: RecordTurnResultInput) {
     },
     repoPath,
   );
+  const recordedTrajectory = trajectoryRow === undefined
+    ? undefined
+    : await recordTrajectory({
+      repoPath,
+      trajectoryRow: {
+        ...trajectoryRow,
+        export: {
+          ...trajectoryRow.export,
+          source_event_paths: Array.from(new Set([
+            ...(trajectoryRow.export.source_event_paths ?? []),
+            result.event.relativePath,
+          ])),
+        },
+      },
+    });
   return {
     ...result,
+    ...(recordedTrajectory !== undefined
+      ? {
+        trajectoryEvent: {
+          relativePath: recordedTrajectory.event.relativePath,
+          payload: recordedTrajectory.event.payload,
+        },
+        trajectoryId: recordedTrajectory.trajectoryId,
+        trajectorySellable: recordedTrajectory.sellable,
+        trajectoryBlockedReasons: recordedTrajectory.blockedReasons,
+      }
+      : {}),
     traceBundle: extractTraceSource({
       id: result.event.payload.id,
       title: result.event.payload.title,
@@ -1168,8 +1195,11 @@ export async function recordTurnResult(input: RecordTurnResultInput) {
         ...(input.matchedNotePaths !== undefined ? { matchedNotePaths: input.matchedNotePaths } : {}),
         ...(input.sessionId !== undefined ? { sessionId: input.sessionId ?? null } : {}),
         ...(input.hostKind !== undefined ? { hostKind: input.hostKind ?? null } : {}),
-        ...(trajectoryRow !== undefined
-          ? { trajectoryRow: appendTrajectorySourceEventPath(trajectoryRow, result.event.relativePath) }
+        ...(recordedTrajectory !== undefined
+          ? {
+            trajectoryEventPath: recordedTrajectory.eventPath,
+            trajectoryId: recordedTrajectory.trajectoryId,
+          }
           : {}),
       }) ?? result.event.payload,
     },

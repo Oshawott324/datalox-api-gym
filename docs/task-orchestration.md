@@ -204,8 +204,9 @@ For this repo, orchestration is process infrastructure. It must not reintroduce
 the legacy note/skill loop as a product model. Product work still flows through:
 
 ```txt
-agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus
+agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
 ```
 
-Use task state for coordination. Use `debugging_trajectory.v1` rows for the B2B
-dataset/eval product.
+Use task state for coordination. Use `agent_turn.v1` events as the capture
+primitive, captured sessions as the source B2B data asset, and
+`debugging_trajectory.v1` rows as compact dataset/eval derivatives.

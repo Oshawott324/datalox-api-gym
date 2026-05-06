@@ -1,0 +1,204 @@
+{
+  "version": 1,
+  "id": "2026-05-04T05-03-29-630Z--trajectory-traj-wrapper-default-trajectory-capture-20260504",
+  "timestamp": "2026-05-04T05:03:29.630Z",
+  "eventKind": "trajectory_row",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "workflow": "coding_debugging",
+  "task": "Stop Datalox wrapper runs from defaulting to legacy trace receipts and make the default capture path record explicit debugging_trajectory.v1 rows.",
+  "summary": "Changed wrapper defaults from legacy trace recording to explicit trajectory-row capture, preserving legacy maintenance modes only behind explicit post-run mode selection.",
+  "observations": [
+    "user: Reported that another repo with datalox-mcp installed still produced old legacy trace-shaped events.",
+    "agent: Inspected the MCP split and found that datalox-mcp exposes only record_trajectory/export_trajectories while the wrapper post-run path still called legacy record_turn_result.",
+    "agent: Changed wrapper post-run behavior so the default mode is trajectory instead of auto/review/record.",
+    "agent: Added parsing for DATALOX_TRAJECTORY_ROW and DATALOX_TRAJECTORY_ROW_FILE markers, with repo-local file validation.",
+    "agent: Updated wrapped prompt guidance to tell agents to write explicit debugging_trajectory.v1 row files after coding-debugging work.",
+    "agent: Changed installed Codex and Claude shim defaults to DATALOX_DEFAULT_POST_RUN_MODE=trajectory.",
+    "agent: Updated CLI help and docs to include the trajectory post-run mode and explicit marker contract.",
+    "agent: Updated wrapper/adoption/retrieval tests so legacy recording is explicit and default wrapper capture requires a trajectory marker."
+  ],
+  "changedFiles": [
+    "src/adapters/shared.ts",
+    "src/cli/main.ts",
+    "src/core/installCore.ts",
+    "README.md",
+    "START_HERE.md",
+    "DATALOX.md",
+    "docs/agent-configuration.md",
+    "tests/wrapperSurfaces.test.ts",
+    "tests/adoptionScripts.test.ts",
+    "tests/retrievalBackends.test.ts"
+  ],
+  "outcome": "success:passed",
+  "tags": [
+    "trajectory",
+    "debugging_trajectory.v1",
+    "wrapper",
+    "trajectory-capture",
+    "legacy-trace-regression",
+    "debugging_trajectory.v1"
+  ],
+  "trajectoryRow": {
+    "schema_version": "debugging_trajectory.v1",
+    "id": "traj_wrapper_default_trajectory_capture_20260504",
+    "created_at": "2026-05-04T05:02:59.000Z",
+    "task": {
+      "domain": "coding_debugging",
+      "prompt": "Stop Datalox wrapper runs from defaulting to legacy trace receipts and make the default capture path record explicit debugging_trajectory.v1 rows.",
+      "language": "typescript",
+      "environment": "nodejs"
+    },
+    "context": {
+      "error": "Wrapped runs were still producing legacy eventKind/eventClass/sourceKind trace objects without payload.trajectoryRow, so trajectory export saw no visible sellable rows.",
+      "relevant_files": [
+        {
+          "path": "src/adapters/shared.ts",
+          "before": "finalizeWrappedRun defaulted to auto, built a legacy observed-turn payload, and called recordTurnResult for every wrapped run.",
+          "after": "finalizeWrappedRun defaults to trajectory mode, reads DATALOX_TRAJECTORY_ROW or DATALOX_TRAJECTORY_ROW_FILE markers, and records only explicit rows through recordTrajectory."
+        },
+        {
+          "path": "src/core/installCore.ts",
+          "before": "Installed Codex and Claude shims defaulted DATALOX_DEFAULT_POST_RUN_MODE to review.",
+          "after": "Installed Codex and Claude shims default DATALOX_DEFAULT_POST_RUN_MODE to trajectory."
+        },
+        {
+          "path": "tests/wrapperSurfaces.test.ts",
+          "before": "Wrapper tests expected a legacy trace event when no markers were emitted.",
+          "after": "Wrapper tests expect no event without a trajectory marker and verify explicit trajectory row recording."
+        }
+      ],
+      "notes": [
+        "Legacy record/promote/review modes remain available only when explicitly requested.",
+        "The wrapper does not reconstruct trajectory rows from prose or transcript text."
+      ]
+    },
+    "trajectory": [
+      {
+        "role": "user",
+        "content": "Reported that another repo with datalox-mcp installed still produced old legacy trace-shaped events."
+      },
+      {
+        "role": "agent",
+        "content": "Inspected the MCP split and found that datalox-mcp exposes only record_trajectory/export_trajectories while the wrapper post-run path still called legacy record_turn_result."
+      },
+      {
+        "role": "agent",
+        "content": "Changed wrapper post-run behavior so the default mode is trajectory instead of auto/review/record.",
+        "files_changed": [
+          "src/adapters/shared.ts"
+        ]
+      },
+      {
+        "role": "agent",
+        "content": "Added parsing for DATALOX_TRAJECTORY_ROW and DATALOX_TRAJECTORY_ROW_FILE markers, with repo-local file validation.",
+        "files_changed": [
+          "src/adapters/shared.ts"
+        ]
+      },
+      {
+        "role": "agent",
+        "content": "Updated wrapped prompt guidance to tell agents to write explicit debugging_trajectory.v1 row files after coding-debugging work.",
+        "files_changed": [
+          "src/adapters/shared.ts"
+        ]
+      },
+      {
+        "role": "agent",
+        "content": "Changed installed Codex and Claude shim defaults to DATALOX_DEFAULT_POST_RUN_MODE=trajectory.",
+        "files_changed": [
+          "src/core/installCore.ts"
+        ]
+      },
+      {
+        "role": "agent",
+        "content": "Updated CLI help and docs to include the trajectory post-run mode and explicit marker contract.",
+        "files_changed": [
+          "src/cli/main.ts",
+          "README.md",
+          "START_HERE.md",
+          "DATALOX.md",
+          "docs/agent-configuration.md"
+        ]
+      },
+      {
+        "role": "agent",
+        "content": "Updated wrapper/adoption/retrieval tests so legacy recording is explicit and default wrapper capture requires a trajectory marker.",
+        "files_changed": [
+          "tests/wrapperSurfaces.test.ts",
+          "tests/adoptionScripts.test.ts",
+          "tests/retrievalBackends.test.ts"
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "TypeScript check passed.",
+        "tool": "shell",
+        "command": "npm run check",
+        "exit_code": 0
+      },
+      {
+        "role": "tool",
+        "content": "Build passed.",
+        "tool": "shell",
+        "command": "npm run build",
+        "exit_code": 0
+      },
+      {
+        "role": "tool",
+        "content": "Focused wrapper, adoption, retrieval, and trajectory export tests passed.",
+        "tool": "shell",
+        "command": "npx vitest run tests/wrapperSurfaces.test.ts tests/adoptionScripts.test.ts tests/retrievalBackends.test.ts tests/trajectoryExport.test.ts",
+        "exit_code": 0
+      },
+      {
+        "role": "tool",
+        "content": "Whitespace diff check passed.",
+        "tool": "shell",
+        "command": "git diff --check",
+        "exit_code": 0
+      }
+    ],
+    "final": {
+      "fix_summary": "Changed wrapper defaults from legacy trace recording to explicit trajectory-row capture, preserving legacy maintenance modes only behind explicit post-run mode selection.",
+      "changed_files": [
+        "src/adapters/shared.ts",
+        "src/cli/main.ts",
+        "src/core/installCore.ts",
+        "README.md",
+        "START_HERE.md",
+        "DATALOX.md",
+        "docs/agent-configuration.md",
+        "tests/wrapperSurfaces.test.ts",
+        "tests/adoptionScripts.test.ts",
+        "tests/retrievalBackends.test.ts"
+      ],
+      "explanation": "Default wrapper runs now create visible trajectory data only when the agent supplies a valid debugging_trajectory.v1 row marker; otherwise they do not create old-shape trace receipts."
+    },
+    "outcome": {
+      "label": "success",
+      "verification": "passed",
+      "command": "npm run check && npm run build && npx vitest run tests/wrapperSurfaces.test.ts tests/adoptionScripts.test.ts tests/retrievalBackends.test.ts tests/trajectoryExport.test.ts && git diff --check",
+      "evidence": "TypeScript check, build, focused tests, and git diff --check passed."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed",
+      "source_event_paths": [
+        "agent-wiki/events/2026-05-04T05-03-29-630Z--trajectory-traj-wrapper-default-trajectory-capture-20260504.json"
+      ]
+    },
+    "curation": {
+      "quality": "use",
+      "tags": [
+        "wrapper",
+        "trajectory-capture",
+        "legacy-trace-regression",
+        "debugging_trajectory.v1"
+      ]
+    },
+    "metadata": {
+      "recorded_reason": "User noticed this repo had no visible trajectory rows after the wrapper behavior change."
+    }
+  }
+}

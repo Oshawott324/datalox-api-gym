@@ -2,7 +2,7 @@
 
 This document defines what "automatic enforcement" means for `datalox-pack`, what counts as supported, and the minimum implementation plan for this repo.
 
-The product-facing goal is Datalox Trajectory Data: lean, outcome-labeled debugging trajectories for coding-agent training and evaluation, captured through Datalox MCP.
+The product-facing goal is approved Datalox session data plus derived trajectory data: capture agent debugging turns through Datalox MCP, assemble sessions, then package approved anonymized sessions directly or derive lean outcome-labeled rows for coding-agent training and evaluation.
 
 ## Target
 
@@ -14,11 +14,13 @@ For this repo, automatic enforcement means:
 
 Product boundary:
 
-- `Datalox Trajectory Data` = primary B2B dataset/eval product
-- `Datalox MCP` = product-facing instrumentation and control surface
+- `Datalox Session Data` = primary B2B source dataset product
+- `AgentTurnV1` = simple per-turn capture primitive defined by [agent-turn-schema.md](./agent-turn-schema.md)
+- `Datalox Trajectory Data` = compact derived B2B dataset/eval product
+- `Datalox MCP` = product-facing instrumentation, session capture, and control surface
 - `datalox-pack` = portable protocol, CLI, durable local knowledge, and adoption assets
 - `adapter` = host-specific enforcement
-- `trajectory dataset` = verified export product defined by [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
+- `trajectory dataset` = derived export product defined by [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
 
 ## Non-Goals
 

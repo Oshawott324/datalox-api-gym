@@ -1,14 +1,14 @@
 # datalox-trajectory-mcp
 
-`datalox-trajectory-mcp` is the trajectory-focused repo-local implementation package for Datalox MCP.
+`datalox-trajectory-mcp` is the session and trajectory focused repo-local implementation package for Datalox MCP.
 
-Datalox Trajectory Data is the primary product focus: lean, outcome-labeled debugging trajectories for coding-agent training and evaluation, captured through Datalox MCP.
+Datalox captures approved agent debugging sessions and derives lean, outcome-labeled trajectories for coding-agent training and evaluation.
 
 Primary product loop:
 
-`agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+`agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows`
 
-This repo should not carry a second product loop around legacy note/skill promotion. Existing skills and notes are legacy or internal agent-guidance surfaces until migrated or isolated behind the trajectory pipeline.
+This repo should not carry a second product loop around legacy note/skill promotion. Existing skills and notes are legacy or internal agent-guidance surfaces until migrated or isolated behind the session/trajectory pipeline.
 
 Legacy/internal agent-guidance surfaces are:
 
@@ -18,13 +18,15 @@ Legacy/internal agent-guidance surfaces are:
 Keep the capture taxonomy small:
 
 - source kinds: `trace`, `web`, `pdf`
-- product export target: `debugging_trajectory.v1`
+- capture primitive: `agent_turn.v1`
+- source export target: approved anonymized session bundle
+- trajectory derivative target: `debugging_trajectory.v1`
 
 The legacy pack loop is:
 
 `detect -> use -> record -> promote -> lint`
 
-The exported dataset schema is canonical in [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). Product language should follow [docs/product-definition.md](docs/product-definition.md).
+The per-turn capture schema is canonical in [docs/agent-turn-schema.md](docs/agent-turn-schema.md). The exported trajectory row schema is canonical in [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). Product language should follow [docs/product-definition.md](docs/product-definition.md).
 
 ## What It Writes
 
@@ -43,10 +45,18 @@ agent-wiki/
 
 Use:
 
-- `agent-wiki/events/` for structured evidence that can feed trajectory export
+- `.datalox/events/` for new product capture data
+- `.datalox/events/agent-turns/` for future `agent_turn.v1` turn events
+- `.datalox/events/trajectory-rows/` for `debugging_trajectory.v1` row events
+- `.datalox/session-candidates/` and `.datalox/approvals/` for future review/approval artifacts
+- `agent-wiki/events/` as the legacy event store for old traces and legacy maintenance only
 - `skills/` and `agent-wiki/notes/` for legacy or internal agent guidance while migration is in progress
 
-Raw traces are not the product. A sellable dataset row must be a lean training example with a labeled outcome, verification status, and small export gate according to [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
+Unapproved raw traces are not sellable data. The capture primitive is `agent_turn.v1`; the source asset is an approved anonymized session bundle assembled from turns; `debugging_trajectory.v1` is the compact row derivative for training/eval packaging.
+
+User-facing capture copy:
+
+> Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
 
 ## Install
 
@@ -62,13 +72,23 @@ bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
+Start to use datalox-mcp from now on to generate trajectory
 
 This does two separate things:
 
 - `https://github.com/Complexity-LLC/datalox-pack.git` is the current public source repo.
+- Fresh installs from that URL use the published GitHub state. Local uncommitted or unpushed changes in another checkout are not present in the target repo until they are pushed or the target install points at that local checkout.
 - `datalox-trajectory-mcp` is the local source directory and package identity. Do not clone `https://github.com/Complexity-LLC/datalox-trajectory-mcp.git` unless that GitHub repo has been created or the existing repo has been renamed.
 - The source clone owns source-only scripts such as `bin/adopt-host-repo.sh`.
 - `$TARGET_REPO` is the user's current project. Adoption writes the Datalox instruction surfaces, core skills, notes, and `.datalox/install.json` there.
+
+Post-install checks from the target repo:
+
+```bash
+which codex
+node datalox-trajectory-mcp/bin/datalox.js status --repo . --json
+codex exec "Check Datalox is active for this repo."
+```
 
 For Claude instead of Codex, run:
 
@@ -183,7 +203,7 @@ codex exec "Update the docs."
 claude --print "Update the docs."
 ```
 
-The installed shims infer the repo from the current working directory and default autonomous second-pass review to `review` mode with `gpt-5.4-mini`.
+The installed shims infer the repo from the current working directory and default post-run capture to `trajectory` mode. In that mode the wrapper records only an explicit `debugging_trajectory.v1` row supplied by the agent through `DATALOX_TRAJECTORY_ROW_FILE` or `DATALOX_TRAJECTORY_ROW`; it does not write legacy trace receipts from prose. Use `--post-run-mode review` only for explicit legacy guidance maintenance.
 
 To stop Datalox-managed host interception later:
 
@@ -205,6 +225,10 @@ The install-facing MCP surface is intentionally small:
   Records one validated `debugging_trajectory.v1` row as a dataset candidate event.
 - `export_trajectories`
   Exports sellable row candidates from recorded events into deterministic JSONL.
+- `grade_trajectories`
+  Grades recorded rows for training readiness without mutating source events.
+- `repair_trajectory`
+  Records a corrected row as a new event linked to the original row event.
 
 Start the trajectory MCP server with:
 
@@ -225,7 +249,7 @@ datalox-pack-mcp
 node dist/src/mcp/server.js
 ```
 
-Use the legacy full server for pack maintenance, adoption, capture, lint, and note/skill promotion tools. Use the trajectory server for dataset capture/export.
+Use the legacy full server for pack maintenance, adoption, capture, lint, and note/skill promotion tools. Use the trajectory server for dataset capture, grading, and export.
 
 ## Promotion Rules
 
@@ -298,9 +322,12 @@ This uploads:
 Keep the pack minimal:
 
 - `trace`, `web`, and `pdf` are the only concrete source kinds
-- `debugging_trajectory.v1` rows are the product export target
+- `agent_turn.v1` is the simple capture primitive
+- new product event data belongs under `.datalox/events/`, not `agent-wiki/events/`
+- approved anonymized session bundles are the source product export target
+- `debugging_trajectory.v1` rows are compact training/eval derivatives
 - legacy `note` and `skill` outputs should not drive new product features
-- verified trajectory rows are export artifacts, not repo-local knowledge page types
+- verified trajectory rows are export artifacts, not repo-local knowledge page types or the complete source session
 - fresh adopted repos should start from the core bootstrap bundle, not the full seed corpus
 - read legacy supporting folders when they already exist, but do not generate new knowledge into them
 - keep the training row small; store detailed consent, license, redaction, and provenance evidence in source events or curation systems
@@ -309,6 +336,7 @@ Keep the pack minimal:
 
 - [DATALOX.md](DATALOX.md)
 - [docs/product-definition.md](docs/product-definition.md)
+- [docs/agent-turn-schema.md](docs/agent-turn-schema.md)
 - [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md)
 - [docs/task-orchestration.md](docs/task-orchestration.md)
 - [docs/agent-configuration.md](docs/agent-configuration.md)

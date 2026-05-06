@@ -115,6 +115,19 @@ export function appendTrajectorySourceEventPath(
   };
 }
 
+export function withDefaultTrajectoryCurationQuality(row: DebuggingTrajectoryV1): DebuggingTrajectoryV1 {
+  if (row.curation?.quality !== undefined) {
+    return row;
+  }
+  return {
+    ...row,
+    curation: {
+      ...(row.curation ?? {}),
+      quality: "needs_review",
+    },
+  };
+}
+
 export function getTrajectorySellableBlockers(row: DebuggingTrajectoryV1): string[] {
   const blockers: string[] = [];
   if (!row.export.allowed) {

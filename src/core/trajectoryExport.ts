@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { gradeTrajectoryRow } from "./trajectoryGrade.js";
 import {
   appendTrajectorySourceEventPath,
   type DebuggingTrajectoryV1,
@@ -9,9 +10,19 @@ import {
   parseDebuggingTrajectoryV1,
   serializeTrajectoryJsonlRow,
   TrajectoryValidationError,
+  withDefaultTrajectoryCurationQuality,
 } from "./trajectorySchema.js";
 
-const EVENTS_RELATIVE_DIR = path.join("agent-wiki", "events");
+export const PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR = path.join(
+  ".datalox",
+  "events",
+  "trajectory-rows",
+);
+export const LEGACY_EVENTS_RELATIVE_DIR = path.join("agent-wiki", "events");
+const TRAJECTORY_EVENT_READ_RELATIVE_DIRS = [
+  PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR,
+  LEGACY_EVENTS_RELATIVE_DIR,
+] as const;
 const DEFAULT_EXPORT_RELATIVE_PATH = path.join(
   "exports",
   "trajectories",
@@ -19,6 +30,14 @@ const DEFAULT_EXPORT_RELATIVE_PATH = path.join(
 );
 
 type JsonObject = Record<string, unknown>;
+export type TrajectoryExportQuality = "use" | "needs_review" | "discard";
+
+export interface RecordedTrajectoryEventPayload {
+  relativePath: string;
+  timestamp: string;
+  payload: unknown;
+  malformedError?: string;
+}
 
 export interface RecordTrajectoryInput {
   repoPath?: string;
@@ -31,6 +50,10 @@ export interface RecordTrajectoryResult {
   trajectoryId: string;
   sellable: boolean;
   blockedReasons: string[];
+  quality: TrajectoryExportQuality;
+  deterministicPassed: boolean;
+  qualityDowngraded: boolean;
+  qualityDowngradeIssueCodes: string[];
   event: {
     relativePath: string;
     payload: JsonObject;
@@ -42,6 +65,7 @@ export interface ExportTrajectoriesInput {
   outputPath?: string;
   blockedReportPath?: string;
   split?: "train" | "validation" | "test" | "eval";
+  quality?: TrajectoryExportQuality;
 }
 
 export interface TrajectoryExportRejectedRow {
@@ -79,16 +103,18 @@ export class TrajectoryExportError extends Error {
 
 export async function recordTrajectory(input: RecordTrajectoryInput): Promise<RecordTrajectoryResult> {
   const repoRoot = resolveRepoRoot(input.repoPath);
-  const parsedRow = parseDebuggingTrajectoryV1(input.trajectoryRow);
+  const parsedRow = withDefaultTrajectoryCurationQuality(parseDebuggingTrajectoryV1(input.trajectoryRow));
   const now = input.now ?? new Date();
   const timestamp = now.toISOString();
   const relativePath = normalizeRelativePath(
     path.join(
-      EVENTS_RELATIVE_DIR,
+      PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR,
       `${safeTimestamp(timestamp)}--trajectory-${slugify(parsedRow.id)}.json`,
     ),
   );
-  const row = appendTrajectorySourceEventPath(parsedRow, relativePath);
+  const rowWithSourcePath = appendTrajectorySourceEventPath(parsedRow, relativePath);
+  const normalized = normalizeRecordedTrajectoryQuality(rowWithSourcePath, timestamp);
+  const row = normalized.row;
   const eventPath = path.join(repoRoot, relativePath);
   const payload = buildTrajectoryEventPayload(row, relativePath, timestamp);
   const blockedReasons = getTrajectorySellableBlockers(row);
@@ -101,10 +127,56 @@ export async function recordTrajectory(input: RecordTrajectoryInput): Promise<Re
     trajectoryId: row.id,
     sellable: blockedReasons.length === 0,
     blockedReasons,
+    quality: normalized.grade.quality,
+    deterministicPassed: normalized.grade.deterministic_passed,
+    qualityDowngraded: normalized.qualityDowngraded,
+    qualityDowngradeIssueCodes: normalized.qualityDowngradeIssueCodes,
     event: {
       relativePath,
       payload,
     },
+  };
+}
+
+function normalizeRecordedTrajectoryQuality(
+  row: DebuggingTrajectoryV1,
+  timestamp: string,
+): {
+  row: DebuggingTrajectoryV1;
+  grade: ReturnType<typeof gradeTrajectoryRow>;
+  qualityDowngraded: boolean;
+  qualityDowngradeIssueCodes: string[];
+} {
+  const grade = gradeTrajectoryRow(row);
+  if (row.curation?.quality !== "use" || grade.quality === "use") {
+    return {
+      row,
+      grade,
+      qualityDowngraded: false,
+      qualityDowngradeIssueCodes: [],
+    };
+  }
+
+  const issueCodes = grade.blocking_issues.map((issue) => issue.code);
+  const downgradedRow: DebuggingTrajectoryV1 = {
+    ...row,
+    curation: {
+      ...(row.curation ?? {}),
+      quality: "needs_review",
+    },
+    metadata: {
+      ...(row.metadata ?? {}),
+      datalox_quality_downgraded_from: "use",
+      datalox_quality_downgrade_issue_codes: issueCodes,
+      datalox_quality_downgraded_at: timestamp,
+    },
+  };
+
+  return {
+    row: downgradedRow,
+    grade: gradeTrajectoryRow(downgradedRow),
+    qualityDowngraded: true,
+    qualityDowngradeIssueCodes: issueCodes,
   };
 }
 
@@ -119,7 +191,7 @@ export async function exportTrajectories(
   const blockedReportAbsolutePath = input.blockedReportPath
     ? resolveOutputPath(repoRoot, input.blockedReportPath)
     : undefined;
-  const eventPayloads = await readRecordedEventPayloads(repoRoot);
+  const eventPayloads = await readRecordedTrajectoryEventPayloads(repoRoot);
   const rejectedRows: TrajectoryExportRejectedRow[] = [];
   const validRows: Array<{
     eventPath: string;
@@ -127,7 +199,15 @@ export async function exportTrajectories(
   }> = [];
 
   for (const eventPayload of eventPayloads) {
-    const rowInput = getObject(eventPayload.payload).trajectoryRow;
+    if (eventPayload.malformedError !== undefined) {
+      rejectedRows.push({
+        eventPath: eventPayload.relativePath,
+        reason: "malformed_event",
+        detail: eventPayload.malformedError,
+      });
+      continue;
+    }
+    const rowInput = getTrajectoryRowInput(eventPayload.payload);
     if (rowInput === undefined) {
       continue;
     }
@@ -183,6 +263,34 @@ export async function exportTrajectories(
         detail: { blockers },
       });
       continue;
+    }
+    if (input.quality && candidate.row.curation?.quality !== input.quality) {
+      rejectedRows.push({
+        eventPath: candidate.eventPath,
+        trajectoryId: candidate.row.id,
+        reason: "quality_filter",
+        detail: {
+          required_quality: input.quality,
+          row_quality: candidate.row.curation?.quality ?? null,
+        },
+      });
+      continue;
+    }
+    if (input.quality === "use") {
+      const grade = gradeTrajectoryRow(candidate.row);
+      if (grade.quality !== "use" || !grade.deterministic_passed) {
+        rejectedRows.push({
+          eventPath: candidate.eventPath,
+          trajectoryId: candidate.row.id,
+          reason: "training_grade_filter",
+          detail: {
+            quality: grade.quality,
+            deterministic_passed: grade.deterministic_passed,
+            issue_codes: grade.blocking_issues.map((issue) => issue.code),
+          },
+        });
+        continue;
+      }
     }
     exportRows.push(applySplitOverride(candidate.row, input.split));
   }
@@ -245,35 +353,73 @@ function deriveChangedFiles(row: DebuggingTrajectoryV1): string[] {
   return Array.from(changed);
 }
 
-async function readRecordedEventPayloads(repoRoot: string): Promise<Array<{
-  relativePath: string;
-  timestamp: string;
-  payload: unknown;
-}>> {
-  const eventsRoot = path.join(repoRoot, EVENTS_RELATIVE_DIR);
-  if (!existsSync(eventsRoot)) {
-    return [];
-  }
-  const filenames = (await readdir(eventsRoot)).filter((filename) => filename.endsWith(".json"));
-  const payloads: Array<{
-    relativePath: string;
-    timestamp: string;
-    payload: unknown;
-  }> = [];
-  for (const filename of filenames) {
-    const relativePath = normalizeRelativePath(path.join(EVENTS_RELATIVE_DIR, filename));
+export async function readRecordedTrajectoryEventPayloads(
+  repoRoot: string,
+  eventPath?: string,
+): Promise<RecordedTrajectoryEventPayload[]> {
+  const relativePaths = eventPath
+    ? [normalizeRelativePath(path.relative(repoRoot, resolveRecordedTrajectoryEventPath(repoRoot, eventPath)))]
+    : await listRecordedTrajectoryEventPaths(repoRoot);
+
+  const payloads: RecordedTrajectoryEventPayload[] = [];
+  for (const relativePath of relativePaths) {
     const absolutePath = path.join(repoRoot, relativePath);
-    const text = await readFile(absolutePath, "utf8");
-    const payload = JSON.parse(text);
-    const timestampValue = getObject(payload).timestamp;
-    const timestamp = typeof timestampValue === "string" ? timestampValue : "";
-    payloads.push({ relativePath, timestamp, payload });
+    try {
+      const payload = JSON.parse(await readFile(absolutePath, "utf8"));
+      const timestampValue = getObject(payload).timestamp;
+      const timestamp = typeof timestampValue === "string" ? timestampValue : "";
+      payloads.push({ relativePath, timestamp, payload });
+    } catch (error) {
+      payloads.push({
+        relativePath,
+        timestamp: "",
+        payload: undefined,
+        malformedError: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
   payloads.sort((left, right) => {
     const byTimestamp = left.timestamp.localeCompare(right.timestamp);
     return byTimestamp !== 0 ? byTimestamp : left.relativePath.localeCompare(right.relativePath);
   });
   return payloads;
+}
+
+export async function listRecordedTrajectoryEventPaths(repoRoot: string): Promise<string[]> {
+  const paths: string[] = [];
+  for (const relativeDir of TRAJECTORY_EVENT_READ_RELATIVE_DIRS) {
+    const eventsRoot = path.join(repoRoot, relativeDir);
+    if (!existsSync(eventsRoot)) {
+      continue;
+    }
+    const filenames = (await readdir(eventsRoot)).filter((filename) => filename.endsWith(".json"));
+    paths.push(...filenames.map((filename) => normalizeRelativePath(path.join(relativeDir, filename))));
+  }
+  return paths.sort();
+}
+
+export function resolveRecordedTrajectoryEventPath(repoRoot: string, eventPath: string): string {
+  const resolved = path.isAbsolute(eventPath) ? eventPath : path.join(repoRoot, eventPath);
+  const relativePath = path.relative(repoRoot, resolved);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    throw new Error("eventPath must point inside the repo.");
+  }
+  const normalized = normalizeRelativePath(relativePath);
+  if (!isRecordedTrajectoryEventPath(normalized)) {
+    throw new Error("eventPath must point under .datalox/events/trajectory-rows or legacy agent-wiki/events.");
+  }
+  return resolved;
+}
+
+export function getTrajectoryRowInput(eventPayload: unknown): unknown {
+  const payloadObject = getObject(eventPayload);
+  return payloadObject.trajectoryRow ?? getObject(payloadObject.payload).trajectoryRow;
+}
+
+function isRecordedTrajectoryEventPath(relativePath: string): boolean {
+  return TRAJECTORY_EVENT_READ_RELATIVE_DIRS.some((relativeDir) => (
+    relativePath.startsWith(`${normalizeRelativePath(relativeDir)}/`)
+  ));
 }
 
 function findDuplicateRows(

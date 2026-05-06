@@ -14,18 +14,120 @@ That doc now holds:
 - completed native Codex active-session provenance work
 - completed Claude Code surface provenance work
 
-## Trajectory Export Product Alignment
+## Session-First Product Alignment
 
-- [x] Goal: converge this repo on one product pipeline for `debugging_trajectory.v1` dataset rows.
+- [x] Goal: make approved agent sessions the source data asset and keep `debugging_trajectory.v1` rows as compact derivatives.
   Implementation:
-  - keep the repo product pipeline as `agent run -> structured event -> verified trajectory row -> curated dataset/eval corpus`
+  - update product docs to use the pipeline `agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows`
+  - define `AgentTurnV1` as the simple per-turn capture primitive
+  - use this user-facing capture copy:
+    - "Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program."
+  - keep `debugging_trajectory.v1` as the compact training/eval row contract, not the only sellable unit
+  - keep unapproved raw traces out of sellable exports
+  - keep legacy `skill` and `note` promotion as internal host guidance only
+  Pass criteria:
+  - `docs/product-definition.md`, `README.md`, `START_HERE.md`, `DATALOX.md`, and `docs/agent-configuration.md` agree that approved sessions are the source asset
+  - `docs/agent-turn-schema.md` defines the per-turn capture shape without adding compliance-heavy fields
+  - `docs/trajectory-dataset-schema.md` says the row is a compact derivative, not the complete source session
+  - no product-facing doc says a perfect trajectory row is required before the captured session has value
+
+- [x] Step 8.5: move future product event storage out of `agent-wiki/events`.
+  Intent:
+  - stop treating the legacy agent wiki event folder as the future product data store
+  - keep old `agent-wiki/events` rows readable for legacy traces and migration
+  - make repo-local `.datalox/` the visible product evidence root for agents and users
+  Storage boundary:
+  - new turn events: `.datalox/events/agent-turns/`
+  - new trajectory row events: `.datalox/events/trajectory-rows/`
+  - future review candidates: `.datalox/session-candidates/`
+  - future approval/block records: `.datalox/approvals/`
+  - legacy traces: `agent-wiki/events/` read-only for future product work
+  Implementation:
+  - update `record_trajectory` / `recordTrajectory` to write new `debugging_trajectory.v1` events under `.datalox/events/trajectory-rows/`
+  - keep trajectory export and grading deterministic across both `.datalox/events/trajectory-rows/` and legacy `agent-wiki/events/`
+  - allow `repair_trajectory` to repair legacy event paths but write corrected rows to `.datalox/events/trajectory-rows/`
+  - update wrapper default trajectory capture expectations to use `.datalox/events/trajectory-rows/`
+  - update docs and instruction surfaces so new product work targets `.datalox/`
+  Pass criteria:
+  - recording a trajectory row returns an event path under `.datalox/events/trajectory-rows/`
+  - invalid trajectory rows create no `.datalox/events/trajectory-rows/` files
+  - exporting trajectories includes both new `.datalox` rows and legacy `agent-wiki/events` rows
+  - grading can target a single `.datalox` row and can still scan legacy rows
+  - repairing a legacy row writes the repaired row under `.datalox/events/trajectory-rows/`
+  - focused trajectory and wrapper tests pass
+
+- [ ] Step 9: add per-turn capture and an explicit approved session bundle export path.
+  Intent:
+  - record useful agent work per completed turn without ingesting whole raw host transcripts
+  - sell/review approved anonymized sessions directly instead of forcing every buyer workflow through compact trajectory rows
+  - keep trajectory rows as a derived package for evals and training examples
+  Implementation:
+  - define a runtime `agent_turn.v1` schema from `docs/agent-turn-schema.md`
+  - add a dedicated MCP tool named `record_agent_turn`
+  - input should be `repo_path` plus one `AgentTurnV1` object
+  - validate the turn before writing an event
+  - write a normal event under `.datalox/events/agent-turns/` with `eventKind: "agent_turn"` and `payload.agentTurn`
+  - return `{ eventPath, turnId, sessionId, exportable, blockedReasons }`
+  - do not infer a turn from arbitrary prose-only summaries when structured tool/action data is absent
+  - keep full raw logs, long command outputs, screenshots, and long diffs path-linked instead of inline by default
+  - define a small `agent_session_bundle.v1` export artifact assembled from turn ids, prompts, tool calls, file edits, verification results, outcome labels, source event paths, and export/redaction status
+  - add deterministic export filtering for approved/anonymized sessions
+  - expose session export as a separate CLI/MCP surface from `export-trajectories`
+  - derive `debugging_trajectory.v1` rows from approved session bundles only when compact training/eval packaging is needed
+  Pass criteria:
+  - `record_agent_turn` appears in the MCP tool list and can be called by an agent without CLI wrappers
+  - a minimal turn from `docs/agent-turn-schema.md` records successfully
+  - recorded events contain `payload.agentTurn.schema_version === "agent_turn.v1"`
+  - invalid turn input creates no event file and returns field-level errors an agent can fix
+  - turn events do not inline raw session JSONL, hidden reasoning, credentials, full files, or long command output
+  - session export can include a captured session even when no `debugging_trajectory.v1` row exists yet
+  - session export excludes turns/events with blocked export or redaction status
+  - session export is deterministic for the same event directory
+  - session export includes turn ids or event paths for provenance
+  - trajectory export still works as a derivative path
+
+- [ ] Step 10: add a lightweight session approval surface without turning MCP into a UI.
+  Intent:
+  - make approval visible and understandable for non-technical users before any session becomes shareable
+  - keep MCP as the capture/control API, not the human review interface
+  - avoid building a heavy SaaS dashboard before the review data model is stable
+  Product boundary:
+  - MCP owns candidate listing, approval commands, blocking commands, and approved export
+  - the UI/report owns human review of "what will be shared"
+  - filesystem or server-side approval records remain the source of truth
+  Implementation:
+  - add session candidate statuses: `private`, `needs_review`, `approved`, `blocked`
+  - generate a local review artifact per candidate session, initially Markdown or static HTML
+  - show plain-language sections for prompt, assistant summary, tool calls, file changes, verification, redaction status, and source event paths
+  - include the user-facing copy:
+    - "Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program."
+  - add CLI/MCP control surfaces after candidate export exists:
+    - `list_session_candidates`
+    - `approve_session`
+    - `block_session`
+    - `export_approved_sessions`
+  - make approval write a durable approval record instead of mutating the captured `agent_turn.v1` evidence
+  - keep automatic upload disabled unless an org policy explicitly enables it for approved sessions
+  Pass criteria:
+  - a non-technical reviewer can open one generated report and understand what would be shared
+  - approving or blocking a session creates a separate durable decision record with reviewer, timestamp, session id, and decision
+  - blocked sessions never appear in approved export
+  - approved export includes only sessions with approval records and non-blocked redaction state
+  - MCP tools expose approval actions but do not render or own UI state
+  - the first UI surface can be local static HTML/Markdown; no full dashboard is required for MVP
+
+## Trajectory Export Derivative Alignment
+
+- [x] Goal: converge this repo on one derivative pipeline for `debugging_trajectory.v1` dataset rows.
+  Implementation:
+  - keep the row pipeline as `agent_turn.v1 events -> approved session bundle -> verified trajectory row -> curated dataset/eval corpus`
   - make Datalox MCP the first-class trajectory generation surface
   - keep [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) as the row contract
   - keep legacy `skill` and `note` promotion as internal host guidance only
-  - route all new export behavior through structured events and `debugging_trajectory.v1` rows
+  - route trajectory export behavior through structured events and `debugging_trajectory.v1` rows
   - do not add another repo-local knowledge page type
   Pass criteria:
-  - product docs, agent instruction surfaces, and TODO agree on the single B2B trajectory export pipeline
+  - product docs, agent instruction surfaces, and TODO agree on the B2B session-first pipeline plus trajectory row derivative
   - no product-facing doc reintroduces `trace -> note -> skill -> better future action` as a product loop
   - new product work references `docs/trajectory-dataset-schema.md` before adding row fields
 
@@ -38,7 +140,7 @@ That doc now holds:
   - add a dedicated MCP tool named `record_trajectory`
   - input should be `repo_path` plus one `DebuggingTrajectoryV1` row object
   - validate the row with `parseDebuggingTrajectoryV1`
-  - write a normal event under `agent-wiki/events/` with `eventKind: "trajectory_row"` and `payload.trajectoryRow`
+  - write a normal event under `.datalox/events/trajectory-rows/` with `eventKind: "trajectory_row"` and `trajectoryRow`
   - return `{ eventPath, trajectoryId, sellable, blockedReasons }`
   - set or append `trajectoryRow.export.source_event_paths` to include the event path after write
   - do not call `promote_gap`, `compileRecordedEvent`, note generation, or skill generation from this MCP tool
@@ -48,7 +150,7 @@ That doc now holds:
   Pass criteria:
   - `record_trajectory` appears in the MCP tool list and can be called by an agent without using CLI wrappers
   - a minimal row from [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) records successfully
-  - recorded events contain `payload.trajectoryRow.schema_version === "debugging_trajectory.v1"`
+  - recorded events contain `trajectoryRow.schema_version === "debugging_trajectory.v1"`
   - the tool returns the repo-local event path and row id
   - `export.allowed: false` records the row but returns `sellable: false`
   - `export.redaction: "blocked"` records the row but returns `sellable: false`
@@ -85,7 +187,7 @@ That doc now holds:
   - do not infer a row from arbitrary `summary`, `observations`, or `transcript` prose
   - if the row candidate is invalid, fail the record call with validator errors that an agent can fix
   Pass criteria:
-  - recording with `--trajectory-row sample.json --json` writes an event containing `payload.trajectoryRow`
+  - recording with `--trajectory-row sample.json --json` writes a product event containing `trajectoryRow` under `.datalox/events/trajectory-rows/`
   - invalid row input fails before writing an event
   - source event paths include the event file that owns the row candidate
   - existing `datalox record`, `patch`, `promote`, wrappers, and MCP tools continue to work without trajectory row input
@@ -93,8 +195,8 @@ That doc now holds:
 - [x] Step 3: add the trajectory export module.
   Implementation:
   - create `src/core/trajectoryExport.ts`
-  - read `agent-wiki/events/*.json` in deterministic timestamp/path order
-  - collect only explicit `payload.trajectoryRow` candidates
+  - read `.datalox/events/trajectory-rows/*.json` and legacy `agent-wiki/events/*.json` in deterministic timestamp/path order
+  - collect only explicit `trajectoryRow` candidates from `.datalox/events/trajectory-rows/` plus legacy `payload.trajectoryRow` candidates when present
   - validate every candidate with `parseDebuggingTrajectoryV1`
   - write sellable rows to JSONL only when `isSellableTrajectoryRow(row)` passes
   - return a structured report with counts: scanned events, candidate rows, exported rows, blocked rows, invalid rows
@@ -160,6 +262,256 @@ That doc now holds:
   - existing focused wrapper/record tests still pass where touched
   - `node dist/src/cli/main.js lint --repo . --json` remains `ok`
   - no test requires real network, real desktop UI, or a paid model
+
+- [x] Step 8: make recorded trajectory rows training-grade while staying token-small.
+  Intent:
+  - convert wrapper/MCP rows from "schema-valid evidence receipts" into high-signal training/eval examples
+  - keep the row lean enough for buyers and agents to consume without replaying full transcripts
+  - avoid over-using agents; use deterministic checks first and one focused agent review only for semantic judgment
+  Training-grade row requirements:
+  - include the actual bug/failure signal in `context.error` or `context.notes`
+  - include only the relevant code snippets in `context.relevant_files.before/after`, not prose-only summaries
+  - include `final.patch` when a diff is available; otherwise include concrete changed files plus why no patch exists
+  - include 3-20 concise trajectory steps covering inspection, conclusion, edit, and verification
+  - include tool steps for meaningful commands with `tool`, `command`, `exit_code`, and a short result summary
+  - include verification evidence that names the tests/checks and result, not just "passed"
+  - set `curation.quality: "needs_review"` by default; upgrade to `"use"` only after an agent reviewer accepts it
+  Token-saving rules:
+  - store raw command output, long diffs, screenshots, or transcripts as source artifacts by path, not inline in the row
+  - keep inline snippets to the minimum needed to understand the fix
+  - prefer unified diff hunks over full files
+  - keep tool evidence to the command, exit code, and the 1-3 lines that prove the result
+  - link source event paths and artifact paths in `export.source_event_paths` or optional metadata
+  Review workflow:
+  - deterministic validator checks schema, export blockers, patch presence, snippet presence, command evidence, and token budget
+  - a single focused reviewer agent runs only when deterministic checks pass but semantic quality still needs judgment
+  - reviewer agent uses a budget/cheap model by default, configurable by env or CLI
+  - skip reviewer calls when deterministic checks already produce blocking diagnostics
+  - use expensive models only for explicitly requested curation audits
+  - reviewer returns structured diagnostics; it does not rewrite rows directly
+  - repair is a separate explicit step that writes a new corrected trajectory row event
+  - curation quality starts as `needs_review`; deterministic pass plus reviewer approval can upgrade it to `use`
+  - do not run separate builder, reviewer, redaction, and curation agents for every row by default
+  Implementation:
+  - add a training-readiness checklist doc for `debugging_trajectory.v1`
+  - add an agent-readable `trajectory_grade` result object with `quality`, `blocking_issues`, `repair_actions`, and `token_notes`
+  - add CLI/MCP support to grade existing `trajectoryRow` events without rewriting them by default
+  - add a repair mode that writes a new corrected trajectory row event instead of mutating the original evidence event
+    - CLI: `datalox repair-trajectory --repo <path> --event-path <event-json> --trajectory-row <json-file> --json`
+    - MCP: `repair_trajectory`
+    - corrected rows link the original event path in `export.source_event_paths` and `metadata.datalox_repaired_from_event_path`
+  - update wrapper guidance so default row capture marks rows `needs_review` unless a reviewer already accepted them
+  Concrete implementation details:
+  - create `docs/trajectory-training-readiness.md`
+    - define training-grade vs schema-valid vs exportable
+    - include compact good/bad row examples
+    - document token budgets for snippets, patch, tool evidence, and metadata
+  - create `src/core/trajectoryGrade.ts`
+    - export `gradeTrajectoryRow(row, options)` for pure deterministic checks
+    - export `gradeRecordedTrajectoryEvent(eventPayload, options)` for event-envelope use
+    - never call models from this module
+    - return stable issue codes suitable for agents to repair
+  - define result shape:
+    ```ts
+    type TrajectoryGradeV1 = {
+      schema: "datalox.trajectory_grade.v1";
+      trajectory_id: string;
+      quality: "use" | "needs_review" | "discard";
+      exportable: boolean;
+      deterministic_passed: boolean;
+      reviewer_required: boolean;
+      blocking_issues: Array<{
+        code: string;
+        path: string;
+        message: string;
+        repair_action: string;
+      }>;
+      warnings: Array<{
+        code: string;
+        path: string;
+        message: string;
+      }>;
+      token_notes: {
+        estimated_row_chars: number;
+        largest_field_path?: string;
+        largest_field_chars?: number;
+        over_budget: boolean;
+      };
+    };
+    ```
+  - deterministic issue codes should include:
+    - `missing_patch_or_explanation`
+    - `prose_only_relevant_file`
+    - `missing_before_after_snippet`
+    - `missing_meaningful_tool_step`
+    - `verification_evidence_too_generic`
+    - `trajectory_too_short`
+    - `trajectory_too_long`
+    - `row_over_token_budget`
+    - `export_blocked`
+  - add CLI command:
+    - `datalox grade-trajectories --repo <path> [--event-path <path>] [--json]`
+    - default scans explicit `trajectoryRow` events
+    - prints a deterministic report with counts by quality and issue code
+    - exits nonzero only for malformed events or invalid schema, not for `needs_review`
+  - add MCP tool:
+    - `grade_trajectories`
+    - input: `repo_path`, optional `event_path`
+    - output: same report as CLI
+    - no note/skill promotion and no row mutation
+  - add optional reviewer command later, separate from deterministic grading:
+    - `datalox review-trajectory --repo <path> --event-path <path> --model <budget-model>`
+    - runs only when deterministic grade has `reviewer_required: true` and no blocking issues
+    - reviewer output can recommend `quality: "use"` but cannot directly mutate the event
+  - add curation filter to export:
+    - optional `--quality use|needs_review|discard`
+    - default product packaging should use `--quality use`
+    - raw export for internal debugging may omit the filter
+  - add tests with fixture rows, not live model calls
+  - keep model-backed review behind an explicit env gate such as `DATALOX_LIVE_REVIEW=1`
+  Pass criteria:
+  - the current dogfood row is graded `needs_review`, not `"use"`, because it lacks real patch/snippets
+  - a fixture row with real before/after snippets, patch, concise tool evidence, and passed verification grades `"use"`
+  - a row with prose-only before/after summaries gets actionable diagnostics
+  - a row with no patch and no explanation gets actionable diagnostics
+  - grading does not require paid models; tests use deterministic fixtures or cheap-model live smoke only when explicitly enabled
+  - export can still emit valid rows, but curated buyer packaging can filter to `curation.quality === "use"`
+  Extended pass criteria:
+  - `npm run build` passes
+  - `npx vitest run tests/trajectoryGrade.test.ts tests/trajectoryExport.test.ts` passes
+  - `grade-trajectories` returns `scannedEvents`, `candidateRows`, `useRows`, `needsReviewRows`, `discardRows`, and `issueCounts`
+  - `grade-trajectories --event-path <trajectory-event>` grades exactly one row
+  - invalid `trajectoryRow` returns schema diagnostics with file path and field path
+  - deterministic grade does not mutate the source event
+  - deterministic grade does not write notes, skills, or curation artifacts
+  - the MCP `grade_trajectories` tool is available on the lean trajectory MCP surface
+  - `repair-trajectory` writes a new linked row event and leaves the original event byte-for-byte unchanged
+  - `export-trajectories --quality use` excludes `needs_review` rows
+  - token budget checks flag oversized `final.patch`, oversized snippets, and oversized metadata independently
+  - a row can be `exportable: true` and still `quality: "needs_review"`
+  - expensive reviewer model is never invoked unless the explicit env/CLI gate is set
+
+- [x] Step 8.6: enforce standalone exported trajectory rows.
+  Intent:
+  - make `debugging_trajectory.v1` rows usable for training/eval without access to the original repo checkout
+  - treat file paths, source event paths, and artifact paths as provenance labels only, not required context
+  - keep rows compact, but ensure the bug, edit, and verification can be understood from the exported JSONL line itself
+  Standalone row contract:
+  - `context.relevant_files[].path` identifies where the snippet came from, but buyers must not need to open that file
+  - `context.relevant_files[].before` and `after` contain exact minimal code snippets for the behavior being fixed
+  - `final.patch` may contain compact unified diff hunks, but must not contain placeholder ellipses or "see file" references
+  - when no patch is available, `final.explanation` must explain the fix using the embedded snippets and changed file labels
+  - `outcome.evidence` must name the verification command/check and the observed result
+  - `export.source_event_paths` links audit evidence and repair lineage only
+  Implementation:
+  - update `docs/trajectory-dataset-schema.md`
+    - add a "Standalone Export Contract" section near Product Meaning
+    - state that exported JSONL rows must carry enough inline context to train/evaluate without repo access
+    - state that `path`, `changed_files`, `source_event_paths`, and artifact paths are provenance labels only
+    - update the minimal example so verification evidence is specific, not "Tests passed."
+  - update `docs/trajectory-training-readiness.md`
+    - add a self-contained row checklist before the token budget section
+    - add a bad example where snippets say "see src/file.ts" or only list paths
+    - add a good example where source paths exist but inline snippets explain the fix
+    - document that optional source/audit bundles are separate from the default JSONL product
+  - update `src/core/trajectoryGrade.ts`
+    - keep existing checks for missing snippets, prose-only snippets, placeholder snippets, placeholder patches, generic verification, and token budget
+    - add deterministic `not_self_contained` blocking diagnostics when the row's only fix evidence depends on external repo/source-event access
+    - add helper functions rather than broad heuristics, for example:
+      - `hasMeaningfulSnippetPair(file)` returns true only when both snippets exist, look code-like, are not placeholders, and are not external-reference-only
+      - `isExternalReferenceOnly(value)` catches standalone evidence such as `see src/foo.ts`, `open agent-wiki/events/...`, `refer to source_event_paths`, `see repo`, or `see attached file`
+      - `hasStandaloneTrainingPayload(row)` requires at least one meaningful snippet pair plus either `final.patch` or a concrete `final.explanation`
+    - keep source paths allowed when they accompany real inline evidence
+    - keep TypeScript spread syntax and normal prose safe; do not flag `...(row.curation ?? {})`
+  - update `tests/trajectoryGrade.test.ts`
+    - add a row with only file paths / "see file" explanations and assert `not_self_contained`
+    - add a row with `source_event_paths` plus real inline snippets and assert it still grades `use`
+    - add a row with no patch but a concrete explanation grounded in snippets and assert it can pass
+    - keep the placeholder patch/snippet regression test from Step 8
+  - update `tests/trajectoryExport.test.ts`
+    - add or adjust an export fixture so `export-trajectories --quality use` exports only standalone `quality: "use"` rows
+    - ensure rows with `quality: "needs_review"` or blocking self-containment issues are not part of buyer-facing fixture output
+  - re-grade real dogfood data after the stricter rule:
+    - legacy weak row: `agent-wiki/events/2026-05-04T05-54-50-295Z--trajectory-traj-training-grade-gate-20260504.json`
+    - repaired row: `.datalox/events/trajectory-rows/2026-05-05T03-34-18-639Z--trajectory-traj-training-grade-gate-repaired-20260505.json`
+    - repair the repaired row again only if it fails the stricter rule for a concrete reason
+  - keep optional source/audit bundles separate from the default JSONL export contract
+  Deterministic issue behavior:
+  - `not_self_contained`
+    - path: `context.relevant_files` when no meaningful inline before/after pair exists
+    - path: `final.explanation` when the explanation only points to source files/events/artifacts
+    - repair action: add compact exact before/after snippets or a concrete explanation grounded in those snippets
+  - existing issue codes should still fire first when more precise:
+    - `missing_before_after_snippet` for absent snippet fields
+    - `prose_only_relevant_file` for prose summaries posing as snippets
+    - `placeholder_relevant_file` / `placeholder_patch` for ellipses and placeholder hunks
+    - `verification_evidence_too_generic` for "passed", "ok", or equivalent
+  - self-containment must not require a full patch, full file, full transcript, or repo checkout
+  Pass criteria:
+  - docs say paths are provenance only and inline snippets plus trajectory plus verification are the training payload
+  - the legacy weak dogfood row fails grading because it contains placeholder evidence
+  - the repaired `.datalox/events/trajectory-rows/...traj-training-grade-gate-repaired...json` row grades `quality: "use"` under the stricter standalone rule
+  - `export-trajectories --quality use` emits rows understandable without opening `agent-wiki/events`, `.datalox/events`, or source files
+  - tests cover a row that has file paths but no meaningful inline snippets and expect `not_self_contained`
+  - tests cover a valid standalone row with compact exact snippets and passed verification
+  - tests cover `source_event_paths` as allowed provenance when inline evidence is sufficient
+  - tests cover `final.explanation` with "see file/source event" as insufficient when no patch is present
+  - tests cover concrete `final.explanation` as sufficient when it is grounded in inline snippets
+  - `node dist/src/cli/main.js grade-trajectories --repo . --event-path agent-wiki/events/2026-05-04T05-54-50-295Z--trajectory-traj-training-grade-gate-20260504.json --json` reports a blocking issue on the weak legacy row
+  - `node dist/src/cli/main.js grade-trajectories --repo . --event-path .datalox/events/trajectory-rows/2026-05-05T03-34-18-639Z--trajectory-traj-training-grade-gate-repaired-20260505.json --json` reports `useRows: 1`, `issueCounts: {}`, and no warnings
+  - `node dist/src/cli/main.js export-trajectories --repo . --quality use --output /tmp/debugging_trajectory.v1.use.jsonl --json` succeeds and emits only standalone rows
+  - `npx vitest run tests/trajectoryGrade.test.ts tests/trajectoryExport.test.ts` passes
+  - `npm run check` passes
+  - `git diff --check` passes
+
+- [x] Step 8.7: tighten trajectory row builder guidance and capture-time quality normalization.
+  Intent:
+  - reduce variance where one agent emits real code snippets and another emits prose summaries for the same row shape
+  - keep `record_trajectory` permissive enough to store weak-but-valid rows for repair, but prevent weak rows from pretending to be accepted training data
+  - make the builder path produce Step 8.6-style standalone rows before export-time gating catches failures
+  Problem signal:
+  - older generated rows can be higher quality than newer rows when the agent chooses prose summaries for `context.relevant_files.before/after`
+  - Step 8.6 protects buyer-facing export, but capture still trusts an agent-provided `curation.quality: "use"` until grade/export time
+  - target repos installed from GitHub may not have local unpublished Step 8.6 guidance, so installer docs must make version/source state obvious
+  Capture-time contract:
+  - `record_trajectory` should still validate schema and write valid rows, including weak rows, because weak rows are repair candidates
+  - when a row claims `curation.quality: "use"`, recording should run deterministic `gradeTrajectoryRow`
+  - if deterministic grade is not `use`, recording should either downgrade `curation.quality` to `needs_review` with metadata or reject only when an explicit strict flag is set
+  - the default should favor downgrade over rejection so agents do not lose evidence
+  - `export-trajectories --quality use` remains the buyer-facing hard gate
+  Implementation:
+  - update `src/core/trajectoryExport.ts` record path or shared row-normalization helper
+    - after schema parse, run `gradeTrajectoryRow` when `curation.quality === "use"`
+    - if grade is not `use`, set `curation.quality: "needs_review"`
+    - add metadata such as `datalox_quality_downgraded_from: "use"`, `datalox_quality_downgrade_issue_codes`, and `datalox_quality_downgraded_at`
+    - avoid circular imports if needed by moving grade-independent row quality helpers into a small module
+  - update MCP/CLI return payload for `record_trajectory`
+    - include `quality`, `deterministicPassed`, and `qualityDowngraded` so the agent immediately sees that the row needs repair
+    - keep existing `sellable` and `blockedReasons`
+  - update row-builder guidance in docs and instruction surfaces
+    - `docs/trajectory-training-readiness.md`: add a "Builder Instructions" section with "before/after must be exact code, not summaries"
+    - `docs/trajectory-dataset-schema.md`: cross-link the builder rule from the standalone contract
+    - `AGENTS.md` / `DATALOX.md` / README if they tell agents how to produce rows
+  - update install guidance
+    - README should state that already-running Codex/Cursor sessions do not hot-load newly installed MCP tools
+    - README should state that GitHub install uses the published remote; local unpushed changes are not present in fresh target repos
+    - include a short post-install check for `which codex`, `node bin/datalox.js status --repo ... --json`, and fresh wrapped session
+  - update tests
+    - a schema-valid row with prose `before/after` and `curation.quality: "use"` records, but stored row has `curation.quality: "needs_review"` and downgrade metadata
+    - a standalone high-quality `use` row records without downgrade
+    - CLI `record-trajectory --json` reports the downgrade fields
+    - MCP `record_trajectory` reports the downgrade fields
+    - export `--quality use` still excludes downgraded rows
+  Pass criteria:
+  - weak prose-snippet rows are never stored as `curation.quality: "use"` by default recording
+  - high-quality standalone rows can still be stored as `curation.quality: "use"`
+  - agents receive immediate structured feedback when their row was downgraded and why
+  - no raw valid evidence is lost just because it is not training-grade yet
+  - README install docs explain restart/reconnect and published-vs-local source behavior
+  - focused tests pass: `npx vitest run tests/trajectoryGrade.test.ts tests/trajectoryExport.test.ts`
+  - install/wrapper tests touched by README or record payload changes pass
+  - `npm run check` passes
+  - `git diff --check` passes
 
 
 ## Refactor `agent-pack.mjs`
@@ -723,6 +1075,3 @@ That doc now holds:
   4. Periodic maintenance compacts shared traces into repo-local notes and then repo-local skills.
   5. No cross-repo trace bleed occurs.
   6. `repo_only` mode keeps its current local-only behavior.
-
-
-officecli
