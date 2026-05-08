@@ -6,6 +6,8 @@ import { getSharedMcpCommands } from "../surface/sharedCommands.js";
 const TRAJECTORY_MCP_TOOL_NAMES = new Set([
   "record_trajectory",
   "export_trajectories",
+  "record_agent_task_trajectory",
+  "export_agent_task_trajectories",
   "grade_trajectories",
   "repair_trajectory",
 ]);

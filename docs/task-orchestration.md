@@ -148,6 +148,21 @@ The orchestrator owns task-level events. Workers may write diagnostics in their
 result packets; they should not append to `events.jsonl` unless the assignment
 explicitly grants that path.
 
+## Trajectory Recording
+
+The agent that performs the real implementation must record the implementation
+trajectory through `datalox-mcp`.
+
+- If an executor worker edits product code, tests, docs, schemas, or runtime
+  behavior, that executor must call `datalox-mcp` before returning `ok: true`.
+- If the orchestrator personally performs the implementation instead of
+  delegating it, the orchestrator must record the trajectory before marking the
+  task completed.
+- Planner, reviewer, viewer, and summarizer workers do not record implementation
+  trajectories unless they also perform implementation work.
+- `events.jsonl` remains only the task coordination log. It is not a substitute
+  for the Datalox trajectory event.
+
 ## Lifecycle
 
 Use these task states in `task.json`:

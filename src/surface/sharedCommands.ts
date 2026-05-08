@@ -12,6 +12,10 @@ import {
   recordTurnResult,
   resolveLoop,
 } from "../core/packCore.js";
+import {
+  exportAgentTaskTrajectories,
+  recordAgentTaskTrajectory,
+} from "../core/agentTaskTrajectoryExport.js";
 import { exportTrajectories, recordTrajectory } from "../core/trajectoryExport.js";
 import { gradeTrajectories } from "../core/trajectoryGrade.js";
 import { repairTrajectory } from "../core/trajectoryRepair.js";
@@ -429,6 +433,38 @@ const requiredTrajectoryRowArg: SharedArgSpec = {
   mcpRequired: true,
 };
 
+const agentTaskTrajectoryOutputPathArg: SharedArgSpec = {
+  key: "outputPath",
+  description: "Optional output path for the JSONL agent_task_trajectory.v1 export.",
+  kind: "string",
+  cliFlag: "output",
+  mcpKey: "output_path",
+};
+
+const agentTaskTrajectoryRowFileArg: SharedArgSpec = {
+  key: "agentTaskTrajectoryFile",
+  description: "Path to a JSON file containing one agent_task_trajectory.v1 row.",
+  kind: "string",
+  cliFlag: "agent-task-trajectory",
+};
+
+const requiredAgentTaskTrajectoryRowFileArg: SharedArgSpec = {
+  ...agentTaskTrajectoryRowFileArg,
+  cliRequired: true,
+};
+
+const agentTaskTrajectoryArg: SharedArgSpec = {
+  key: "agentTaskTrajectory",
+  description: "One agent_task_trajectory.v1 row object.",
+  kind: "json",
+  mcpKey: "agent_task_trajectory",
+};
+
+const requiredAgentTaskTrajectoryArg: SharedArgSpec = {
+  ...agentTaskTrajectoryArg,
+  mcpRequired: true,
+};
+
 const blockedReportPathArg: SharedArgSpec = {
   key: "blockedReportPath",
   description: "Optional path for an export report that includes blocked trajectory rows.",
@@ -687,24 +723,53 @@ function buildMcpArgSchema(spec: SharedArgSpec): z.ZodTypeAny {
   return schema.describe(spec.description);
 }
 
-async function loadTrajectoryRowInput(input: Record<string, unknown>, required: boolean): Promise<unknown | undefined> {
-  const directRow = maybeUnknownObject(input.trajectoryRow);
+async function loadJsonRowInput(
+  input: Record<string, unknown>,
+  directRowKey: string,
+  rowFileKey: string,
+  required: boolean,
+  errorMessage: string,
+): Promise<unknown | undefined> {
+  const directRow = maybeUnknownObject(input[directRowKey]);
   if (directRow !== undefined) {
     return directRow;
   }
-  const trajectoryRowFile = maybeString(input.trajectoryRowFile);
-  if (trajectoryRowFile !== undefined) {
+  const rowFile = maybeString(input[rowFileKey]);
+  if (rowFile !== undefined) {
     const repoPath = maybeString(input.repoPath);
     const basePath = repoPath ? path.resolve(repoPath) : process.cwd();
-    const resolvedPath = path.isAbsolute(trajectoryRowFile)
-      ? trajectoryRowFile
-      : path.join(basePath, trajectoryRowFile);
+    const resolvedPath = path.isAbsolute(rowFile)
+      ? rowFile
+      : path.join(basePath, rowFile);
     return JSON.parse(await readFile(resolvedPath, "utf8"));
   }
   if (required) {
-    throw new Error("A debugging_trajectory.v1 row is required.");
+    throw new Error(errorMessage);
   }
   return undefined;
+}
+
+async function loadTrajectoryRowInput(input: Record<string, unknown>, required: boolean): Promise<unknown | undefined> {
+  return loadJsonRowInput(
+    input,
+    "trajectoryRow",
+    "trajectoryRowFile",
+    required,
+    "A debugging_trajectory.v1 row is required.",
+  );
+}
+
+async function loadAgentTaskTrajectoryInput(
+  input: Record<string, unknown>,
+  required: boolean,
+): Promise<unknown | undefined> {
+  return loadJsonRowInput(
+    input,
+    "agentTaskTrajectory",
+    "agentTaskTrajectoryFile",
+    required,
+    "An agent_task_trajectory.v1 row is required.",
+  );
 }
 
 const sharedCommandsInternal: SharedCommandSpec[] = [
@@ -817,6 +882,33 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
     args: [repoPathArg, trajectoryOutputPathArg, blockedReportPathArg, splitArg, qualityArg],
     async run(input) {
       return exportTrajectories({
+        repoPath: maybeString(input.repoPath),
+        outputPath: maybeString(input.outputPath),
+        blockedReportPath: maybeString(input.blockedReportPath),
+        split: maybeString(input.split) as "train" | "validation" | "test" | "eval" | undefined,
+        quality: maybeString(input.quality) as "use" | "needs_review" | "discard" | undefined,
+      });
+    },
+  },
+  {
+    cliCommand: "record-agent-task-trajectory",
+    mcpTool: "record_agent_task_trajectory",
+    description: "Record one validated agent_task_trajectory.v1 row as a mixed-domain dataset candidate event.",
+    args: [repoPathArg, requiredAgentTaskTrajectoryRowFileArg, requiredAgentTaskTrajectoryArg],
+    async run(input) {
+      return recordAgentTaskTrajectory({
+        repoPath: maybeString(input.repoPath),
+        agentTaskTrajectory: await loadAgentTaskTrajectoryInput(input, true),
+      });
+    },
+  },
+  {
+    cliCommand: "export-agent-task-trajectories",
+    mcpTool: "export_agent_task_trajectories",
+    description: "Export sellable agent_task_trajectory.v1 rows from recorded events into deterministic JSONL.",
+    args: [repoPathArg, agentTaskTrajectoryOutputPathArg, blockedReportPathArg, splitArg, qualityArg],
+    async run(input) {
+      return exportAgentTaskTrajectories({
         repoPath: maybeString(input.repoPath),
         outputPath: maybeString(input.outputPath),
         blockedReportPath: maybeString(input.blockedReportPath),

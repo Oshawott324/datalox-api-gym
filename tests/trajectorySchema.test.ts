@@ -166,6 +166,22 @@ describe("debugging_trajectory.v1 schema", () => {
     expect(() => parseDebuggingTrajectoryV1(missingExport)).toThrow(/export/);
   });
 
+  it("rejects mixed-domain code_snippets extensions on the debugging row", () => {
+    expect(() => parseDebuggingTrajectoryV1({
+      ...makeRow("no-code-snippets"),
+      context: {
+        ...makeRow("no-code-snippets").context,
+        code_snippets: [
+          {
+            path: "src/example.ts",
+            before: "value();",
+            after: "if (value) value();",
+          },
+        ],
+      },
+    })).toThrow(/Unrecognized key/);
+  });
+
   it("accepts explicit non-command verification states", () => {
     const notRun = parseDebuggingTrajectoryV1({
       ...makeRow("not-run"),

@@ -4,7 +4,10 @@ This is the canonical definition of what this repo is building.
 
 If other docs drift, this document wins. For the per-turn capture shape,
 [agent-turn-schema.md](./agent-turn-schema.md) wins. For the exported trajectory
-row shape, [trajectory-dataset-schema.md](./trajectory-dataset-schema.md) wins.
+row shape, [trajectory-dataset-schema.md](./trajectory-dataset-schema.md) wins
+for coding/debugging rows and
+[agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md) wins for
+mixed-domain task episode rows.
 
 ## One-Sentence Definition
 
@@ -33,7 +36,7 @@ The operating model is:
 3. Turn events are assembled into a session or task episode.
 4. A small export/redaction gate and outcome label are applied.
 5. Approved anonymized sessions can be packaged directly as source data.
-6. Compact `debugging_trajectory.v1` rows are derived for buyers who need training/eval examples instead of full session replay.
+6. Compact `debugging_trajectory.v1` or `agent_task_trajectory.v1` rows are derived for buyers who need training/eval examples instead of full session replay.
 
 The desktop or host agent is the source of agent runs. `AgentTurnV1` is the capture primitive. The approved session bundle is the source-of-truth asset; trajectory rows are a buyer-facing derivative.
 
@@ -72,7 +75,7 @@ This repo builds one product pipeline with supporting infrastructure:
 2. **Datalox Session Data**
    The source B2B data product: approved anonymized agent sessions with prompts, tool actions, file edits, and verification evidence.
 3. **Datalox Trajectory Data**
-   The derived B2B dataset/eval product: lean, outcome-labeled `debugging_trajectory.v1` records and curated corpora.
+   The derived B2B dataset/eval product: lean, outcome-labeled `debugging_trajectory.v1` and `agent_task_trajectory.v1` records and curated corpora.
 
 Legacy repo-local skill and note surfaces may remain while the pack is being migrated, but they are not the product architecture for this repo.
 
@@ -86,7 +89,9 @@ The commercial source export structure is:
 The derived trajectory export structure is:
 
 - one `.datalox/events/trajectory-rows/` lean trajectory row per meaningful debugging episode
-- schema defined in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
+- one `.datalox/events/agent-task-trajectories/` lean trajectory row per mixed-domain task episode
+- coding/debugging schema defined in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
+- mixed-domain schema defined in [agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md)
 - records include the problem, context, agent trajectory, final fix, outcome label, verification state, and a small export gate
 
 The agent capture structure is:
@@ -99,9 +104,11 @@ The first-class capture surface is Datalox MCP:
 
 - `record_agent_turn` should record one explicit `agent_turn.v1` event as `payload.agentTurn`
 - `record_trajectory` records one explicit `debugging_trajectory.v1` row as a `.datalox/events/trajectory-rows/` event with `trajectoryRow`
+- `record_agent_task_trajectory` records one explicit `agent_task_trajectory.v1` row as a `.datalox/events/agent-task-trajectories/` event with `agentTaskTrajectory`
 - `grade_trajectories` grades recorded rows for training readiness without mutating source events
 - `repair_trajectory` records corrected rows as new linked events instead of mutating evidence events
 - `export_trajectories` exports sellable row candidates from recorded events into JSONL
+- `export_agent_task_trajectories` exports sellable mixed-domain task rows into JSONL
 - `record_turn_result` may carry an explicit trajectory row candidate, but it must not infer one from prose fields
 
 ## Data Capture Rule
@@ -142,6 +149,7 @@ The event capture and dataset export should stay direct:
 - `trace` inputs record what happened during an agent run and should be normalized into `agent_turn.v1` events for session export
 - `web` and `pdf` inputs provide source evidence
 - verified debugging episodes can become derived trajectory dataset rows
+- verified mixed-domain episodes can become `agent_task_trajectory.v1` rows when a task combines code, documents, spreadsheets, analysis, lab workflow, or source-review evidence
 - new product capture data writes under `.datalox/events/`
 - legacy `agent-wiki/events/` traces remain readable but are not the future product store
 
@@ -215,5 +223,6 @@ When repo docs talk about Datalox, they should stay consistent with this definit
 - `datalox-trajectory-mcp` is the repo-local implementation package
 - legacy note/skill promotion is not a product loop for this repo
 - unapproved raw traces are not sellable data
-- exported dataset rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
+- exported coding/debugging rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
+- exported mixed-domain rows must follow [agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md)
 - agent-first operation and setup

@@ -5,6 +5,12 @@ data/eval product.
 
 If other docs describe exported dataset rows differently, this document wins.
 
+This document intentionally covers only `debugging_trajectory.v1`. For mixed
+task episodes where evidence crosses code, documents, spreadsheets, analysis,
+lab workflow, or source review, use
+[agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md) and
+`agent_task_trajectory.v1` instead.
+
 ## Design Goal
 
 The schema must be adopted by agents and buyers, so it stays small.

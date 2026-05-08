@@ -898,6 +898,8 @@ describe("trajectory recording and export", () => {
       expect(toolNames).toEqual([
         "record_trajectory",
         "export_trajectories",
+        "record_agent_task_trajectory",
+        "export_agent_task_trajectories",
         "grade_trajectories",
         "repair_trajectory",
       ]);
@@ -998,6 +1000,8 @@ describe("trajectory recording and export", () => {
       expect(tools.tools.map((tool) => tool.name)).toEqual([
         "record_trajectory",
         "export_trajectories",
+        "record_agent_task_trajectory",
+        "export_agent_task_trajectories",
         "grade_trajectories",
         "repair_trajectory",
       ]);

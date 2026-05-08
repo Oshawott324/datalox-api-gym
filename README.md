@@ -20,13 +20,13 @@ Keep the capture taxonomy small:
 - source kinds: `trace`, `web`, `pdf`
 - capture primitive: `agent_turn.v1`
 - source export target: approved anonymized session bundle
-- trajectory derivative target: `debugging_trajectory.v1`
+- trajectory derivative targets: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
 The legacy pack loop is:
 
 `detect -> use -> record -> promote -> lint`
 
-The per-turn capture schema is canonical in [docs/agent-turn-schema.md](docs/agent-turn-schema.md). The exported trajectory row schema is canonical in [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). Product language should follow [docs/product-definition.md](docs/product-definition.md).
+The per-turn capture schema is canonical in [docs/agent-turn-schema.md](docs/agent-turn-schema.md). The coding/debugging trajectory row schema is canonical in [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). The mixed-domain task trajectory schema is canonical in [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md). Product language should follow [docs/product-definition.md](docs/product-definition.md).
 
 ## What It Writes
 
@@ -48,11 +48,12 @@ Use:
 - `.datalox/events/` for new product capture data
 - `.datalox/events/agent-turns/` for future `agent_turn.v1` turn events
 - `.datalox/events/trajectory-rows/` for `debugging_trajectory.v1` row events
+- `.datalox/events/agent-task-trajectories/` for mixed-domain `agent_task_trajectory.v1` row events
 - `.datalox/session-candidates/` and `.datalox/approvals/` for future review/approval artifacts
 - `agent-wiki/events/` as the legacy event store for old traces and legacy maintenance only
 - `skills/` and `agent-wiki/notes/` for legacy or internal agent guidance while migration is in progress
 
-Unapproved raw traces are not sellable data. The capture primitive is `agent_turn.v1`; the source asset is an approved anonymized session bundle assembled from turns; `debugging_trajectory.v1` is the compact row derivative for training/eval packaging.
+Unapproved raw traces are not sellable data. The capture primitive is `agent_turn.v1`; the source asset is an approved anonymized session bundle assembled from turns; `debugging_trajectory.v1` and `agent_task_trajectory.v1` are compact row derivatives for training/eval packaging.
 
 User-facing capture copy:
 
@@ -225,6 +226,10 @@ The install-facing MCP surface is intentionally small:
   Records one validated `debugging_trajectory.v1` row as a dataset candidate event.
 - `export_trajectories`
   Exports sellable row candidates from recorded events into deterministic JSONL.
+- `record_agent_task_trajectory`
+  Records one validated `agent_task_trajectory.v1` mixed-domain row as a dataset candidate event.
+- `export_agent_task_trajectories`
+  Exports sellable mixed-domain row candidates into deterministic JSONL.
 - `grade_trajectories`
   Grades recorded rows for training readiness without mutating source events.
 - `repair_trajectory`
@@ -326,6 +331,7 @@ Keep the pack minimal:
 - new product event data belongs under `.datalox/events/`, not `agent-wiki/events/`
 - approved anonymized session bundles are the source product export target
 - `debugging_trajectory.v1` rows are compact training/eval derivatives
+- `agent_task_trajectory.v1` rows are compact mixed-domain task derivatives with domain-specific evidence blocks
 - legacy `note` and `skill` outputs should not drive new product features
 - verified trajectory rows are export artifacts, not repo-local knowledge page types or the complete source session
 - fresh adopted repos should start from the core bootstrap bundle, not the full seed corpus
@@ -338,6 +344,7 @@ Keep the pack minimal:
 - [docs/product-definition.md](docs/product-definition.md)
 - [docs/agent-turn-schema.md](docs/agent-turn-schema.md)
 - [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md)
+- [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md)
 - [docs/task-orchestration.md](docs/task-orchestration.md)
 - [docs/agent-configuration.md](docs/agent-configuration.md)
 - [docs/automatic-enforcement-plan.md](docs/automatic-enforcement-plan.md)

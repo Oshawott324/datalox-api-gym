@@ -513,7 +513,7 @@ That doc now holds:
   - `npm run check` passes
   - `git diff --check` passes
 
-- [ ] Step 8.8: design and implement `agent_task_trajectory.v1` for mixed-domain task episodes.
+- [x] Step 8.8: design and implement `agent_task_trajectory.v1` for mixed-domain task episodes.
   Intent:
   - support real agent episodes that mix coding, shell commands, docs, spreadsheets, web/PDF evidence, analysis, and domain workflows in one task
   - avoid mutating `debugging_trajectory.v1` or adding ad hoc fields such as `context.code_snippets`
@@ -523,7 +523,7 @@ That doc now holds:
   - `debugging_trajectory.v1` remains the narrow coding/debugging row and keeps its current strict shape
   - `agent_task_trajectory.v1` is a new row schema, not a silent variant of `debugging_trajectory.v1`
   - generic does not mean arbitrary JSON: `evidence_blocks[]` must be a discriminated union with known `type` values and strict per-type fields
-  - `task.domain` can be a string because real work is mixed, but `task.workflows[]` should name the concrete workflow labels when known
+  - `task.domains[]` names the task domains because real work is mixed, and `task.workflows[]` should name the concrete workflow labels when known
   - every exported row must still be standalone: evidence blocks carry the minimal before/after, command, document, measurement, or source evidence needed to understand the task without opening the original repo/session
   Proposed envelope:
   ```ts
@@ -532,8 +532,8 @@ That doc now holds:
     id: string;
     created_at: string;
     task: {
-      domain: string;
       prompt: string;
+      domains: string[];
       workflows?: string[];
       environment?: string;
     };
@@ -594,8 +594,8 @@ That doc now holds:
     - fields: `type`, `workflow`, optional `assay`, `measurement_context`, `before`, `after`, optional `criteria`, optional `validation`
     - for biotech/lab episodes such as gating, sample QC, protocol interpretation, or assay review
   - `source_reference`
-    - fields: `type`, `source_kind: "web" | "pdf" | "local_file"`, `title`, optional `source_path`, optional `url`, `excerpt`, `relevance`
-    - for compact evidence excerpts; source links are provenance, not the only payload
+    - fields: `type`, `source_kind: "web" | "pdf" | "local_file"`, `title`, optional `source_path`, optional `url`, optional `excerpt`, optional `relevance`
+    - for compact evidence excerpts; source links are provenance, not the only payload, and buyer-facing `quality: "use"` export requires excerpt plus relevance
   Implementation:
   - create `docs/agent-task-trajectory-schema.md`
     - state that this is the generic mixed-domain derivative row

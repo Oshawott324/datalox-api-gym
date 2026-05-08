@@ -59,6 +59,8 @@ function usage(): string {
     "  datalox retrieval sync [--repo <path>] [--json]",
     "  datalox record-trajectory [--repo <path>] --trajectory-row <json-file> [--json]",
     "  datalox export-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
+    "  datalox record-agent-task-trajectory [--repo <path>] --agent-task-trajectory <json-file> [--json]",
+    "  datalox export-agent-task-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
     "  datalox grade-trajectories [--repo <path>] [--event-path <event-json>] [--max-row-chars <n>] [--max-patch-chars <n>] [--max-snippet-chars <n>] [--max-metadata-chars <n>] [--json]",
     "  datalox repair-trajectory [--repo <path>] --event-path <event-json> --trajectory-row <json-file> [--json]",
     "  datalox record [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--summary <summary>] [--observation <text>] [--changed-file <path>] [--transcript <text>] [--title <title>] [--signal <signal>] [--interpretation <text>] [--action <text>] [--outcome <text>] [--tag <tag>] [--event-kind <kind>] [--trajectory-row <json-file>] [--json]",

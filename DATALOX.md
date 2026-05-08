@@ -9,7 +9,7 @@ The capture taxonomy is intentionally small:
 - source kinds: `trace`, `web`, `pdf`
 - capture primitive: `agent_turn.v1`
 - source export target: approved anonymized session bundle
-- trajectory derivative target: `debugging_trajectory.v1`
+- trajectory derivative targets: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
 The legacy pack loop is:
 
@@ -21,7 +21,7 @@ Primary product loop:
 
 Do not keep legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until migrated or isolated behind the session/trajectory pipeline.
 
-Per-turn session capture must follow [docs/agent-turn-schema.md](docs/agent-turn-schema.md). Exported debugging trajectory rows must follow [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md).
+Per-turn session capture must follow [docs/agent-turn-schema.md](docs/agent-turn-schema.md). Exported debugging trajectory rows must follow [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). Mixed-domain task trajectory rows must follow [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md).
 
 ## Read Order
 
@@ -46,17 +46,19 @@ The main repo-local data surfaces are:
 
 - `.datalox/events/agent-turns/`
 - `.datalox/events/trajectory-rows/`
+- `.datalox/events/agent-task-trajectories/`
 - `.datalox/session-candidates/`
 - `.datalox/approvals/`
 - `agent-wiki/events/`
 - `docs/agent-turn-schema.md`
 - `docs/trajectory-dataset-schema.md`
+- `docs/agent-task-trajectory-schema.md`
 - `agent-wiki/index.md`
 - `agent-wiki/log.md`
 - `agent-wiki/lint.md`
 - `agent-wiki/hot.md`
 
-Use `.datalox/events/` for new product capture data. `agent_turn.v1` events belong under `.datalox/events/agent-turns/`; `debugging_trajectory.v1` row events belong under `.datalox/events/trajectory-rows/`.
+Use `.datalox/events/` for new product capture data. `agent_turn.v1` events belong under `.datalox/events/agent-turns/`; `debugging_trajectory.v1` row events belong under `.datalox/events/trajectory-rows/`; `agent_task_trajectory.v1` row events belong under `.datalox/events/agent-task-trajectories/`.
 Read `agent-wiki/events/` as the legacy event store only. Keep it readable for old traces and legacy note/skill maintenance, but do not use it as the future product store.
 Use `skills/` and `agent-wiki/notes/` only as legacy/internal host-guidance surfaces while migration is in progress.
 
@@ -126,6 +128,8 @@ A trajectory export row is a compact derivative. It is valid only when it follow
 
 Do not treat a recorded event or derived row as sellable data when `export.allowed` is false or `export.redaction` is `blocked`. Detailed consent, license, and provenance evidence should live in source events or curation systems, not as required row fields.
 
+Use `agent_task_trajectory.v1` from [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md) when the episode is mixed-domain instead of pure coding/debugging. Its domain-specific evidence belongs in strict `evidence_blocks` such as `code_change`, `command_result`, `document_change`, `spreadsheet_change`, `data_analysis`, `lab_workflow`, and `source_reference`.
+
 ## Turn Recording
 
 `AgentTurnV1` is the simple capture primitive. It records one completed turn with
@@ -177,6 +181,8 @@ CLI equivalents:
 - `datalox repair-trajectory --repo . --event-path .datalox/events/trajectory-rows/bad-row.json --trajectory-row corrected-row.json --json`
 - `datalox export-trajectories --repo . --output exports/trajectories/debugging_trajectory.v1.jsonl --json`
 - `datalox export-trajectories --repo . --quality use --json`
+- `datalox record-agent-task-trajectory --repo . --agent-task-trajectory row.json --json`
+- `datalox export-agent-task-trajectories --repo . --quality use --json`
 
 ## Lint Rule
 
@@ -261,6 +267,10 @@ The install-facing `datalox-mcp` surface is intentionally small:
   Records one validated `debugging_trajectory.v1` row as a dataset candidate event without note or skill promotion.
 - `export_trajectories`
   Exports sellable row candidates from recorded events into deterministic JSONL.
+- `record_agent_task_trajectory`
+  Records one validated `agent_task_trajectory.v1` row as a mixed-domain dataset candidate event without note or skill promotion.
+- `export_agent_task_trajectories`
+  Exports sellable mixed-domain row candidates into deterministic JSONL.
 - `grade_trajectories`
   Grades recorded row candidates for training readiness without mutating events or writing notes/skills.
 - `repair_trajectory`
@@ -279,7 +289,7 @@ The explicit legacy full-pack MCP surface is `datalox-pack-mcp`. Use it only for
 - `publish_web_capture`
 - `adopt_pack`
 
-CLI commands mirror both surfaces. Product data work should prefer `record-trajectory`, `grade-trajectories`, and `export-trajectories --quality use`.
+CLI commands mirror both surfaces. Product data work should prefer `record-trajectory`, `record-agent-task-trajectory`, `grade-trajectories`, `export-trajectories --quality use`, and `export-agent-task-trajectories --quality use`.
 
 Core CLI commands emit JSON for agent consumption. Wrapper commands keep passthrough behavior by default; use `--json` there when you need a structured envelope instead of prompt or child-process output.
 
