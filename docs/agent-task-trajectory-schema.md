@@ -244,14 +244,49 @@ use` applies deterministic readiness checks:
 - `evidence_blocks` must be non-empty.
 - Unknown evidence block types and unknown fields are rejected by schema.
 - `code_change` evidence must carry exact code or patch evidence, not prose.
+- Code-heavy rows must include at least one concrete `code_change` block before
+  buyer-facing `quality: "use"` export. A row is code-heavy when task domains or
+  artifact paths indicate code, tests, package metadata, runtime behavior, or
+  implementation work.
+- `source_reference` entries for local code files are provenance/context only.
+  They do not replace `code_change`, even when the excerpt describes the edit.
 - Document, spreadsheet, and lab before/after evidence must be concrete excerpts,
   not placeholder summaries or path-only references.
 - `source_reference` must include a concrete excerpt and relevance, not only a
   URL or file path.
 - `command_result` must include the command, exit code, and observed result.
+- `export.source_event_paths` must contain `.datalox/events/...` provenance
+  event paths only. Put source files in `context.source_paths` and
+  `final.changed_artifacts`.
 - `export.allowed: false` and `export.redaction: "blocked"` are excluded.
 - Oversized rows, patches, evidence fields, and metadata are blocked from
   `quality: "use"` export.
+
+Bad code-heavy evidence:
+
+```json
+{
+  "type": "source_reference",
+  "source_kind": "local_file",
+  "title": "Preview implementation",
+  "source_path": "src/core/preview.ts",
+  "excerpt": "getEventPreview now caches previews and delegates work to a worker.",
+  "relevance": "Explains the implementation."
+}
+```
+
+Good code-heavy evidence:
+
+```json
+{
+  "type": "code_change",
+  "path": "src/core/preview.ts",
+  "language": "typescript",
+  "before": "const preview = buildPreview(events, options);",
+  "after": "const preview = await runPreviewWorker(events, options);",
+  "reason": "Move preview generation off the main process for large workspaces."
+}
+```
 
 ## CLI And MCP
 

@@ -145,6 +145,75 @@ const GENERIC_RESULT_SUMMARIES = new Set([
   "done",
 ]);
 
+const CODE_HEAVY_DOMAINS = new Set([
+  "code",
+  "coding",
+  "software",
+  "engineering",
+  "typescript",
+  "javascript",
+  "python",
+  "rust",
+  "go",
+  "java",
+  "tsx",
+  "jsx",
+  "react",
+  "node",
+  "nodejs",
+  "mcp",
+  "mcp_apps",
+  "worker_threads",
+  "packaging",
+  "tests",
+  "testing",
+]);
+
+const CODE_ARTIFACT_FILENAMES = new Set([
+  "package.json",
+  "package-lock.json",
+  "pnpm-lock.yaml",
+  "yarn.lock",
+  "tsconfig.json",
+  "vite.config.ts",
+  "vitest.config.ts",
+  "jest.config.js",
+  "cargo.toml",
+  "cargo.lock",
+  "pyproject.toml",
+  "requirements.txt",
+]);
+
+const CODE_ARTIFACT_EXTENSIONS = new Set([
+  ".c",
+  ".cc",
+  ".cpp",
+  ".cs",
+  ".css",
+  ".go",
+  ".h",
+  ".hpp",
+  ".html",
+  ".java",
+  ".js",
+  ".jsx",
+  ".json",
+  ".kt",
+  ".mjs",
+  ".mts",
+  ".py",
+  ".rs",
+  ".sh",
+  ".sql",
+  ".swift",
+  ".toml",
+  ".ts",
+  ".tsx",
+  ".vue",
+  ".yaml",
+  ".yml",
+]);
+
 export async function recordAgentTaskTrajectory(
   input: RecordAgentTaskTrajectoryInput,
 ): Promise<RecordAgentTaskTrajectoryResult> {
@@ -362,6 +431,8 @@ export function gradeAgentTaskTrajectoryRow(
   row.evidence_blocks.forEach((block, index) => {
     blocking_issues.push(...gradeEvidenceBlock(block, index));
   });
+  blocking_issues.push(...gradeCodeHeavyEvidence(row));
+  blocking_issues.push(...gradeSourceEventPaths(row));
   blocking_issues.push(...buildTokenBudgetIssues(row, resolvedOptions));
 
   const tokenNotes = buildTokenNotes(row, resolvedOptions);
@@ -585,6 +656,20 @@ function gradeEvidenceBlock(
           "Add the concrete source text or observation, not only the locator.",
         ));
       }
+      if (
+        block.source_kind === "local_file"
+        && typeof block.source_path === "string"
+        && looksLikeCodeArtifactPath(block.source_path)
+        && block.excerpt
+        && !looksLikeCodeOrPatchEvidence(block.excerpt)
+      ) {
+        issues.push(buildIssue(
+          "source_reference_prose_only_code_excerpt",
+          `${pathPrefix}.excerpt`,
+          "Source reference to a code artifact has a prose excerpt instead of exact code.",
+          "Use source_reference for provenance/context and add exact code evidence in a code_change block.",
+        ));
+      }
       if (!block.relevance || block.relevance.trim().length === 0) {
         issues.push(buildIssue(
           "source_reference_missing_relevance",
@@ -609,6 +694,86 @@ function gradeEvidenceBlock(
   }
 
   return issues;
+}
+
+function gradeCodeHeavyEvidence(row: AgentTaskTrajectoryV1): AgentTaskTrajectoryGradeIssue[] {
+  if (!rowAppearsCodeHeavy(row) || hasConcreteCodeChangeEvidence(row)) {
+    return [];
+  }
+  return [
+    buildIssue(
+      "code_heavy_row_missing_code_change",
+      "evidence_blocks",
+      "Code-heavy agent task trajectory has no concrete code_change evidence.",
+      "Add compact exact code_change before/after snippets or patch hunks for the key edit.",
+    ),
+  ];
+}
+
+function gradeSourceEventPaths(row: AgentTaskTrajectoryV1): AgentTaskTrajectoryGradeIssue[] {
+  const issues: AgentTaskTrajectoryGradeIssue[] = [];
+  row.export.source_event_paths?.forEach((sourcePath, index) => {
+    const normalized = normalizeRelativePath(sourcePath);
+    if (!normalized.startsWith(".datalox/events/")) {
+      issues.push(buildIssue(
+        "export_source_event_path_not_event",
+        `export.source_event_paths.${index}`,
+        "export.source_event_paths must contain .datalox event provenance paths only.",
+        "Move source files into context.source_paths or final.changed_artifacts and keep only .datalox/events/... paths here.",
+      ));
+    }
+  });
+  return issues;
+}
+
+function rowAppearsCodeHeavy(row: AgentTaskTrajectoryV1): boolean {
+  if (row.task.domains.some((domain) => CODE_HEAVY_DOMAINS.has(normalizeSignal(domain)))) {
+    return true;
+  }
+  return collectArtifactPaths(row).some(looksLikeCodeArtifactPath);
+}
+
+function hasConcreteCodeChangeEvidence(row: AgentTaskTrajectoryV1): boolean {
+  return row.evidence_blocks.some((block) => block.type === "code_change" && isConcreteCodeChangeBlock(block));
+}
+
+function isConcreteCodeChangeBlock(block: Extract<AgentTaskEvidenceBlockV1, { type: "code_change" }>): boolean {
+  if (block.patch !== undefined && block.patch.trim().length > 0) {
+    return looksLikeCodeOrPatchEvidence(block.patch)
+      && !hasPlaceholderEllipsis(block.patch)
+      && !isExternalReferenceOnly(block.patch);
+  }
+  if (!block.before || !block.after) {
+    return false;
+  }
+  return looksLikeCodeSnippet(block.before)
+    && looksLikeCodeSnippet(block.after)
+    && !hasPlaceholderEllipsis(block.before)
+    && !hasPlaceholderEllipsis(block.after)
+    && !isExternalReferenceOnly(block.before)
+    && !isExternalReferenceOnly(block.after);
+}
+
+function collectArtifactPaths(row: AgentTaskTrajectoryV1): string[] {
+  const paths: string[] = [];
+  paths.push(...(row.context?.source_paths ?? []));
+  paths.push(...(row.final.changed_artifacts ?? []));
+  for (const step of row.trajectory) {
+    paths.push(...(step.artifacts ?? []));
+    paths.push(...(step.files_changed ?? []));
+  }
+  for (const block of row.evidence_blocks) {
+    if (block.type === "code_change") {
+      paths.push(block.path);
+    }
+    if (block.type === "source_reference" && block.source_path) {
+      paths.push(block.source_path);
+    }
+    if ("artifact" in block) {
+      paths.push(block.artifact);
+    }
+  }
+  return paths;
 }
 
 function buildIssue(
@@ -822,6 +987,30 @@ function looksLikeConcreteBeforeAfter(value: string): boolean {
   }
   const normalized = trimmed.toLowerCase();
   return !/^(?:the previous|the new|the old|before,?|after,?|updated|changed|fixed)\b/u.test(normalized);
+}
+
+function looksLikeCodeArtifactPath(filePath: string): boolean {
+  const normalized = normalizeRelativePath(filePath).toLowerCase();
+  const basename = normalized.split("/").at(-1) ?? normalized;
+  if (CODE_ARTIFACT_FILENAMES.has(basename)) {
+    return true;
+  }
+  if (
+    normalized.includes("/src/")
+    || normalized.startsWith("src/")
+    || normalized.includes("/tests/")
+    || normalized.startsWith("tests/")
+    || normalized.includes("/test/")
+    || normalized.startsWith("test/")
+  ) {
+    const extension = path.posix.extname(normalized);
+    return extension.length === 0 || CODE_ARTIFACT_EXTENSIONS.has(extension);
+  }
+  return CODE_ARTIFACT_EXTENSIONS.has(path.posix.extname(normalized));
+}
+
+function normalizeSignal(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s-]+/gu, "_");
 }
 
 function hasPlaceholderEllipsis(value: string): boolean {

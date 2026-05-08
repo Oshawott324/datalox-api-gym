@@ -256,6 +256,13 @@ node dist/src/mcp/server.js
 
 Use the legacy full server for pack maintenance, adoption, capture, lint, and note/skill promotion tools. Use the trajectory server for dataset capture, grading, and export.
 
+For code-heavy `agent_task_trajectory.v1` rows, buyer-facing `--quality use`
+export requires at least one exact `code_change` evidence block. Local code
+`source_reference` blocks are useful provenance, but they do not replace
+before/after snippets or patch hunks. Put source files in `context.source_paths`
+and `final.changed_artifacts`; keep `export.source_event_paths` limited to
+`.datalox/events/...` provenance event paths.
+
 ## Promotion Rules
 
 Default behavior:

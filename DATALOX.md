@@ -130,6 +130,14 @@ Do not treat a recorded event or derived row as sellable data when `export.allow
 
 Use `agent_task_trajectory.v1` from [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md) when the episode is mixed-domain instead of pure coding/debugging. Its domain-specific evidence belongs in strict `evidence_blocks` such as `code_change`, `command_result`, `document_change`, `spreadsheet_change`, `data_analysis`, `lab_workflow`, and `source_reference`.
 
+For mixed-domain implementation work, code-heavy rows must include exact
+`code_change` evidence before buyer-facing `quality: "use"` export. Use compact
+before/after snippets or patch hunks for the key code edit. A local-file
+`source_reference` to `src/...`, `tests/...`, or package metadata is provenance
+and context; it does not replace `code_change`. Keep source files in
+`context.source_paths` and `final.changed_artifacts`; reserve
+`export.source_event_paths` for `.datalox/events/...` provenance events.
+
 ## Turn Recording
 
 `AgentTurnV1` is the simple capture primitive. It records one completed turn with

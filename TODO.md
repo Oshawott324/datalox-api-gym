@@ -703,6 +703,129 @@ That doc now holds:
   - `npm run check` passes
   - `git diff --check` passes
 
+- [x] Step 8.10: tighten `agent_task_trajectory.v1` readiness for code-heavy agent-company rows.
+  Intent:
+  - make mixed-domain trajectory rows useful for agent behavior distillation, not just high-level execution summaries
+  - prevent code-heavy tasks from passing buyer-facing `quality: "use"` export when they only contain command results and prose source references
+  - keep raw sessions as audit/source material, while requiring canonical rows to carry enough standalone code evidence for training/eval derivation
+  Problem signal:
+  - observed real row:
+    - `.datalox/events/agent-task-trajectories/2026-05-08T03-58-36-334Z--agent-task-trajectory-traj-flowcyto-ship-ready-alpha-milestone6-20260508.json`
+  - the row changed many code artifacts but had no `code_change` evidence block
+  - `source_reference` entries pointed to local code files but their `excerpt` values were prose summaries, not exact code snippets
+  - `export.source_event_paths` mixed source file paths with `.datalox/events/...` event paths
+  - a buyer cannot understand or train on the actual code edits without opening the repo or raw session
+  Data product rule:
+  - raw sessions may contain `sed`, `apply_patch`, diffs, and tool outputs, but they are noisy source/audit material
+  - `agent_task_trajectory.v1` is the canonical compact row and must be self-contained enough for buyer-specific exports
+  - code-heavy rows must use `code_change` for code evidence; `source_reference` to a code file is provenance only
+  - `export.source_event_paths` must contain event paths only; source files belong in `context.source_paths` and `final.changed_artifacts`
+  Implementation:
+  - update `src/core/agentTaskTrajectoryExport.ts`
+    - add a helper such as `rowAppearsCodeHeavy(row)`:
+      - true when `task.domains[]` includes coding-like domains (`coding`, `typescript`, `javascript`, `python`, `rust`, `mcp_apps`, `worker_threads`, `packaging`, etc.)
+      - true when `final.changed_artifacts`, `context.source_paths`, or trajectory artifacts include code/test/package paths or extensions (`.ts`, `.tsx`, `.js`, `.py`, `.rs`, `package.json`, `src/`, `tests/`)
+    - add `hasConcreteCodeChangeEvidence(row)`:
+      - true only when at least one `code_change` block has exact `before`+`after` snippets or exact `patch`
+      - reject prose-only, placeholder, path-only, or source-reference-only code evidence using the existing readiness helpers
+    - in `gradeAgentTaskTrajectoryRow`, when `rowAppearsCodeHeavy(row)` and no concrete code change evidence exists, add blocking issue:
+      - `code_heavy_row_missing_code_change`
+      - path: `evidence_blocks`
+      - repair action: add compact exact `code_change` before/after snippets or patch hunks for the key edit
+    - validate `export.source_event_paths` semantics during readiness:
+      - add `export_source_event_path_not_event` when a path does not start with `.datalox/events/`
+      - do not fail schema validation for old rows; fail buyer-facing readiness/export `--quality use`
+    - validate `source_reference` to local code files:
+      - if `source_kind: "local_file"` and `source_path` looks like code/test/package path, the block cannot satisfy code evidence
+      - if its `excerpt` is prose-only for a code file, add a readiness issue such as `source_reference_prose_only_code_excerpt`
+  - update `src/core/agentTaskTrajectorySchema.ts` only if needed:
+    - keep schema permissive enough to record weak rows as `needs_review`
+    - do not add arbitrary fields or `context.code_snippets`
+  - update `docs/agent-task-trajectory-schema.md`
+    - state that code-heavy rows require at least one `code_change` evidence block before `quality: "use"` export
+    - state that local code `source_reference` blocks are provenance/context and do not replace `code_change`
+    - state that `export.source_event_paths` must only list `.datalox/events/...` provenance events
+    - add a bad/good mini example for a local code source reference versus a real `code_change`
+  - update `DATALOX.md` and `README.md`
+    - tell agents recording mixed-domain implementation work to include exact code snippets/patches in `code_change`
+    - tell agents to put source file paths in `context.source_paths` / `changed_artifacts`, not `export.source_event_paths`
+  - update tests in `tests/agentTaskTrajectoryExport.test.ts`
+    - fixture matching the FlowCyto failure mode:
+      - code-heavy domains + many `src/`/`tests/` changed artifacts
+      - only `command_result` + prose `source_reference`
+      - `curation.quality: "use"`
+      - export `--quality use` rejects with `readiness_filter` and issue code `code_heavy_row_missing_code_change`
+    - fixture with exact `code_change` before/after plus command result passes `--quality use`
+    - fixture with `export.source_event_paths` containing `src/core/preview.ts` rejects buyer-ready export with `export_source_event_path_not_event`
+    - fixture with `export.source_event_paths` containing only `.datalox/events/...` passes when other evidence is sufficient
+    - fixture proves local code `source_reference` prose excerpt does not count as code evidence
+  Pass criteria:
+  - code-heavy agent task rows without `code_change` evidence cannot export under `export-agent-task-trajectories --quality use`
+  - code-heavy rows with exact `code_change` evidence and command verification can export under `--quality use`
+  - source references to code files do not satisfy code evidence
+  - `export.source_event_paths` rejects source files and accepts only `.datalox/events/...` paths for buyer-ready export
+  - weak rows remain recordable as `needs_review`; they are not lost
+  - focused tests pass:
+    - `npx vitest run tests/agentTaskTrajectoryExport.test.ts tests/agentTaskTrajectorySchema.test.ts`
+  - existing debugging trajectory tests still pass:
+    - `npx vitest run tests/trajectoryExport.test.ts tests/trajectorySchema.test.ts`
+  - `npm run check` passes
+  - `git diff --check` passes
+
+- [ ] Step 8.11: stop shipping `agent-wiki/` as a first-class trajectory-product artifact.
+  Intent:
+  - make the trajectory-product branch install cleanly without presenting `agent-wiki/` as the active product store
+  - keep old repos readable, but stop teaching fresh agents to write product data or primary guidance through `agent-wiki/`
+  - reduce confusion between legacy note/skill promotion and the current `.datalox/events/` session/trajectory product loop
+  Product boundary:
+  - `.datalox/events/` is the product data store
+  - `.datalox/events/agent-turns/` is for turn capture
+  - `.datalox/events/trajectory-rows/` is for `debugging_trajectory.v1`
+  - `.datalox/events/agent-task-trajectories/` is for `agent_task_trajectory.v1`
+  - `agent-wiki/events/` is legacy read-only compatibility only
+  - useful stable agent guidance should live in `DATALOX.md`, `AGENTS.md`, `docs/`, and `skills/`, not a shipped wiki corpus
+  Implementation:
+  - update install/adoption behavior:
+    - inspect and patch `bin/adopt-host-repo.sh`
+    - inspect and patch `src/core/packCore.ts`
+    - inspect and patch `scripts/lib/agent-pack.mjs` only where fresh adoption copies or creates wiki artifacts
+    - fresh trajectory-product adoption should not create or copy `agent-wiki/events/`
+    - fresh trajectory-product adoption should not copy the seed `agent-wiki/` corpus unless explicitly requested by a legacy mode flag
+  - keep legacy read compatibility:
+    - `export-trajectories` may continue to read legacy `agent-wiki/events/` for old debugging rows
+    - maintenance/legacy commands may read existing `agent-wiki/notes/` only when the repo already has them or when legacy mode is explicit
+    - do not delete a host repo's existing `agent-wiki/` during adoption
+  - update command names and help text if needed:
+    - make legacy write surfaces visibly legacy, for example `record-legacy-event`
+    - ensure `datalox record --help`, `status`, and other introspection commands are read-only
+    - keep product writes explicit through `record-trajectory`, `record-agent-task-trajectory`, and future `record-agent-turn`
+  - update docs:
+    - `README.md`
+    - `DATALOX.md`
+    - `AGENTS.md`
+    - `docs/product-definition.md`
+    - `docs/task-orchestration.md`
+    - state that fresh product installs do not ship `agent-wiki/` as the active store
+    - state that legacy repos may still have `agent-wiki/` and agents may read it for compatibility
+  - update tests:
+    - adoption/bootstrap test: fresh trajectory-product install creates `.datalox/` and expected instruction surfaces, but does not create `agent-wiki/events/`
+    - adoption/bootstrap test: fresh product install does not copy seed `agent-wiki/` corpus by default
+    - legacy compatibility test: existing `agent-wiki/events/` debugging rows remain readable by `export-trajectories`
+    - help/status test: `datalox record --help` or equivalent help path does not write events
+    - product recording test: `record-trajectory` and `record-agent-task-trajectory` still write only under `.datalox/events/...`
+  Pass criteria:
+  - a fresh adopted repo for the trajectory-product branch has no generated `agent-wiki/events/`
+  - fresh adoption does not ship the seed `agent-wiki/` corpus by default
+  - existing host `agent-wiki/` content is preserved and readable, not deleted
+  - legacy `agent-wiki/events/` rows can still be exported when present
+  - no help/status/introspection command writes a legacy event
+  - product writes continue to use only `.datalox/events/`
+  - focused tests pass:
+    - adoption/bootstrap tests touched by the install behavior
+    - `npx vitest run tests/trajectoryExport.test.ts tests/agentTaskTrajectoryExport.test.ts`
+  - `npm run check` passes
+  - `git diff --check` passes
+
 
 ## Refactor `agent-pack.mjs`
 

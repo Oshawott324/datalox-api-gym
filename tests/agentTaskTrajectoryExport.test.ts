@@ -172,6 +172,104 @@ function makeSourceOnlyRow(id: string) {
   };
 }
 
+function makeFlowCytoStyleWeakCodeHeavyRow(id: string) {
+  return {
+    schema_version: "agent_task_trajectory.v1",
+    id,
+    created_at: "2026-05-08T03:57:43.000Z",
+    task: {
+      prompt: "Implement the next shipping milestone for the flow cytometry MCP.",
+      domains: [
+        "flow_cytometry",
+        "typescript",
+        "mcp_apps",
+        "worker_threads",
+        "packaging",
+      ],
+      workflows: ["ship_ready_alpha", "worker_cached_preview"],
+      environment: "TypeScript, Vitest, Playwright",
+    },
+    context: {
+      problem: "Milestone required worker-backed previews, package hardening, and MCP app host coverage.",
+      source_paths: [
+        "/Users/example/flowcyto/src/core/preview.ts",
+        "/Users/example/flowcyto/src/core/preview-worker.ts",
+        "/Users/example/flowcyto/tests/core.test.ts",
+        "/Users/example/flowcyto/package.json",
+      ],
+    },
+    trajectory: [
+      {
+        role: "tool",
+        content: "Implemented worker-backed cached previews and tests.",
+        tool: "apply_patch",
+        artifacts: ["src/core/preview.ts", "tests/core.test.ts"],
+      },
+      {
+        role: "tool",
+        content: "Ran alpha verification successfully.",
+        tool: "exec_command",
+        command: "npm run verify:alpha",
+        exit_code: 0,
+      },
+    ],
+    evidence_blocks: [
+      {
+        type: "command_result",
+        command: "npm run verify:alpha",
+        exit_code: 0,
+        result_summary: "verify:alpha passed: npm run check, npm test, doctor, and pack dry-run completed successfully.",
+      },
+      {
+        type: "source_reference",
+        source_kind: "local_file",
+        title: "Worker cached preview path",
+        source_path: "/Users/example/flowcyto/src/core/preview.ts",
+        excerpt: "getEventPreview computes preview cache keys, reads/writes preview artifacts, and runs preview generation in preview-worker.js.",
+        relevance: "This implements the large-file responsiveness boundary.",
+      },
+    ],
+    final: {
+      summary: "Implemented worker-backed cached previews, host coverage, and alpha package hardening.",
+      changed_artifacts: [
+        "src/core/preview.ts",
+        "src/core/preview-worker.ts",
+        "tests/core.test.ts",
+        "package.json",
+      ],
+    },
+    outcome: {
+      label: "success",
+      verification: "passed",
+      command: "npm run verify:alpha",
+      evidence: "verify:alpha passed.",
+    },
+    export: {
+      allowed: true,
+      redaction: "none_needed",
+      source_event_paths: [
+        "src/core/preview.ts",
+        ".datalox/events/agent-task-trajectories/example.json",
+      ],
+    },
+    curation: {
+      quality: "use",
+      tags: ["flow-cytometry-mcp", "typescript"],
+    },
+  };
+}
+
+function makeRowWithSourceEventPaths(id: string, sourceEventPaths: string[]) {
+  return {
+    ...makeRow(id),
+    export: {
+      allowed: true,
+      redaction: "none_needed",
+      source_event_paths: sourceEventPaths,
+    },
+  };
+}
+
 function runBuiltCli(cwd: string, args: string[]) {
   return spawnSync("node", [builtCliPath, ...args], {
     cwd,
@@ -364,6 +462,105 @@ describe("agent_task_trajectory.v1 recording and export", () => {
       }),
     ]);
     expect(output).toBe("");
+  });
+
+  it("excludes code-heavy rows without code_change evidence from quality-use export", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-code-heavy-"));
+    tempDirs.push(tempDir);
+
+    await recordAgentTaskTrajectory({
+      repoPath: tempDir,
+      agentTaskTrajectory: makeFlowCytoStyleWeakCodeHeavyRow("flowcyto-weak"),
+      now: new Date("2026-05-08T03:58:36.334Z"),
+    });
+
+    const report = await exportAgentTaskTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use.jsonl",
+      quality: "use",
+    });
+
+    expect(report.exportedRows).toBe(0);
+    expect(report.rejectedRows).toEqual([
+      expect.objectContaining({
+        trajectoryId: "flowcyto-weak",
+        reason: "readiness_filter",
+        detail: expect.objectContaining({
+          issue_codes: expect.arrayContaining([
+            "code_heavy_row_missing_code_change",
+            "source_reference_prose_only_code_excerpt",
+            "export_source_event_path_not_event",
+          ]),
+        }),
+      }),
+    ]);
+  });
+
+  it("exports code-heavy rows with exact code_change evidence and event-only source paths", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-code-heavy-use-"));
+    tempDirs.push(tempDir);
+
+    await recordAgentTaskTrajectory({
+      repoPath: tempDir,
+      agentTaskTrajectory: makeRowWithSourceEventPaths("code-heavy-use", [
+        ".datalox/events/agent-task-trajectories/source-event.json",
+      ]),
+      now: new Date("2026-05-08T04:00:00.000Z"),
+    });
+
+    const report = await exportAgentTaskTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use.jsonl",
+      quality: "use",
+    });
+    const lines = (await readFile(path.join(tempDir, "out", "use.jsonl"), "utf8")).trim().split("\n");
+
+    expect(report.exportedRows).toBe(1);
+    expect(JSON.parse(lines[0]).id).toBe("code-heavy-use");
+  });
+
+  it("excludes source file paths from export.source_event_paths in buyer-ready export", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-source-event-path-"));
+    tempDirs.push(tempDir);
+
+    await recordAgentTaskTrajectory({
+      repoPath: tempDir,
+      agentTaskTrajectory: makeRowWithSourceEventPaths("bad-source-event-path", [
+        "src/core/preview.ts",
+      ]),
+      now: new Date("2026-05-08T04:01:00.000Z"),
+    });
+
+    const report = await exportAgentTaskTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use.jsonl",
+      quality: "use",
+    });
+
+    expect(report.exportedRows).toBe(0);
+    expect(report.rejectedRows).toEqual([
+      expect.objectContaining({
+        trajectoryId: "bad-source-event-path",
+        reason: "readiness_filter",
+        detail: expect.objectContaining({
+          issue_codes: expect.arrayContaining(["export_source_event_path_not_event"]),
+        }),
+      }),
+    ]);
+  });
+
+  it("does not count local code source_reference prose as code evidence", () => {
+    const grade = gradeAgentTaskTrajectoryRow(
+      parseAgentTaskTrajectoryV1(makeFlowCytoStyleWeakCodeHeavyRow("source-reference-not-code-evidence")),
+    );
+
+    expect(grade.deterministic_passed).toBe(false);
+    expect(grade.blocking_issues.map((issue) => issue.code)).toEqual(
+      expect.arrayContaining([
+        "code_heavy_row_missing_code_change",
+        "source_reference_prose_only_code_excerpt",
+      ]),
+    );
   });
 
   it("fails export on duplicate agent task trajectory ids", async () => {
