@@ -145,6 +145,41 @@ describe("agent_task_trajectory.v1 schema", () => {
     expect(parsed.final.changed_artifacts).toEqual(["docs/viability-gate.md"]);
   });
 
+  it("accepts exact code_change patch evidence without before/after snippets", () => {
+    const parsed = parseAgentTaskTrajectoryV1({
+      ...makeMixedRow("patch-evidence"),
+      evidence_blocks: [
+        {
+          type: "code_change",
+          path: "PyMolAI/modules/protein_mcp/apply_plan.py",
+          language: "python",
+          symbol: "build_apply_plan",
+          patch: [
+            "+def build_apply_plan(workspace, previous_workspace, active_view_id):",
+            "+    current_view = _active_view(workspace, active_view_id)",
+            "+    previous_view = _active_view(previous_workspace, current_view.id if current_view else active_view_id)",
+            "+    actions = []",
+            "+    actions.extend(_object_actions(workspace, previous_workspace, current_view, previous_view))",
+            "+    return {\"actions\": actions}",
+          ].join("\n"),
+          reason: "Add a pure entry point that compares workspace state and returns ordered scene actions.",
+        },
+        {
+          type: "command_result",
+          command: "pytest testing/protein_mcp/test_apply_plan.py -q",
+          exit_code: 0,
+          result_summary: "Focused apply-plan tests passed: 8 tests, 0 failed.",
+        },
+      ],
+    });
+
+    expect(parsed.evidence_blocks[0]).toMatchObject({
+      type: "code_change",
+      patch: expect.stringContaining("+def build_apply_plan"),
+    });
+    expect(isSellableAgentTaskTrajectoryRow(parsed)).toBe(true);
+  });
+
   it("rejects empty evidence blocks", () => {
     expect(() => parseAgentTaskTrajectoryV1({
       ...makeMixedRow("empty-evidence"),

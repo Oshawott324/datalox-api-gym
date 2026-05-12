@@ -22,8 +22,8 @@ Read:
 3. `docs/product-definition.md`
 4. `docs/agent-turn-schema.md` when touching session capture, session export, or data-sale fields
 5. `docs/trajectory-dataset-schema.md` when touching trajectory export or data-sale fields
-6. selected skill in `skills/` only when current host guidance requires it
-7. linked notes in `agent-wiki/notes/` only when current host guidance requires it
+6. selected skill in `skills/` only when this repo has explicit legacy guidance
+7. linked notes in `agent-wiki/notes/` only when this repo already has them
 
 Route new product behavior through `.datalox/events/` captured `agent_turn.v1` events first, assemble sessions, then derive trajectory rows when useful.
 Read `agent-wiki/events/` only as the legacy event store.

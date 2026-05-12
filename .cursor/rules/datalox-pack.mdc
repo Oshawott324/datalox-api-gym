@@ -1,11 +1,11 @@
 ---
-description: Datalox pack rules for Cursor. Use skills and linked notes, record grounded events, and keep trajectory export aligned with the schema.
+description: Datalox pack rules for Cursor. Keep product events under .datalox and trajectory export aligned with the schema.
 globs:
-  - "skills/**/SKILL.md"
-  - "agent-wiki/**/*.md"
-  - "agent-wiki/events/**/*.json"
+  - ".datalox/**/*.json"
   - "docs/product-definition.md"
+  - "docs/agent-turn-schema.md"
   - "docs/trajectory-dataset-schema.md"
+  - "docs/agent-task-trajectory-schema.md"
   - "DATALOX.md"
   - "AGENTS.md"
 alwaysApply: true
@@ -27,10 +27,10 @@ Product boundary:
 On each loop:
 
 1. read product/schema docs when trajectory export is involved
-2. record meaningful grounded events in `agent-wiki/events/`
-3. use `skills/` and linked notes only where current host guidance still requires them
+2. record new product events under `.datalox/events/`
+3. use `skills/` and linked notes only when this repo has explicit legacy guidance
 4. route new product behavior through structured events and trajectory rows
-5. refresh `agent-wiki/index.md`, `agent-wiki/log.md`, `agent-wiki/lint.md`, and `agent-wiki/hot.md`
+5. leave `agent-wiki/` alone unless this repo already has legacy compatibility content
 
 When touching trajectory recording, export gates, redaction states, or dataset fields, read `docs/trajectory-dataset-schema.md` first.
 

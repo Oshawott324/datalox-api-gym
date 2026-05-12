@@ -32,11 +32,11 @@ On each loop:
 3. read `docs/product-definition.md` when it exists
 4. read `docs/agent-turn-schema.md` when the work touches session capture, session export, or data sale
 5. read `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, trajectory export, or data sale
-6. read `agent-wiki/hot.md` if it exists
-7. detect the best matching skill in `skills/`
-8. read the linked notes in that skill's `metadata.datalox.note_paths`
+6. read `agent-wiki/hot.md` only if this repo already has legacy wiki content
+7. detect a matching skill in `skills/` only when this repo has legacy/local skills
+8. read linked notes in `metadata.datalox.note_paths` only when those files exist
 9. follow `related` and `sources` only when the linked note says they matter
-10. act from the skill body plus the linked notes
+10. act from the repo docs, and from the skill body plus linked notes only when that legacy skill path exists
 
 Host repo files override seed-pack files when both define the same knowledge.
 
@@ -49,18 +49,13 @@ The main repo-local data surfaces are:
 - `.datalox/events/agent-task-trajectories/`
 - `.datalox/session-candidates/`
 - `.datalox/approvals/`
-- `agent-wiki/events/`
 - `docs/agent-turn-schema.md`
 - `docs/trajectory-dataset-schema.md`
 - `docs/agent-task-trajectory-schema.md`
-- `agent-wiki/index.md`
-- `agent-wiki/log.md`
-- `agent-wiki/lint.md`
-- `agent-wiki/hot.md`
 
 Use `.datalox/events/` for new product capture data. `agent_turn.v1` events belong under `.datalox/events/agent-turns/`; `debugging_trajectory.v1` row events belong under `.datalox/events/trajectory-rows/`; `agent_task_trajectory.v1` row events belong under `.datalox/events/agent-task-trajectories/`.
-Read `agent-wiki/events/` as the legacy event store only. Keep it readable for old traces and legacy note/skill maintenance, but do not use it as the future product store.
-Use `skills/` and `agent-wiki/notes/` only as legacy/internal host-guidance surfaces while migration is in progress.
+Fresh product adoption does not create or copy `agent-wiki/` or `skills/` by default. Read `agent-wiki/events/` as a legacy event store only when an older repo already has it, or when adoption was run with `--include-legacy-guidance`. Keep it readable for old traces and legacy note/skill maintenance, but do not use it as the future product store.
+Treat `skills/` and `agent-wiki/notes/` as legacy/internal support only when present.
 
 Legacy folders such as `patterns/`, `sources/`, `concepts/`, `comparisons/`, and `questions/` may still exist in older repos. Read them when present, but do not add new product behavior to those folders.
 
@@ -206,9 +201,11 @@ Lint checks:
 
 Run lint after patching local knowledge.
 
-## Web Capture
+## Legacy Web Capture
 
 Use web capture when a live page should become repo-local design knowledge.
+This is legacy/internal guidance capture; fresh product adoption does not create
+the `agent-wiki/` tree unless legacy compatibility is explicitly requested.
 
 Commands:
 
@@ -230,9 +227,11 @@ Treat screenshots and raw CSS variables as evidence.
 Treat semantic design tokens as the reusable artifact.
 Treat Tailwind output as derived from those tokens, not the source of truth.
 
-## PDF Capture
+## Legacy PDF Capture
 
 Use PDF capture when a binary document should become repo-local knowledge.
+This is legacy/internal guidance capture; fresh product adoption does not create
+the `agent-wiki/` tree unless legacy compatibility is explicitly requested.
 
 When a wrapped host prompt references a concrete PDF file path, capture that PDF into `agent-wiki/notes/pdf/` before falling back to generic repo-context skill matching.
 
@@ -335,8 +334,14 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp
-cd datalox-trajectory-mcp
+PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+mkdir -p "$(dirname "$PACK_REPO")"
+if [ -d "$PACK_REPO/.git" ]; then
+  git -C "$PACK_REPO" pull --ff-only
+else
+  git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO"
+fi
+cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
@@ -345,8 +350,9 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 Source and target roles:
 
 - `https://github.com/Complexity-LLC/datalox-pack.git` is the current public source repo.
-- `datalox-trajectory-mcp` is the local source clone name and owns source-only scripts such as `bin/adopt-host-repo.sh`.
-- `$TARGET_REPO` is the user's current project and receives `.datalox/install.json`, instruction surfaces, core skills, and notes.
+- `~/.datalox/cache/datalox-trajectory-mcp` is the local source clone and owns source-only scripts such as `bin/adopt-host-repo.sh`.
+- Keep the source clone outside `$TARGET_REPO` so source-only folders such as `agent-wiki/` do not appear in the managed project.
+- `$TARGET_REPO` is the user's current project and receives `.datalox/install.json` plus instruction surfaces by default.
 - If a repo claims to be the source pack but lacks `bin/adopt-host-repo.sh`, clone a fresh source pack.
 
 Host-specific setup:
@@ -365,13 +371,15 @@ After setup, the user should keep using the host normally:
 
 The installed shims infer the repo from the current working directory and default post-run capture to `trajectory` mode. In that mode the wrapper records only an explicit `debugging_trajectory.v1` row supplied by the agent through `DATALOX_TRAJECTORY_ROW_FILE` or `DATALOX_TRAJECTORY_ROW`; it does not create legacy trace receipts from prose. Use `--post-run-mode review` only for explicit legacy guidance maintenance.
 
-Claude native skills are linked at the canonical personal-skill paths:
+Legacy Claude native skills are linked only when setup is run with
+`--include-legacy-guidance`. When enabled, they use the canonical personal-skill
+paths:
 
 - `~/.claude/skills/<skill-name>/SKILL.md`
 
 Restart Claude Code only if it was already running before `~/.claude/skills` existed, or if the host does not pick up new skill links live.
 
-The Claude hook is sidecar post-run automation. It records or promotes after a turn; it does not prove Claude used the right skill before acting. Keep `CLAUDE.md`, the wrapper/shim paths, MCP tools, and repo-local `skills/` as the robust fallback surfaces.
+The Claude hook is sidecar post-run automation. It records or promotes after a turn; it does not prove Claude used the right skill before acting. Keep `CLAUDE.md`, the wrapper/shim paths, MCP tools, and repo-local docs as the robust fallback surfaces.
 
 Only run machine-level setup when the user allows writes under `HOME` such as `~/.local/bin`, `~/.claude`, or `~/.codex`.
 

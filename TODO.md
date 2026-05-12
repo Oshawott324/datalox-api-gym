@@ -771,8 +771,14 @@ That doc now holds:
     - `npx vitest run tests/trajectoryExport.test.ts tests/trajectorySchema.test.ts`
   - `npm run check` passes
   - `git diff --check` passes
+  Follow-up fix:
+  - 2026-05-11: record-time normalization now also applies to `agent_task_trajectory.v1`.
+    If a code-heavy mixed-domain row claims `curation.quality: "use"` but lacks
+    concrete `code_change` evidence, `record-agent-task-trajectory` /
+    `record_agent_task_trajectory` stores it as `needs_review` with downgrade
+    metadata and returns `qualityDowngraded: true`.
 
-- [ ] Step 8.11: stop shipping `agent-wiki/` as a first-class trajectory-product artifact.
+- [x] Step 8.11: stop shipping `agent-wiki/` as a first-class trajectory-product artifact.
   Intent:
   - make the trajectory-product branch install cleanly without presenting `agent-wiki/` as the active product store
   - keep old repos readable, but stop teaching fresh agents to write product data or primary guidance through `agent-wiki/`
@@ -783,7 +789,7 @@ That doc now holds:
   - `.datalox/events/trajectory-rows/` is for `debugging_trajectory.v1`
   - `.datalox/events/agent-task-trajectories/` is for `agent_task_trajectory.v1`
   - `agent-wiki/events/` is legacy read-only compatibility only
-  - useful stable agent guidance should live in `DATALOX.md`, `AGENTS.md`, `docs/`, and `skills/`, not a shipped wiki corpus
+  - useful stable agent guidance should live in `DATALOX.md`, `AGENTS.md`, and `docs/`; `skills/` is legacy/local guidance unless explicitly requested
   Implementation:
   - update install/adoption behavior:
     - inspect and patch `bin/adopt-host-repo.sh`

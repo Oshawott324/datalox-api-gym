@@ -21,9 +21,9 @@ Product boundary:
 Current legacy guidance behavior may still be:
 
 1. detect the relevant skill
-2. read `skills/<name>/SKILL.md`
-3. read the linked `metadata.datalox.note_paths`
-4. act from the skill plus its linked notes
+2. read `skills/<name>/SKILL.md` only when the repo has legacy/local skills
+3. read the linked `metadata.datalox.note_paths` only when those files exist
+4. act from the skill plus its linked notes only for explicit legacy guidance work
 
 ## Main Surfaces
 
@@ -31,19 +31,15 @@ Current legacy guidance behavior may still be:
 .datalox/
   manifest.json
   config.json
-skills/
-agent-wiki/
-  notes/
-  index.md
-  log.md
-  lint.md
-  hot.md
-.datalox/
   events/
     agent-turns/
     trajectory-rows/
+    agent-task-trajectories/
   session-candidates/
   approvals/
+docs/
+DATALOX.md
+AGENTS.md
 ```
 
 ## Read Order
@@ -53,9 +49,10 @@ agent-wiki/
 3. `docs/product-definition.md`
 4. `docs/agent-turn-schema.md` when touching session capture, session export, or data sale
 5. `docs/trajectory-dataset-schema.md` when touching trajectory recording, trajectory export, or data sale
-6. `agent-wiki/hot.md`
-7. selected `skills/<name>/SKILL.md`
-8. linked `metadata.datalox.note_paths`
+6. `docs/agent-task-trajectory-schema.md` when touching mixed-domain task trajectories
+7. `agent-wiki/hot.md` only when this repo already has legacy wiki content
+8. selected `skills/<name>/SKILL.md` only when this repo has legacy/local skills
+9. linked `metadata.datalox.note_paths` only when those files exist
 
 ## Write Rule
 
@@ -63,10 +60,11 @@ New product writes should go to:
 
 - `.datalox/events/agent-turns/`
 - `.datalox/events/trajectory-rows/`
+- `.datalox/events/agent-task-trajectories/`
 - `.datalox/session-candidates/`
 - `.datalox/approvals/`
 - `agent_turn.v1` event payloads that follow [agent-turn-schema.md](./agent-turn-schema.md)
-- trajectory JSONL export artifacts that follow `debugging_trajectory.v1`
+- trajectory JSONL export artifacts that follow `debugging_trajectory.v1` or `agent_task_trajectory.v1`
 
 `.datalox/events/` is the source product evidence surface. Turns can later be assembled into sessions, reviewed, anonymized, shared, or used to derive compact trajectory rows.
 
@@ -75,6 +73,7 @@ New product writes should go to:
 Legacy skill/note writes may still happen for current host guidance, but new product work should not depend on them.
 
 Legacy supporting folders may still be readable during migration, but they are no longer the primary surface.
+Fresh product adoption does not create or copy `agent-wiki/` or `skills/` unless legacy compatibility is explicitly requested.
 
 ## Source Kinds
 
@@ -154,22 +153,28 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp
-cd datalox-trajectory-mcp
+PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+mkdir -p "$(dirname "$PACK_REPO")"
+if [ -d "$PACK_REPO/.git" ]; then
+  git -C "$PACK_REPO" pull --ff-only
+else
+  git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO"
+fi
+cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
-`https://github.com/Complexity-LLC/datalox-pack.git` is the current public GitHub source repo. `datalox-trajectory-mcp` is the local checkout/package name. Do not use `https://github.com/Complexity-LLC/datalox-trajectory-mcp.git` until that GitHub repo exists.
+`https://github.com/Complexity-LLC/datalox-pack.git` is the current public GitHub source repo. `~/.datalox/cache/datalox-trajectory-mcp` is the local checkout/package path and stays outside the target project, so source-only folders such as `agent-wiki/` do not appear in the managed repo. Do not use `https://github.com/Complexity-LLC/datalox-trajectory-mcp.git` until that GitHub repo exists.
 
 The source clone owns `bin/adopt-host-repo.sh`. The adopted host repo owns host-local shims such as `bin/setup-multi-agent.sh`, `bin/install-default-host-integrations.sh`, and `bin/disable-default-host-integrations.sh`.
 
 After setup, the user should keep using `codex` or `claude` normally from the target repo.
 
-Claude native skills install at `~/.claude/skills/<skill-name>/SKILL.md`. Restart Claude Code only if it was already running before `~/.claude/skills` existed, or if the host does not pick up the new links live.
+Claude native skills are legacy optional and install at `~/.claude/skills/<skill-name>/SKILL.md` only when setup is run with `--include-legacy-guidance`. Restart Claude Code only if it was already running before `~/.claude/skills` existed, or if the host does not pick up the new links live.
 
-The Claude hook is sidecar post-run automation. `CLAUDE.md`, wrapper/shim paths, MCP tools, and repo-local `skills/` remain the fallback when native skills are not surfaced.
+The Claude hook is sidecar post-run automation. `CLAUDE.md`, wrapper/shim paths, MCP tools, and repo-local docs remain the fallback when native skills are not surfaced.
 
 ## Stop
 

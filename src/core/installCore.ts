@@ -16,6 +16,7 @@ export type InstallHost = "all" | "codex" | "claude";
 export interface InstallHostIntegrationsInput {
   host?: InstallHost;
   packRootPath: string;
+  includeLegacySkills?: boolean;
 }
 
 export interface InstallLinkSummary {
@@ -1293,7 +1294,9 @@ export async function installHostIntegrations(input: InstallHostIntegrationsInpu
   const localBin = path.join(os.homedir(), ".local", "bin");
   await mkdir(localBin, { recursive: true });
   const packCachePath = await ensureLocalPackCache(packRootPath);
-  const skillLinks = await installSkillLinks(host, packRootPath);
+  const skillLinks = input.includeLegacySkills === true
+    ? await installSkillLinks(host, packRootPath)
+    : { linked: [], skipped: [] };
 
   const selected = new Set(selectedHosts(host));
   const codexShimPath = path.join(localBin, "codex");

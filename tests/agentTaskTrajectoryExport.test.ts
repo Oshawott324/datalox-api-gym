@@ -259,6 +259,67 @@ function makeFlowCytoStyleWeakCodeHeavyRow(id: string) {
   };
 }
 
+function makeRestApiStyleSourceOnlyCodeHeavyRow(id: string) {
+  return {
+    ...makeRow(id),
+    task: {
+      prompt: "Implement Phase 3 REST API until pass.",
+      domains: [
+        "typescript_monorepo",
+        "fastify",
+        "rest_api",
+        "sqlite",
+        "openapi",
+      ],
+      workflows: ["phase_3_rest_api"],
+      environment: "TypeScript monorepo, Fastify, SQLite",
+    },
+    context: {
+      problem: "The API package needed real routes and tests.",
+      source_paths: [
+        "apps/api/src/app.ts",
+        "apps/api/src/routes/posts.ts",
+        "apps/api/src/app.test.ts",
+      ],
+    },
+    evidence_blocks: [
+      {
+        type: "command_result",
+        command: "pnpm build && pnpm test && pnpm lint && pnpm typecheck",
+        exit_code: 0,
+        result_summary: "Workspace build, tests, lint, and typecheck passed.",
+      },
+      {
+        type: "source_reference",
+        source_kind: "local_file",
+        title: "API integration tests",
+        source_path: "apps/api/src/app.test.ts",
+        excerpt: "Tests use fake providers and temp SQLite databases to verify connection redaction and idempotency without real provider calls.",
+        relevance: "Grounds the no-real-provider and temp-SQLite pass criteria.",
+      },
+    ],
+    final: {
+      summary: "Phase 3 REST API is implemented and passing.",
+      changed_artifacts: [
+        "apps/api/src/app.ts",
+        "apps/api/src/routes/posts.ts",
+        "apps/api/src/app.test.ts",
+      ],
+    },
+    export: {
+      allowed: true,
+      redaction: "none_needed",
+      source_event_paths: [
+        ".datalox/events/agent-task-trajectories/rest-api-source.json",
+      ],
+    },
+    curation: {
+      quality: "use",
+      tags: ["rest-api", "fastify"],
+    },
+  };
+}
+
 function makeRowWithSourceEventPaths(id: string, sourceEventPaths: string[]) {
   return {
     ...makeRow(id),
@@ -267,6 +328,40 @@ function makeRowWithSourceEventPaths(id: string, sourceEventPaths: string[]) {
       redaction: "none_needed",
       source_event_paths: sourceEventPaths,
     },
+  };
+}
+
+function makePatchEvidenceRow(id: string) {
+  return {
+    ...makeRowWithSourceEventPaths(id, [
+      ".datalox/events/agent-task-trajectories/source-event.json",
+    ]),
+    evidence_blocks: [
+      {
+        type: "code_change",
+        path: "PyMolAI/modules/protein_mcp/apply_plan.py",
+        language: "python",
+        symbol: "build_apply_plan",
+        patch: [
+          "+def build_apply_plan(workspace, previous_workspace, active_view_id):",
+          "+    current_view = _active_view(workspace, active_view_id)",
+          "+    previous_view = _active_view(previous_workspace, current_view.id if current_view else active_view_id)",
+          "+    current_names = _build_scene_names(workspace)",
+          "+    previous_names = _build_scene_names(previous_workspace) if previous_workspace else _empty_scene_names()",
+          "+    actions = []",
+          "+    actions.extend(_object_actions(workspace, previous_workspace, current_view, previous_view, current_names, previous_names))",
+          "+    return {\"actions\": actions}",
+        ].join("\n"),
+        reason: "Add a pure entry point that compares current and previous workspace state and returns ordered scene actions.",
+      },
+      {
+        type: "command_result",
+        command: "pytest testing/protein_mcp/test_apply_plan.py -q",
+        exit_code: 0,
+        result_summary: "Milestone focused apply-plan tests passed: 8 tests, 0 failed.",
+        evidence: "8 passed in 0.14s",
+      },
+    ],
   };
 }
 
@@ -325,12 +420,46 @@ describe("agent_task_trajectory.v1 recording and export", () => {
       blockedReasons: [],
       readinessQuality: "use",
       deterministicPassed: true,
+      qualityDowngraded: false,
+      qualityDowngradeIssueCodes: [],
     });
     expect(result.eventPath).toContain(`${AGENT_TASK_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
     expect(event.eventKind).toBe("agent_task_trajectory");
     expect(event.agentTaskTrajectory.schema_version).toBe("agent_task_trajectory.v1");
     expect(event.agentTaskTrajectory.export.source_event_paths).toContain(result.eventPath);
     expect(existsSync(path.join(tempDir, "agent-wiki", "events"))).toBe(false);
+  });
+
+  it("downgrades code-heavy use rows without concrete code_change evidence at record time", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-record-downgrade-"));
+    tempDirs.push(tempDir);
+
+    const result = await recordAgentTaskTrajectory({
+      repoPath: tempDir,
+      agentTaskTrajectory: makeRestApiStyleSourceOnlyCodeHeavyRow("record-weak-code-heavy"),
+      now: new Date("2026-05-08T03:58:36.334Z"),
+    });
+    const event = JSON.parse(await readFile(path.join(tempDir, result.eventPath), "utf8"));
+
+    expect(result).toMatchObject({
+      trajectoryId: "record-weak-code-heavy",
+      sellable: true,
+      readinessQuality: "needs_review",
+      deterministicPassed: false,
+      qualityDowngraded: true,
+      qualityDowngradeIssueCodes: expect.arrayContaining([
+        "code_heavy_row_missing_code_change",
+        "source_reference_prose_only_code_excerpt",
+      ]),
+    });
+    expect(event.agentTaskTrajectory.curation.quality).toBe("needs_review");
+    expect(event.agentTaskTrajectory.metadata).toMatchObject({
+      datalox_quality_downgraded_from: "use",
+      datalox_quality_downgrade_issue_codes: expect.arrayContaining([
+        "code_heavy_row_missing_code_change",
+      ]),
+      datalox_quality_downgraded_at: "2026-05-08T03:58:36.334Z",
+    });
   });
 
   it("exports sellable rows deterministically and reports blocked rows", async () => {
@@ -517,6 +646,32 @@ describe("agent_task_trajectory.v1 recording and export", () => {
 
     expect(report.exportedRows).toBe(1);
     expect(JSON.parse(lines[0]).id).toBe("code-heavy-use");
+  });
+
+  it("exports code-heavy rows that use exact patch evidence instead of before/after snippets", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-patch-use-"));
+    tempDirs.push(tempDir);
+
+    await recordAgentTaskTrajectory({
+      repoPath: tempDir,
+      agentTaskTrajectory: makePatchEvidenceRow("patch-code-heavy-use"),
+      now: new Date("2026-05-08T04:00:30.000Z"),
+    });
+
+    const grade = gradeAgentTaskTrajectoryRow(parseAgentTaskTrajectoryV1(makePatchEvidenceRow("patch-code-heavy-use")));
+    const report = await exportAgentTaskTrajectories({
+      repoPath: tempDir,
+      outputPath: "out/use.jsonl",
+      quality: "use",
+    });
+    const lines = (await readFile(path.join(tempDir, "out", "use.jsonl"), "utf8")).trim().split("\n");
+
+    expect(grade.deterministic_passed).toBe(true);
+    expect(report.exportedRows).toBe(1);
+    expect(JSON.parse(lines[0]).evidence_blocks[0]).toMatchObject({
+      type: "code_change",
+      patch: expect.stringContaining("+def build_apply_plan"),
+    });
   });
 
   it("excludes source file paths from export.source_event_paths in buyer-ready export", async () => {

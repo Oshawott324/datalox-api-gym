@@ -6,11 +6,11 @@ This repo uses a session-first data product model:
 - `agent-wiki/events/` for legacy event evidence only
 - `docs/agent-turn-schema.md` for simple per-turn capture shape
 - `docs/trajectory-dataset-schema.md` for compact derived row shape
-- `skills/` and `agent-wiki/notes/` only as legacy/internal guidance surfaces during migration
+- `docs/`, `DATALOX.md`, and `AGENTS.md` for active repo-local guidance
 
 For product work, route new behavior through captured `agent_turn.v1` events first, assemble approved sessions, then derive trajectory rows when useful.
 
-Legacy folders may still exist in older repos, but do not add new product behavior to them.
+Fresh product adoption does not create or copy `agent-wiki/` or `skills/` by default. Legacy folders may still exist in older repos, or in repos adopted with `--include-legacy-guidance`, but do not add new product behavior to them.
 
 Product boundary:
 

@@ -344,6 +344,22 @@ const packSourceArg: SharedArgSpec = {
   mcpKey: "pack_source",
 };
 
+const includeLegacyGuidanceArg: SharedArgSpec = {
+  key: "includeLegacyGuidance",
+  description: "Also install legacy skill and agent-wiki compatibility files. Fresh product installs leave them absent by default.",
+  kind: "boolean",
+  cliFlag: "include-legacy-guidance",
+  mcpKey: "include_legacy_guidance",
+};
+
+const includeLegacyWikiArg: SharedArgSpec = {
+  key: "includeLegacyWiki",
+  description: "Compatibility alias for include_legacy_guidance.",
+  kind: "boolean",
+  cliFlag: "include-legacy-wiki",
+  mcpKey: "include_legacy_wiki",
+};
+
 const hostRepoPathArg: SharedArgSpec = {
   key: "hostRepoPath",
   description: "Absolute or relative path to the host repo.",
@@ -377,7 +393,7 @@ const pathArg: SharedArgSpec = {
 
 const captureArg: SharedArgSpec = {
   key: "capture",
-  description: "Capture slug under agent-wiki/notes/web/<slug>.capture.json.",
+  description: "Legacy web-capture slug under agent-wiki/notes/web/<slug>.capture.json.",
   kind: "string",
   cliFlag: "capture",
   mcpKey: "capture",
@@ -777,11 +793,13 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
     cliCommand: "adopt",
     mcpTool: "adopt_pack",
     description: "Copy the Datalox pack into a host repo from the current repo or a git URL.",
-    args: [hostRepoPathArg, packSourceArg],
+    args: [hostRepoPathArg, packSourceArg, includeLegacyGuidanceArg, includeLegacyWikiArg],
     async run(input) {
       return adoptPack({
         hostRepoPath: maybeString(input.hostRepoPath) ?? "",
         packSource: maybeString(input.packSource),
+        includeLegacyGuidance: maybeBoolean(input.includeLegacyGuidance),
+        includeLegacyWiki: maybeBoolean(input.includeLegacyWiki),
       });
     },
   },
@@ -1135,7 +1153,7 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
   {
     cliCommand: "lint",
     mcpTool: "lint_pack",
-    description: "Lint the local Datalox pack and refresh agent-wiki/lint.md.",
+    description: "Lint the local Datalox pack and refresh legacy agent-wiki/lint.md when present.",
     args: [repoPathArg],
     async run(input) {
       return lintLocalPack({

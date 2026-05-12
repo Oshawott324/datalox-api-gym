@@ -53,7 +53,7 @@ Use this skill when changing the Datalox pack itself, its instruction surfaces, 
 ## Workflow
 
 1. Confirm the change is really about the Datalox pack and not the backend service.
-2. Read the linked notes before editing behavior or instructions.
+2. Read linked notes before editing behavior or instructions when those note files exist.
 3. Preserve the minimal loop: detect -> use -> patch -> lint.
 4. Keep Datalox additive to the agent's native skills. Do not replace or shadow built-in skill behavior.
 5. Keep writes in the host repo. Seed knowledge can be read from the pack, but generated skills and notes belong in the host repo.
@@ -63,7 +63,7 @@ Use this skill when changing the Datalox pack itself, its instruction surfaces, 
 
 - Keep skill bodies operational, not metadata-heavy.
 - Prefer plain markdown skills and notes over extra configuration layers.
-- Make the benefit visible in `agent-wiki/index.md`, `agent-wiki/log.md`, and `agent-wiki/lint.md`.
+- Make the benefit visible in `DATALOX.md`, `AGENTS.md`, `README.md`, docs, or tests. Use `agent-wiki/` only for explicit legacy compatibility work.
 - Avoid pack-only abstractions that another agent cannot discover from the repo.
 
 ## Expected Output

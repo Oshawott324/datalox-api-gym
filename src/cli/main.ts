@@ -43,14 +43,14 @@ function resolveCliPackRoot(): string {
 function usage(): string {
   return [
     "Usage:",
-    "  datalox install [all|codex|claude] [--json]",
+    "  datalox install [all|codex|claude] [--include-legacy-guidance] [--json]",
     "  datalox disable [all|codex|claude] [--json]",
     "  datalox status [--repo <path>] [--json]",
-    "  datalox bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
-    "  datalox setup [all|codex|claude] [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
-    "  datalox adopt <host-repo-path> [--pack-source <path-or-git-url>] [--json]",
+    "  datalox bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
+    "  datalox setup [all|codex|claude] [--repo <path>] [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
+    "  datalox adopt <host-repo-path> [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
     "  datalox probe-bootstrap [--repo <path>] [--json]",
-    "  datalox auto-bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
+    "  datalox auto-bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
     "  datalox capture-web [--repo <path>] --url <url> [--artifact <design-doc|design-tokens|css-variables|tailwind-theme|note|source-page>] [--title <title>] [--slug <slug>] [--output <path>] [--json]",
     "  datalox capture-design [--repo <path>] --url <url> [--title <title>] [--slug <slug>] [--output <path>] [--json]",
     "  datalox capture-pdf [--repo <path>] --path <pdf-path> [--title <title>] [--slug <slug>] [--source-url <url>] [--json]",
@@ -139,7 +139,13 @@ function parseInstallHost(value: string | undefined): InstallHost {
   }
 }
 
-async function bootstrapRepo(repoPath?: string, packSource?: string) {
+function includeLegacyGuidance(args: ReturnType<typeof parseCliArgs>): boolean {
+  return args["include-legacy-guidance"] === true
+    || args["include-legacy-skills"] === true
+    || args["include-legacy-wiki"] === true;
+}
+
+async function bootstrapRepo(repoPath?: string, packSource?: string, includeLegacyGuidanceValue?: boolean) {
   const probeBefore = await probeBootstrapCandidate(repoPath);
   if (probeBefore.status === "ready" || !probeBefore.canAutoBootstrap) {
     return {
@@ -153,6 +159,7 @@ async function bootstrapRepo(repoPath?: string, packSource?: string) {
   return autoBootstrapIfSafe({
     repoPath,
     packSource,
+    includeLegacyGuidance: includeLegacyGuidanceValue,
   });
 }
 
@@ -241,6 +248,11 @@ async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
   const [command, positional, ...rest] = args._;
   const asJson = args.json === true;
+  if (args.help === true || command === "help" || command === "--help" || command === "-h" || command === undefined) {
+    process.stdout.write(`${usage()}\n`);
+    process.stdout.write(`Default pack URL: ${getDefaultPackUrl()}\n`);
+    return;
+  }
   const sharedCommand = getSharedCliCommand(command);
 
   if (sharedCommand) {
@@ -255,6 +267,7 @@ async function main(): Promise<void> {
       const result = await installHostIntegrations({
         host,
         packRootPath: resolveCliPackRoot(),
+        includeLegacySkills: includeLegacyGuidance(args),
       });
       writeResult(result, true);
       return;
@@ -280,6 +293,7 @@ async function main(): Promise<void> {
       const result = await bootstrapRepo(
         typeof args.repo === "string" ? args.repo : undefined,
         typeof args["pack-source"] === "string" ? args["pack-source"] : undefined,
+        includeLegacyGuidance(args),
       );
       writeResult(result, true);
       return;
@@ -289,10 +303,12 @@ async function main(): Promise<void> {
       const install = await installHostIntegrations({
         host,
         packRootPath: resolveCliPackRoot(),
+        includeLegacySkills: includeLegacyGuidance(args),
       });
       const bootstrap = await bootstrapRepo(
         typeof args.repo === "string" ? args.repo : undefined,
         typeof args["pack-source"] === "string" ? args["pack-source"] : undefined,
+        includeLegacyGuidance(args),
       );
       writeResult({ install, bootstrap }, true);
       return;
@@ -306,6 +322,7 @@ async function main(): Promise<void> {
       const result = await autoBootstrapIfSafe({
         repoPath: typeof args.repo === "string" ? args.repo : undefined,
         packSource: typeof args["pack-source"] === "string" ? args["pack-source"] : undefined,
+        includeLegacyGuidance: includeLegacyGuidance(args),
       });
       writeResult(result, true);
       return;
@@ -444,13 +461,6 @@ async function main(): Promise<void> {
       process.exitCode = result.child.exitCode;
       return;
     }
-    case "help":
-    case "--help":
-    case "-h":
-    case undefined:
-      process.stdout.write(`${usage()}\n`);
-      process.stdout.write(`Default pack URL: ${getDefaultPackUrl()}\n`);
-      return;
     default:
       throw new Error(`Unknown command: ${command}`);
   }

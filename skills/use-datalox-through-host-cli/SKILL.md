@@ -40,23 +40,25 @@ Use this skill when the host agent cannot receive Datalox guidance through an en
 
 1. If MCP tools are available in the active session, call `resolve_loop` before acting.
 2. For buyer-facing trajectory dataset capture after coding/debugging work, build a `debugging_trajectory.v1` row and call MCP tool `record_trajectory` when it is available.
-3. If MCP is not available, write the row JSON and run `datalox record-trajectory --repo <repo> --trajectory-row <row.json> --json`.
-4. In every trajectory row, `context.relevant_files[].before` and `after` must be exact minimal code snippets from the changed source, not prose, pointers, or "see file" summaries. Put explanation in `context.notes`, `trajectory.content`, or `final.explanation`.
-5. If `record_trajectory` or `record-trajectory` returns `qualityDowngraded: true`, repair the row before treating it as `curation.quality: "use"` or exporting it as training-grade data.
-6. Use `record_turn_result` or `datalox record` only for legacy/internal guidance maintenance when no explicit trajectory row/session event is being captured.
-7. Treat native Codex chat with MCP as guidance-only unless a Datalox wrapper sentinel is present.
-8. Treat Claude Code native skills and MCP as model-chosen guidance unless `currentSession.activeWrapper` is `"claude"` and `currentSession.wrapperEnforced` is `true`.
-9. Treat the Claude Stop hook as post-turn sidecar automation only; it can record, compile, and maintain after Claude responds, but it cannot force pre-turn `resolve_loop`.
-10. For enforceable Codex `exec`, use `datalox codex --repo <repo> --task "<task>" --prompt "<prompt>"`.
-11. For enforceable Claude prompt runs, use `datalox claude --repo <repo> --task "<task>" --prompt "<prompt>" -- --print "<prompt>"` or the installed Claude shim when status proves it is automatic.
-12. For other CLI hosts, use `datalox wrap command --repo <repo> --task "<task>" --prompt "<prompt>" -- <host-command> __DATALOX_PROMPT__`.
-13. If the host cannot accept prompt placeholders, use `datalox wrap prompt` and pass the returned prompt to the host manually.
-14. When the host has no automatic post-turn hook or wrapper and the work is only repeated internal guidance maintenance, use `datalox record` or `datalox promote` explicitly after repeated corrections.
+3. For mixed-domain implementation work, build an `agent_task_trajectory.v1` row and call MCP tool `record_agent_task_trajectory` when it is available.
+4. If MCP is not available, write the row JSON and run `datalox record-trajectory --repo <repo> --trajectory-row <row.json> --json` or `datalox record-agent-task-trajectory --repo <repo> --agent-task-trajectory <row.json> --json`.
+5. In every `debugging_trajectory.v1` row, `context.relevant_files[].before` and `after` must be exact minimal code snippets from the changed source, not prose, pointers, or "see file" summaries. Put explanation in `context.notes`, `trajectory.content`, or `final.explanation`.
+6. In every code-heavy `agent_task_trajectory.v1` row, include at least one exact `code_change` evidence block. Local code `source_reference` blocks are provenance only and do not replace exact before/after snippets or patch hunks.
+7. If `record_trajectory`, `record-agent-task-trajectory`, or the corresponding MCP tool returns `qualityDowngraded: true`, repair the row before treating it as `curation.quality: "use"` or exporting it as training-grade data.
+8. Use `record_turn_result` or `datalox record` only for legacy/internal guidance maintenance when no explicit trajectory row/session event is being captured.
+9. Treat native Codex chat with MCP as guidance-only unless a Datalox wrapper sentinel is present.
+10. Treat Claude Code native skills and MCP as model-chosen guidance unless `currentSession.activeWrapper` is `"claude"` and `currentSession.wrapperEnforced` is `true`.
+11. Treat the Claude Stop hook as post-turn sidecar automation only; it can record, compile, and maintain after Claude responds, but it cannot force pre-turn `resolve_loop`.
+12. For enforceable Codex `exec`, use `datalox codex --repo <repo> --task "<task>" --prompt "<prompt>"`.
+13. For enforceable Claude prompt runs, use `datalox claude --repo <repo> --task "<task>" --prompt "<prompt>" -- --print "<prompt>"` or the installed Claude shim when status proves it is automatic.
+14. For other CLI hosts, use `datalox wrap command --repo <repo> --task "<task>" --prompt "<prompt>" -- <host-command> __DATALOX_PROMPT__`.
+15. If the host cannot accept prompt placeholders, use `datalox wrap prompt` and pass the returned prompt to the host manually.
+16. When the host has no automatic post-turn hook or wrapper and the work is only repeated internal guidance maintenance, use `datalox record` or `datalox promote` explicitly after repeated corrections.
 
 ## Checks Before Editing
 
 - Keep the wrapper thin. It should resolve guidance and pass it into the host, not reimplement pack logic.
-- Preserve the host repo as the write target for generated skills and wiki pages.
+- Preserve the host repo as the write target for generated skills and product events. Use wiki pages only for explicit legacy compatibility work.
 - Prefer placeholders and environment variables over shell-specific quoting tricks.
 - Keep Codex-specific behavior inside the Codex wrapper and everything else in the generic wrapper.
 - Do not describe MCP availability as enforcement. MCP-only sessions still depend on the agent choosing to call the tools.

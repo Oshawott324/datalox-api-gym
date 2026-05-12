@@ -122,6 +122,14 @@ Every evidence block is strict. Unknown fields are rejected.
 Use for exact code edits. Provide either exact `before` and `after` snippets, or
 a compact exact `patch`.
 
+`patch` is a first-class schema field. It may be a compact unified diff hunk, or
+an exact addition/removal snippet with `+`/`-` prefixes when that is the smallest
+self-contained evidence. For newly added code, addition-only `+...` patches are
+valid when they show real code, not a summary. For edits to existing code, prefer
+exact `before` and `after` snippets or a compact unified diff with enough context
+to understand what changed. Do not use prose such as "the code now validates
+inputs" as `patch` evidence.
+
 ```ts
 {
   type: "code_change";
@@ -261,6 +269,14 @@ use` applies deterministic readiness checks:
 - `export.allowed: false` and `export.redaction: "blocked"` are excluded.
 - Oversized rows, patches, evidence fields, and metadata are blocked from
   `quality: "use"` export.
+
+Recording also runs the deterministic readiness grader. If a row claims
+`curation.quality: "use"` but fails these checks, Datalox records the event with
+`curation.quality: "needs_review"` and adds downgrade metadata:
+
+- `datalox_quality_downgraded_from`
+- `datalox_quality_downgrade_issue_codes`
+- `datalox_quality_downgraded_at`
 
 Bad code-heavy evidence:
 

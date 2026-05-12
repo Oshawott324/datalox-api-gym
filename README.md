@@ -33,14 +33,13 @@ The per-turn capture schema is canonical in [docs/agent-turn-schema.md](docs/age
 In an adopted repo, the main surfaces are:
 
 ```text
-skills/
-agent-wiki/
-  notes/
+.datalox/
   events/
-  index.md
-  log.md
-  lint.md
-  hot.md
+  session-candidates/
+  approvals/
+docs/
+DATALOX.md
+AGENTS.md
 ```
 
 Use:
@@ -50,8 +49,8 @@ Use:
 - `.datalox/events/trajectory-rows/` for `debugging_trajectory.v1` row events
 - `.datalox/events/agent-task-trajectories/` for mixed-domain `agent_task_trajectory.v1` row events
 - `.datalox/session-candidates/` and `.datalox/approvals/` for future review/approval artifacts
-- `agent-wiki/events/` as the legacy event store for old traces and legacy maintenance only
-- `skills/` and `agent-wiki/notes/` for legacy or internal agent guidance while migration is in progress
+- `agent-wiki/events/` only when an older repo already has legacy traces, or when legacy compatibility mode is explicitly requested
+- `skills/` only when an older repo already has local skills, or when legacy compatibility mode is explicitly requested
 
 Unapproved raw traces are not sellable data. The capture primitive is `agent_turn.v1`; the source asset is an approved anonymized session bundle assembled from turns; `debugging_trajectory.v1` and `agent_task_trajectory.v1` are compact row derivatives for training/eval packaging.
 
@@ -67,8 +66,14 @@ From the repo you want Datalox to manage, paste this into the agent chatbox and 
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp
-cd datalox-trajectory-mcp
+PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+mkdir -p "$(dirname "$PACK_REPO")"
+if [ -d "$PACK_REPO/.git" ]; then
+  git -C "$PACK_REPO" pull --ff-only
+else
+  git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO"
+fi
+cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
@@ -79,15 +84,16 @@ This does two separate things:
 
 - `https://github.com/Complexity-LLC/datalox-pack.git` is the current public source repo.
 - Fresh installs from that URL use the published GitHub state. Local uncommitted or unpushed changes in another checkout are not present in the target repo until they are pushed or the target install points at that local checkout.
-- `datalox-trajectory-mcp` is the local source directory and package identity. Do not clone `https://github.com/Complexity-LLC/datalox-trajectory-mcp.git` unless that GitHub repo has been created or the existing repo has been renamed.
+- `~/.datalox/cache/datalox-trajectory-mcp` is the local source directory and package identity. Keep the source checkout outside the target repo so the target repo does not receive source-only folders such as `agent-wiki/`.
+- Do not clone `https://github.com/Complexity-LLC/datalox-trajectory-mcp.git` unless that GitHub repo has been created or the existing repo has been renamed.
 - The source clone owns source-only scripts such as `bin/adopt-host-repo.sh`.
-- `$TARGET_REPO` is the user's current project. Adoption writes the Datalox instruction surfaces, core skills, notes, and `.datalox/install.json` there.
+- `$TARGET_REPO` is the user's current project. Default adoption writes the Datalox instruction surfaces and `.datalox/install.json` there.
 
 Post-install checks from the target repo:
 
 ```bash
 which codex
-node datalox-trajectory-mcp/bin/datalox.js status --repo . --json
+node "${HOME}/.datalox/cache/datalox-trajectory-mcp/bin/datalox.js" status --repo . --json
 codex exec "Check Datalox is active for this repo."
 ```
 
@@ -119,19 +125,23 @@ node bin/datalox-mcp.js
 
 Use `datalox-mcp` only when the package has also been installed or linked onto `PATH`.
 
-Fresh adopted repos now receive only the core bootstrap bundle by default:
+Fresh adopted repos now receive only the product bootstrap bundle by default:
 
 - core runtime/instruction surfaces
-- the `maintain-datalox-pack` skill and its linked notes
-- the `use-datalox-through-host-cli` skill and its linked note
 
 They do not receive unrelated example or domain seed knowledge such as:
 
+- `skills/`
 - `github`
 - `ordercli`
 - unrelated domain review skills
+- `agent-wiki/`
 - `agent-wiki/notes/pdf/*`
 - `agent-wiki/notes/web/*`
+
+Fresh trajectory-product installs do not create `agent-wiki/` or `skills/` by
+default. To install legacy skill/wiki compatibility files for an older
+note/skill maintenance flow, run setup/adoption with `--include-legacy-guidance`.
 
 Direct adoption from GitHub is also available:
 
@@ -139,11 +149,15 @@ Direct adoption from GitHub is also available:
 bash bin/adopt-from-github.sh /path/to/your-project
 ```
 
-Supported default host paths include the Codex shim, the Claude shim when a real `claude` CLI exists, canonical Claude native skill links, the Claude hook, and the generic CLI wrapper.
+Supported default host paths include the Codex shim, the Claude shim when a real `claude` CLI exists, the Claude hook, and the generic CLI wrapper. Canonical Claude native skill links are legacy optional and install only with `--include-legacy-guidance`.
 
-Claude native skills are linked at `~/.claude/skills/<skill-name>/SKILL.md`. Restart Claude Code only if it was already running before the top-level `~/.claude/skills` directory existed, or if the host does not pick up the new links live.
+Legacy Claude native skills are linked only when setup is run with
+`--include-legacy-guidance`. When enabled, they use
+`~/.claude/skills/<skill-name>/SKILL.md`. Restart Claude Code only if it was
+already running before the top-level `~/.claude/skills` directory existed, or if
+the host does not pick up the new links live.
 
-The Claude hook is sidecar post-run automation. It can record what happened after a turn, but it is not proof that Claude used the right skill before acting. `CLAUDE.md`, wrapper/shim paths, MCP tools, and repo-local `skills/` remain the robust fallback.
+The Claude hook is sidecar post-run automation. It can record what happened after a turn, but it is not proof that Claude used the right skill before acting. `CLAUDE.md`, wrapper/shim paths, MCP tools, and repo-local docs remain the robust fallback.
 
 Automatic enforcement only applies on supported host adapter paths. MCP and repo instruction files are still available outside those paths, but they are guidance surfaces, not enforcement.
 
@@ -182,6 +196,11 @@ node dist/src/cli/main.js record --repo . --task "review ambiguous viability gat
 node dist/src/cli/main.js promote --repo . --event-path agent-wiki/events/<event>.json --task "review ambiguous viability gate" --workflow flow_cytometry --observation "dim dead tail overlaps live shoulder" --interpretation "likely artifact" --action "review exception note before widening gate" --json
 node dist/src/cli/main.js lint --repo . --json
 ```
+
+`record`, `promote`, and `lint` are legacy/internal guidance-maintenance
+commands. New product data should use `record-trajectory`,
+`record-agent-task-trajectory`, and future turn/session capture commands.
+Help and status paths are read-only and should not create event records.
 
 Durable writes now require provenance. `patch` and `promote` need one of:
 
@@ -261,7 +280,9 @@ export requires at least one exact `code_change` evidence block. Local code
 `source_reference` blocks are useful provenance, but they do not replace
 before/after snippets or patch hunks. Put source files in `context.source_paths`
 and `final.changed_artifacts`; keep `export.source_event_paths` limited to
-`.datalox/events/...` provenance event paths.
+`.datalox/events/...` provenance event paths. Recording downgrades claimed
+`curation.quality: "use"` rows to `needs_review` when deterministic readiness
+checks fail.
 
 ## Promotion Rules
 
@@ -275,7 +296,15 @@ Default behavior:
 Generated notes go to `agent-wiki/notes/`.
 Generated skills go to `skills/`.
 
-## Web Capture
+This promotion loop is legacy/internal. Fresh product installs do not ship
+`agent-wiki/` as an active store; legacy repos may still read or maintain it
+when it already exists or when adoption used `--include-legacy-guidance`.
+
+## Legacy Web Capture
+
+This command is legacy/internal guidance capture. It may create
+`agent-wiki/notes/web/` when explicitly used, but fresh product adoption does
+not create that wiki tree.
 
 Capture a live site into repo-local design knowledge:
 
@@ -298,7 +327,11 @@ Outputs:
 Design tokens are the reusable artifact.
 Tailwind output is derived from the tokens.
 
-## PDF Capture
+## Legacy PDF Capture
+
+This command is legacy/internal guidance capture. It may create
+`agent-wiki/notes/pdf/` when explicitly used, but fresh product adoption does
+not create that wiki tree.
 
 Capture a PDF into a repo-local note:
 

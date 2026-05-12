@@ -152,6 +152,7 @@ The event capture and dataset export should stay direct:
 - verified mixed-domain episodes can become `agent_task_trajectory.v1` rows when a task combines code, documents, spreadsheets, analysis, lab workflow, or source-review evidence
 - new product capture data writes under `.datalox/events/`
 - legacy `agent-wiki/events/` traces remain readable but are not the future product store
+- fresh product adoption does not create or copy `agent-wiki/` or `skills/` unless the user explicitly requests legacy compatibility
 
 An exported trajectory can link:
 

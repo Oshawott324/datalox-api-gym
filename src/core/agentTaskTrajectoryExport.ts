@@ -46,6 +46,8 @@ export interface RecordAgentTaskTrajectoryResult {
   blockedReasons: string[];
   readinessQuality: AgentTaskTrajectoryQuality;
   deterministicPassed: boolean;
+  qualityDowngraded: boolean;
+  qualityDowngradeIssueCodes: string[];
   event: {
     relativePath: string;
     payload: JsonObject;
@@ -229,11 +231,12 @@ export async function recordAgentTaskTrajectory(
       `${safeTimestamp(timestamp)}--agent-task-trajectory-${slugify(parsedRow.id)}.json`,
     ),
   );
-  const row = appendAgentTaskTrajectorySourceEventPath(parsedRow, relativePath);
+  const rowWithSourcePath = appendAgentTaskTrajectorySourceEventPath(parsedRow, relativePath);
+  const normalized = normalizeRecordedAgentTaskTrajectoryQuality(rowWithSourcePath, timestamp);
+  const row = normalized.row;
   const eventPath = path.join(repoRoot, relativePath);
   const payload = buildAgentTaskTrajectoryEventPayload(row, relativePath, timestamp);
   const blockedReasons = getAgentTaskTrajectorySellableBlockers(row);
-  const grade = gradeAgentTaskTrajectoryRow(row);
 
   await mkdir(path.dirname(eventPath), { recursive: true });
   await writeFile(eventPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
@@ -243,12 +246,56 @@ export async function recordAgentTaskTrajectory(
     trajectoryId: row.id,
     sellable: blockedReasons.length === 0,
     blockedReasons,
-    readinessQuality: grade.quality,
-    deterministicPassed: grade.deterministic_passed,
+    readinessQuality: normalized.grade.quality,
+    deterministicPassed: normalized.grade.deterministic_passed,
+    qualityDowngraded: normalized.qualityDowngraded,
+    qualityDowngradeIssueCodes: normalized.qualityDowngradeIssueCodes,
     event: {
       relativePath,
       payload,
     },
+  };
+}
+
+function normalizeRecordedAgentTaskTrajectoryQuality(
+  row: AgentTaskTrajectoryV1,
+  timestamp: string,
+): {
+  row: AgentTaskTrajectoryV1;
+  grade: AgentTaskTrajectoryReadinessGrade;
+  qualityDowngraded: boolean;
+  qualityDowngradeIssueCodes: string[];
+} {
+  const grade = gradeAgentTaskTrajectoryRow(row);
+  if (row.curation?.quality !== "use" || grade.quality === "use") {
+    return {
+      row,
+      grade,
+      qualityDowngraded: false,
+      qualityDowngradeIssueCodes: [],
+    };
+  }
+
+  const issueCodes = grade.blocking_issues.map((issue) => issue.code);
+  const downgradedRow: AgentTaskTrajectoryV1 = {
+    ...row,
+    curation: {
+      ...(row.curation ?? {}),
+      quality: "needs_review",
+    },
+    metadata: {
+      ...(row.metadata ?? {}),
+      datalox_quality_downgraded_from: "use",
+      datalox_quality_downgrade_issue_codes: issueCodes,
+      datalox_quality_downgraded_at: timestamp,
+    },
+  };
+
+  return {
+    row: downgradedRow,
+    grade: gradeAgentTaskTrajectoryRow(downgradedRow),
+    qualityDowngraded: true,
+    qualityDowngradeIssueCodes: issueCodes,
   };
 }
 
@@ -326,21 +373,9 @@ export async function exportAgentTaskTrajectories(
       });
       continue;
     }
-    if (input.quality && candidate.row.curation?.quality !== input.quality) {
-      rejectedRows.push({
-        eventPath: candidate.eventPath,
-        trajectoryId: candidate.row.id,
-        reason: "quality_filter",
-        detail: {
-          required_quality: input.quality,
-          row_quality: candidate.row.curation?.quality ?? null,
-        },
-      });
-      continue;
-    }
     if (input.quality === "use") {
       const grade = gradeAgentTaskTrajectoryRow(candidate.row);
-      if (grade.quality !== "use" || !grade.deterministic_passed) {
+      if (!grade.deterministic_passed || grade.blocking_issues.length > 0) {
         rejectedRows.push({
           eventPath: candidate.eventPath,
           trajectoryId: candidate.row.id,
@@ -353,6 +388,18 @@ export async function exportAgentTaskTrajectories(
         });
         continue;
       }
+    }
+    if (input.quality && candidate.row.curation?.quality !== input.quality) {
+      rejectedRows.push({
+        eventPath: candidate.eventPath,
+        trajectoryId: candidate.row.id,
+        reason: "quality_filter",
+        detail: {
+          required_quality: input.quality,
+          row_quality: candidate.row.curation?.quality ?? null,
+        },
+      });
+      continue;
     }
     exportCandidates.push(candidate);
   }

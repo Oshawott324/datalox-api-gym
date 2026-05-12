@@ -144,6 +144,8 @@ export interface AdoptPackInput {
   hostRepoPath: string;
   packSource?: string;
   installMode?: "manual" | "auto" | "repair";
+  includeLegacyGuidance?: boolean;
+  includeLegacyWiki?: boolean;
 }
 
 interface AdoptPackResult {
@@ -154,6 +156,8 @@ interface AdoptPackResult {
   skipped: string[];
   installStampPath: string;
   installMode: "manual" | "auto" | "repair";
+  includeLegacyGuidance: boolean;
+  includeLegacyWiki: boolean;
 }
 
 interface InstallStamp {
@@ -187,6 +191,8 @@ export interface BootstrapProbeResult {
 export interface AutoBootstrapInput {
   repoPath?: string;
   packSource?: string;
+  includeLegacyGuidance?: boolean;
+  includeLegacyWiki?: boolean;
 }
 
 export interface AutoBootstrapResult {
@@ -226,8 +232,10 @@ function shellDoubleQuote(value: string): string {
 function buildExplicitAdoptionRecoveryCommands(repoPath: string): string[] {
   return [
     `TARGET_REPO=${shellDoubleQuote(repoPath)}`,
-    `git clone ${DEFAULT_PACK_URL} ${DEFAULT_PACK_CLONE_DIR}`,
-    `cd ${DEFAULT_PACK_CLONE_DIR}`,
+    `PACK_REPO="$HOME/.datalox/cache/${DEFAULT_PACK_CLONE_DIR}"`,
+    "mkdir -p \"$(dirname \"$PACK_REPO\")\"",
+    `[ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone ${DEFAULT_PACK_URL} "$PACK_REPO"`,
+    "cd \"$PACK_REPO\"",
     "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
   ];
 }
@@ -247,7 +255,6 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   ".datalox/config.json",
   ".datalox/config.schema.json",
   ".datalox/manifest.json",
-  ".datalox/skill.schema.md",
   "bin/claude-global-auto-promote.sh",
   "bin/datalox-auto-promote.js",
   "bin/datalox-claude.js",
@@ -259,13 +266,14 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "bin/disable-default-host-integrations.sh",
   "bin/install-default-host-integrations.sh",
   "bin/setup-multi-agent.sh",
-  "agent-wiki/note.schema.md",
 ];
-const CORE_BUNDLE_TREE_PATHS = [
+const LEGACY_GUIDANCE_TREE_PATHS = [
   "skills/maintain-datalox-pack",
   "skills/use-datalox-through-host-cli",
 ];
-const CORE_BUNDLE_FILE_PATHS = [
+const LEGACY_GUIDANCE_FILE_PATHS = [
+  ".datalox/skill.schema.md",
+  "agent-wiki/note.schema.md",
   "agent-wiki/notes/maintain-datalox-pack.md",
   "agent-wiki/notes/use-datalox-through-host-cli.md",
   "agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md",
@@ -283,7 +291,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "If `DATALOX.md` exists in this repo, read it after this file and treat it as the repo-local Datalox contract.",
-      "Use reusable local knowledge in `agent-wiki/notes/` and grounded event records in `agent-wiki/events/`.",
+      "Use `.datalox/events/` for new product capture data; read `agent-wiki/` only when this repo already has legacy compatibility content.",
     ],
   },
   "CLAUDE.md": {
@@ -297,7 +305,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
-      "Keep reusable knowledge in `agent-wiki/notes/` and grounded event traces in `agent-wiki/events/`.",
+      "Keep new product capture data under `.datalox/events/`; treat `agent-wiki/` as legacy compatibility content only when present.",
     ],
   },
   "GEMINI.md": {
@@ -305,7 +313,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
-      "Keep reusable knowledge in `agent-wiki/notes/` and grounded event traces in `agent-wiki/events/`.",
+      "Keep new product capture data under `.datalox/events/`; treat `agent-wiki/` as legacy compatibility content only when present.",
     ],
   },
   ".github/copilot-instructions.md": {
@@ -313,7 +321,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "Also consult `AGENTS.md` and `DATALOX.md` when they exist.",
-      "Use `agent-wiki/notes/` for reusable repo knowledge and `agent-wiki/events/` for grounded event traces.",
+      "Use `.datalox/events/` for new product capture data; read `agent-wiki/` only for legacy compatibility when present.",
     ],
   },
 };
@@ -1408,6 +1416,8 @@ export async function adoptPack(input: AdoptPackInput): Promise<AdoptPackResult>
   const hostRepoPath = resolveRepoPath(input.hostRepoPath);
   const packRootPath = await resolvePackRoot(input.packSource);
   const installMode = input.installMode ?? "manual";
+  const includeLegacyGuidance = input.includeLegacyGuidance === true || input.includeLegacyWiki === true;
+  const includeLegacyWiki = includeLegacyGuidance;
   await ensureLocalPackCache(packRootPath);
   const copied: string[] = [];
   const injected: string[] = [];
@@ -1419,8 +1429,6 @@ export async function adoptPack(input: AdoptPackInput): Promise<AdoptPackResult>
   await mkdir(path.join(hostRepoPath, ".cursor", "rules"), { recursive: true });
   await mkdir(path.join(hostRepoPath, ".windsurf", "rules"), { recursive: true });
   await mkdir(path.join(hostRepoPath, "bin"), { recursive: true });
-  await mkdir(path.join(hostRepoPath, "skills"), { recursive: true });
-  await mkdir(path.join(hostRepoPath, "agent-wiki", "events"), { recursive: true });
 
   for (const relativePath of SINGLE_FILE_ADOPTION_PATHS) {
     await copyOrInjectInstructionFile(
@@ -1433,24 +1441,27 @@ export async function adoptPack(input: AdoptPackInput): Promise<AdoptPackResult>
     );
   }
 
-  for (const relativePath of CORE_BUNDLE_FILE_PATHS) {
-    await copyOrInjectInstructionFile(
-      path.join(packRootPath, relativePath),
-      path.join(hostRepoPath, relativePath),
-      relativePath,
-      copied,
-      injected,
-      skipped,
-    );
-  }
-
-  for (const relativePath of CORE_BUNDLE_TREE_PATHS) {
-    await copyTreeEntriesIfMissing(
-      path.join(packRootPath, relativePath),
-      path.join(hostRepoPath, relativePath),
-      copied,
-      skipped,
-    );
+  if (includeLegacyGuidance) {
+    await mkdir(path.join(hostRepoPath, "skills"), { recursive: true });
+    await mkdir(path.join(hostRepoPath, "agent-wiki", "events"), { recursive: true });
+    for (const relativePath of LEGACY_GUIDANCE_FILE_PATHS) {
+      await copyOrInjectInstructionFile(
+        path.join(packRootPath, relativePath),
+        path.join(hostRepoPath, relativePath),
+        relativePath,
+        copied,
+        injected,
+        skipped,
+      );
+    }
+    for (const relativePath of LEGACY_GUIDANCE_TREE_PATHS) {
+      await copyTreeEntriesIfMissing(
+        path.join(packRootPath, relativePath),
+        path.join(hostRepoPath, relativePath),
+        copied,
+        skipped,
+      );
+    }
   }
 
   const installStampPath = await writeInstallStamp(hostRepoPath, packRootPath, installMode);
@@ -1464,6 +1475,8 @@ export async function adoptPack(input: AdoptPackInput): Promise<AdoptPackResult>
     skipped: skipped.map((item) => path.relative(hostRepoPath, item) || "."),
     installStampPath: path.relative(hostRepoPath, installStampPath) || ".",
     installMode,
+    includeLegacyGuidance,
+    includeLegacyWiki,
   };
 }
 
@@ -1485,6 +1498,8 @@ export async function autoBootstrapIfSafe(input: AutoBootstrapInput = {}): Promi
     hostRepoPath: repoPath,
     packSource: input.packSource,
     installMode,
+    includeLegacyGuidance: input.includeLegacyGuidance,
+    includeLegacyWiki: input.includeLegacyWiki,
   });
   const probeAfter = await probeBootstrapCandidate(repoPath);
 

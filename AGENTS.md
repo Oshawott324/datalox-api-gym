@@ -7,9 +7,9 @@ Read in this order:
 3. `docs/product-definition.md`
 4. `docs/agent-turn-schema.md` when the task touches session capture, session export, or data sale
 5. `docs/trajectory-dataset-schema.md` when the task touches trajectory recording, trajectory export, or data sale
-6. `agent-wiki/hot.md` when it exists
-7. the selected `skills/<name>/SKILL.md`
-8. the linked notes in `metadata.datalox.note_paths`
+6. `agent-wiki/hot.md` when it exists in a legacy repo
+7. the selected `skills/<name>/SKILL.md` only when this repo has legacy/local skills
+8. linked notes in `metadata.datalox.note_paths` only when those files exist
 
 If legacy full-pack MCP tools are available, call `resolve_loop` before internal Datalox maintenance work and use the matched skill plus linked notes before acting. For trajectory dataset work, prefer the lean `datalox-mcp` tools: `record_trajectory` and `export_trajectories`.
 
@@ -43,7 +43,7 @@ Business rule:
 - lean, outcome-labeled `debugging_trajectory.v1` rows are compact training/eval derivatives
 - unapproved raw traces are not sellable data
 
-Generate new supporting knowledge into `agent-wiki/notes/`, not legacy wiki folders.
+Fresh product adoption does not create or copy `agent-wiki/` or `skills/` by default. Keep new product data under `.datalox/`. Generate durable agent guidance into `docs/`, `DATALOX.md`, or `AGENTS.md`; use `skills/` and `agent-wiki/notes/` only for explicit legacy compatibility work in repos that already have them.
 
 If docs disagree on what Datalox is, `docs/product-definition.md` wins.
 If docs disagree on turn capture, `docs/agent-turn-schema.md` wins.
