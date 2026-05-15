@@ -3,17 +3,7 @@ import { constants as fsConstants, existsSync } from "node:fs";
 import { access, cp, mkdir, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-
-import { extractTraceSource } from "./sourceBundle.js";
-import { createRuntimeClient } from "./runtimeClient.js";
-import { recordTrajectory } from "./trajectoryExport.js";
-import {
-  type DebuggingTrajectoryV1,
-  parseDebuggingTrajectoryV1,
-  withDefaultTrajectoryCurationQuality,
-} from "./trajectorySchema.js";
-import { loadAgentConfig } from "../agent/loadAgentConfig.js";
+import { fileURLToPath } from "node:url";
 
 export type EventClass = "trace" | "candidate";
 
@@ -144,8 +134,6 @@ export interface AdoptPackInput {
   hostRepoPath: string;
   packSource?: string;
   installMode?: "manual" | "auto" | "repair";
-  includeLegacyGuidance?: boolean;
-  includeLegacyWiki?: boolean;
 }
 
 interface AdoptPackResult {
@@ -156,8 +144,6 @@ interface AdoptPackResult {
   skipped: string[];
   installStampPath: string;
   installMode: "manual" | "auto" | "repair";
-  includeLegacyGuidance: boolean;
-  includeLegacyWiki: boolean;
 }
 
 interface InstallStamp {
@@ -182,7 +168,6 @@ export interface BootstrapProbeResult {
     hasDataloxMd: boolean;
     hasManifest: boolean;
     hasConfig: boolean;
-    hasAgentWiki: boolean;
     hasInstallStamp: boolean;
     ownedRootSignals: string[];
   };
@@ -191,8 +176,6 @@ export interface BootstrapProbeResult {
 export interface AutoBootstrapInput {
   repoPath?: string;
   packSource?: string;
-  includeLegacyGuidance?: boolean;
-  includeLegacyWiki?: boolean;
 }
 
 export interface AutoBootstrapResult {
@@ -212,7 +195,7 @@ function resolvePackRootPath(): string {
   for (const candidate of candidates) {
     if (
       existsSync(path.join(candidate, "package.json"))
-      && existsSync(path.join(candidate, "scripts", "lib", "agent-pack.mjs"))
+      && existsSync(path.join(candidate, "bin", "datalox.js"))
     ) {
       return candidate;
     }
@@ -248,15 +231,12 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "GEMINI.md",
   "START_HERE.md",
   ".claude/settings.json",
-  ".claude/hooks/auto-promote.sh",
   ".github/copilot-instructions.md",
   ".cursor/rules/datalox-pack.mdc",
   ".windsurf/rules/datalox-pack.md",
   ".datalox/config.json",
   ".datalox/config.schema.json",
   ".datalox/manifest.json",
-  "bin/claude-global-auto-promote.sh",
-  "bin/datalox-auto-promote.js",
   "bin/datalox-claude.js",
   "bin/datalox-codex.js",
   "bin/datalox-mcp.js",
@@ -266,17 +246,6 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "bin/disable-default-host-integrations.sh",
   "bin/install-default-host-integrations.sh",
   "bin/setup-multi-agent.sh",
-];
-const LEGACY_GUIDANCE_TREE_PATHS = [
-  "skills/maintain-datalox-pack",
-  "skills/use-datalox-through-host-cli",
-];
-const LEGACY_GUIDANCE_FILE_PATHS = [
-  ".datalox/skill.schema.md",
-  "agent-wiki/note.schema.md",
-  "agent-wiki/notes/maintain-datalox-pack.md",
-  "agent-wiki/notes/use-datalox-through-host-cli.md",
-  "agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md",
 ];
 const ADOPTION_INJECTION_BEGIN = "<!-- DATALOX_PACK:BEGIN -->";
 const ADOPTION_INJECTION_END = "<!-- DATALOX_PACK:END -->";
@@ -291,7 +260,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "If `DATALOX.md` exists in this repo, read it after this file and treat it as the repo-local Datalox contract.",
-      "Use `.datalox/events/` for new product capture data; read `agent-wiki/` only when this repo already has legacy compatibility content.",
+      "Use `.datalox/events/` for product capture data.",
     ],
   },
   "CLAUDE.md": {
@@ -305,7 +274,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
-      "Keep new product capture data under `.datalox/events/`; treat `agent-wiki/` as legacy compatibility content only when present.",
+      "Keep product capture data under `.datalox/events/`.",
     ],
   },
   "GEMINI.md": {
@@ -313,7 +282,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
-      "Keep new product capture data under `.datalox/events/`; treat `agent-wiki/` as legacy compatibility content only when present.",
+      "Keep product capture data under `.datalox/events/`.",
     ],
   },
   ".github/copilot-instructions.md": {
@@ -321,13 +290,11 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Pack",
       "Also consult `AGENTS.md` and `DATALOX.md` when they exist.",
-      "Use `.datalox/events/` for new product capture data; read `agent-wiki/` only for legacy compatibility when present.",
+      "Use `.datalox/events/` for product capture data.",
     ],
   },
 };
 const INSTALL_STAMP_RELATIVE_PATH = ".datalox/install.json";
-const EVENTS_RELATIVE_DIR = path.join("agent-wiki", "events");
-const NOTES_RELATIVE_DIR = path.join("agent-wiki", "notes");
 
 interface NoteUsageStats {
   readCount: number;
@@ -366,7 +333,7 @@ interface RecordedEventPayload {
   summarizedAt?: string | null;
   maintenanceRollupKind?: string | null;
   maintenanceStatus?: string | null;
-  trajectoryRow?: DebuggingTrajectoryV1 | null;
+  trajectoryRow?: unknown;
 }
 
 function normalizePath(value: string): string {
@@ -577,51 +544,6 @@ async function updateManyNotesUsage(
   return updated;
 }
 
-async function listRecordedEventPayloads(repoPath: string): Promise<Array<{ filePath: string; relativePath: string; value: RecordedEventPayload }>> {
-  const eventsDir = path.join(repoPath, EVENTS_RELATIVE_DIR);
-  const files = await readJsonFiles(eventsDir);
-  const events = await Promise.all(
-    files.map(async (filePath) => ({
-      filePath,
-      relativePath: normalizePath(path.relative(repoPath, filePath)),
-      value: (await readJsonIfPresent<RecordedEventPayload>(filePath)) ?? {},
-    })),
-  );
-  return events.sort((left, right) => parseTimestamp(right.value.timestamp) - parseTimestamp(left.value.timestamp));
-}
-
-async function patchRecordedEvent(
-  repoPath: string,
-  relativePath: string,
-  patch: Partial<RecordedEventPayload>,
-): Promise<RecordedEventPayload | null> {
-  const eventPath = path.join(repoPath, relativePath);
-  const event = await readJsonIfPresent<RecordedEventPayload>(eventPath);
-  if (!event) {
-    return null;
-  }
-
-  const next = { ...event, ...patch };
-  await writeFile(eventPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-  return next;
-}
-
-function collectSupportingNotePaths(result: any): string[] {
-  const topMatch = result?.matches?.[0];
-  const linkedNotes = Array.isArray(topMatch?.linkedNotes)
-    ? topMatch.linkedNotes
-    : Array.isArray(result?.directNoteMatches)
-      ? result.directNoteMatches.map((entry: { note?: unknown }) => entry.note).filter(Boolean)
-      : [];
-  return linkedNotes
-    .map((noteDoc: { path?: string }) => noteDoc?.path)
-    .filter((value: unknown): value is string => typeof value === "string" && value.length > 0);
-}
-
-async function loadLegacyPackModule() {
-  return import(pathToFileURL(path.join(PACK_ROOT, "scripts", "lib", "agent-pack.mjs")).href);
-}
-
 function resolveRepoPath(repoPath?: string): string {
   return path.resolve(repoPath ?? process.cwd());
 }
@@ -667,41 +589,6 @@ async function readInstallStamp(installStampPath: string): Promise<InstallStamp 
     return null;
   }
   return null;
-}
-
-async function validateDurableWriteProvenance(input: {
-  repoPath: string;
-  eventPath?: string;
-  sessionId?: string;
-  hostKind?: string;
-  adminOverride?: boolean;
-}, operation: "patch" | "promote"): Promise<void> {
-  if (input.adminOverride === true) {
-    return;
-  }
-
-  if (typeof input.eventPath === "string" && input.eventPath.trim().length > 0) {
-    const candidate = path.isAbsolute(input.eventPath)
-      ? input.eventPath
-      : path.join(input.repoPath, input.eventPath);
-    if (!await fileExists(candidate)) {
-      throw new Error(`${operation} requires a valid recorded event path when eventPath is provided.`);
-    }
-    return;
-  }
-
-  if (
-    typeof input.sessionId === "string"
-    && input.sessionId.trim().length > 0
-    && typeof input.hostKind === "string"
-    && input.hostKind.trim().length > 0
-  ) {
-    return;
-  }
-
-  throw new Error(
-    `${operation} requires durable-write provenance. Pass eventPath, or both sessionId and hostKind, or set adminOverride=true.`,
-  );
 }
 
 async function writeInstallStamp(
@@ -893,15 +780,13 @@ export async function probeBootstrapCandidate(repoPath?: string): Promise<Bootst
   const hasDataloxMd = await fileExists(path.join(resolvedRepoPath, "DATALOX.md"));
   const hasManifest = await fileExists(path.join(resolvedRepoPath, ".datalox", "manifest.json"));
   const hasConfig = await fileExists(path.join(resolvedRepoPath, ".datalox", "config.json"));
-  const hasAgentWiki = await fileExists(path.join(resolvedRepoPath, "agent-wiki"));
   const hasInstallStamp = await fileExists(installStampPath);
   const installStamp = hasInstallStamp ? await readInstallStamp(installStampPath) : null;
   const detectedRoots = [
     hasDataloxMd ? "DATALOX.md" : null,
     hasManifest || hasConfig || hasInstallStamp ? ".datalox/" : null,
-    hasAgentWiki ? "agent-wiki/" : null,
   ].filter((value): value is string => Boolean(value));
-  const completeCore = hasDataloxMd && hasManifest && hasConfig && hasAgentWiki;
+  const completeCore = hasDataloxMd && hasManifest && hasConfig;
   const gitRepo = isGitRepo(resolvedRepoPath);
   const writable = await isWritableDirectory(resolvedRepoPath);
 
@@ -919,7 +804,6 @@ export async function probeBootstrapCandidate(repoPath?: string): Promise<Bootst
         hasDataloxMd,
         hasManifest,
         hasConfig,
-        hasAgentWiki,
         hasInstallStamp,
         ownedRootSignals: detectedRoots,
       },
@@ -940,7 +824,6 @@ export async function probeBootstrapCandidate(repoPath?: string): Promise<Bootst
         hasDataloxMd,
         hasManifest,
         hasConfig,
-        hasAgentWiki,
         hasInstallStamp,
         ownedRootSignals: detectedRoots,
       },
@@ -965,7 +848,6 @@ export async function probeBootstrapCandidate(repoPath?: string): Promise<Bootst
         hasDataloxMd,
         hasManifest,
         hasConfig,
-        hasAgentWiki,
         hasInstallStamp,
         ownedRootSignals: detectedRoots,
       },
@@ -986,7 +868,6 @@ export async function probeBootstrapCandidate(repoPath?: string): Promise<Bootst
         hasDataloxMd,
         hasManifest,
         hasConfig,
-        hasAgentWiki,
         hasInstallStamp,
         ownedRootSignals: detectedRoots,
       },
@@ -1007,7 +888,6 @@ export async function probeBootstrapCandidate(repoPath?: string): Promise<Bootst
         hasDataloxMd,
         hasManifest,
         hasConfig,
-        hasAgentWiki,
         hasInstallStamp,
         ownedRootSignals: detectedRoots,
       },
@@ -1031,400 +911,116 @@ export async function probeBootstrapCandidate(repoPath?: string): Promise<Bootst
       hasDataloxMd,
       hasManifest,
       hasConfig,
-      hasAgentWiki,
       hasInstallStamp,
       ownedRootSignals: detectedRoots,
     },
   };
 }
 
+function removedLegacyWriteResult(operation: string, repoPath?: string) {
+  return {
+    repoPath: resolveRepoPath(repoPath),
+    operation,
+    status: "removed_from_this_branch",
+    written: false,
+    reason: "This branch records product data under .datalox/events through explicit trajectory and turn schemas.",
+  };
+}
+
 export async function resolveLoop(input: ResolveLoopInput) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  const legacy = await loadLegacyPackModule();
-  const result = await legacy.resolveLocalKnowledge(
-    {
-      task: input.task,
-      workflow: input.workflow,
-      step: input.step,
-      skill: input.skill,
-      limit: input.limit ?? 3,
-      includeContent: input.includeContent ?? false,
-    },
-    repoPath,
-  );
-  const supportingNotePaths = collectSupportingNotePaths(result);
-  if (supportingNotePaths.length > 0) {
-    const timestamp = new Date().toISOString();
-    await updateManyNotesUsage(repoPath, supportingNotePaths, (current) => ({
-      ...current,
-      readCount: current.readCount + 1,
-      lastReadAt: timestamp,
-    }));
-  }
-
-  // Enrich with remote guidance when runtime is enabled
-  let runtimeGuidance = null;
-  try {
-    const { config } = await loadAgentConfig(repoPath);
-    const client = createRuntimeClient(config);
-    if (client && input.task) {
-      runtimeGuidance = await client.compileGuidance({
-        task: input.task,
-        workflow: input.workflow ?? config.runtime.defaultWorkflow,
-        step: input.step,
-      });
-    }
-  } catch {
-    // Runtime unreachable — continue with local-only result
-  }
-
-  return { ...result, runtimeGuidance };
+  return {
+    workflow: input.workflow ?? "unknown",
+    selectionBasis: "removed_from_this_branch",
+    matchedSkillId: null,
+    matches: [],
+    directNoteMatches: [],
+    loopGuidance: null,
+    runtimeGuidance: null,
+  };
 }
 
 export async function syncNoteRetrieval(input: SyncNoteRetrievalInput = {}) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  const legacy = await loadLegacyPackModule();
-  return legacy.syncNoteRetrieval(repoPath);
+  return {
+    repoPath: resolveRepoPath(input.repoPath),
+    status: "removed_from_this_branch",
+    synced: false,
+  };
 }
 
 export async function patchKnowledge(input: PatchKnowledgeInput) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  await validateDurableWriteProvenance({
-    repoPath,
-    eventPath: input.eventPath,
-    sessionId: input.sessionId,
-    hostKind: input.hostKind,
-    adminOverride: input.adminOverride,
-  }, "patch");
-  const legacy = await loadLegacyPackModule();
-  const result = await legacy.learnFromInteraction(
-    {
-      task: input.task,
-      workflow: input.workflow,
-      step: input.step,
-      skillId: input.skillId,
-      summary: input.summary,
-      observations: input.observations ?? [],
-      transcript: input.transcript,
-      tags: input.tags ?? [],
-      title: input.title,
-      signal: input.signal,
-      interpretation: input.interpretation,
-      recommendedAction: input.recommendedAction,
-    },
-    repoPath,
-  );
-  return {
-    ...result,
-    note: result.note,
-  };
+  return removedLegacyWriteResult("patchKnowledge", input.repoPath);
 }
 
 export async function recordTurnResult(input: RecordTurnResultInput) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  const trajectoryRow = input.trajectoryRow === undefined
-    ? undefined
-    : withDefaultTrajectoryCurationQuality(parseDebuggingTrajectoryV1(input.trajectoryRow));
-  const legacy = await loadLegacyPackModule();
-  const result = await legacy.recordTurnResult(
-    {
-      sourceKind: input.sourceKind,
-      task: input.task,
-      workflow: input.workflow,
-      step: input.step,
-      skillId: input.skillId,
-      matchedSkillIdHint: input.matchedSkillIdHint,
-      adjudicationDecision: input.adjudicationDecision,
-      adjudicationSkillId: input.adjudicationSkillId,
-      candidateSkills: input.candidateSkills ?? [],
-      summary: input.summary,
-      observations: input.observations ?? [],
-      changedFiles: input.changedFiles ?? [],
-      transcript: input.transcript,
-      tags: input.tags ?? [],
-      title: input.title,
-      signal: input.signal,
-      interpretation: input.interpretation,
-      recommendedAction: input.recommendedAction,
-      outcome: input.outcome,
-      eventKind: input.eventKind,
-      eventClass: input.eventClass,
-    },
-    repoPath,
-  );
-  const recordedTrajectory = trajectoryRow === undefined
-    ? undefined
-    : await recordTrajectory({
-      repoPath,
-      trajectoryRow: {
-        ...trajectoryRow,
-        export: {
-          ...trajectoryRow.export,
-          source_event_paths: Array.from(new Set([
-            ...(trajectoryRow.export.source_event_paths ?? []),
-            result.event.relativePath,
-          ])),
-        },
-      },
-    });
-  return {
-    ...result,
-    ...(recordedTrajectory !== undefined
-      ? {
-        trajectoryEvent: {
-          relativePath: recordedTrajectory.event.relativePath,
-          payload: recordedTrajectory.event.payload,
-        },
-        trajectoryId: recordedTrajectory.trajectoryId,
-        trajectorySellable: recordedTrajectory.sellable,
-        trajectoryBlockedReasons: recordedTrajectory.blockedReasons,
-      }
-      : {}),
-    traceBundle: extractTraceSource({
-      id: result.event.payload.id,
-      title: result.event.payload.title,
-      capturedAt: result.event.payload.timestamp,
-      task: result.event.payload.task ?? input.task,
-      workflow: result.event.payload.workflow ?? input.workflow,
-      step: result.event.payload.step ?? input.step,
-      transcript: result.event.payload.transcript ?? input.transcript,
-      summary: result.event.payload.summary ?? input.summary,
-      observations: result.event.payload.observations ?? input.observations ?? [],
-      signal: result.event.payload.signal ?? input.signal,
-      interpretation: result.event.payload.interpretation ?? input.interpretation,
-      action: result.event.payload.recommendedAction ?? input.recommendedAction,
-      matchedSkillId: result.event.payload.matchedSkillId ?? input.matchedSkillIdHint ?? input.skillId,
-      changedFiles: result.event.payload.changedFiles ?? input.changedFiles ?? [],
-      outcome: result.event.payload.outcome ?? input.outcome,
-    }),
-    event: {
-      ...result.event,
-      payload: await patchRecordedEvent(repoPath, result.event.relativePath, {
-        ...(input.matchedNotePaths !== undefined ? { matchedNotePaths: input.matchedNotePaths } : {}),
-        ...(input.sessionId !== undefined ? { sessionId: input.sessionId ?? null } : {}),
-        ...(input.hostKind !== undefined ? { hostKind: input.hostKind ?? null } : {}),
-        ...(recordedTrajectory !== undefined
-          ? {
-            trajectoryEventPath: recordedTrajectory.eventPath,
-            trajectoryId: recordedTrajectory.trajectoryId,
-          }
-          : {}),
-      }) ?? result.event.payload,
-    },
-  };
+  return removedLegacyWriteResult("recordTurnResult", input.repoPath);
 }
 
 export async function promoteGap(input: PromoteGapInput) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  await validateDurableWriteProvenance({
-    repoPath,
-    eventPath: input.eventPath,
-    sessionId: input.sessionId,
-    hostKind: input.hostKind,
-    adminOverride: input.adminOverride,
-  }, "promote");
-  const legacy = await loadLegacyPackModule();
-  const result = await legacy.promoteGap(
-    {
-      sourceKind: input.sourceKind,
-      task: input.task,
-      workflow: input.workflow,
-      step: input.step,
-      skillId: input.skillId,
-      matchedSkillIdHint: input.matchedSkillIdHint,
-      adjudicationDecision: input.adjudicationDecision,
-      adjudicationSkillId: input.adjudicationSkillId,
-      candidateSkills: input.candidateSkills ?? [],
-      summary: input.summary,
-      observations: input.observations ?? [],
-      changedFiles: input.changedFiles ?? [],
-      transcript: input.transcript,
-      tags: input.tags ?? [],
-      title: input.title,
-      signal: input.signal,
-      interpretation: input.interpretation,
-      recommendedAction: input.recommendedAction,
-      outcome: input.outcome,
-      eventKind: input.eventKind,
-      eventClass: "candidate",
-      minWikiOccurrences: input.minWikiOccurrences,
-      minSkillOccurrences: input.minSkillOccurrences,
-    },
-    repoPath,
-  );
-
-  // Auto-publish promoted skills to the runtime registry
-  let runtimePublish = null;
-  try {
-    const promotion = result.promotion;
-    if (promotion?.skill) {
-      const { config } = await loadAgentConfig(repoPath);
-      const client = createRuntimeClient(config);
-      if (client) {
-        const skillContent = typeof promotion.skill.content === "string"
-          ? promotion.skill.content
-          : "";
-        runtimePublish = await client.publishSkill({
-          name: promotion.skill.name ?? promotion.skill.id ?? "unnamed",
-          description: promotion.skill.description ?? input.summary ?? "",
-          workflow: input.workflow ?? config.runtime.defaultWorkflow,
-          trigger: input.signal ?? "",
-          skillMd: skillContent,
-          tags: input.tags ?? [],
-        });
-      }
-    }
-  } catch {
-    // Runtime unreachable — continue without publishing
-  }
-
-  return {
-    ...result,
-    runtimePublish,
-    promotion: result.promotion
-      ? {
-        ...result.promotion,
-        note: result.promotion.note ?? null,
-      }
-      : null,
-    traceBundle: extractTraceSource({
-      id: result.event.payload.id,
-      title: result.event.payload.title,
-      capturedAt: result.event.payload.timestamp,
-      task: result.event.payload.task ?? input.task,
-      workflow: result.event.payload.workflow ?? input.workflow,
-      step: result.event.payload.step ?? input.step,
-      transcript: result.event.payload.transcript ?? input.transcript,
-      summary: result.event.payload.summary ?? input.summary,
-      observations: result.event.payload.observations ?? input.observations ?? [],
-      signal: result.event.payload.signal ?? input.signal,
-      interpretation: result.event.payload.interpretation ?? input.interpretation,
-      action: result.event.payload.recommendedAction ?? input.recommendedAction,
-      matchedSkillId: result.event.payload.matchedSkillId ?? input.matchedSkillIdHint ?? input.skillId,
-      changedFiles: result.event.payload.changedFiles ?? input.changedFiles ?? [],
-      outcome: result.event.payload.outcome ?? input.outcome,
-    }),
-    event: {
-      ...result.event,
-      payload: await patchRecordedEvent(repoPath, result.event.relativePath, {
-        ...(input.matchedNotePaths !== undefined ? { matchedNotePaths: input.matchedNotePaths } : {}),
-        ...(input.sessionId !== undefined ? { sessionId: input.sessionId ?? null } : {}),
-        ...(input.hostKind !== undefined ? { hostKind: input.hostKind ?? null } : {}),
-      }) ?? result.event.payload,
-    },
-  };
+  return removedLegacyWriteResult("promoteGap", input.repoPath);
 }
 
 export async function compileRecordedEvent(input: CompileRecordedEventInput) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  const legacy = await loadLegacyPackModule();
-  const result = await legacy.compileRecordedEvent(
-    {
-      eventPath: input.eventPath,
-      minWikiOccurrences: input.minWikiOccurrences,
-      minSkillOccurrences: input.minSkillOccurrences,
-    },
-    repoPath,
-  );
-  return {
-    ...result,
-    promotion: result.promotion
-      ? {
-        ...result.promotion,
-        note: result.promotion.note ?? null,
-      }
-      : null,
-  };
+  return removedLegacyWriteResult("compileRecordedEvent", input.repoPath);
 }
 
 export async function maintainKnowledge(input: MaintainKnowledgeInput = {}) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  const legacy = await loadLegacyPackModule();
-  return legacy.maintainKnowledge(
-    {
-      maxEvents: input.maxEvents,
-      includeCovered: input.includeCovered,
-      minNoteOccurrences: input.minNoteOccurrences,
-      minSkillOccurrences: input.minSkillOccurrences,
-      synthesizeSkills: input.synthesizeSkills,
-    },
-    repoPath,
-  );
+  return removedLegacyWriteResult("maintainKnowledge", input.repoPath);
 }
 
 export async function runAutomaticMaintenance(input: AutomaticMaintenanceInput = {}) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  const legacy = await loadLegacyPackModule();
-  return legacy.runAutomaticMaintenance(
-    {
-      reason: input.reason,
-    },
-    repoPath,
-  );
+  return {
+    status: "skipped",
+    skippedReason: "removed_from_this_branch",
+    reason: input.reason ?? null,
+    beforeBacklog: await getEventBacklogStatus({ repoPath: input.repoPath }),
+    afterBacklog: await getEventBacklogStatus({ repoPath: input.repoPath }),
+    maintenance: null,
+  };
 }
 
 export async function getEventBacklogStatus(input: EventBacklogStatusInput = {}) {
-  const repoPath = resolveRepoPath(input.repoPath);
-  const legacy = await loadLegacyPackModule();
-  return legacy.getEventBacklogStatus({}, repoPath);
+  return {
+    repoPath: resolveRepoPath(input.repoPath),
+    maintenanceRecommended: false,
+    uncoveredEvents: 0,
+    maintainableUnresolvedTraceGroupCount: 0,
+    recommendedCommand: null,
+    policy: {
+      level: "off",
+      reason: "legacy maintenance was removed from this branch",
+    },
+  };
 }
 
 export async function lintLocalPack(input: LintPackInput = {}) {
-  const legacy = await loadLegacyPackModule();
-  const repoPath = resolveRepoPath(input.repoPath);
-  const base = await legacy.lintPack(repoPath);
-  const supportingIssues = await (async () => {
-    const issues: Array<{ level: string; code: string; path: string; message: string }> = [];
-    const notesDir = path.join(repoPath, NOTES_RELATIVE_DIR);
-    const noteFiles = await listMarkdownFiles(notesDir);
-    for (const entryPath of noteFiles) {
-      const split = splitFrontmatter(await readFile(entryPath, "utf8"));
-      if (!split) {
-        continue;
-      }
-      const usage = parseUsageStats(split.frontmatterLines);
-      if (usage.applyCount > usage.readCount) {
-        issues.push({
-          level: "warning",
-          code: "note_usage_apply_exceeds_read",
-          path: normalizePath(path.relative(repoPath, entryPath)),
-          message: "Note apply_count should not exceed read_count.",
-        });
-      }
-    }
-    return issues;
-  })();
-
-  const issues = [...base.issues, ...supportingIssues];
   return {
-    ...base,
-    issues,
-    issueCount: issues.length,
-    ok: issues.filter((issue: { level: string }) => issue.level === "error").length === 0,
+    repoPath: resolveRepoPath(input.repoPath),
+    ok: true,
+    issues: [],
+    issueCount: 0,
+    status: "removed_from_this_branch",
   };
 }
 
 export async function refreshControlArtifacts(input: RefreshControlArtifactsInput = {}) {
-  const legacy = await loadLegacyPackModule();
-  return legacy.refreshControlArtifacts(resolveRepoPath(input.repoPath), {
-    logEntry: input.logEntry,
-    lintResult: input.lintResult,
-  });
+  return {
+    repoPath: resolveRepoPath(input.repoPath),
+    status: "removed_from_this_branch",
+    logEntry: input.logEntry ?? null,
+    lintResult: input.lintResult ?? null,
+  };
 }
 
 export async function adoptPack(input: AdoptPackInput): Promise<AdoptPackResult> {
   const hostRepoPath = resolveRepoPath(input.hostRepoPath);
   const packRootPath = await resolvePackRoot(input.packSource);
   const installMode = input.installMode ?? "manual";
-  const includeLegacyGuidance = input.includeLegacyGuidance === true || input.includeLegacyWiki === true;
-  const includeLegacyWiki = includeLegacyGuidance;
   await ensureLocalPackCache(packRootPath);
   const copied: string[] = [];
   const injected: string[] = [];
   const skipped: string[] = [];
 
   await mkdir(path.join(hostRepoPath, ".datalox"), { recursive: true });
-  await mkdir(path.join(hostRepoPath, ".claude", "hooks"), { recursive: true });
   await mkdir(path.join(hostRepoPath, ".github"), { recursive: true });
   await mkdir(path.join(hostRepoPath, ".cursor", "rules"), { recursive: true });
   await mkdir(path.join(hostRepoPath, ".windsurf", "rules"), { recursive: true });
@@ -1441,29 +1037,6 @@ export async function adoptPack(input: AdoptPackInput): Promise<AdoptPackResult>
     );
   }
 
-  if (includeLegacyGuidance) {
-    await mkdir(path.join(hostRepoPath, "skills"), { recursive: true });
-    await mkdir(path.join(hostRepoPath, "agent-wiki", "events"), { recursive: true });
-    for (const relativePath of LEGACY_GUIDANCE_FILE_PATHS) {
-      await copyOrInjectInstructionFile(
-        path.join(packRootPath, relativePath),
-        path.join(hostRepoPath, relativePath),
-        relativePath,
-        copied,
-        injected,
-        skipped,
-      );
-    }
-    for (const relativePath of LEGACY_GUIDANCE_TREE_PATHS) {
-      await copyTreeEntriesIfMissing(
-        path.join(packRootPath, relativePath),
-        path.join(hostRepoPath, relativePath),
-        copied,
-        skipped,
-      );
-    }
-  }
-
   const installStampPath = await writeInstallStamp(hostRepoPath, packRootPath, installMode);
   copied.push(installStampPath);
 
@@ -1475,8 +1048,6 @@ export async function adoptPack(input: AdoptPackInput): Promise<AdoptPackResult>
     skipped: skipped.map((item) => path.relative(hostRepoPath, item) || "."),
     installStampPath: path.relative(hostRepoPath, installStampPath) || ".",
     installMode,
-    includeLegacyGuidance,
-    includeLegacyWiki,
   };
 }
 
@@ -1498,8 +1069,6 @@ export async function autoBootstrapIfSafe(input: AutoBootstrapInput = {}): Promi
     hostRepoPath: repoPath,
     packSource: input.packSource,
     installMode,
-    includeLegacyGuidance: input.includeLegacyGuidance,
-    includeLegacyWiki: input.includeLegacyWiki,
   });
   const probeAfter = await probeBootstrapCandidate(repoPath);
 

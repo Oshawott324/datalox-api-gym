@@ -14,15 +14,6 @@
     "datalox-wrap": "./bin/datalox-wrap.js"
   },
   "scripts": {
-    "agent:bootstrap": "node scripts/agent-bootstrap.mjs",
-    "agent:resolve": "node scripts/agent-resolve.mjs",
-    "agent:lint": "node scripts/agent-lint.mjs",
-    "agent:learn-pattern": "node scripts/agent-learn-pattern.mjs",
-    "agent:learn-skill": "node scripts/agent-learn-skill.mjs",
-    "agent:learn-from-interaction": "node scripts/agent-learn-from-interaction.mjs",
-    "demo:one-correction": "node scripts/demo-one-correction.mjs",
-    "demo:one-correction:artifact": "node scripts/demo-one-correction-artifact.mjs",
-    "demo:one-correction:replay": "node scripts/demo-one-correction-replay.mjs",
     "build": "tsc",
     "datalox": "node dist/src/cli/main.js",
     "mcp:stdio": "node dist/src/mcp/trajectoryServer.js",

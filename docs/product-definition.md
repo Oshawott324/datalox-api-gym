@@ -77,7 +77,8 @@ This repo builds one product pipeline with supporting infrastructure:
 3. **Datalox Trajectory Data**
    The derived B2B dataset/eval product: lean, outcome-labeled `debugging_trajectory.v1` and `agent_task_trajectory.v1` records and curated corpora.
 
-Legacy repo-local skill and note surfaces may remain while the pack is being migrated, but they are not the product architecture for this repo.
+Local skills may remain as agent guidance, but they are not a product data
+store and they do not create a second note/promotion loop.
 
 The commercial source export structure is:
 
@@ -151,8 +152,8 @@ The event capture and dataset export should stay direct:
 - verified debugging episodes can become derived trajectory dataset rows
 - verified mixed-domain episodes can become `agent_task_trajectory.v1` rows when a task combines code, documents, spreadsheets, analysis, lab workflow, or source-review evidence
 - new product capture data writes under `.datalox/events/`
-- legacy `agent-wiki/events/` traces remain readable but are not the future product store
-- fresh product adoption does not create or copy `agent-wiki/` or `skills/` unless the user explicitly requests legacy compatibility
+- fresh product adoption creates `.datalox/`, instruction surfaces, and host shims only
+- no wiki/note/event store is shipped as a parallel product path in this branch
 
 An exported trajectory can link:
 
@@ -167,7 +168,7 @@ An exported trajectory can link:
 - `Datalox Trajectory Data` = derived B2B dataset/eval product.
 - `Datalox MCP` = instrumentation, session capture, labeling, verification status, and export-control surface.
 - `Datalox Desktop` or a desktop agent = a capture client, not a separate product loop for this repo.
-- `datalox-trajectory-mcp` = repo-local implementation package, protocol, CLI, event capture, export, and remaining legacy guidance assets.
+- `datalox-trajectory-mcp` = repo-local implementation package, protocol, CLI, event capture, and export.
 - `adapter` = host-specific enforcement and automation.
 
 MCP availability alone is not enforcement. Enforced host wrappers still matter because they inject guidance before the child run and can record after it.
@@ -182,7 +183,7 @@ The export progression is primary:
 agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
 ```
 
-Legacy note/skill promotion should be treated as internal behavior in this repo. New product work should route through structured turn events first, assemble sessions, then derive trajectory rows when useful.
+New product work should route through structured turn events first, assemble sessions, then derive trajectory rows when useful.
 
 The system should prefer:
 

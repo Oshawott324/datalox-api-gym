@@ -7,7 +7,6 @@ import {
   autoBootstrapIfSafe,
   getDefaultPackUrl,
   probeBootstrapCandidate,
-  syncNoteRetrieval,
 } from "../core/packCore.js";
 import {
   disableHostIntegrations,
@@ -31,7 +30,7 @@ function resolveCliPackRoot(): string {
   for (const candidate of candidates) {
     if (
       existsSync(path.join(candidate, "package.json"))
-      && existsSync(path.join(candidate, "scripts", "lib", "agent-pack.mjs"))
+      && existsSync(path.join(candidate, "bin", "datalox.js"))
     ) {
       return candidate;
     }
@@ -43,35 +42,24 @@ function resolveCliPackRoot(): string {
 function usage(): string {
   return [
     "Usage:",
-    "  datalox install [all|codex|claude] [--include-legacy-guidance] [--json]",
+    "  datalox install [all|codex|claude] [--json]",
     "  datalox disable [all|codex|claude] [--json]",
     "  datalox status [--repo <path>] [--json]",
-    "  datalox bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
-    "  datalox setup [all|codex|claude] [--repo <path>] [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
-    "  datalox adopt <host-repo-path> [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
+    "  datalox bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
+    "  datalox setup [all|codex|claude] [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
+    "  datalox adopt <host-repo-path> [--pack-source <path-or-git-url>] [--json]",
     "  datalox probe-bootstrap [--repo <path>] [--json]",
-    "  datalox auto-bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--include-legacy-guidance] [--json]",
-    "  datalox capture-web [--repo <path>] --url <url> [--artifact <design-doc|design-tokens|css-variables|tailwind-theme|note|source-page>] [--title <title>] [--slug <slug>] [--output <path>] [--json]",
-    "  datalox capture-design [--repo <path>] --url <url> [--title <title>] [--slug <slug>] [--output <path>] [--json]",
-    "  datalox capture-pdf [--repo <path>] --path <pdf-path> [--title <title>] [--slug <slug>] [--source-url <url>] [--json]",
-    "  datalox publish-web-capture [--repo <path>] --capture <slug> [--bucket <bucket>] [--prefix <prefix>] [--public-base-url <url>] [--json]",
-    "  datalox resolve [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--limit <n>] [--include-content] [--json]",
-    "  datalox retrieval sync [--repo <path>] [--json]",
+    "  datalox auto-bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
     "  datalox record-trajectory [--repo <path>] --trajectory-row <json-file> [--json]",
     "  datalox export-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
     "  datalox record-agent-task-trajectory [--repo <path>] --agent-task-trajectory <json-file> [--json]",
     "  datalox export-agent-task-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
     "  datalox grade-trajectories [--repo <path>] [--event-path <event-json>] [--max-row-chars <n>] [--max-patch-chars <n>] [--max-snippet-chars <n>] [--max-metadata-chars <n>] [--json]",
     "  datalox repair-trajectory [--repo <path>] --event-path <event-json> --trajectory-row <json-file> [--json]",
-    "  datalox record [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--summary <summary>] [--observation <text>] [--changed-file <path>] [--transcript <text>] [--title <title>] [--signal <signal>] [--interpretation <text>] [--action <text>] [--outcome <text>] [--tag <tag>] [--event-kind <kind>] [--trajectory-row <json-file>] [--json]",
-    "  datalox patch [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--summary <summary>] [--observation <text>] [--transcript <text>] [--title <title>] [--signal <signal>] [--interpretation <text>] [--action <text>] [--event-path <path>] [--session-id <id>] [--host-kind <kind>] [--admin-override] [--tag <tag>] [--json]",
-    "  datalox promote [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--summary <summary>] [--observation <text>] [--changed-file <path>] [--transcript <text>] [--title <title>] [--signal <signal>] [--interpretation <text>] [--action <text>] [--outcome <text>] [--tag <tag>] [--event-kind <kind>] [--event-path <path>] [--session-id <id>] [--host-kind <kind>] [--admin-override] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--json]",
-    "  datalox maintain [--repo <path>] [--max-events <n>] [--include-covered] [--min-note-occurrences <n>] [--min-skill-occurrences <n>] [--synthesize-skills] [--json]",
-    "  datalox lint [--repo <path>] [--json]",
     "  datalox wrap prompt [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--json]",
-    "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory|record|auto|promote|review>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
-    "  datalox claude [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory|record|auto|promote|review>] [--review-model <model>] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--claude-bin <path>] [--json] [-- <claude args>]",
-    "  datalox codex [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory|record|auto|promote|review>] [--review-model <model>] [--min-wiki-occurrences <n>] [--min-skill-occurrences <n>] [--codex-bin <path>] [--json] [-- <codex exec args>]",
+    "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
+    "  datalox claude [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory>] [--review-model <model>] [--claude-bin <path>] [--json] [-- <claude args>]",
+    "  datalox codex [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory>] [--review-model <model>] [--codex-bin <path>] [--json] [-- <codex exec args>]",
   ].join("\n");
 }
 
@@ -103,10 +91,6 @@ function parsePostRunMode(
   switch (raw) {
     case "off":
     case "trajectory":
-    case "record":
-    case "auto":
-    case "promote":
-    case "review":
       return raw;
     default:
       return undefined;
@@ -139,13 +123,7 @@ function parseInstallHost(value: string | undefined): InstallHost {
   }
 }
 
-function includeLegacyGuidance(args: ReturnType<typeof parseCliArgs>): boolean {
-  return args["include-legacy-guidance"] === true
-    || args["include-legacy-skills"] === true
-    || args["include-legacy-wiki"] === true;
-}
-
-async function bootstrapRepo(repoPath?: string, packSource?: string, includeLegacyGuidanceValue?: boolean) {
+async function bootstrapRepo(repoPath?: string, packSource?: string) {
   const probeBefore = await probeBootstrapCandidate(repoPath);
   if (probeBefore.status === "ready" || !probeBefore.canAutoBootstrap) {
     return {
@@ -159,7 +137,6 @@ async function bootstrapRepo(repoPath?: string, packSource?: string, includeLega
   return autoBootstrapIfSafe({
     repoPath,
     packSource,
-    includeLegacyGuidance: includeLegacyGuidanceValue,
   });
 }
 
@@ -174,65 +151,9 @@ function writePostRunSummary(prefix: string, postRun: unknown): void {
       event?: { relativePath?: string };
       decision?: { action?: string; reason?: string; occurrenceCount?: number };
     } | null;
-    review?: {
-      status?: string;
-      decision?: { action?: string; reason?: string } | null;
-      error?: string;
-    } | null;
-    maintenance?: {
-      status?: string;
-      skippedReason?: string | null;
-      maintenance?: {
-        scannedEvents?: number;
-        noteActions?: unknown[];
-        rollupActions?: unknown[];
-        skillActions?: unknown[];
-      } | null;
-      afterBacklog?: {
-        uncoveredEvents?: number;
-        maintenanceRecommended?: boolean;
-      } | null;
-    } | null;
   };
   const eventPath = typed.result?.event?.relativePath;
   const decision = typed.result?.decision;
-  const review = typed.review;
-  const maintenance = typed.maintenance;
-  const backlog = (typed as {
-    backlog?: {
-      maintenanceRecommended?: boolean;
-      policy?: { level?: string };
-      uncoveredEvents?: number;
-      maintainableUnresolvedTraceGroupCount?: number;
-      recommendedCommand?: string;
-    } | null;
-  }).backlog;
-  if (maintenance?.status === "ran") {
-    process.stderr.write(
-      `[${prefix}] maintenance | ran | scanned=${maintenance.maintenance?.scannedEvents ?? "?"} | notes=${maintenance.maintenance?.noteActions?.length ?? 0} | rollups=${maintenance.maintenance?.rollupActions?.length ?? 0} | skills=${maintenance.maintenance?.skillActions?.length ?? 0} | uncovered=${maintenance.afterBacklog?.uncoveredEvents ?? "?"}\n`,
-    );
-  } else if (maintenance?.status === "skipped" && maintenance.skippedReason && maintenance.skippedReason !== "no_maintenance_backlog") {
-    process.stderr.write(
-      `[${prefix}] maintenance | skipped | ${maintenance.skippedReason}\n`,
-    );
-  }
-  if (backlog?.maintenanceRecommended) {
-    process.stderr.write(
-      `[${prefix}] maintenance_backlog | ${backlog.policy?.level ?? "warn"} | uncovered=${backlog.uncoveredEvents ?? "?"} | maintainable_groups=${backlog.maintainableUnresolvedTraceGroupCount ?? "?"} | ${backlog.recommendedCommand ?? "datalox maintain --json"}\n`,
-    );
-  }
-  if (typed.mode === "review") {
-    if (review?.status === "completed" && review.decision) {
-      process.stderr.write(
-        `[${prefix}] review | ${review.decision.action} | ${review.decision.reason ?? "no reason"}${eventPath ? ` | ${eventPath}` : ""}\n`,
-      );
-      return;
-    }
-    process.stderr.write(
-      `[${prefix}] review | ${review?.status ?? "failed"} | ${review?.error ?? "review unavailable"}${eventPath ? ` | ${eventPath}` : ""}\n`,
-    );
-    return;
-  }
   if (decision?.action) {
     process.stderr.write(
       `[${prefix}] ${decision.action} | ${decision.reason ?? "no reason"} | occurrences=${decision.occurrenceCount ?? "?"}${eventPath ? ` | ${eventPath}` : ""}\n`,
@@ -267,7 +188,6 @@ async function main(): Promise<void> {
       const result = await installHostIntegrations({
         host,
         packRootPath: resolveCliPackRoot(),
-        includeLegacySkills: includeLegacyGuidance(args),
       });
       writeResult(result, true);
       return;
@@ -293,7 +213,6 @@ async function main(): Promise<void> {
       const result = await bootstrapRepo(
         typeof args.repo === "string" ? args.repo : undefined,
         typeof args["pack-source"] === "string" ? args["pack-source"] : undefined,
-        includeLegacyGuidance(args),
       );
       writeResult(result, true);
       return;
@@ -303,12 +222,10 @@ async function main(): Promise<void> {
       const install = await installHostIntegrations({
         host,
         packRootPath: resolveCliPackRoot(),
-        includeLegacySkills: includeLegacyGuidance(args),
       });
       const bootstrap = await bootstrapRepo(
         typeof args.repo === "string" ? args.repo : undefined,
         typeof args["pack-source"] === "string" ? args["pack-source"] : undefined,
-        includeLegacyGuidance(args),
       );
       writeResult({ install, bootstrap }, true);
       return;
@@ -322,17 +239,6 @@ async function main(): Promise<void> {
       const result = await autoBootstrapIfSafe({
         repoPath: typeof args.repo === "string" ? args.repo : undefined,
         packSource: typeof args["pack-source"] === "string" ? args["pack-source"] : undefined,
-        includeLegacyGuidance: includeLegacyGuidance(args),
-      });
-      writeResult(result, true);
-      return;
-    }
-    case "retrieval": {
-      if (positional !== "sync") {
-        throw new Error("retrieval requires a subcommand; supported: sync");
-      }
-      const result = await syncNoteRetrieval({
-        repoPath: typeof args.repo === "string" ? args.repo : undefined,
       });
       writeResult(result, true);
       return;
@@ -351,8 +257,6 @@ async function main(): Promise<void> {
         eventKind: typeof args["event-kind"] === "string" ? args["event-kind"] : undefined,
         postRunMode: parsePostRunMode(args["post-run-mode"]),
         reviewModel: parseOptionalString(args["review-model"], "DATALOX_DEFAULT_REVIEW_MODEL"),
-        minWikiOccurrences: parsePositiveInt(args["min-wiki-occurrences"]),
-        minSkillOccurrences: parsePositiveInt(args["min-skill-occurrences"]),
       };
 
       if (subcommand === "prompt") {
@@ -407,8 +311,6 @@ async function main(): Promise<void> {
         eventKind: typeof args["event-kind"] === "string" ? args["event-kind"] : undefined,
         postRunMode: parsePostRunMode(args["post-run-mode"]),
         reviewModel: parseOptionalString(args["review-model"], "DATALOX_DEFAULT_REVIEW_MODEL"),
-        minWikiOccurrences: parsePositiveInt(args["min-wiki-occurrences"]),
-        minSkillOccurrences: parsePositiveInt(args["min-skill-occurrences"]),
         codexBin: typeof args["codex-bin"] === "string" ? args["codex-bin"] : undefined,
         codexArgs,
       });
@@ -441,8 +343,6 @@ async function main(): Promise<void> {
         eventKind: typeof args["event-kind"] === "string" ? args["event-kind"] : undefined,
         postRunMode: parsePostRunMode(args["post-run-mode"]),
         reviewModel: parseOptionalString(args["review-model"], "DATALOX_DEFAULT_REVIEW_MODEL"),
-        minWikiOccurrences: parsePositiveInt(args["min-wiki-occurrences"]),
-        minSkillOccurrences: parsePositiveInt(args["min-skill-occurrences"]),
         claudeBin: typeof args["claude-bin"] === "string" ? args["claude-bin"] : undefined,
         claudeArgs,
       });

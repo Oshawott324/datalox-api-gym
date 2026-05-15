@@ -18,11 +18,6 @@ export const PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR = path.join(
   "events",
   "trajectory-rows",
 );
-export const LEGACY_EVENTS_RELATIVE_DIR = path.join("agent-wiki", "events");
-const TRAJECTORY_EVENT_READ_RELATIVE_DIRS = [
-  PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR,
-  LEGACY_EVENTS_RELATIVE_DIR,
-] as const;
 const DEFAULT_EXPORT_RELATIVE_PATH = path.join(
   "exports",
   "trajectories",
@@ -331,6 +326,16 @@ export async function exportTrajectories(
     await writeFile(blockedReportAbsolutePath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
   }
 
+  const fatalUseRejections = input.quality === "use"
+    ? rejectedRows.filter((row) => row.reason === "not_exportable" || row.reason === "training_grade_filter")
+    : [];
+  if (fatalUseRejections.length > 0) {
+    throw new TrajectoryExportError(
+      "Trajectory export failed: use-quality rows failed export or training-readiness gates.",
+      report,
+    );
+  }
+
   return report;
 }
 
@@ -400,16 +405,14 @@ export async function readRecordedTrajectoryEventPayloads(
 }
 
 export async function listRecordedTrajectoryEventPaths(repoRoot: string): Promise<string[]> {
-  const paths: string[] = [];
-  for (const relativeDir of TRAJECTORY_EVENT_READ_RELATIVE_DIRS) {
-    const eventsRoot = path.join(repoRoot, relativeDir);
-    if (!existsSync(eventsRoot)) {
-      continue;
-    }
-    const filenames = (await readdir(eventsRoot)).filter((filename) => filename.endsWith(".json"));
-    paths.push(...filenames.map((filename) => normalizeRelativePath(path.join(relativeDir, filename))));
+  const eventsRoot = path.join(repoRoot, PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR);
+  if (!existsSync(eventsRoot)) {
+    return [];
   }
-  return paths.sort();
+  const filenames = (await readdir(eventsRoot)).filter((filename) => filename.endsWith(".json"));
+  return filenames
+    .map((filename) => normalizeRelativePath(path.join(PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR, filename)))
+    .sort();
 }
 
 export function resolveRecordedTrajectoryEventPath(repoRoot: string, eventPath: string): string {
@@ -420,7 +423,7 @@ export function resolveRecordedTrajectoryEventPath(repoRoot: string, eventPath: 
   }
   const normalized = normalizeRelativePath(relativePath);
   if (!isRecordedTrajectoryEventPath(normalized)) {
-    throw new Error("eventPath must point under .datalox/events/trajectory-rows or legacy agent-wiki/events.");
+    throw new Error("eventPath must point under .datalox/events/trajectory-rows.");
   }
   return resolved;
 }
@@ -431,9 +434,7 @@ export function getTrajectoryRowInput(eventPayload: unknown): unknown {
 }
 
 function isRecordedTrajectoryEventPath(relativePath: string): boolean {
-  return TRAJECTORY_EVENT_READ_RELATIVE_DIRS.some((relativeDir) => (
-    relativePath.startsWith(`${normalizeRelativePath(relativeDir)}/`)
-  ));
+  return relativePath.startsWith(`${normalizeRelativePath(PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR)}/`);
 }
 
 function selectRepairLineageExportCandidates(

@@ -83,7 +83,7 @@ Stop exposing heuristic ranking numbers to downstream agents and tools.
 ### Main files
 
 - `src/adapters/shared.ts`
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 - `src/core/packCore.ts`
 - tests covering wrapper, bridge, hook, and script outputs
 
@@ -108,7 +108,7 @@ Stop using “sum enough overlap points and keep anything above zero” as the m
 
 ### Main files
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 
 ### Changes
 
@@ -160,7 +160,7 @@ Make note retrieval more structural and less popularity-weighted.
 
 ### Main files
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 
 ### Changes
 
@@ -205,7 +205,7 @@ Give downstream agents reasons, not numbers.
 ### Main files
 
 - `src/adapters/shared.ts`
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 
 ### Changes
 
@@ -264,7 +264,7 @@ Remove dead or misleading older heuristic logic so the repo reflects the actual 
 
 ### Main files
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 
 ### Changes
 
@@ -293,7 +293,7 @@ Required proof tests:
 
 Primary:
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 - `src/adapters/shared.ts`
 - `src/core/packCore.ts`
 - `src/adapters/sourceRoutes.ts`

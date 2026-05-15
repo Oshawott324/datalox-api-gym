@@ -23,7 +23,7 @@ What the agent would do:
 
 ## Human Correction
 
-Note written or updated: `agent-wiki/notes/agent-adoption-repo-has-no-visible-install-surface-for-the-agent.md`
+Note written or updated: `removed-wiki-store/notes/agent-adoption-repo-has-no-visible-install-surface-for-the-agent.md`
 Skill operation: `update_skill`
 Skill path: `$DEMO_REPO/skills/stabilize-repo-onboarding/SKILL.md`
 
@@ -41,6 +41,6 @@ Lint OK: `true`
 Lint issue count: `0`
 
 Recent log lines:
-- 2026-04-16T09:21:04.289Z | create_note | A first-run coding agent needs a visible and reversible onboarding path for agent_adoption | agent-wiki/notes/agent-adoption-repo-has-no-visible-install-surface-for-the-agent.md
+- 2026-04-16T09:21:04.289Z | create_note | A first-run coding agent needs a visible and reversible onboarding path for agent_adoption | removed-wiki-store/notes/agent-adoption-repo-has-no-visible-install-surface-for-the-agent.md
 - 2026-04-16T09:21:04.295Z | update_skill | agent-adoption.stabilize-repo-onboarding updated with 2 note(s) | skills/stabilize-repo-onboarding/SKILL.md
-- 2026-04-16T09:21:06.170Z | lint_pack | pack lint completed with no blocking issues | agent-wiki/lint.md
+- 2026-04-16T09:21:06.170Z | lint_pack | pack lint completed with no blocking issues | removed-wiki-store/lint.md

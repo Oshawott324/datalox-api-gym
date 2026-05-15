@@ -12,7 +12,7 @@ This is a runtime and machine-facing contract change, not a new product definiti
 
 The following public or machine-facing surfaces were changed:
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 - `src/core/packCore.ts`
 - `src/adapters/shared.ts`
 - `src/mcp/loopPulse.ts`
@@ -107,7 +107,7 @@ These behaviors were not meant to change:
 - skill matching and ranking
 - note retrieval ranking
 - note usage tracking
-- note write location: still `agent-wiki/notes/`
+- note write location: still `removed-wiki-store/notes/`
 - skill write location: still `skills/<name>/SKILL.md`
 - wrapper recording flow
 - hook provenance flow

@@ -5,7 +5,7 @@ Status: completed.
 This pass upgraded note retrieval in `datalox-pack` without changing the core product boundary:
 
 - `skills/` stay the primary execution entrypoints
-- `agent-wiki/notes/` stays the primary knowledge body
+- `removed-wiki-store/notes/` stays the primary knowledge body
 - Datalox keeps ownership of:
   - note and skill schemas
   - workflow and skill scoping
@@ -88,8 +88,8 @@ The only pluggable part is direct note retrieval.
 - [x] Scope QMD collections per repo.
 - [x] Do not use a single global collection for all repos.
 - [x] Start by indexing:
-  - `agent-wiki/notes/`
-- [x] Leave `agent-wiki/docs/` for later, when that surface is real.
+  - `removed-wiki-store/notes/`
+- [x] Leave `removed-wiki-store/docs/` for later, when that surface is real.
 - [x] Add one Datalox-managed sync command:
   - `datalox retrieval sync`
 - [x] Sync:
@@ -126,7 +126,7 @@ The only pluggable part is direct note retrieval.
   - event compilation into notes
   - note promotion into skills
 - [x] QMD does not become a source of truth for notes.
-- [x] `agent-wiki/notes/` remains the source of truth.
+- [x] `removed-wiki-store/notes/` remains the source of truth.
 
 ## Phase 9: CLI And MCP Surfaces
 
@@ -165,4 +165,4 @@ The only pluggable part is direct note retrieval.
 - [x] No cloud retrieval service in this pass.
 - [x] No replacement of skills with free-form search.
 - [x] No separate memory browser or second wiki system.
-- [x] No broad `agent-wiki/docs/` retrieval until that surface is actually adopted.
+- [x] No broad `removed-wiki-store/docs/` retrieval until that surface is actually adopted.

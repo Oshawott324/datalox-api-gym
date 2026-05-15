@@ -79,7 +79,7 @@ If a run is unscoped and only weak candidates exist, keep the recorded workflow 
 
 ### Main files
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 - `src/core/packCore.ts`
 - `src/adapters/shared.ts`
 
@@ -113,7 +113,7 @@ The same real run on the same repo should not bounce between `record_trace` and 
 
 ### Main files
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 - `src/core/packCore.ts`
 - wrapper/hook proof tests
 
@@ -150,7 +150,7 @@ Promoted notes should be semantically correct before they are made prettier.
 
 ### Main files
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 - note rendering path in `src/core/packCore.ts`
 
 ### Changes
@@ -183,7 +183,7 @@ Make promoted notes agent-usable without carrying noisy dumps.
 ### Main files
 
 - note rendering path in `src/core/packCore.ts`
-- any helper shaping functions in `scripts/lib/agent-pack.mjs`
+- any helper shaping functions in `removed legacy pack script`
 
 ### Changes
 

@@ -60,11 +60,11 @@ const baseConfig = {
   },
   paths: {
     seedSkillsDir: "skills",
-    seedNotesDir: "agent-wiki/notes",
-    seedPatternsDir: "agent-wiki/patterns",
+    seedNotesDir: ".datalox/guidance/notes",
+    seedPatternsDir: ".datalox/guidance/patterns",
     hostSkillsDir: "skills",
-    hostNotesDir: "agent-wiki/notes",
-    hostPatternsDir: "agent-wiki/patterns",
+    hostNotesDir: ".datalox/guidance/notes",
+    hostPatternsDir: ".datalox/guidance/patterns",
   },
   runtime: {
     enabled: false,
@@ -121,9 +121,9 @@ describe("loadAgentConfig", () => {
       expect(loaded.config.runtime.baseUrl).toBe("https://api.example.datalox.com");
       expect(loaded.config.mode).toBe("repo_only");
       expect(loaded.config.agent.detectOnEveryLoop).toBe(true);
-      expect(loaded.config.paths.seedNotesDir).toBe("agent-wiki/notes");
+      expect(loaded.config.paths.seedNotesDir).toBe(".datalox/guidance/notes");
       expect(loaded.config.paths.seedSkillsDir).toBe("skills");
-      expect(loaded.config.paths.hostNotesDir).toBe("agent-wiki/notes");
+      expect(loaded.config.paths.hostNotesDir).toBe(".datalox/guidance/notes");
       expect(loaded.config.paths.hostSkillsDir).toBe("skills");
       expect(loaded.localOverridePath?.replaceAll("\\", "/")).toContain(".datalox/config.local.json");
     } finally {

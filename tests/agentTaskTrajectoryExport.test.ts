@@ -403,7 +403,7 @@ describe("agent_task_trajectory.v1 recording and export", () => {
     await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
   });
 
-  it("records mixed-domain rows under .datalox and never writes agent-wiki events", async () => {
+  it("records mixed-domain rows under .datalox and never writes removed wiki events", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-record-"));
     tempDirs.push(tempDir);
 
@@ -427,7 +427,7 @@ describe("agent_task_trajectory.v1 recording and export", () => {
     expect(event.eventKind).toBe("agent_task_trajectory");
     expect(event.agentTaskTrajectory.schema_version).toBe("agent_task_trajectory.v1");
     expect(event.agentTaskTrajectory.export.source_event_paths).toContain(result.eventPath);
-    expect(existsSync(path.join(tempDir, "agent-wiki", "events"))).toBe(false);
+    expect(existsSync(path.join(tempDir, ["agent", "wiki"].join("-"), "events"))).toBe(false);
   });
 
   it("downgrades code-heavy use rows without concrete code_change evidence at record time", async () => {

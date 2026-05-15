@@ -24,7 +24,7 @@ function readInstallPackRoot(root) {
 function isFullPackRoot(root) {
   return (
     existsSync(path.join(root, "package.json"))
-    && existsSync(path.join(root, "scripts", "lib", "agent-pack.mjs"))
+    && existsSync(path.join(root, "bin", "datalox.js"))
   );
 }
 
@@ -75,7 +75,7 @@ function resolveRuntimeEntrypoint(root) {
     }
   }
 
-  throw new Error("Unable to resolve legacy full Datalox pack MCP runtime root for datalox-pack-mcp.js");
+  throw new Error("Unable to resolve Datalox MCP runtime root for datalox-pack-mcp.js");
 }
 
 const entrypoint = resolveRuntimeEntrypoint(repoRoot);

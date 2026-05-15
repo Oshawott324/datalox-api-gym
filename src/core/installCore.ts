@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { constants as fsConstants, existsSync } from "node:fs";
-import { access, chmod, copyFile, lstat, mkdir, readFile, readdir, readlink, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { access, chmod, lstat, mkdir, readFile, readdir, readlink, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -9,14 +9,13 @@ import {
   type EnforcementLevel,
   type HostSurfaceId,
 } from "../adapters/capabilities.js";
-import { getEventBacklogStatus, probeBootstrapCandidate } from "./packCore.js";
+import { probeBootstrapCandidate } from "./packCore.js";
 
 export type InstallHost = "all" | "codex" | "claude";
 
 export interface InstallHostIntegrationsInput {
   host?: InstallHost;
   packRootPath: string;
-  includeLegacySkills?: boolean;
 }
 
 export interface InstallLinkSummary {
@@ -151,7 +150,6 @@ export interface EnforcementStatusSnapshot {
     automaticReady: boolean;
     enforcementLevel: EnforcementLevel;
     reasons: string[];
-    maintenanceBacklog: Awaited<ReturnType<typeof getEventBacklogStatus>> | null;
   };
 }
 
@@ -178,7 +176,7 @@ function optionalEnv(name: string): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
-function inspectCurrentSession(input: { claudeHookInstalled?: boolean } = {}): CurrentSessionStatus {
+function inspectCurrentSession(): CurrentSessionStatus {
   const activeWrapper = optionalEnv("DATALOX_ACTIVE_WRAPPER");
   const hostKind = optionalEnv("DATALOX_HOST_KIND");
   const enforcement = optionalEnv("DATALOX_ENFORCEMENT");
@@ -199,9 +197,6 @@ function inspectCurrentSession(input: { claudeHookInstalled?: boolean } = {}): C
     notes.push("Claude host detected without a complete Datalox wrapper sentinel; pre-run guidance injection is not enforced.");
     if (activeWrapper === "claude" && enforcement !== "wrapper") {
       notes.push("DATALOX_ACTIVE_WRAPPER=claude is present without DATALOX_ENFORCEMENT=wrapper, so this is not counted as wrapper-enforced.");
-    }
-    if (input.claudeHookInstalled) {
-      notes.push("Claude Stop-hook automation is installed, but it runs after the model turn.");
     }
   } else {
     notes.push("No active Datalox wrapper sentinel detected; status describes installed capability, not active-session enforcement.");
@@ -237,17 +232,10 @@ function buildClaudeSurfaceSummary(input: {
   if (wrapperPreRunEnforced) {
     wrapperNotes.push("Current process is inside the Datalox Claude wrapper.");
   }
-  if (!input.installed && input.hookInstalled) {
-    wrapperNotes.push("Claude Stop hook is installed, but it cannot enforce pre-run guidance injection.");
-  }
-
-  const stopHookNotes = input.hookInstalled
-    ? [
-        "Claude Stop hook is installed.",
-        "Stop-hook automation records, compiles, or maintains after Claude finishes a turn.",
-      ]
-    : ["Claude Stop hook is not installed."];
-  stopHookNotes.push("The Stop hook is post-turn sidecar automation, not pre-run enforcement.");
+  const stopHookNotes = [
+    "Claude Stop hook automation is not installed by this branch.",
+    "The supported enforcement path is the pre-run shim wrapper.",
+  ];
 
   const nativeSkillNotes = input.nativeSkillLinks.canonical
     ? ["Canonical Claude native skill links are installed at ~/.claude/skills/<skill-name>."]
@@ -266,9 +254,9 @@ function buildClaudeSurfaceSummary(input: {
       notes: wrapperNotes,
     },
     stopHook: {
-      installed: input.hookInstalled,
+      installed: false,
       postTurnSidecar: true,
-      recordsAfterTurn: input.hookInstalled,
+      recordsAfterTurn: false,
       preRunEnforced: false,
       notes: stopHookNotes,
     },
@@ -305,7 +293,7 @@ function claudeLegacyPackSkillsLink(): string {
 function validFullPackRoot(candidate: string): boolean {
   return (
     existsSync(path.join(candidate, "package.json"))
-    && existsSync(path.join(candidate, "scripts", "lib", "agent-pack.mjs"))
+    && existsSync(path.join(candidate, "bin", "datalox.js"))
   );
 }
 
@@ -912,146 +900,6 @@ async function writeExecutable(filePath: string, content: string): Promise<void>
   await chmod(filePath, 0o755);
 }
 
-async function installClaudeHook(packRootPath: string): Promise<{ hookPath: string; settingsPath: string }> {
-  const claudeHome = path.join(os.homedir(), ".claude");
-  const hooksDir = path.join(claudeHome, "hooks");
-  const settingsPath = path.join(claudeHome, "settings.json");
-  const hookPath = path.join(hooksDir, "datalox-auto-promote.sh");
-
-  await mkdir(hooksDir, { recursive: true });
-  await copyFile(path.join(packRootPath, "bin", "claude-global-auto-promote.sh"), hookPath);
-  await chmod(hookPath, 0o755);
-
-  let parsed: Record<string, unknown> = {};
-  try {
-    parsed = JSON.parse(await readFile(settingsPath, "utf8")) as Record<string, unknown>;
-  } catch {
-    parsed = {};
-  }
-
-  const hooks = (parsed.hooks && typeof parsed.hooks === "object" ? parsed.hooks : {}) as Record<string, unknown>;
-  parsed.hooks = hooks;
-  for (const eventName of ["Stop", "SubagentStop"]) {
-    const entries = Array.isArray(hooks[eventName]) ? hooks[eventName] as Array<Record<string, unknown>> : [];
-    const hasDatalox = entries.some((entry) => Array.isArray(entry.hooks) && entry.hooks.some((hook) => (
-      hook
-      && typeof hook === "object"
-      && (hook as { type?: unknown }).type === "command"
-      && typeof (hook as { command?: unknown }).command === "string"
-      && (hook as { command: string }).command.includes("datalox-auto-promote.sh")
-    )));
-    if (!hasDatalox) {
-      entries.push({
-        hooks: [
-          {
-            type: "command",
-            command: hookPath,
-            timeout: 60,
-          },
-        ],
-      });
-    }
-    hooks[eventName] = entries;
-  }
-
-  await writeFile(settingsPath, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
-  return { hookPath, settingsPath };
-}
-
-async function uninstallClaudeHook(): Promise<{ hookPath: string | null; settingsPath: string | null }> {
-  const claudeHome = path.join(os.homedir(), ".claude");
-  const hookPath = path.join(claudeHome, "hooks", "datalox-auto-promote.sh");
-  const settingsPath = path.join(claudeHome, "settings.json");
-
-  let removedHookPath: string | null = null;
-  try {
-    const hookStats = await lstat(hookPath);
-    if (hookStats.isFile()) {
-      const contents = await readFile(hookPath, "utf8");
-      if (contents.includes("datalox-auto-promote.js")) {
-        await rm(hookPath, { force: true });
-        removedHookPath = hookPath;
-      }
-    }
-  } catch {
-    // Ignore missing or unrelated hook files.
-  }
-
-  try {
-    const parsed = JSON.parse(await readFile(settingsPath, "utf8")) as Record<string, unknown>;
-    const hooks = (parsed.hooks && typeof parsed.hooks === "object") ? parsed.hooks as Record<string, unknown> : null;
-    if (!hooks) {
-      return { hookPath: removedHookPath, settingsPath: existsSync(settingsPath) ? settingsPath : null };
-    }
-
-    let changed = false;
-    for (const eventName of ["Stop", "SubagentStop"]) {
-      const entries = Array.isArray(hooks[eventName]) ? hooks[eventName] as Array<Record<string, unknown>> : [];
-      const filtered = entries.filter((entry) => !(
-        Array.isArray(entry.hooks)
-        && entry.hooks.some((hook) => (
-          hook
-          && typeof hook === "object"
-          && (hook as { type?: unknown }).type === "command"
-          && typeof (hook as { command?: unknown }).command === "string"
-          && (hook as { command: string }).command.includes("datalox-auto-promote.sh")
-        ))
-      ));
-      if (filtered.length !== entries.length) {
-        changed = true;
-      }
-      if (filtered.length > 0) {
-        hooks[eventName] = filtered;
-      } else if (eventName in hooks) {
-        delete hooks[eventName];
-      }
-    }
-
-    if (changed) {
-      if (Object.keys(hooks).length === 0) {
-        delete parsed.hooks;
-      }
-      await writeFile(settingsPath, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
-    }
-    return { hookPath: removedHookPath, settingsPath };
-  } catch {
-    return { hookPath: removedHookPath, settingsPath: existsSync(settingsPath) ? settingsPath : null };
-  }
-}
-
-async function isClaudeHookInstalled(): Promise<boolean> {
-  const hookPath = path.join(os.homedir(), ".claude", "hooks", "datalox-auto-promote.sh");
-  const settingsPath = path.join(os.homedir(), ".claude", "settings.json");
-  const hookFileMatches = await fileContains(hookPath, "datalox-auto-promote.js");
-  if (!hookFileMatches) {
-    return false;
-  }
-
-  const parsed = await readJsonIfPresent<Record<string, unknown>>(settingsPath);
-  const hooks = parsed?.hooks && typeof parsed.hooks === "object"
-    ? parsed.hooks as Record<string, unknown>
-    : null;
-  if (!hooks) {
-    return false;
-  }
-
-  for (const eventName of ["Stop", "SubagentStop"]) {
-    const entries = Array.isArray(hooks[eventName]) ? hooks[eventName] as Array<Record<string, unknown>> : [];
-    const hasDatalox = entries.some((entry) => Array.isArray(entry.hooks) && entry.hooks.some((hook) => (
-      hook
-      && typeof hook === "object"
-      && (hook as { type?: unknown }).type === "command"
-      && typeof (hook as { command?: unknown }).command === "string"
-      && (hook as { command: string }).command.includes("datalox-auto-promote.sh")
-    )));
-    if (hasDatalox) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 async function inspectClaudeNativeSkillLinks(packRootPath: string): Promise<NativeSkillLinkStatus> {
   const specs = await claudeSkillLinkSpecs(packRootPath);
   const linked: string[] = [];
@@ -1113,10 +961,10 @@ export async function inspectEnforcementStatus(input: {
 
   const claudeInstalled = await hasManagedShim(claudeShimPath, "datalox-claude.js");
   const claudeStableLinks = await stableLinksPointingTo(claudeShimPath, "claude");
-  const claudeHookInstalled = await isClaudeHookInstalled();
+  const claudeHookInstalled = false;
   const claudeNativeSkillLinks = await inspectClaudeNativeSkillLinks(packRootPath);
   const claudeAutomatic = claudeInstalled && (claudeStableLinks.length > 0 || pathActivationAvailable);
-  const currentSession = inspectCurrentSession({ claudeHookInstalled });
+  const currentSession = inspectCurrentSession();
   const claudeSurfaces = buildClaudeSurfaceSummary({
     shimPath: claudeShimPath,
     stableLinks: claudeStableLinks,
@@ -1133,7 +981,6 @@ export async function inspectEnforcementStatus(input: {
     || repoProbe.status === "repairable";
   const guidanceSurface = repoProbe.detected.hasDataloxMd
     || repoProbe.detected.hasConfig
-    || repoProbe.detected.hasAgentWiki
     || repoProbe.detected.hasInstallStamp;
 
   const adapters: Record<HostSurfaceId, HostSurfaceStatus> = {
@@ -1173,18 +1020,16 @@ export async function inspectEnforcementStatus(input: {
       surfaces: claudeSurfaces,
       notes: claudeAutomatic
         ? [
-            ...(claudeHookInstalled ? [] : ["Claude shim is automatic; hook is optional sidecar automation and is not installed."]),
+            "Claude shim is automatic; post-turn hook automation is not installed by this branch.",
             ...(claudeNativeSkillLinks.canonical ? [] : ["Claude native skill links are not installed at canonical ~/.claude/skills/<skill-name> paths."]),
           ]
         : claudeInstalled
           ? [
               "Claude shim is installed, but no stable link or shell PATH export was detected yet.",
-              ...(claudeHookInstalled ? ["Claude Stop hook is installed, but it is post-turn sidecar automation and cannot enforce pre-run guidance injection."] : []),
               ...(claudeNativeSkillLinks.canonical ? [] : ["Claude native skill links are not installed at canonical ~/.claude/skills/<skill-name> paths."]),
             ]
           : [
               "Claude shim wrapper is not installed, so pre-run Datalox guidance injection is unavailable for native Claude Code.",
-              ...(claudeHookInstalled ? ["Claude Stop hook is installed, but it runs after the model turn and cannot prove pre-turn skill use."] : []),
               ...(claudeNativeSkillLinks.canonical ? [] : ["Claude native skill links are not installed at canonical ~/.claude/skills/<skill-name> paths."]),
             ],
     },
@@ -1243,11 +1088,6 @@ export async function inspectEnforcementStatus(input: {
   const conditionalReady = repoReady && !automaticReady && Object.values(adapters).some((adapter) => (
     adapter.enforcementLevel === "conditional" && adapter.available
   ));
-  const canReadMaintenanceBacklog = repoProbe.detected.hasConfig && repoProbe.detected.hasAgentWiki;
-  const maintenanceBacklog = canReadMaintenanceBacklog
-    ? await getEventBacklogStatus({ repoPath })
-    : null;
-
   return {
     generatedAt: new Date().toISOString(),
     packRootPath: normalizePath(packRootPath),
@@ -1264,7 +1104,6 @@ export async function inspectEnforcementStatus(input: {
       automaticReady,
       enforcementLevel: computeRepoEnforcementLevel(automaticReady, conditionalReady),
       reasons: repoProbe.reasons,
-      maintenanceBacklog,
     },
   };
 }
@@ -1294,9 +1133,7 @@ export async function installHostIntegrations(input: InstallHostIntegrationsInpu
   const localBin = path.join(os.homedir(), ".local", "bin");
   await mkdir(localBin, { recursive: true });
   const packCachePath = await ensureLocalPackCache(packRootPath);
-  const skillLinks = input.includeLegacySkills === true
-    ? await installSkillLinks(host, packRootPath)
-    : { linked: [], skipped: [] };
+  const skillLinks = { linked: [], skipped: [] };
 
   const selected = new Set(selectedHosts(host));
   const codexShimPath = path.join(localBin, "codex");
@@ -1318,8 +1155,8 @@ export async function installHostIntegrations(input: InstallHostIntegrationsInpu
   }
 
   let claude = createSkippedHostResult("claude", selected.has("claude"));
-  let claudeHookPath: string | null = null;
-  let claudeSettingsPath: string | null = null;
+  const claudeHookPath: string | null = null;
+  const claudeSettingsPath: string | null = null;
   if (selected.has("claude")) {
     const realBinary = findRealBinary("claude", claudeShimPath, process.env.DATALOX_REAL_CLAUDE_BIN);
     if (realBinary) {
@@ -1332,9 +1169,6 @@ export async function installHostIntegrations(input: InstallHostIntegrationsInpu
         stableLinks: await installStableLinks("claude", claudeShimPath),
       };
     }
-    const hook = await installClaudeHook(packRootPath);
-    claudeHookPath = hook.hookPath;
-    claudeSettingsPath = hook.settingsPath;
   }
 
   const pathExportsUpdated: string[] = [];
@@ -1407,8 +1241,8 @@ export async function disableHostIntegrations(input: InstallHostIntegrationsInpu
   }
 
   let claude = createSkippedDisableHostResult("claude", selected.has("claude"));
-  let claudeHookRemoved: string | null = null;
-  let claudeSettingsPath: string | null = null;
+  const claudeHookRemoved: string | null = null;
+  const claudeSettingsPath: string | null = null;
   if (selected.has("claude")) {
     const removed = await removeManagedShim(claudeShimPath, "datalox-claude.js");
     const stableLinksRemoved: string[] = [];
@@ -1424,9 +1258,6 @@ export async function disableHostIntegrations(input: InstallHostIntegrationsInpu
       shimPath: claudeShimPath,
       stableLinksRemoved,
     };
-    const hook = await uninstallClaudeHook();
-    claudeHookRemoved = hook.hookPath;
-    claudeSettingsPath = hook.settingsPath;
   }
 
   const pathExportsRemoved: string[] = [];

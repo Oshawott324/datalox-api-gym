@@ -1081,10 +1081,10 @@ function isExternalReferenceLine(line: string): boolean {
     return true;
   }
   if (/^(?:see|open|refer to|reference|check|inspect|look at)\b/u.test(normalized)) {
-    return /\b(?:src\/|docs\/|agent-wiki\/|\.datalox\/|exports\/|source_event_paths|changed_files|repo|repository|artifact|file path|url)\b/u
+    return /\b(?:src\/|docs\/|\.datalox\/|exports\/|source_event_paths|changed_files|repo|repository|artifact|file path|url)\b/u
       .test(normalized);
   }
-  return /^(?:src\/|docs\/|agent-wiki\/|\.datalox\/|exports\/|\/[^\s]+)|^(?:source_event_paths|changed_files|path|url):\b/u
+  return /^(?:src\/|docs\/|\.datalox\/|exports\/|\/[^\s]+)|^(?:source_event_paths|changed_files|path|url):\b/u
     .test(normalized);
 }
 

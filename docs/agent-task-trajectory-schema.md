@@ -43,8 +43,8 @@ Buyer-facing JSONL defaults to:
 exports/trajectories/agent_task_trajectory.v1.jsonl
 ```
 
-Legacy `agent-wiki/events/` remains readable for old traces only. New
-`agent_task_trajectory.v1` rows must not be written there.
+New `agent_task_trajectory.v1` rows are recorded under
+`.datalox/events/agent-task-trajectories/`.
 
 ## Required Row
 

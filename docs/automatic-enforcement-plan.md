@@ -139,7 +139,7 @@ This is the real post-run enforcement boundary today.
 
 The Claude hook path exists, but it is not the primary enforcement surface.
 
-- `bin/datalox-auto-promote.js` reuses the shared payload builders
+- `removed legacy hook script` reuses the shared payload builders
 - it can auto-record from host hook payloads
 - it is stronger than prompt guidance
 - it is weaker than full wrapper ownership
@@ -318,7 +318,7 @@ Acceptance:
 
 Main file:
 
-- `bin/datalox-auto-promote.js`
+- `removed legacy hook script`
 
 Hook responsibilities:
 

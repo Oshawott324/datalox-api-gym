@@ -55,7 +55,7 @@ For this query:
 
 ## Recommended Next Fix
 
-Tighten unscoped admission in `scripts/lib/agent-pack.mjs`:
+Tighten unscoped admission in `removed legacy pack script`:
 
 1. Treat `primary_term_overlap` as supporting evidence, not a sufficient admission reason.
 2. For queries without an explicit workflow, require at least one strong field phrase match in:

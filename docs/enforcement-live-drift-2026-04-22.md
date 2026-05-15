@@ -97,11 +97,11 @@ The same command was run twice on the same repo.
 Produced artifacts:
 
 - control event:
-  - [reading-additional-input-from-stdin.json](/tmp/datalox-enforce-host-nXoE5q/agent-wiki/events/2026-04-22T14-28-23-945Z--reading-additional-input-from-stdin.json)
+  - [reading-additional-input-from-stdin.json](/tmp/datalox-enforce-host-nXoE5q/removed-wiki-store/events/2026-04-22T14-28-23-945Z--reading-additional-input-from-stdin.json)
 - explicit wrapper-gap note:
-  - [repo-engineering-generic-wrapped-runs-abort-with-the-datalox-prompt-placeholder.md](/tmp/datalox-enforce-host-nXoE5q/agent-wiki/notes/repo-engineering-generic-wrapped-runs-abort-with-the-datalox-prompt-placeholder.md)
+  - [repo-engineering-generic-wrapped-runs-abort-with-the-datalox-prompt-placeholder.md](/tmp/datalox-enforce-host-nXoE5q/removed-wiki-store/notes/repo-engineering-generic-wrapped-runs-abort-with-the-datalox-prompt-placeholder.md)
 - generic setup-gap note:
-  - [flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md](/tmp/datalox-gap-host-p3Lch1/agent-wiki/notes/flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md)
+  - [flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md](/tmp/datalox-gap-host-p3Lch1/removed-wiki-store/notes/flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md)
 
 ## Drift
 
@@ -121,7 +121,7 @@ That leaked into:
 
 Actual artifact:
 
-- [flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md](/tmp/datalox-gap-host-p3Lch1/agent-wiki/notes/flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md)
+- [flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md](/tmp/datalox-gap-host-p3Lch1/removed-wiki-store/notes/flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md)
 
 Expected:
 
@@ -138,7 +138,7 @@ instead of from the actual child answer.
 
 Actual artifact:
 
-- [reading-additional-input-from-stdin.json](/tmp/datalox-enforce-host-nXoE5q/agent-wiki/events/2026-04-22T14-28-23-945Z--reading-additional-input-from-stdin.json)
+- [reading-additional-input-from-stdin.json](/tmp/datalox-enforce-host-nXoE5q/removed-wiki-store/events/2026-04-22T14-28-23-945Z--reading-additional-input-from-stdin.json)
 
 Expected:
 
@@ -157,7 +157,7 @@ That causes prompt recursion in the child command/transcript.
 
 Actual artifact:
 
-- [clarify-generic-wrap-placeholder-contract.json](/tmp/datalox-enforce-host-nXoE5q/agent-wiki/events/2026-04-22T14-33-06-385Z--clarify-generic-wrap-placeholder-contract.json)
+- [clarify-generic-wrap-placeholder-contract.json](/tmp/datalox-enforce-host-nXoE5q/removed-wiki-store/events/2026-04-22T14-33-06-385Z--clarify-generic-wrap-placeholder-contract.json)
 
 Expected:
 
@@ -175,7 +175,7 @@ The system did create notes, but the generated note shape is still rough:
 
 Example:
 
-- [flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md](/tmp/datalox-gap-host-p3Lch1/agent-wiki/notes/flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md)
+- [flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md](/tmp/datalox-gap-host-p3Lch1/removed-wiki-store/notes/flow-cytometry-readme-uses-scripts-bootstrap-sh-and-agents-requires-docs-product.md)
 
 ### 5. Repeated identical runs do not mature reliably
 
@@ -194,9 +194,9 @@ So the same real task on the same repo did not stably progress toward a skill.
 Actual artifacts:
 
 - first event:
-  - [stale-setup-entrypoints.json](/tmp/datalox-gap-host-p3Lch1/agent-wiki/events/2026-04-22T14-36-10-420Z--stale-setup-entrypoints.json)
+  - [stale-setup-entrypoints.json](/tmp/datalox-gap-host-p3Lch1/removed-wiki-store/events/2026-04-22T14-36-10-420Z--stale-setup-entrypoints.json)
 - second event:
-  - [stale-setup-entrypoints.json](/tmp/datalox-gap-host-p3Lch1/agent-wiki/events/2026-04-22T14-38-28-147Z--stale-setup-entrypoints.json)
+  - [stale-setup-entrypoints.json](/tmp/datalox-gap-host-p3Lch1/removed-wiki-store/events/2026-04-22T14-38-28-147Z--stale-setup-entrypoints.json)
 
 Expected:
 
@@ -317,7 +317,7 @@ This exact command was run twice on the same fresh repo.
   - `adjudicationDecision: "create_operational_note"`
   - `decision.action: "create_note_from_gap"`
 - note created:
-  - [unknown-readme-md-agents-md-or-github-copilot-instructions-md-mention-scripts-bo.md](/tmp/datalox-phase2-live-n1nfJr/agent-wiki/notes/unknown-readme-md-agents-md-or-github-copilot-instructions-md-mention-scripts-bo.md)
+  - [unknown-readme-md-agents-md-or-github-copilot-instructions-md-mention-scripts-bo.md](/tmp/datalox-phase2-live-n1nfJr/removed-wiki-store/notes/unknown-readme-md-agents-md-or-github-copilot-instructions-md-mention-scripts-bo.md)
 
 #### Second identical run
 
@@ -329,7 +329,7 @@ This exact command was run twice on the same fresh repo.
   - `decision.action: "create_note_from_gap"`
   - `decision.reason: "an identical repeated run already established this reusable gap; do not regress to trace only."`
 - note created:
-  - [unknown-readme-md-references-scripts-bootstrap-sh-docs-product-definition-md-and.md](/tmp/datalox-phase2-live-n1nfJr/agent-wiki/notes/unknown-readme-md-references-scripts-bootstrap-sh-docs-product-definition-md-and.md)
+  - [unknown-readme-md-references-scripts-bootstrap-sh-docs-product-definition-md-and.md](/tmp/datalox-phase2-live-n1nfJr/removed-wiki-store/notes/unknown-readme-md-references-scripts-bootstrap-sh-docs-product-definition-md-and.md)
 
 ### Interpretation
 
@@ -381,7 +381,7 @@ This exact command was run twice on the same fresh repo.
 #### First run
 
 - promoted note:
-  - `relativePath: agent-wiki/notes/unknown-inspect-the-repo-setup-instructions-if-there-is-a-reusable-setup-gap-exp.md`
+  - `relativePath: removed-wiki-store/notes/unknown-inspect-the-repo-setup-instructions-if-there-is-a-reusable-setup-gap-exp.md`
   - `kind: "workflow_note"`
   - `workflow: "unknown"`
   - `title: "Canonical bootstrap entrypoints"`
@@ -448,7 +448,7 @@ node dist/src/cli/main.js codex \
 #### Promoted note
 
 - note:
-  - [unknown-inspect-the-repo-setup-instructions-if-there-is-a-reusable-setup-gap-exp.md](/tmp/datalox-phase4-live-AaVtH0/agent-wiki/notes/unknown-inspect-the-repo-setup-instructions-if-there-is-a-reusable-setup-gap-exp.md)
+  - [unknown-inspect-the-repo-setup-instructions-if-there-is-a-reusable-setup-gap-exp.md](/tmp/datalox-phase4-live-AaVtH0/removed-wiki-store/notes/unknown-inspect-the-repo-setup-instructions-if-there-is-a-reusable-setup-gap-exp.md)
 - size:
   - `1389` bytes
 
@@ -457,7 +457,7 @@ Key rendered lines:
 - `## When to Use`
   - `When \`START_HERE.md\` and \`.datalox/manifest.json\` reference \`adopt-*\` scripts that do not exist.`
 - `## Evidence`
-  - `agent-wiki/events/2026-04-23T03-38-20-699Z--align-bootstrap-entrypoints.json`
+  - `removed-wiki-store/events/2026-04-23T03-38-20-699Z--align-bootstrap-entrypoints.json`
   - one compact grounded observation bullet
 
 What is no longer present:
@@ -468,7 +468,7 @@ What is no longer present:
   - `.claude/`
   - `.cursor/`
   - `skills/`
-  - `agent-wiki/`
+  - `removed-wiki-store/`
 
 ### Interpretation
 
@@ -526,7 +526,7 @@ node dist/src/cli/main.js codex \
 #### Recorded event
 
 - event:
-  - [there-s-no-readme-md-in-this-checkout-but-the-repo-is-a-datalox-portable-agent-p.json](/tmp/datalox-phase5-live3-DRGTpu/agent-wiki/events/2026-04-23T04-27-01-105Z--there-s-no-readme-md-in-this-checkout-but-the-repo-is-a-datalox-portable-agent-p.json)
+  - [there-s-no-readme-md-in-this-checkout-but-the-repo-is-a-datalox-portable-agent-p.json](/tmp/datalox-phase5-live3-DRGTpu/removed-wiki-store/events/2026-04-23T04-27-01-105Z--there-s-no-readme-md-in-this-checkout-but-the-repo-is-a-datalox-portable-agent-p.json)
 
 Transcript checks on the stored event:
 

@@ -124,7 +124,7 @@ function makeSchemaDocExample() {
     export: {
       allowed: true,
       redaction: "none_needed",
-      source_event_paths: ["agent-wiki/events/example.json"],
+      source_event_paths: [".datalox/events/trajectory-rows/example.json"],
     },
     curation: {
       quality: "use",

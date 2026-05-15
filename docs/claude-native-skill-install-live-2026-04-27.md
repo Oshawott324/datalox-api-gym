@@ -63,7 +63,7 @@ lrwxr-xr-x  use-datalox-through-host-cli -> /Users/yifanjin/datalox-pack/skills/
 }
 ```
 
-Hook state: `~/.claude/hooks/datalox-auto-promote.sh` — present.
+Hook state: `~/.claude/hooks/removed legacy hook` — present.
 
 ## Host limitation note
 

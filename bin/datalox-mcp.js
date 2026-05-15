@@ -24,7 +24,7 @@ function readInstallPackRoot(root) {
 function isFullPackRoot(root) {
   return (
     existsSync(path.join(root, "package.json"))
-    && existsSync(path.join(root, "scripts", "lib", "agent-pack.mjs"))
+    && existsSync(path.join(root, "bin", "datalox.js"))
   );
 }
 

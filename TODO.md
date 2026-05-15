@@ -59,11 +59,77 @@ That doc now holds:
 - [ ] Step 9: add per-turn capture and an explicit approved session bundle export path.
   Intent:
   - record useful agent work per completed turn without ingesting whole raw host transcripts
+  - preserve normalized tool action and observation data so later RL/preference/eval exports can be derived from approved sessions
   - sell/review approved anonymized sessions directly instead of forcing every buyer workflow through compact trajectory rows
   - keep trajectory rows as a derived package for evals and training examples
+  Shape decision:
+  - `AgentTurnV1` is the source capture unit, not the RL training row
+  - capture facts now; assign rewards later in a derived export after replay/rubric/judge/human review
+  - do not add reward fields to `agent_turn.v1`
+  - do not rely on `debugging_trajectory.v1` or `agent_task_trajectory.v1` to reconstruct exact tool actions later
+  - `tool_calls[]` must preserve the normalized action/observation pair when a tool was used:
+    ```ts
+    type AgentTurnToolCallV1 = {
+      tool: string;
+      action: {
+        type: "tool_call" | "shell_command" | "file_edit" | "review" | "other";
+        name?: string;
+        arguments?: Record<string, unknown>;
+        command?: string;
+      };
+      observation: {
+        status: "ok" | "error" | "cancelled";
+        error_code?: string | null;
+        content_summary?: string;
+        content_ref?: string;
+        artifact_paths?: string[];
+      };
+      exit_code?: number;
+      started_at?: string;
+      completed_at?: string;
+    };
+    ```
+  - the selected RL-style block should round-trip inside `tool_calls[]` as:
+    ```json
+    {
+      "tool": "search_policy",
+      "action": {
+        "type": "tool_call",
+        "name": "search_policy",
+        "arguments": {
+          "query": "Beijing business-trip taxi reimbursement limit",
+          "top_k": 5
+        }
+      },
+      "observation": {
+        "status": "ok",
+        "error_code": null,
+        "content_summary": "doc1 ...; doc2 ..."
+      }
+    }
+    ```
   Implementation:
-  - define a runtime `agent_turn.v1` schema from `docs/agent-turn-schema.md`
+  - update `docs/agent-turn-schema.md` before code:
+    - replace summary-only `tool_calls[]` with structured `action` and `observation`
+    - keep compact `args_summary` / `output_summary` only as optional human-readable helpers if still needed
+    - state that long observations must use `content_ref` / `artifact_paths`, not inline raw output
+    - state that rewards, replay bundles, and train/test split labels are derived/export-layer fields, not turn capture fields
+  - create `src/core/agentTurnSchema.ts`
+    - use `zod`
+    - export `AgentTurnV1`
+    - export `parseAgentTurnV1(input)`
+    - export `isExportableAgentTurn(turn)` / `getAgentTurnExportBlockers(turn)`
+    - reject unknown fields
+    - require non-empty `tool_calls[]` entries to contain both `action` and `observation`
+    - allow no tool calls only when the turn has useful `assistant_summary`, `file_changes`, or `verification`
+  - create `src/core/agentTurnExport.ts`
+    - write valid turns under `.datalox/events/agent-turns/`
+    - event payload shape: `{ eventKind: "agent_turn", payload: { agentTurn } }`
+    - return `{ eventPath, turnId, sessionId, exportable, blockedReasons }`
+    - read `.datalox/events/agent-turns/*.json` deterministically
+    - never read or write legacy wiki paths
   - add a dedicated MCP tool named `record_agent_turn`
+  - add CLI command `record-agent-turn --repo <path> --agent-turn <json-file> --json`
   - input should be `repo_path` plus one `AgentTurnV1` object
   - validate the turn before writing an event
   - write a normal event under `.datalox/events/agent-turns/` with `eventKind: "agent_turn"` and `payload.agentTurn`
@@ -77,14 +143,24 @@ That doc now holds:
   Pass criteria:
   - `record_agent_turn` appears in the MCP tool list and can be called by an agent without CLI wrappers
   - a minimal turn from `docs/agent-turn-schema.md` records successfully
+  - a turn containing the normalized `search_policy` action/observation example above records successfully
+  - the recorded event preserves exact structured `action.arguments`, not only `args_summary`
+  - the recorded event preserves structured `observation.status` and `observation.error_code`
   - recorded events contain `payload.agentTurn.schema_version === "agent_turn.v1"`
   - invalid turn input creates no event file and returns field-level errors an agent can fix
+  - a tool call missing `action` or `observation` is rejected unless it is explicitly marked non-exportable with a blocker
+  - `agent_turn.v1` rejects reward fields so reward assignment cannot be mixed into source capture
   - turn events do not inline raw session JSONL, hidden reasoning, credentials, full files, or long command output
   - session export can include a captured session even when no `debugging_trajectory.v1` row exists yet
   - session export excludes turns/events with blocked export or redaction status
   - session export is deterministic for the same event directory
   - session export includes turn ids or event paths for provenance
   - trajectory export still works as a derivative path
+  - focused tests pass:
+    - `npx vitest run tests/agentTurnSchema.test.ts tests/agentTurnExport.test.ts`
+    - `npx vitest run tests/trajectoryExport.test.ts tests/agentTaskTrajectoryExport.test.ts`
+  - `npm run check` passes
+  - `git diff --check` passes
 
 - [ ] Step 10: add a lightweight session approval surface without turning MCP into a UI.
   Intent:
@@ -829,6 +905,71 @@ That doc now holds:
   - focused tests pass:
     - adoption/bootstrap tests touched by the install behavior
     - `npx vitest run tests/trajectoryExport.test.ts tests/agentTaskTrajectoryExport.test.ts`
+  - `npm run check` passes
+  - `git diff --check` passes
+
+- [x] Step 8.12: remove `agent-wiki/` cleanly from this branch instead of preserving it as deprecated compatibility.
+  Intent:
+  - converge the branch on the current `.datalox/` product model without a parallel wiki/note/event path
+  - remove source-pack `agent-wiki/` content so fresh clones do not contain the old store even outside adopted target repos
+  - remove code paths that write, scan, promote, lint, or repair through `agent-wiki`
+  - keep user data safe by never deleting an existing host repo's `agent-wiki/` during adoption
+  Product boundary:
+  - `.datalox/events/agent-turns/` is the only turn capture event root
+  - `.datalox/events/trajectory-rows/` is the only `debugging_trajectory.v1` event root
+  - `.datalox/events/agent-task-trajectories/` is the only `agent_task_trajectory.v1` event root
+  - `docs/`, `DATALOX.md`, and `AGENTS.md` are the durable product guidance surfaces
+  - legacy note/skill promotion is not part of this branch after this step
+  Implementation:
+  - remove the tracked root `agent-wiki/` directory from the repo
+  - remove `agent-wiki` adoption/copy constants from `src/core/packCore.ts`
+    - delete `EVENTS_RELATIVE_DIR` / `NOTES_RELATIVE_DIR` usage when it exists only for wiki support
+    - delete `includeLegacyWiki`
+    - delete or collapse `includeLegacyGuidance` behavior if its only remaining purpose is wiki/skill compatibility
+    - ensure adoption never creates `agent-wiki/`
+  - remove legacy `agent-wiki/events` scanning from `src/core/trajectoryExport.ts`
+    - export should scan `.datalox/events/trajectory-rows/` only
+    - repair should accept `.datalox/events/trajectory-rows/...` only
+    - duplicate handling should no longer compare legacy and product rows
+  - remove or hard-disable legacy maintenance/write commands in `src/cli/main.ts` and `src/surface/sharedCommands.ts`
+    - remove product-facing help for `record`, `patch`, `promote`, `maintain`, and legacy `lint` paths if they only serve wiki promotion
+    - if temporary compatibility stubs are kept, they must return a clear "removed from this branch" error and write nothing
+  - remove wiki-specific wrapper/reviewer paths in `src/adapters/shared.ts`
+    - no `record_turn_result` prose-to-legacy-event mode
+    - no second-pass reviewer prompt that produces repo-local wiki knowledge
+    - wrapper default remains explicit trajectory/turn recording only
+  - remove wiki-specific tests and fixtures
+    - replace any legacy export fixture with `.datalox/events/...` fixtures
+    - delete tests whose only purpose is legacy wiki promotion or maintenance
+    - keep tests proving adoption preserves existing user-owned `agent-wiki/` by not touching it if that case is still relevant
+  - update docs and instruction surfaces
+    - `README.md`
+    - `DATALOX.md`
+    - `AGENTS.md`
+    - `docs/product-definition.md`
+    - `docs/agent-configuration.md`
+    - `docs/task-orchestration.md`
+    - remove "legacy agent-wiki remains readable" language
+    - remove "use legacy skills/notes" language unless pointing to a separate legacy branch/package
+  - decide the fate of `skills/`
+    - if skills remain, mark them as local agent guidance only and remove all `agent-wiki` note links from frontmatter
+    - if skills are removed with the wiki, migrate essential instructions into `docs/`, `DATALOX.md`, and `AGENTS.md`
+  - update `docs/rl-trajectory.md` only as a design note after active product docs are aligned
+  Pass criteria:
+  - a fresh checkout of this branch has no root `agent-wiki/` directory
+  - `rg -n "agent-wiki" src tests README.md DATALOX.md AGENTS.md docs .github .cursor .windsurf CLAUDE.md GEMINI.md WIKI.md` returns no active references, except an explicitly named migration/changelog file if one is kept
+  - adoption/bootstrap creates `.datalox/`, instruction surfaces, and shims only; it never creates `agent-wiki/`
+  - `record_trajectory`, `record_agent_task_trajectory`, and future `record_agent_turn` write only under `.datalox/events/...`
+  - `export-trajectories` scans only `.datalox/events/trajectory-rows/`
+  - legacy write commands either do not exist in help output or fail read-only with no filesystem writes
+  - wrappers cannot create legacy wiki events from prose summaries
+  - no tracked tests require `agent-wiki` fixtures
+  - existing user-owned `agent-wiki/` in a host repo is not deleted by adoption
+  - focused tests pass:
+    - `npx vitest run tests/adoptionScripts.test.ts`
+    - `npx vitest run tests/trajectoryExport.test.ts tests/agentTaskTrajectoryExport.test.ts`
+    - wrapper/shared-surface tests touched by removing legacy modes
+  - `npm run build` passes
   - `npm run check` passes
   - `git diff --check` passes
 

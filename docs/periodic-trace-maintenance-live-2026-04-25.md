@@ -56,12 +56,12 @@ This passes the required first boundary:
 - `skippedCoveredEvents: 4`
 - skill actions:
   - `create_skill`
-    - `notePath: agent-wiki/notes/agent-adoption-state-the-committed-datalox-bootstrap-read-order-for-future-agent.md`
+    - `notePath: removed-wiki-store/notes/agent-adoption-state-the-committed-datalox-bootstrap-read-order-for-future-agent.md`
     - `skillId: agent_adoption.read-the-committed-datalox-bootstrap-surfaces-before-acting`
     - `skillPath: skills/read-the-committed-datalox-bootstrap-surfaces-before-acting/SKILL.md`
     - `reason: note_backed_skill_synthesis`
   - `keep_note_only`
-    - `notePath: agent-wiki/notes/unknown-in-one-sentence-state-the-committed-datalox-bootstrap-read-order-for-fut.md`
+    - `notePath: removed-wiki-store/notes/unknown-in-one-sentence-state-the-committed-datalox-bootstrap-read-order-for-fut.md`
     - `reason: workflow_unknown_for_skill_synthesis`
 
 This passes the required second boundary:
@@ -74,7 +74,7 @@ This passes the required second boundary:
 
 Inspected note:
 
-- `agent-wiki/notes/unknown-in-one-sentence-state-the-committed-datalox-bootstrap-read-order-for-fut.md`
+- `removed-wiki-store/notes/unknown-in-one-sentence-state-the-committed-datalox-bootstrap-read-order-for-fut.md`
 
 Result:
 
@@ -101,7 +101,7 @@ Result:
 
 The maintenance loop now passes the intended model:
 
-- recent traces in `agent-wiki/events/` are compacted periodically
+- recent traces in `removed-wiki-store/events/` are compacted periodically
 - coverage is durable and explicit
 - the first durable compaction boundary is `trace -> note`
 - new skills are synthesized only from note-backed evidence

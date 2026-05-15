@@ -31,7 +31,7 @@
   },
   "paths": {
     "seedSkillsDir": "skills",
-    "seedNotesDir": "agent-wiki/notes",
+    "seedNotesDir": ".datalox/guidance/notes",
     "hostSkillsDir": null,
     "hostNotesDir": null
   },

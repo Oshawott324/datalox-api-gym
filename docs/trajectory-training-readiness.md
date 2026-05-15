@@ -58,7 +58,7 @@ When building a `debugging_trajectory.v1` row, treat
 ## Self-Contained Row Checklist
 
 Buyer-facing JSONL rows must be understandable without opening the source repo,
-`agent-wiki/events`, `.datalox/events`, or an audit artifact.
+`.datalox/events`, or an audit artifact.
 
 - Use paths only as labels for provenance.
 - Include at least one meaningful `before`/`after` code snippet pair.
@@ -171,7 +171,7 @@ This is schema-shaped prose, not training data. The grader should keep it in
     "explanation": "Open source_event_paths for the actual patch."
   },
   "export": {
-    "source_event_paths": ["agent-wiki/events/source.json"]
+    "source_event_paths": [".datalox/events/trajectory-rows/source.json"]
   }
 }
 ```
@@ -198,7 +198,7 @@ repo or source-event access to understand the edit.
     "explanation": "The before snippet reads from the Promise; the after snippet awaits fetchUser before property access."
   },
   "export": {
-    "source_event_paths": ["agent-wiki/events/source.json"]
+    "source_event_paths": [".datalox/events/trajectory-rows/source.json"]
   }
 }
 ```

@@ -12,7 +12,7 @@ Short version:
 - `debugging_trajectory.v1` rows are compact training/eval derivatives.
 - Datalox MCP is the instrumentation, session capture, labeling, verification, and export-control layer.
 - `datalox-pack` is the repo-local implementation package.
-- Existing skills and notes are legacy or internal guidance surfaces, not a second product loop.
+- Local skills are internal guidance surfaces, not a second product loop.
 
 Primary product loop:
 
@@ -30,9 +30,9 @@ The repo is centered on:
 - `.datalox/approvals/`
 - `docs/agent-turn-schema.md`
 - `docs/trajectory-dataset-schema.md`
-- legacy/internal `skills/` and `agent-wiki/notes/` only where current host guidance still requires them
+- local `skills/` only where current host guidance still requires them
 
-`agent-wiki/events/` remains a readable legacy event store. New product data should write to `.datalox/` paths.
+New product data writes to `.datalox/` paths.
 
 Normal read path:
 
@@ -40,7 +40,7 @@ Normal read path:
 2. read the turn schema when session capture/export fields are involved
 3. read the trajectory schema when trajectory export/data fields are involved
 4. record meaningful grounded events
-5. use existing skill/note guidance only where current host behavior still requires it
+5. use local skill guidance only where current host behavior still requires it
 
 Current source kinds:
 
@@ -48,10 +48,11 @@ Current source kinds:
 - `web`
 - `pdf`
 
-Current durable local outputs:
+Current durable local product outputs:
 
-- `skill`
-- `note`
+- `.datalox/events/agent-turns/`
+- `.datalox/events/trajectory-rows/`
+- `.datalox/events/agent-task-trajectories/`
 
 Turn events are source capture units, not raw host transcripts. Trajectory dataset rows are export derivatives, not new repo-local knowledge page types and not the complete source session. Use `agent_turn.v1` from [agent-turn-schema.md](./agent-turn-schema.md) for capture and `debugging_trajectory.v1` from [trajectory-dataset-schema.md](./trajectory-dataset-schema.md) for compact derived rows. Do not add new product behavior to local note/skill promotion.
 

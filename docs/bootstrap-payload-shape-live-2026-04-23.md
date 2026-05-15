@@ -16,8 +16,8 @@ That meant unrelated knowledge landed in generic repos by default, including:
 - `skills/ordercli`
 - `skills/review-ambiguous-viability-gate`
 - `skills/capture-web-knowledge`
-- `agent-wiki/notes/pdf/*`
-- `agent-wiki/notes/web/*`
+- `removed-wiki-store/notes/pdf/*`
+- `removed-wiki-store/notes/web/*`
 
 The problem was not MCP itself. The problem was bootstrap/adoption payload shape.
 
@@ -27,13 +27,13 @@ In [src/core/packCore.ts](/Users/yifanjin/datalox-pack/src/core/packCore.ts):
 
 - removed whole-tree default adoption of:
   - `skills/`
-  - `agent-wiki/notes/`
+  - `removed-wiki-store/notes/`
 - replaced it with a small core bootstrap bundle:
 - `skills/maintain-datalox-pack`
 - `skills/use-datalox-through-host-cli`
-- `agent-wiki/notes/maintain-datalox-pack.md`
-- `agent-wiki/notes/use-datalox-through-host-cli.md`
-  - `agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md`
+- `removed-wiki-store/notes/maintain-datalox-pack.md`
+- `removed-wiki-store/notes/use-datalox-through-host-cli.md`
+  - `removed-wiki-store/notes/repo-engineering-multi-agent-bootstrap-surfaces.md`
 
 This keeps:
 
@@ -81,9 +81,9 @@ Observed adopted skills:
 
 Observed adopted notes:
 
-- `agent-wiki/notes/maintain-datalox-pack.md`
-- `agent-wiki/notes/use-datalox-through-host-cli.md`
-- `agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md`
+- `removed-wiki-store/notes/maintain-datalox-pack.md`
+- `removed-wiki-store/notes/use-datalox-through-host-cli.md`
+- `removed-wiki-store/notes/repo-engineering-multi-agent-bootstrap-surfaces.md`
 
 Not present:
 
@@ -91,8 +91,8 @@ Not present:
 - `skills/ordercli`
 - `skills/review-ambiguous-viability-gate`
 - `skills/capture-web-knowledge`
-- `agent-wiki/notes/pdf/`
-- `agent-wiki/notes/web/`
+- `removed-wiki-store/notes/pdf/`
+- `removed-wiki-store/notes/web/`
 
 ## Live Proof 2: Fresh Auto-Bootstrap + Real Codex Loop
 
@@ -107,7 +107,7 @@ Run 1:
 - action: `create_note_from_gap`
 - decision: `create_operational_note`
 - note:
-  - `agent-wiki/notes/agent-adoption-stabilize-manual-pack-adoption-in-non-technical-repos.md`
+  - `removed-wiki-store/notes/agent-adoption-stabilize-manual-pack-adoption-in-non-technical-repos.md`
 
 Run 2:
 

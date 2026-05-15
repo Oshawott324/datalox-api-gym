@@ -43,7 +43,7 @@ Completed:
 
 Main touched areas:
 
-- `scripts/lib/agent-pack.mjs`
+- `removed legacy pack script`
 - `src/adapters/shared.ts`
 - `src/core/packCore.ts`
 - `src/mcp/loopPulse.ts`
@@ -148,7 +148,7 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 
 Passed:
 
-1. a git repo with `agent-wiki/` but no `.datalox/install.json` remains blocked for auto-bootstrap
+1. a git repo with `removed-wiki-store/` but no `.datalox/install.json` remains blocked for auto-bootstrap
 2. the blocked probe output includes an explicit recovery action and command shape
 3. explicit `bash bin/adopt-host-repo.sh "$TARGET_REPO"` from a real source clone repairs the repo and writes `.datalox/install.json`
 4. the repaired repo reports `status: "ready"`
@@ -171,7 +171,7 @@ Public deployment:
 
 Completed:
 
-- added a real bounded maintenance pass over `agent-wiki/events/`
+- added a real bounded maintenance pass over `removed-wiki-store/events/`
 - grouped recent unresolved traces by `workflow + stabilityKey`
 - compacted repeated traces into operational notes
 - wrote explicit trace coverage back to the recorded event JSON
@@ -197,7 +197,7 @@ Implemented shape:
 
 Passed:
 
-1. recent traces in `agent-wiki/events/` can be compacted periodically instead of growing unbounded
+1. recent traces in `removed-wiki-store/events/` can be compacted periodically instead of growing unbounded
 2. maintenance explicitly marks covered traces with durable metadata
 3. the first durable compaction boundary is `trace -> note`
 4. no skill is created in the same pass that first creates the note
@@ -248,7 +248,7 @@ Grounded proof:
 Live machine state (2026-04-27):
 
 - `~/.claude/skills/` now contains direct per-skill symlinks for all 4 current pack skills
-- `~/.claude/hooks/datalox-auto-promote.sh` present
+- `~/.claude/hooks/removed legacy hook` present
 - `status.adapters.claude.nativeSkillLinks.canonical: true`
 - host limitation recorded: `claude` CLI not in shell PATH (IDE extension mode); canonical skill links are installed and will surface in a CLI-launched session
 
@@ -308,7 +308,7 @@ Implemented shape:
   - `datalox maintain --max-events 12 --json`
 - default behavior:
   - scan bounded trace events
-  - compact repeated trace groups into `agent-wiki/notes/`
+  - compact repeated trace groups into `removed-wiki-store/notes/`
   - mark covered events
   - do not create or patch skills
 - explicit skill synthesis:
@@ -330,7 +330,7 @@ Completed:
 - added shared event backlog stats and policy evaluation
 - added maintenance backlog data to `status --json`
 - added Claude hook stderr warnings for hot backlogs
-- added next-turn-readable backlog visibility in `agent-wiki/hot.md`
+- added next-turn-readable backlog visibility in `removed-wiki-store/hot.md`
 - added machine-readable Codex wrapper backlog warnings in wrapper JSON
 - added a composite backlog policy in `.datalox/config.json` and `.datalox/config.schema.json`
 - kept hook/wrapper warnings note-only; they recommend bounded maintenance and do not synthesize skills
@@ -365,7 +365,7 @@ Passed:
 5. config can tune backlog policy
 6. invalid empty warning policies fail clearly
 7. Codex wrapper JSON includes machine-readable backlog warning data
-8. Claude hook writes a compact stderr warning and updates `agent-wiki/hot.md`
+8. Claude hook writes a compact stderr warning and updates `removed-wiki-store/hot.md`
 9. `status --json` exposes the same shared backlog status
 10. warnings do not trigger skill synthesis
 
@@ -394,7 +394,7 @@ Implemented shape:
   - events are marked `maintenanceStatus: "covered"`
   - events receive `coveredByNotePath`
 - low-signal singleton traces:
-  - compact into bounded `trace_rollup` notes under `agent-wiki/notes/`
+  - compact into bounded `trace_rollup` notes under `removed-wiki-store/notes/`
   - events are marked `maintenanceStatus: "summarized"`
   - events receive `summarizedByNotePath`
 - explicitly adjudicated singleton traces:
@@ -466,7 +466,7 @@ Passed:
 7. Codex wrapper drains a hot backlog without manual `datalox maintain`
 8. generic wrapper drains a hot backlog when prompt injection is active
 9. Claude hook drains a hot backlog after recording/compiling the current event
-10. after-maintenance `agent-wiki/hot.md` no longer keeps a stale backlog warning
+10. after-maintenance `removed-wiki-store/hot.md` no longer keeps a stale backlog warning
 
 Focused verification:
 
@@ -526,7 +526,7 @@ Completed:
 - added `adapters.claude.surfaces.wrapper`, `stopHook`, `nativeSkills`, and `mcp` to `datalox status --json`
 - kept existing raw `adapters.claude` fields for compatibility
 - added Claude-specific active-session notes so wrapper enforcement only counts when `currentSession.activeWrapper` is `"claude"` and `currentSession.wrapperEnforced` is `true`
-- documented the boundary in `CLAUDE.md`, `skills/use-datalox-through-host-cli/SKILL.md`, and `agent-wiki/notes/use-datalox-through-host-cli.md`
+- documented the boundary in `CLAUDE.md`, `skills/use-datalox-through-host-cli/SKILL.md`, and `removed-wiki-store/notes/use-datalox-through-host-cli.md`
 - documented live proof in [docs/claude-code-surface-provenance-live-2026-05-02.md](/Users/yifanjin/datalox-pack/docs/claude-code-surface-provenance-live-2026-05-02.md)
 
 Passed:

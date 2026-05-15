@@ -226,7 +226,6 @@ Use task state for coordination. Use `agent_turn.v1` events as the capture
 primitive, captured sessions as the source B2B data asset, and
 `debugging_trajectory.v1` rows as compact dataset/eval derivatives.
 
-Fresh trajectory-product adoption should keep orchestration and product data
-under `.datalox/`. `agent-wiki/` is legacy compatibility only: preserve and
-read it when an older repo already has it, but do not create it as a default
-store for task state, session capture, or trajectory rows.
+Fresh trajectory-product adoption keeps orchestration and product data under
+`.datalox/`. This branch does not create a parallel wiki, note, or event store
+for task state, session capture, or trajectory rows.

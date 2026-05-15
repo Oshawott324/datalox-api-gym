@@ -1,39 +1,9 @@
 ---
-description: Datalox pack rules for Cursor. Keep product events under .datalox and trajectory export aligned with the schema.
-globs:
-  - ".datalox/**/*.json"
-  - "docs/product-definition.md"
-  - "docs/agent-turn-schema.md"
-  - "docs/trajectory-dataset-schema.md"
-  - "docs/agent-task-trajectory-schema.md"
-  - "DATALOX.md"
-  - "AGENTS.md"
-alwaysApply: true
+description: Datalox product capture rules
+alwaysApply: false
 ---
 
-# Datalox Pack
+Read `AGENTS.md` and `DATALOX.md`.
 
-Read `docs/product-definition.md` and `DATALOX.md` first.
-
-Product boundary:
-
-- Datalox MCP is the product-facing instrumentation and control layer for desktop agents.
-- `datalox-trajectory-mcp` is the repo-local implementation package.
-- B2B trajectory data/evals are the primary product focus.
-- Do not keep legacy note/skill promotion as a second product loop in this repo.
-- Existing skills/notes are legacy or internal agent-guidance surfaces until migrated.
-- Lean, outcome-labeled `debugging_trajectory.v1` rows are the dataset/eval export product.
-
-On each loop:
-
-1. read product/schema docs when trajectory export is involved
-2. record new product events under `.datalox/events/`
-3. use `skills/` and linked notes only when this repo has explicit legacy guidance
-4. route new product behavior through structured events and trajectory rows
-5. leave `agent-wiki/` alone unless this repo already has legacy compatibility content
-
-When touching trajectory recording, export gates, redaction states, or dataset fields, read `docs/trajectory-dataset-schema.md` first.
-
-Raw traces are not sellable data. Trajectory dataset rows are export artifacts, not repo-local knowledge page types.
-
-Preserve native Cursor behavior. Datalox is additive.
+Write product capture data under `.datalox/events/` only. Use explicit
+trajectory rows and the Datalox MCP/CLI recording commands for dataset work.

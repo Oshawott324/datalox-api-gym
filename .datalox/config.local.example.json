@@ -1,10 +1,12 @@
 {
   "paths": {
-    "hostSkillsDir": "skills",
-    "hostNotesDir": "agent-wiki/notes"
+    "eventsRoot": ".datalox/events",
+    "agentTurnsDir": ".datalox/events/agent-turns",
+    "trajectoryRowsDir": ".datalox/events/trajectory-rows",
+    "agentTaskTrajectoriesDir": ".datalox/events/agent-task-trajectories"
   },
   "runtime": {
     "baseUrl": "https://api.example.datalox.com",
-    "defaultWorkflow": "flow_cytometry"
+    "defaultWorkflow": "trajectory_export"
   }
 }

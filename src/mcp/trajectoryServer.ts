@@ -18,19 +18,7 @@ async function main(): Promise<void> {
     name: "datalox-trajectory-mcp",
     version: "0.1.0",
     commands,
-    unavailableLoopPulseTools: [
-      "adopt_pack",
-      "resolve_loop",
-      "record_turn_result",
-      "patch_knowledge",
-      "promote_gap",
-      "maintain_knowledge",
-      "lint_pack",
-      "capture_web_artifact",
-      "capture_design_source",
-      "capture_pdf_artifact",
-      "publish_web_capture",
-    ],
+    unavailableLoopPulseTools: ["adopt_pack"],
     fallbackLoopPulseTool: null,
   });
 }

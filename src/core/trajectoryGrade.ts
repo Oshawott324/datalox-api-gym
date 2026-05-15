@@ -158,9 +158,17 @@ export function gradeTrajectoryRow(
       });
       return;
     }
+    if (isExternalReferenceOnly(file.before) || isExternalReferenceOnly(file.after)) {
+      blocking_issues.push({
+        code: "relevant_file_snippet_external_reference",
+        path: basePath,
+        message: "Relevant file before/after snippet points outside the row instead of carrying code evidence.",
+        repair_action: "Replace source path references with the exact minimal before and after code snippets.",
+      });
+    }
     if (!looksLikeCodeSnippet(file.before) || !looksLikeCodeSnippet(file.after)) {
       blocking_issues.push({
-        code: "prose_only_relevant_file",
+        code: "relevant_file_snippet_not_code_like",
         path: basePath,
         message: "Relevant file before/after content does not look like code evidence.",
         repair_action: "Replace prose summaries with the exact minimal code snippets.",
@@ -383,10 +391,10 @@ function isExternalReferenceOnly(value: string): boolean {
 function isExternalReferenceLine(line: string): boolean {
   const normalized = line.toLowerCase();
   if (/^(?:see|open|refer to|reference|check|inspect|look at)\b/u.test(normalized)) {
-    return /\b(?:src\/|agent-wiki\/|\.datalox\/|source_event_paths|changed_files|repo|repository|artifact|attached file|file path)\b/u
+    return /\b(?:src\/|\.datalox\/|source_event_paths|changed_files|repo|repository|artifact|attached file|file path)\b/u
       .test(normalized);
   }
-  return /^(?:src\/|agent-wiki\/|\.datalox\/|exports\/|\/[^\s]+)|^(?:source_event_paths|changed_files|path):\b/u
+  return /^(?:src\/|\.datalox\/|exports\/|\/[^\s]+)|^(?:source_event_paths|changed_files|path):\b/u
     .test(normalized);
 }
 

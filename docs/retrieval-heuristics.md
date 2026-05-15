@@ -25,7 +25,7 @@ This is different from the skill-note contract drift described in [runtime-skill
 
 Current code:
 
-- [scripts/lib/agent-pack.mjs](../scripts/lib/agent-pack.mjs)
+- [removed legacy pack script](../removed legacy pack script)
   - `tokenize()`
   - `scoreRepoHints()`
   - `scoreSkill()`
@@ -55,7 +55,7 @@ Why this is heuristic:
 
 Current code:
 
-- [scripts/lib/agent-pack.mjs](../scripts/lib/agent-pack.mjs)
+- [removed legacy pack script](../removed legacy pack script)
   - `scoreNote()`
   - `explainNoteMatch()`
   - `compareRetrievedNotes()`
@@ -151,7 +151,7 @@ Promotion is no longer primarily score-driven.
 
 Current code:
 
-- [scripts/lib/agent-pack.mjs](../scripts/lib/agent-pack.mjs)
+- [removed legacy pack script](../removed legacy pack script)
   - `buildAdjudicationPacket()`
   - `decideAdjudicatedPromotion()`
 
@@ -182,7 +182,7 @@ Current examples:
 Current code:
 
 - [src/adapters/shared.ts](../src/adapters/shared.ts)
-- [scripts/lib/agent-pack.mjs](../scripts/lib/agent-pack.mjs)
+- [removed legacy pack script](../removed legacy pack script)
 
 This means downstream agents can still see and possibly overtrust heuristic ranking numbers, even though those numbers are not durable product truth.
 
@@ -190,7 +190,7 @@ This means downstream agents can still see and possibly overtrust heuristic rank
 
 There is also stale heuristic promotion code still present:
 
-- `decidePromotionAction()` in [scripts/lib/agent-pack.mjs](../scripts/lib/agent-pack.mjs)
+- `decidePromotionAction()` in [removed legacy pack script](../removed legacy pack script)
 
 It reflects the older repetition-threshold ladder and should not be treated as the live product model.
 

@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "kind": "portable_knowledge_pack",
-  "name": "Datalox Pack",
+  "kind": "trajectory_mcp_pack",
+  "name": "Datalox Trajectory MCP",
   "mode": "repo_only",
   "runtimeRequired": false,
   "configPath": ".datalox/config.json",
@@ -15,60 +15,43 @@
     ".cursor/rules/datalox-pack.mdc",
     ".windsurf/rules/datalox-pack.md"
   ],
-  "entrypoints": {
-    "seedSkillsDir": "skills",
-    "seedNotesDir": "agent-wiki/notes",
-    "hostSkillsDir": null,
-    "hostNotesDir": null
+  "eventStores": {
+    "agentTurns": ".datalox/events/agent-turns",
+    "debuggingTrajectories": ".datalox/events/trajectory-rows",
+    "agentTaskTrajectories": ".datalox/events/agent-task-trajectories",
+    "sessionCandidates": ".datalox/session-candidates",
+    "approvals": ".datalox/approvals"
   },
-  "knowledgeModel": {
-    "primaryDurableEntry": "skill",
-    "supportingDurableEntry": "note",
-    "normalReadPath": [
-      "detect_skill",
-      "read_skill",
-      "read_linked_notes",
-      "act"
+  "productModel": {
+    "sourceAsset": "approved_anonymized_session_bundle",
+    "capturePrimitive": "agent_turn.v1",
+    "derivatives": [
+      "debugging_trajectory.v1",
+      "agent_task_trajectory.v1"
     ],
-    "noteLinkField": "metadata.datalox.note_paths"
-  },
-  "controlArtifacts": {
-    "indexPath": "agent-wiki/index.md",
-    "logPath": "agent-wiki/log.md",
-    "lintPath": "agent-wiki/lint.md",
-    "hotPath": "agent-wiki/hot.md"
+    "guidanceSurfaces": [
+      "docs/",
+      "DATALOX.md",
+      "AGENTS.md",
+      "skills/"
+    ]
   },
   "startup": {
     "readOnEveryLoop": true,
     "readOrder": [
       ".datalox/config.local.json",
       ".datalox/config.json",
+      "docs/product-definition.md",
       "DATALOX.md",
       "AGENTS.md",
       "CLAUDE.md",
       "WIKI.md",
       "GEMINI.md"
-    ],
-    "skillSelectionSignals": [
-      "current task text",
-      "current workflow if known",
-      "git changed paths when available",
-      "repo root files",
-      "package metadata"
     ]
   },
-  "agentRules": {
-    "preserveNativeSkills": true,
-    "generatedSkillsDir": "skills",
-    "notesDir": "agent-wiki/notes",
-    "knowledgeDirs": [
-      "agent-wiki/notes"
-    ],
-    "hostRepoOwnsWrites": true
-  },
   "distribution": {
-    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp && cd datalox-trajectory-mcp && bash bin/setup-multi-agent.sh claude && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
-    "multiAgentSetup": "bash bin/setup-multi-agent.sh claude",
+    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp && cd datalox-trajectory-mcp && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
+    "multiAgentSetup": "bash bin/setup-multi-agent.sh codex",
     "friendlyEntryPoint": "START_HERE.md",
     "agentSetupPrompt": {
       "instruction": "Paste this into the agent chatbox from the repo you want Datalox to manage.",
@@ -76,22 +59,21 @@
         "TARGET_REPO=\"$(pwd)\"",
         "git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp",
         "cd datalox-trajectory-mcp",
-        "bash bin/setup-multi-agent.sh claude",
+        "bash bin/setup-multi-agent.sh codex",
         "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
         "node bin/datalox.js status --repo \"$TARGET_REPO\" --json"
       ],
       "sourcePackRole": "The public GitHub source repo is datalox-pack; the local checkout/package identity is datalox-trajectory-mcp and it owns bin/adopt-host-repo.sh.",
-      "targetRepoRole": "$TARGET_REPO is the user's current project and receives the Datalox install stamp, instruction surfaces, core skills, and notes."
+      "targetRepoRole": "$TARGET_REPO is the user's current project and receives the Datalox install stamp, instruction surfaces, .datalox config, and host shims."
     },
     "defaultBootstrapBundle": {
-      "skills": [
-        "skills/maintain-datalox-pack",
-        "skills/use-datalox-through-host-cli"
-      ],
-      "notes": [
-        "agent-wiki/notes/maintain-datalox-pack.md",
-        "agent-wiki/notes/use-datalox-through-host-cli.md",
-        "agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md"
+      "eventsRoot": ".datalox/events",
+      "instructionSurfaces": [
+        "DATALOX.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "WIKI.md",
+        "GEMINI.md"
       ]
     },
     "wrapperFallback": {

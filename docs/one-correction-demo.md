@@ -50,7 +50,7 @@ npm run demo:one-correction:artifact
 3. Run `patch` with the human correction
 4. Run `resolve` again
 5. Point out that the new run now includes the specific onboarding rule
-6. End with `lint` or `agent-wiki/log.md` to show the correction persisted
+6. End with `lint` or `removed-wiki-store/log.md` to show the correction persisted
 
 ## Suggested Narration
 

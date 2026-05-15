@@ -1,8 +1,7 @@
 # Skill Schema
 
-A Datalox skill should be a real playbook, not a metadata wrapper.
-
-## File Location
+Skills in this branch are local agent guidance only. They are not a second
+product data store and they do not link to a wiki or note promotion loop.
 
 Each skill lives at:
 
@@ -10,84 +9,19 @@ Each skill lives at:
 skills/<skill-name>/SKILL.md
 ```
 
-## Frontmatter
-
-Keep top-level frontmatter minimal:
+Keep frontmatter minimal:
 
 ```yaml
 ---
-name: evolve-portable-pack
-description: Use when changing the portable pack or agent guidance in this repo.
+name: maintain-datalox-pack
+description: Use when changing the Datalox trajectory MCP package, schemas, CLI/MCP surfaces, wrappers, docs, or product guidance in this repo.
 metadata:
   datalox:
-    id: repo-engineering.evolve-portable-pack
+    id: repo-engineering.maintain-datalox-pack
     workflow: repo_engineering
-    trigger: Use when changing the portable pack or agent guidance in this repo.
-    note_paths:
-      - agent-wiki/notes/repo-engineering-multi-agent-bootstrap-surfaces.md
-    tags:
-      - repo_engineering
-      - portable_pack
+    trigger: Datalox trajectory MCP package maintenance
 ---
 ```
 
-Top-level required fields:
-
-- `name`
-- `description`
-
-Put Datalox-specific runtime fields under `metadata.datalox`.
-
-Recommended `metadata.datalox` fields:
-
-- `id`
-- `workflow`
-- `trigger`
-- `note_paths`
-- `tags`
-
-Optional `metadata.datalox` fields:
-
-- `status`
-- `author`
-- `updated_at`
-- `repo_hints`
-
-## Body
-
-The markdown body is the real skill.
-
-Required sections:
-
-### When to Use
-
-Say when this skill should be selected.
-
-### Workflow
-
-Give the actual steps the agent should follow.
-
-### Expected Output
-
-Say what the agent should produce or explain after using the skill.
-
-### Notes
-
-List the linked notes that ground the skill.
-
-## Writing Rule
-
-The skill body should let an agent act even if it has not opened every linked note yet.
-
-Notes are supporting references. They are not a substitute for the skill body.
-
-## Anti-Pattern
-
-Do not write skills like this:
-
-- large custom frontmatter
-- tiny body
-- "read the linked docs" as the only workflow
-- no concrete output
-
-That shape is a registry record, not a skill.
+The body should contain the usable workflow. Durable product evidence belongs
+under `.datalox/events/`, not in skill frontmatter.
