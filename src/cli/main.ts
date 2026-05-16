@@ -14,6 +14,7 @@ import {
   installHostIntegrations,
   type InstallHost,
 } from "../core/installCore.js";
+import { packReplayBundle, verifyReplayBundle } from "../core/replayBundle.js";
 import { runClaudeWrapper } from "../adapters/claude/run.js";
 import { runCodexWrapper } from "../adapters/codex/run.js";
 import { runGenericWrapper } from "../adapters/generic/run.js";
@@ -50,6 +51,8 @@ function usage(): string {
     "  datalox adopt <host-repo-path> [--pack-source <path-or-git-url>] [--json]",
     "  datalox probe-bootstrap [--repo <path>] [--json]",
     "  datalox auto-bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
+    "  datalox bundle pack [--repo <path>] --bundle-id <id> [--json]",
+    "  datalox bundle verify [--repo <path>] --bundle <bundle-path> [--json]",
     "  datalox record-trajectory [--repo <path>] --trajectory-row <json-file> [--json]",
     "  datalox export-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
     "  datalox record-agent-task-trajectory [--repo <path>] --agent-task-trajectory <json-file> [--json]",
@@ -242,6 +245,31 @@ async function main(): Promise<void> {
       });
       writeResult(result, true);
       return;
+    }
+    case "bundle": {
+      if (positional === "pack") {
+        if (typeof args["bundle-id"] !== "string") {
+          throw new Error("bundle pack requires --bundle-id");
+        }
+        const result = await packReplayBundle({
+          repoPath: typeof args.repo === "string" ? args.repo : undefined,
+          bundleId: args["bundle-id"],
+        });
+        writeResult(result, true);
+        return;
+      }
+      if (positional === "verify") {
+        if (typeof args.bundle !== "string") {
+          throw new Error("bundle verify requires --bundle");
+        }
+        const result = await verifyReplayBundle({
+          repoPath: typeof args.repo === "string" ? args.repo : undefined,
+          bundlePath: args.bundle,
+        });
+        writeResult(result, true);
+        return;
+      }
+      throw new Error("bundle requires subcommand pack or verify");
     }
     case "wrap": {
       const subcommand = positional;
