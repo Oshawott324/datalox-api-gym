@@ -133,7 +133,7 @@ Implemented shape:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-agent-replay.git
+git clone https://github.com/Oshawott324/datalox-agent-replay.git
 cd datalox-agent-replay
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"

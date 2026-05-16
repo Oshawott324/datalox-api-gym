@@ -37,7 +37,7 @@ Pass criteria:
 - `npm run check`
 - `git diff --check`
 - stale identity scan passes through `tests/repoIdentity.test.ts`
-- GitHub repo exists at `Complexity-LLC/datalox-agent-replay`
+- GitHub repo exists at `Oshawott324/datalox-agent-replay`
 
 ## Step 1: Make Replay The Canonical Schema Layer
 

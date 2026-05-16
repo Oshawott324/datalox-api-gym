@@ -126,7 +126,7 @@ mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
+  git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex

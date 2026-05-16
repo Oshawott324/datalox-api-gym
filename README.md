@@ -59,7 +59,7 @@ mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
+  git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
@@ -71,7 +71,7 @@ Start to use `datalox-mcp` from now on to generate trajectory rows.
 
 This does two separate things:
 
-- `https://github.com/Complexity-LLC/datalox-agent-replay.git` is the current public source repo.
+- `https://github.com/Oshawott324/datalox-agent-replay.git` is the current public source repo.
 - `~/.datalox/cache/datalox-agent-replay` is the local source directory and package identity.
 - `$TARGET_REPO` is the user's current project.
 - Default adoption writes instruction surfaces and `.datalox/install.json` into the target repo.

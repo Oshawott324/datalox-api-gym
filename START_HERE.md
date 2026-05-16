@@ -35,7 +35,7 @@ mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
+  git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
@@ -82,7 +82,7 @@ node bin/datalox.js status --repo . --json
 ## One-Click Options
 
 - Full setup from the target repo:
-  `TARGET_REPO="$(pwd)" && PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay" && mkdir -p "$(dirname "$PACK_REPO")" && ([ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO") && cd "$PACK_REPO" && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
+  `TARGET_REPO="$(pwd)" && PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay" && mkdir -p "$(dirname "$PACK_REPO")" && ([ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO") && cd "$PACK_REPO" && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
 - Adopt a target repo from an existing Datalox Agent Replay clone:
   `bash bin/adopt-host-repo.sh /path/to/host-repo`
 - Pull from GitHub and adopt:

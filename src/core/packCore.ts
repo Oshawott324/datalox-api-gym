@@ -205,7 +205,7 @@ function resolvePackRootPath(): string {
 }
 
 const PACK_ROOT = resolvePackRootPath();
-const DEFAULT_PACK_URL = "https://github.com/Complexity-LLC/datalox-agent-replay.git";
+const DEFAULT_PACK_URL = "https://github.com/Oshawott324/datalox-agent-replay.git";
 const DEFAULT_PACK_CLONE_DIR = "datalox-agent-replay";
 
 function shellDoubleQuote(value: string): string {

@@ -141,7 +141,7 @@ The source clone should live outside the target repo:
 TARGET_REPO="$(pwd)"
 PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
 mkdir -p "$(dirname "$PACK_REPO")"
-[ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
+[ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"

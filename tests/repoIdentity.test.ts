@@ -5,6 +5,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = process.cwd();
+const expectedRepoUrl = "https://github.com/Oshawott324/datalox-agent-replay.git";
 
 const ignoredDirectories = new Set([
   ".git",
@@ -35,6 +36,7 @@ const forbiddenActiveStrings = [
   "DATALOX_PACK",
   "agent-wiki",
   "auto-promote",
+  "Complexity-LLC/datalox-agent-replay",
 ];
 
 const removedLegacyPaths = [
@@ -111,5 +113,26 @@ describe("repo identity regression guard", () => {
     const existing = removedLegacyPaths.filter((relativePath) => existsSync(path.join(repoRoot, relativePath)));
 
     expect(existing).toEqual([]);
+  });
+
+  it("keeps install-facing files pointed at the live GitHub repo", async () => {
+    const checkedFiles = [
+      "README.md",
+      "START_HERE.md",
+      "DATALOX.md",
+      "docs/agent-configuration.md",
+      "bin/adopt-from-github.sh",
+      "src/core/packCore.ts",
+    ];
+    const missing = [];
+
+    for (const relativePath of checkedFiles) {
+      const content = await readFile(path.join(repoRoot, relativePath), "utf8");
+      if (!content.includes(expectedRepoUrl)) {
+        missing.push(relativePath);
+      }
+    }
+
+    expect(missing).toEqual([]);
   });
 });
