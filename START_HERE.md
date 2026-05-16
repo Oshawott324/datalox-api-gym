@@ -1,21 +1,20 @@
 # Start Here
 
-Datalox records agent tool I/O and session evidence so agent teams can replay
-and audit behavior later. Approved replay/session bundles can become B2B source
-data, with compact trajectory/eval rows as derivatives.
+Datalox records agent tool I/O and turn evidence so agent teams can replay and
+audit behavior later. Approved replay bundles are the source product, with
+compact trajectory/eval rows as optional derivatives.
 
 Primary product loop:
 
 ```text
-agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-The turn capture contract is
-[docs/agent-turn-schema.md](docs/agent-turn-schema.md). The compact debugging
-row contract is
-[docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). Mixed
-domain task rows use
-[docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md).
+The exact replay primitive is
+[docs/tool-io-store-schema.md](docs/tool-io-store-schema.md). The source bundle
+contract is [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md). The
+turn review contract is [docs/agent-turn-schema.md](docs/agent-turn-schema.md).
+Compact trajectory rows use the trajectory schemas only as derivatives.
 The concrete replay migration plan is
 [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md).
 
@@ -44,7 +43,8 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
 Fresh adoption creates instruction surfaces, `.datalox/` config, the install
-stamp, and host shims. Product data writes under `.datalox/events/`.
+stamp, and host shims. Product replay data writes under `.datalox/tool-io/`,
+`.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.
 
 ## New Session In The Same Repo
 
@@ -62,9 +62,11 @@ node bin/datalox.js status --repo . --json
 
 ## What You Should See
 
-- `.datalox/events/`: product capture data
-- `.datalox/session-candidates/`: future review candidates
+- `.datalox/tool-io/records/`: exact replay records
+- `.datalox/events/agent-turns/`: turn review events
+- `.datalox/replay-bundles/`: source replay bundles
 - `.datalox/approvals/`: future approval records
+- `.datalox/derivatives/trajectories/`: optional trajectory/eval derivatives
 - `DATALOX.md`, `AGENTS.md`, and host instruction files
 - host shims under `bin/` and `~/.local/bin`
 
@@ -73,11 +75,12 @@ node bin/datalox.js status --repo . --json
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md`
-4. `docs/agent-turn-schema.md` when the work touches session capture, session export, or data sale
-5. `docs/trajectory-dataset-schema.md` when the work touches trajectory recording, trajectory export, or data sale
-6. `docs/agent-task-trajectory-schema.md` when the work touches mixed-domain trajectories
-7. `DATALOX.md`
-8. the selected `skills/<name>/SKILL.md` only when the task matches that skill
+4. `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
+5. `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
+6. `docs/agent-turn-schema.md` when the work touches turn review data
+7. trajectory schema docs only when deriving optional trajectory/eval rows
+8. `DATALOX.md`
+9. the selected `skills/<name>/SKILL.md` only when the task matches that skill
 
 ## One-Click Options
 
@@ -109,11 +112,9 @@ After setup, keep using the host normally.
 - Claude:
   `claude --print "Update the onboarding docs."`
 
-The installed shims route supported runs through Datalox automatically and
-default to `trajectory` capture mode. The wrapper records only an explicit row
-supplied by the agent through `DATALOX_TRAJECTORY_ROW_FILE` or
-`DATALOX_TRAJECTORY_ROW`; default rows should be
-`curation.quality: "needs_review"` until accepted.
+The installed shims route supported runs through Datalox automatically. Replay
+capture is the target default. Any remaining trajectory-mode wrapper behavior is
+an implementation gap tracked in the Option A plan, not the product contract.
 
 If a host only sees repo instructions or MCP tools, Datalox is guidance-only
 until a wrapper or plugin owns the loop.

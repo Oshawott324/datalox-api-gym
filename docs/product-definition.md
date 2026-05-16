@@ -2,12 +2,11 @@
 
 This is the canonical definition of what this repo is building.
 
-If other docs drift, this document wins. For the per-turn capture shape,
-[agent-turn-schema.md](./agent-turn-schema.md) wins. For the exported trajectory
-row shape, [trajectory-dataset-schema.md](./trajectory-dataset-schema.md) wins
-for coding/debugging rows and
-[agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md) wins for
-mixed-domain task episode rows.
+If other docs drift, this document wins. For exact tool-call capture,
+[tool-io-store-schema.md](./tool-io-store-schema.md) wins. For replay bundles,
+[replay-bundle-schema.md](./replay-bundle-schema.md) wins. For the per-turn
+capture shape, [agent-turn-schema.md](./agent-turn-schema.md) wins. Trajectory
+schemas define optional derivatives only.
 
 ## One-Sentence Definition
 
@@ -16,35 +15,36 @@ Datalox Agent Replay records agent-visible tool I/O and session evidence into ex
 ## Product Focus
 
 The repo should optimize for reproducible agent replay as the source product,
-with B2B replay/session data and trajectory/eval rows as export derivatives.
+with B2B replay bundle data and trajectory/eval rows as export derivatives.
 
 The repo product pipeline is:
 
 ```text
-agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-Do not preserve legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until they are migrated or isolated behind the session/trajectory data pipeline.
+Do not preserve legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until they are migrated or isolated behind the replay data pipeline.
 
 ## Business Goal
 
 The commercial goal is to give agent teams reproducible records of what their
-agents saw and did, then sell approved anonymized replay/session datasets and
+agents saw and did, then sell approved anonymized replay bundle datasets and
 derived trajectory/eval corpora to AI companies.
 
 The operating model is:
 
 1. Users run an agent with Datalox MCP instrumentation enabled.
-2. Datalox records `agent_turn.v1` events from completed turns: prompts, tool actions, file edits, verification commands, and outcome evidence.
-3. Tool I/O evidence is kept stable enough to support replay, audit, and reward/eval recomputation.
-4. Turn events and tool evidence are assembled into a replay/session bundle.
+2. Datalox records `tool_io_record.v1` records for agent-visible tool calls and observations.
+3. Datalox records `agent_turn.v1` events from completed turns: prompts, tool actions, file edits, verification commands, and outcome evidence.
+4. Tool I/O records and turn events are assembled into a replay bundle.
 5. A small export/redaction gate and outcome label are applied.
-6. Approved anonymized replay/session bundles can be packaged directly as source data.
+6. Approved anonymized replay bundles can be packaged directly as source data.
 7. Compact `debugging_trajectory.v1` or `agent_task_trajectory.v1` rows are derived for buyers who need training/eval examples instead of full replay.
 
-The desktop or host agent is the source of agent runs. `AgentTurnV1` is the
-capture primitive. The approved replay/session bundle is the source-of-truth
-asset; trajectory rows are a buyer-facing derivative.
+The desktop or host agent is the source of agent runs. `tool_io_record.v1` is
+the replay primitive, `agent_turn.v1` is the review primitive, and the approved
+replay bundle is the source-of-truth asset. Trajectory rows are optional
+buyer-facing derivatives.
 
 ## Why This Exists
 
@@ -71,7 +71,7 @@ That unit is useful for:
 - failure-mode analysis
 
 Datalox exists to capture each turn simply, preserve tool evidence for replay,
-assemble approved replay/session bundles, keep them export-gated, and derive
+assemble approved replay bundles, keep them export-gated, and derive
 the compact unit only when useful. Agents should not have to fill an
 audit-heavy schema during normal work.
 
@@ -82,7 +82,7 @@ This repo builds one product pipeline with supporting infrastructure:
 1. **Datalox MCP**
    Agent instrumentation, session/event capture, tool I/O evidence capture, host adapters, outcome labeling, verification status, and export control.
 2. **Datalox Replay Data**
-   The source B2B data product: approved anonymized replay/session bundles with prompts, tool actions, tool observations, file edits, and verification evidence.
+   The source B2B data product: approved anonymized replay bundles with prompts, tool actions, tool observations, file edits, and verification evidence.
 3. **Datalox Trajectory Data**
    The derived B2B dataset/eval product: lean, outcome-labeled `debugging_trajectory.v1` and `agent_task_trajectory.v1` records and curated corpora.
 
@@ -91,35 +91,33 @@ store and they do not create a second note/promotion loop.
 
 The commercial source export structure is:
 
+- one `.datalox/tool-io/records/` `tool_io_record.v1` event per replayable tool call
 - one `.datalox/events/agent-turns/` `agent_turn.v1` event per meaningful completed turn
-- one approved replay/session bundle per meaningful agent work episode
+- one `.datalox/replay-bundles/` `replay_bundle.v1` artifact per meaningful agent work episode
 - prompts, tool actions, file edits, diffs or changed snippets, verification commands, and outcome evidence
 - export/redaction status and source provenance
 
 The derived trajectory export structure is:
 
-- one `.datalox/events/trajectory-rows/` lean trajectory row per meaningful debugging episode
-- one `.datalox/events/agent-task-trajectories/` lean trajectory row per mixed-domain task episode
+- optional trajectory rows under `.datalox/derivatives/trajectories/`
 - coding/debugging schema defined in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
 - mixed-domain schema defined in [agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md)
 - records include the problem, context, agent trajectory, final fix, outcome label, verification state, and a small export gate
 
 The agent capture structure is:
 
-- agents or host adapters produce `.datalox/events/` structured events
-- events preserve enough context, action, evidence, and verification material for export
-- approved events can be sold as anonymized sessions or used to derive trajectory rows after labels and export-blocking issues are handled
+- host adapters produce `.datalox/tool-io/records/` replay records
+- agents or host adapters produce `.datalox/events/agent-turns/` review events
+- replay bundles preserve enough context, action, evidence, and verification material for export
+- approved replay bundles can be sold as anonymized source data or used to derive trajectory rows after labels and export-blocking issues are handled
 
 The first-class capture surface is Datalox MCP:
 
+- `record_tool_io` should record one explicit `tool_io_record.v1` record
 - `record_agent_turn` should record one explicit `agent_turn.v1` event as `payload.agentTurn`
-- `record_trajectory` records one explicit `debugging_trajectory.v1` row as a `.datalox/events/trajectory-rows/` event with `trajectoryRow`
-- `record_agent_task_trajectory` records one explicit `agent_task_trajectory.v1` row as a `.datalox/events/agent-task-trajectories/` event with `agentTaskTrajectory`
-- `grade_trajectories` grades recorded rows for training readiness without mutating source events
-- `repair_trajectory` records corrected rows as new linked events instead of mutating evidence events
-- `export_trajectories` exports sellable row candidates from recorded events into JSONL
-- `export_agent_task_trajectories` exports sellable mixed-domain task rows into JSONL
-- `record_turn_result` may carry an explicit trajectory row candidate, but it must not infer one from prose fields
+- `pack_replay_bundle` should assemble turn events and tool I/O records into `replay_bundle.v1`
+- `verify_replay_bundle` should verify bundle checksums and replay readiness
+- derivative trajectory tools may exist only under the derivative boundary and must not be the normal capture path
 
 ## Data Capture Rule
 
@@ -129,9 +127,10 @@ User-facing capture copy should stay plain:
 
 > Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
 
-Every exportable session bundle must include:
+Every exportable replay bundle must include:
 
 - source `agent_turn.v1` turn ids or event paths
+- source `tool_io_record.v1` ids or record paths
 - source prompt or problem statement
 - agent-visible actions
 - meaningful tool calls with command results
@@ -150,17 +149,19 @@ Every derived trajectory record must include:
 - verification status
 - small export gate
 
-Unapproved raw logs are not sellable data. An approved anonymized session can be a product by itself; a trajectory row is the compact training/eval derivative.
+Unapproved raw logs are not sellable data. An approved anonymized replay bundle
+can be a product by itself; a trajectory row is the compact training/eval
+derivative.
 
 ## Source Rules
 
 The event capture and dataset export should stay direct:
 
-- `trace` inputs record what happened during an agent run and should be normalized into `agent_turn.v1` events for session export
+- `trace` inputs record what happened during an agent run and should be normalized into `tool_io_record.v1` records plus `agent_turn.v1` events for replay export
 - `web` and `pdf` inputs provide source evidence
 - verified debugging episodes can become derived trajectory dataset rows
 - verified mixed-domain episodes can become `agent_task_trajectory.v1` rows when a task combines code, documents, spreadsheets, analysis, lab workflow, or source-review evidence
-- new product capture data writes under `.datalox/events/`
+- new replay product capture data writes under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`
 - fresh product adoption creates `.datalox/`, instruction surfaces, and host shims only
 - no wiki/note/event store is shipped as a parallel product path in this branch
 
@@ -189,16 +190,17 @@ Datalox should not be a raw log dump and should not be generic vector memory.
 The export progression is primary:
 
 ```text
-agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-New product work should route through structured turn events first, assemble sessions, then derive trajectory rows when useful.
+New product work should route through tool I/O records first, assemble replay
+bundles, then derive trajectory or eval rows when useful.
 
 The system should prefer:
 
 - provenance-aware capture
 - explicit export blocking when data cannot be sold
-- approved anonymized replay/session bundles
+- approved anonymized replay bundles
 - outcome-labeled rows
 - exportable structured derivatives
 - simple agent-readable capture outputs
@@ -226,10 +228,10 @@ Use this sentence when describing the project:
 
 When repo docs talk about Datalox, they should stay consistent with this definition:
 
-- B2B approved replay/session data plus derived trajectory/evals are the primary product focus
+- B2B approved replay bundle data plus derived trajectory/evals are the primary product focus
 - `AgentTurnV1` events are the simple capture primitive
-- approved replay/session bundles are the source B2B data asset
-- trajectory rows are compact training/eval derivatives
+- approved replay bundles are the source B2B data asset
+- trajectory rows are optional compact training/eval derivatives
 - Datalox MCP is the instrumentation, tool I/O capture, labeling, verification, and export-control layer
 - `datalox-agent-replay` is the repo-local implementation package
 - legacy note/skill promotion is not a product loop for this repo

@@ -9,21 +9,25 @@ Claude Code can see Datalox through separate surfaces:
 Product boundary:
 
 - Datalox MCP is the product-facing instrumentation and control layer for desktop agents.
-- B2B approved replay/session data plus derived trajectory/evals are the primary product focus.
-- `agent_turn.v1` events are the simple capture primitive.
-- Approved anonymized replay/session bundles are the source B2B data asset.
-- Lean, outcome-labeled trajectory rows are compact training/eval derivatives.
+- B2B approved replay bundles plus derived trajectory/evals are the primary product focus.
+- `tool_io_record.v1` records are the exact replay primitive.
+- `agent_turn.v1` events are the simple turn review primitive.
+- Approved anonymized replay bundles are the source B2B data asset.
+- Lean, outcome-labeled trajectory rows are optional compact training/eval derivatives.
+
+Primary product loop:
+
+```text
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+```
 
 On each loop:
 
-1. read `docs/product-definition.md`, `docs/agent-turn-schema.md`, and trajectory schema docs when export/data fields are involved
-2. record new product events under `.datalox/events/`
-3. route new product behavior through captured `agent_turn.v1` events first, assemble sessions, then derive trajectory rows when useful
+1. read `docs/product-definition.md`, `docs/tool-io-store-schema.md`, `docs/replay-bundle-schema.md`, and `docs/agent-turn-schema.md` when export/data fields are involved
+2. record replay source evidence under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`
+3. route new product behavior through tool I/O records first, assemble replay bundles, then derive trajectory rows when useful
 4. do not create a parallel wiki/note/event store
 
 Useful commands:
 
-- `datalox record-trajectory --repo . --trajectory-row row.json --json`
-- `datalox record-agent-task-trajectory --repo . --agent-task-trajectory row.json --json`
-- `datalox grade-trajectories --repo . --json`
-- `datalox export-trajectories --repo . --quality use --json`
+- current trajectory commands are derivative-only until replay MCP tools land

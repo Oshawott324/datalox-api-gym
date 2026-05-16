@@ -17,14 +17,18 @@
   ],
   "eventStores": {
     "agentTurns": ".datalox/events/agent-turns",
-    "debuggingTrajectories": ".datalox/events/trajectory-rows",
-    "agentTaskTrajectories": ".datalox/events/agent-task-trajectories",
-    "sessionCandidates": ".datalox/session-candidates",
-    "approvals": ".datalox/approvals"
+    "toolIoRecords": ".datalox/tool-io/records",
+    "replayBundles": ".datalox/replay-bundles",
+    "approvals": ".datalox/approvals",
+    "trajectoryDerivatives": ".datalox/derivatives/trajectories"
   },
   "productModel": {
-    "sourceAsset": "approved_anonymized_replay_session_bundle",
-    "capturePrimitive": "agent_turn.v1",
+    "sourceAsset": "approved_anonymized_replay_bundle",
+    "capturePrimitives": [
+      "tool_io_record.v1",
+      "agent_turn.v1"
+    ],
+    "bundleSchema": "replay_bundle.v1",
     "derivatives": [
       "debugging_trajectory.v1",
       "agent_task_trajectory.v1"
@@ -42,6 +46,9 @@
       ".datalox/config.local.json",
       ".datalox/config.json",
       "docs/product-definition.md",
+      "docs/tool-io-store-schema.md",
+      "docs/replay-bundle-schema.md",
+      "docs/agent-turn-schema.md",
       "DATALOX.md",
       "AGENTS.md",
       "CLAUDE.md",
@@ -67,7 +74,9 @@
       "targetRepoRole": "$TARGET_REPO is the user's current project and receives the Datalox install stamp, instruction surfaces, .datalox config, and host shims."
     },
     "defaultBootstrapBundle": {
-      "eventsRoot": ".datalox/events",
+      "toolIoRoot": ".datalox/tool-io/records",
+      "turnEventsRoot": ".datalox/events/agent-turns",
+      "replayBundlesRoot": ".datalox/replay-bundles",
       "instructionSurfaces": [
         "DATALOX.md",
         "AGENTS.md",

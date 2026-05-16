@@ -6,11 +6,18 @@ Product boundary:
 
 - Datalox MCP is the product-facing instrumentation and control layer.
 - `datalox-agent-replay` is the repo-local implementation package.
-- Approved B2B replay/session data and derived trajectory/evals are the primary product focus.
-- `agent_turn.v1` is the simple per-turn capture primitive.
-- Approved anonymized replay/session bundles are the source dataset asset.
-- Lean, outcome-labeled trajectory exports are compact training/eval derivatives.
+- Approved B2B replay bundles and derived trajectory/evals are the primary product focus.
+- `tool_io_record.v1` is the exact replay primitive.
+- `agent_turn.v1` is the simple per-turn review primitive.
+- Approved anonymized replay bundles are the source dataset asset.
+- Lean, outcome-labeled trajectory exports are optional compact training/eval derivatives.
 - Local `skills/` are agent guidance only, not a product data store.
+
+Primary product loop:
+
+```text
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+```
 
 ## Main Surfaces
 
@@ -18,12 +25,14 @@ Product boundary:
 .datalox/
   manifest.json
   config.json
+  tool-io/
+    records/
+  replay-bundles/
   events/
     agent-turns/
-    trajectory-rows/
-    agent-task-trajectories/
-  session-candidates/
   approvals/
+  derivatives/
+    trajectories/
 docs/
 DATALOX.md
 AGENTS.md
@@ -35,25 +44,26 @@ skills/
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md`
-4. `docs/agent-turn-schema.md` when touching session capture, session export, or data sale
-5. `docs/trajectory-dataset-schema.md` when touching trajectory recording, trajectory export, or data sale
-6. `docs/agent-task-trajectory-schema.md` when touching mixed-domain task trajectories
-7. selected `skills/<name>/SKILL.md` only when the task matches that skill
+4. `docs/tool-io-store-schema.md` when touching tool-call capture or replay
+5. `docs/replay-bundle-schema.md` when touching replay bundles, approval, or export
+6. `docs/agent-turn-schema.md` when touching turn review data
+7. trajectory schema docs only when deriving optional trajectory/eval rows
+8. selected `skills/<name>/SKILL.md` only when the task matches that skill
 
 ## Write Rule
 
 New product writes go only to:
 
 - `.datalox/events/agent-turns/`
-- `.datalox/events/trajectory-rows/`
-- `.datalox/events/agent-task-trajectories/`
-- `.datalox/session-candidates/`
+- `.datalox/tool-io/records/`
+- `.datalox/replay-bundles/`
 - `.datalox/approvals/`
+- `.datalox/derivatives/trajectories/`
 - deterministic export artifacts under the chosen export output path
 
-`.datalox/events/` is the source product evidence surface. Turns can later be
-assembled into sessions, reviewed, anonymized, shared, or used to derive compact
-trajectory rows.
+`.datalox/tool-io/records/` and `.datalox/events/agent-turns/` are the source
+evidence surfaces. They can later be assembled into replay bundles, reviewed,
+anonymized, shared, or used to derive compact trajectory rows.
 
 ## Source Kinds
 
@@ -65,26 +75,27 @@ Concrete source kinds only:
 
 ## Product Export Targets
 
-- `agent_turn.v1` as the capture primitive
-- approved anonymized session bundle
-- `debugging_trajectory.v1` as the coding/debugging derivative
-- `agent_task_trajectory.v1` as the mixed-domain derivative
+- `tool_io_record.v1` as the exact replay primitive
+- `agent_turn.v1` as the turn review primitive
+- `replay_bundle.v1` as the source product artifact
+- `debugging_trajectory.v1` as an optional coding/debugging derivative
+- `agent_task_trajectory.v1` as an optional mixed-domain derivative
 
-Turn capture must follow [agent-turn-schema.md](./agent-turn-schema.md).
-Debugging rows must follow
-[trajectory-dataset-schema.md](./trajectory-dataset-schema.md). Mixed-domain
-rows must follow
-[agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md).
+Tool I/O capture must follow [tool-io-store-schema.md](./tool-io-store-schema.md).
+Replay bundles must follow [replay-bundle-schema.md](./replay-bundle-schema.md).
+Turn review capture must follow [agent-turn-schema.md](./agent-turn-schema.md).
+Derivative rows must follow the trajectory schema docs.
 
-## Session Capture
+## Replay Capture
 
 Use this user-facing copy when a session is captured:
 
 > Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
 
-An exportable session bundle should preserve:
+An exportable replay bundle should preserve:
 
 - source `agent_turn.v1` ids or event paths
+- source `tool_io_record.v1` ids or record paths
 - prompt or task request
 - agent-visible actions
 - tool calls and command results
@@ -152,6 +163,6 @@ To keep the wrapper but stop autonomous post-run recording:
 - set `DATALOX_DEFAULT_POST_RUN_MODE=off`
 - or pass `--post-run-mode off`
 
-The default wrapper post-run mode is `trajectory`. It records only an explicit
-row supplied by the agent through `DATALOX_TRAJECTORY_ROW_FILE` or
-`DATALOX_TRAJECTORY_ROW`.
+Replay capture is the target wrapper default. Any remaining trajectory-mode
+wrapper behavior is an implementation gap tracked in the Option A plan, not the
+product contract.

@@ -1,15 +1,18 @@
 # Project Overview
 
 The canonical product definition lives in [product-definition.md](./product-definition.md).
-The canonical per-turn capture schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
-The canonical dataset export schema lives in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md).
+The canonical tool I/O schema lives in [tool-io-store-schema.md](./tool-io-store-schema.md).
+The canonical replay bundle schema lives in [replay-bundle-schema.md](./replay-bundle-schema.md).
+The canonical per-turn review schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
+The canonical derivative trajectory schema lives in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md).
 The filesystem-backed orchestration protocol lives in [task-orchestration.md](./task-orchestration.md).
 
 Short version:
 
-- Approved Datalox replay/session bundles are the source B2B dataset product.
-- `agent_turn.v1` events are the simple capture primitive.
-- `debugging_trajectory.v1` rows are compact training/eval derivatives.
+- Approved Datalox replay bundles are the source B2B dataset product.
+- `tool_io_record.v1` records are the exact replay primitive.
+- `agent_turn.v1` events are the simple turn review primitive.
+- `debugging_trajectory.v1` rows are optional compact training/eval derivatives.
 - Datalox MCP is the instrumentation, tool I/O capture, labeling, verification, and export-control layer.
 - `datalox-agent-replay` is the repo-local implementation package.
 - Local skills are internal guidance surfaces, not a second product loop.
@@ -17,17 +20,22 @@ Short version:
 Primary product loop:
 
 ```text
-agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-Do not model this repo around legacy note/skill promotion. New product work should route through captured turn events first, assemble sessions, then derive trajectory rows when useful.
+Do not model this repo around legacy note/skill promotion. New product work
+should route through tool I/O records first, assemble replay bundles, then
+derive trajectory rows when useful.
 
 The repo is centered on:
 
 - `.datalox/events/agent-turns/`
-- `.datalox/events/trajectory-rows/`
-- `.datalox/session-candidates/`
+- `.datalox/tool-io/records/`
+- `.datalox/replay-bundles/`
 - `.datalox/approvals/`
+- `.datalox/derivatives/trajectories/`
+- `docs/tool-io-store-schema.md`
+- `docs/replay-bundle-schema.md`
 - `docs/agent-turn-schema.md`
 - `docs/trajectory-dataset-schema.md`
 - local `skills/` only where current host guidance still requires them
@@ -37,10 +45,12 @@ New product data writes to `.datalox/` paths.
 Normal read path:
 
 1. read the product definition
-2. read the turn schema when session capture/export fields are involved
-3. read the trajectory schema when trajectory export/data fields are involved
-4. record meaningful grounded events
-5. use local skill guidance only where current host behavior still requires it
+2. read the tool I/O schema when replay capture fields are involved
+3. read the replay bundle schema when approval/export fields are involved
+4. read the turn schema when turn review fields are involved
+5. read the trajectory schema only for optional derivative rows
+6. record meaningful grounded events
+7. use local skill guidance only where current host behavior still requires it
 
 Current source kinds:
 
@@ -51,9 +61,17 @@ Current source kinds:
 Current durable local product outputs:
 
 - `.datalox/events/agent-turns/`
-- `.datalox/events/trajectory-rows/`
-- `.datalox/events/agent-task-trajectories/`
+- `.datalox/tool-io/records/`
+- `.datalox/replay-bundles/`
+- `.datalox/derivatives/trajectories/`
 
-Turn events are source capture units, not raw host transcripts. Trajectory dataset rows are export derivatives, not new repo-local knowledge page types and not the complete source session. Use `agent_turn.v1` from [agent-turn-schema.md](./agent-turn-schema.md) for capture and `debugging_trajectory.v1` from [trajectory-dataset-schema.md](./trajectory-dataset-schema.md) for compact derived rows. Do not add new product behavior to local note/skill promotion.
+Tool I/O records are the exact replay source units, not raw host transcripts.
+Turn events are review units. Trajectory dataset rows are export derivatives,
+not new repo-local knowledge page types and not the complete source replay
+bundle. Use `tool_io_record.v1` from
+[tool-io-store-schema.md](./tool-io-store-schema.md) for replay capture,
+`replay_bundle.v1` from [replay-bundle-schema.md](./replay-bundle-schema.md)
+for source product bundles, and trajectory schemas only for compact derived
+rows. Do not add new product behavior to local note/skill promotion.
 
 Avoid expanding taxonomy unless real usage proves another generated page type is necessary.

@@ -23,5 +23,6 @@ metadata:
 ---
 ```
 
-The body should contain the usable workflow. Durable product evidence belongs
-under `.datalox/events/`, not in skill frontmatter.
+The body should contain the usable workflow. Durable replay evidence belongs
+under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and
+`.datalox/replay-bundles/`, not in skill frontmatter.

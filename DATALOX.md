@@ -2,21 +2,22 @@
 
 This repo is the portable implementation package for Datalox Agent Replay.
 
-Datalox records agent-visible prompts, tool actions, file edits, verification
-results, and replay evidence so teams can reproduce agent behavior later.
-Approved anonymized sessions and trajectory/eval rows are derived from that
-source data.
+Datalox records agent-visible tool I/O, turn summaries, file edits, and
+verification evidence so teams can reproduce agent behavior later. Approved
+replay bundles are the source product, and trajectory/eval rows are optional
+derivatives.
 
 The capture taxonomy is intentionally small:
 
 - source kinds: `trace`, `web`, `pdf`
-- capture primitive: `agent_turn.v1`
-- source export target: approved anonymized replay/session bundle
-- trajectory derivative targets: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
+- replay primitive: `tool_io_record.v1`
+- review primitive: `agent_turn.v1`
+- source export target: approved anonymized `replay_bundle.v1`
+- optional derivative targets: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
 Primary product loop:
 
-`agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows`
+`agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives`
 
 Do not keep note/skill promotion as a second product loop in this repo.
 
@@ -27,20 +28,23 @@ On each loop:
 1. read `.datalox/manifest.json`
 2. read `.datalox/config.json`
 3. read `docs/product-definition.md` when it exists
-4. read `docs/agent-turn-schema.md` when the work touches session capture, session export, or data sale
-5. read `docs/trajectory-dataset-schema.md` when the work touches debugging trajectory recording, trajectory export, or data sale
-6. read `docs/agent-task-trajectory-schema.md` when the work touches mixed-domain agent episodes
-7. read a selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
+4. read `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
+5. read `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
+6. read `docs/agent-turn-schema.md` when the work touches turn review data
+7. read trajectory schema docs only when deriving optional trajectory/eval rows
+8. read a selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
 
 ## Knowledge Surfaces
 
 The repo-local product data surfaces are:
 
 - `.datalox/events/agent-turns/`
-- `.datalox/events/trajectory-rows/`
-- `.datalox/events/agent-task-trajectories/`
-- `.datalox/session-candidates/`
+- `.datalox/tool-io/records/`
+- `.datalox/replay-bundles/`
 - `.datalox/approvals/`
+- `.datalox/derivatives/trajectories/`
+- `docs/tool-io-store-schema.md`
+- `docs/replay-bundle-schema.md`
 - `docs/agent-turn-schema.md`
 - `docs/trajectory-dataset-schema.md`
 - `docs/agent-task-trajectory-schema.md`
@@ -48,13 +52,15 @@ The repo-local product data surfaces are:
 Fresh product adoption creates `.datalox/`, instruction surfaces, and shims. It
 does not create a parallel wiki/note/event store.
 
-## Trajectory Dataset Rule
+## Replay Bundle Rule
 
 Unapproved raw traces are not sellable data.
 
-The source data product is an approved anonymized agent session bundle. It should preserve:
+The source data product is an approved anonymized replay bundle. It should
+preserve:
 
 - `agent_turn.v1` source turn ids or event paths
+- `tool_io_record.v1` source record ids or record paths
 - prompts or task requests
 - agent-visible actions
 - tool calls and command results
@@ -66,72 +72,33 @@ User-facing capture copy:
 
 > Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
 
-A trajectory export row is a compact derivative. It is valid only when it
-follows [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md)
-or [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md)
-and includes grounded evidence, a final outcome, and an export gate.
-
-For mixed-domain implementation work, code-heavy rows must include exact
-`code_change` evidence before buyer-facing `quality: "use"` export. Use compact
-before/after snippets or patch hunks for the key code edit. A local-file
-`source_reference` is provenance and context; it does not replace `code_change`.
-
 ## Turn Recording
 
-`AgentTurnV1` is the simple capture primitive. It records one completed turn with
-the user prompt when safe, a short assistant summary, meaningful tool calls, file
-change summaries, verification evidence, and export/redaction status.
+`tool_io_record.v1` is the exact replay primitive. It records one agent-visible
+tool request and observation with a deterministic request hash and sequence
+index.
 
-Approved replay/session bundles are assembled from `agent_turn.v1` events. A
-trajectory row is derived only when compact training/eval packaging is useful.
+`AgentTurnV1` is the simple turn review primitive. It records one completed
+turn with the user prompt when safe, a short assistant summary, meaningful tool
+call references, file change summaries, verification evidence, and
+export/redaction status.
 
-## Trajectory Recording
+Approved replay bundles are assembled from `tool_io_record.v1` records and
+`agent_turn.v1` events. A trajectory row is derived only when compact
+training/eval packaging is useful.
 
-After a coding-debugging run, the agent should build one lean
-`debugging_trajectory.v1` row from observed facts:
+## Optional Derivative Trajectory Rows
 
-- task prompt or problem statement
-- minimal context needed to understand the fix
-- concise user/agent/tool trajectory steps
-- final fix summary and changed files or patch
-- explicit outcome label and verification status
-- small export gate
+Trajectory rows are derivative artifacts. They are valid only when they follow
+[docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) or
+[docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md)
+and include grounded evidence, a final outcome, and an export gate.
 
-Then call MCP tool `record_trajectory` with `repo_path` and `trajectory_row`.
-
-`context.relevant_files[].before` and `after` must contain exact minimal code
-snippets, not prose summaries. Put prose in `context.notes`,
-`trajectory.content`, or `final.explanation`.
-
-`record_trajectory` writes a structured event under
-`.datalox/events/trajectory-rows/`, stores the row at `trajectoryRow`, appends
-the owning event path to `trajectoryRow.export.source_event_paths`, and returns
-the deterministic readiness details.
-
-If a row claims `curation.quality: "use"` but deterministic training-grade
-checks fail, `record_trajectory` still records the valid evidence but stores it
-as `needs_review` with downgrade metadata. Repair the row with real code
-snippets, then use `repair_trajectory` to write a corrected linked event.
-
-Wrapper runs use the same explicit-row rule. For coding-debugging work, write
-the row to a repo-local file such as `.datalox/trajectory-rows/<stable-id>.json`
-and append:
-
-```text
-DATALOX_TRAJECTORY_ROW_FILE: .datalox/trajectory-rows/<stable-id>.json
-```
-
-The wrapper records that row in default `trajectory` mode. If the marker is
-absent, the wrapper records nothing.
-
-CLI equivalents:
-
-- `datalox record-trajectory --repo . --trajectory-row row.json --json`
-- `datalox grade-trajectories --repo . --json`
-- `datalox repair-trajectory --repo . --event-path .datalox/events/trajectory-rows/bad-row.json --trajectory-row corrected-row.json --json`
-- `datalox export-trajectories --repo . --quality use --json`
-- `datalox record-agent-task-trajectory --repo . --agent-task-trajectory row.json --json`
-- `datalox export-agent-task-trajectories --repo . --quality use --json`
+For mixed-domain implementation work, code-heavy derivative rows must include
+exact `code_change` evidence before buyer-facing `quality: "use"` export. Use
+compact before/after snippets or patch hunks for the key code edit. A
+local-file `source_reference` is provenance and context; it does not replace
+`code_change`.
 
 ## Install
 

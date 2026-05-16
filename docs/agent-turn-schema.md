@@ -1,15 +1,18 @@
 # Agent Turn Capture Schema
 
-This document defines the small per-turn capture primitive for Datalox session data.
+This document defines the small per-turn review primitive for Datalox replay
+data.
 
 If other docs describe turn capture differently, this document wins for
-`agent_turn.v1`. For exported compact trajectory rows,
-[trajectory-dataset-schema.md](./trajectory-dataset-schema.md) still wins.
+`agent_turn.v1`. Exact tool-call capture belongs to
+[tool-io-store-schema.md](./tool-io-store-schema.md). Replay bundle assembly
+belongs to [replay-bundle-schema.md](./replay-bundle-schema.md). Trajectory
+schemas define optional derivatives only.
 
 ## Design Goal
 
 `AgentTurnV1` captures one completed agent turn with enough structure to review,
-redact, sell, or derive compact training rows later.
+redact, bundle, or derive compact training rows later.
 
 It should stay simple enough for MCP tools, wrappers, and hooks to record after a
 turn without replaying the whole raw Codex or Claude session log.
@@ -17,11 +20,12 @@ turn without replaying the whole raw Codex or Claude session log.
 The boundary is:
 
 ```text
-agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-The capture unit is one completed turn. The commercial unit is usually a reviewed
-session or task episode assembled from multiple turns.
+The exact replay unit is `tool_io_record.v1`. The review unit is one completed
+turn. The commercial source unit is usually a verified replay bundle assembled
+from tool I/O records and turns.
 
 ## Required Shape
 
@@ -40,6 +44,12 @@ type AgentTurnV1 = {
 
   tool_calls: Array<{
     tool: string;
+    call_id?: string;
+    tool_io_ref?: {
+      record_id: string;
+      request_hash: string;
+      sequence_index: number;
+    };
     command?: string;
     args_summary?: string;
     exit_code?: number;
@@ -73,7 +83,8 @@ Include:
 
 - the user request when it is safe to store
 - a short assistant summary of what the agent did
-- meaningful tool calls with command, exit code, and compact output summary
+- meaningful tool calls with command, exit code, compact output summary, and
+  `tool_io_ref` when exact replay evidence exists
 - file paths and edit summaries
 - verification commands and result evidence
 - export/redaction status
@@ -91,33 +102,24 @@ Do not inline by default:
 Use path links for long artifacts when the implementation needs to preserve them.
 The turn object should stay reviewable without becoming a raw log dump.
 
-## Session Assembly
+## Replay Bundle Assembly
 
-Approved session bundles are assembled from turn events.
+Approved replay bundles are assembled from tool I/O records and turn events.
 
 ```ts
-type AgentSessionBundleV1 = {
-  schema_version: "agent_session_bundle.v1";
-  session_id: string;
+type ReplayBundleTurnIndexV1 = {
+  schema_version: "replay_bundle_turn_index.v1";
+  replay_bundle_id: string;
   created_at: string;
   turn_ids: string[];
-  episodes?: Array<{
-    id: string;
-    goal: string;
-    turn_ids: string[];
-    outcome: "success" | "partial" | "failure";
-  }>;
-  export: {
-    allowed: boolean;
-    redaction: "none_needed" | "applied" | "blocked";
-  };
-  source_event_paths?: string[];
+  tool_io_record_ids: string[];
 };
 ```
 
-Session bundles are the direct B2B source data product when approved and
-anonymized. `debugging_trajectory.v1` rows are compact derivatives for buyers
-who want training or eval examples instead of session replay.
+Replay bundles are the direct B2B source data product when approved and
+anonymized. `debugging_trajectory.v1` and `agent_task_trajectory.v1` rows are
+optional compact derivatives for buyers who want training or eval examples
+instead of replay.
 
 ## Readiness Rule
 
@@ -128,4 +130,4 @@ An `AgentTurnV1` event is useful when it can answer three questions:
 - What evidence shows whether the turn helped?
 
 If those answers are missing, the turn can still be stored as private source
-evidence, but it should not be exported as approved session data.
+evidence, but it should not be exported as approved replay data.

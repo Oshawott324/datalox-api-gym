@@ -5,12 +5,12 @@ Agent Replay: an MCP-compatible recorder/replay layer for agent tool I/O.
 
 Datalox records agent-visible prompts, tool actions, file edits, verification
 results, and replay evidence so teams can reproduce agent behavior later.
-Approved anonymized sessions and trajectory/eval rows are derived from that
-source data.
+Approved replay bundles are the source data product. Trajectory/eval rows are
+optional derivatives from those bundles.
 
 Primary product loop:
 
-`agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows`
+`agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives`
 
 This branch does not ship a parallel wiki/note/event product store.
 
@@ -22,10 +22,12 @@ In an adopted repo, product data and review state live under `.datalox/`:
 .datalox/
   events/
     agent-turns/
-    trajectory-rows/
-    agent-task-trajectories/
-  session-candidates/
+  tool-io/
+    records/
+  replay-bundles/
   approvals/
+  derivatives/
+    trajectories/
 docs/
 DATALOX.md
 AGENTS.md
@@ -33,15 +35,16 @@ AGENTS.md
 
 Use:
 
-- `.datalox/events/agent-turns/` for future `agent_turn.v1` turn events
-- `.datalox/events/trajectory-rows/` for `debugging_trajectory.v1` row events
-- `.datalox/events/agent-task-trajectories/` for mixed-domain `agent_task_trajectory.v1` row events
-- `.datalox/session-candidates/` and `.datalox/approvals/` for future review/approval artifacts
+- `.datalox/tool-io/records/` for `tool_io_record.v1` replay records
+- `.datalox/events/agent-turns/` for `agent_turn.v1` review events
+- `.datalox/replay-bundles/` for `replay_bundle.v1` source product artifacts
+- `.datalox/approvals/` for review/approval artifacts
+- `.datalox/derivatives/trajectories/` for optional compact trajectory/eval derivatives
 
 Unapproved raw traces are not sellable data. The source asset is an approved
-anonymized session bundle assembled from turns. `debugging_trajectory.v1` and
-`agent_task_trajectory.v1` are compact row derivatives for training/eval
-packaging.
+anonymized replay bundle assembled from tool I/O records and turns.
+`debugging_trajectory.v1` and `agent_task_trajectory.v1` are compact row
+derivatives for training/eval packaging.
 
 User-facing capture copy:
 
@@ -67,7 +70,9 @@ bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
-Start to use `datalox-mcp` from now on to generate trajectory rows.
+After setup, use `datalox-mcp` as the replay capture surface. Until the replay
+MCP tools land, trajectory commands remain implementation-era derivative
+commands and should not be treated as the product capture path.
 
 This does two separate things:
 
@@ -111,16 +116,9 @@ node bin/datalox-mcp.js
 
 ## CLI
 
-Dataset commands:
-
-```bash
-node dist/src/cli/main.js record-trajectory --repo . --trajectory-row row.json --json
-node dist/src/cli/main.js grade-trajectories --repo . --json
-node dist/src/cli/main.js repair-trajectory --repo . --event-path .datalox/events/trajectory-rows/bad-row.json --trajectory-row corrected-row.json --json
-node dist/src/cli/main.js export-trajectories --repo . --quality use --json
-node dist/src/cli/main.js record-agent-task-trajectory --repo . --agent-task-trajectory row.json --json
-node dist/src/cli/main.js export-agent-task-trajectories --repo . --quality use --json
-```
+Replay bundle commands land in Step 3 of the Option A plan. Current trajectory
+commands are derivative-only implementation-era commands and are not the source
+product capture path.
 
 Wrapper entrypoints:
 
@@ -130,11 +128,10 @@ node bin/datalox-codex.js -- exec "Update the docs."
 node bin/datalox-wrap.js command --repo /path/to/repo --task "update docs" --prompt "Update the docs." -- <host-command> __DATALOX_PROMPT__
 ```
 
-The installed shims infer the repo from the current working directory and
-default post-run capture to `trajectory` mode. In that mode the wrapper records
-only an explicit trajectory row supplied by the agent through
-`DATALOX_TRAJECTORY_ROW_FILE` or `DATALOX_TRAJECTORY_ROW`. If the marker is
-absent, it records nothing.
+The installed shims infer the repo from the current working directory. Replay
+capture is the target default; existing trajectory post-run behavior is an
+implementation gap tracked in
+[docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md).
 
 To stop Datalox-managed host interception later:
 
@@ -150,22 +147,22 @@ export DATALOX_DEFAULT_POST_RUN_MODE=off
 
 ## MCP
 
-The install-facing MCP surface is intentionally small:
+The install-facing MCP surface should be replay-first:
 
-- `record_trajectory`
-- `export_trajectories`
-- `record_agent_task_trajectory`
-- `export_agent_task_trajectories`
-- `grade_trajectories`
-- `repair_trajectory`
+- `record_tool_io`
+- `record_agent_turn`
+- `pack_replay_bundle`
+- `verify_replay_bundle`
+- `replay_tool_io`
 
-Start the trajectory MCP server with:
+Start the MCP server with:
 
 ```bash
 datalox-mcp
 ```
 
-For local source-tree testing, use:
+For local source-tree testing, the current implementation still starts the
+legacy derivative server until Step 4 replaces it:
 
 ```bash
 node dist/src/mcp/trajectoryServer.js
@@ -180,11 +177,12 @@ before/after snippets or patch hunks.
 
 - `trace`, `web`, and `pdf` are the only concrete source kinds.
 - `agent_turn.v1` is the simple capture primitive.
-- Product event data belongs under `.datalox/events/`.
-- Approved anonymized replay/session bundles are the source product export target.
-- `debugging_trajectory.v1` rows are compact training/eval derivatives.
-- `agent_task_trajectory.v1` rows are compact mixed-domain task derivatives with domain-specific evidence blocks.
-- Verified trajectory rows are export artifacts, not repo-local knowledge page types or the complete source session.
+- Exact replay data belongs under `.datalox/tool-io/records/`.
+- Turn review data belongs under `.datalox/events/agent-turns/`.
+- Approved anonymized replay bundles are the source product export target.
+- `debugging_trajectory.v1` rows are optional compact training/eval derivatives.
+- `agent_task_trajectory.v1` rows are optional compact mixed-domain task derivatives with domain-specific evidence blocks.
+- Verified trajectory rows are derivative artifacts, not repo-local knowledge page types or the complete source session.
 - Keep training rows small; store detailed consent, license, redaction, and provenance evidence in source events or curation systems.
 
 ## Docs
@@ -192,6 +190,8 @@ before/after snippets or patch hunks.
 - [DATALOX.md](DATALOX.md)
 - [docs/product-definition.md](docs/product-definition.md)
 - [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md)
+- [docs/tool-io-store-schema.md](docs/tool-io-store-schema.md)
+- [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md)
 - [docs/agent-turn-schema.md](docs/agent-turn-schema.md)
 - [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md)
 - [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md)
