@@ -3,13 +3,13 @@
   "version": 1,
   "mode": "repo_only",
   "project": {
-    "id": "datalox-flow-cytometry-demo",
-    "name": "Datalox Flow Cytometry Demo"
+    "id": "datalox-agent-replay",
+    "name": "Datalox Agent Replay"
   },
   "sources": [
     {
       "kind": "local_repo",
-      "name": "repo-pack",
+      "name": "repo-agent-replay",
       "enabled": true,
       "root": ".datalox"
     }

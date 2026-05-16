@@ -28,7 +28,7 @@ describe("product adoption scripts", () => {
     expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("source kinds: `trace`, `web`, `pdf`");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/manifest.json");
     expect(await readFile(path.join(hostDir, ".datalox/install.json"), "utf8")).toContain("\"installMode\": \"manual\"");
-    expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox Trajectory MCP runtime root for datalox.js");
+    expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox Agent Replay runtime root for datalox.js");
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir)]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills")]).status).not.toBe(0);
   }, 30000);
@@ -81,8 +81,8 @@ describe("product adoption scripts", () => {
     expect(install.status).toBe(0);
     expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain(`PACK_ROOT="${repoRoot}"`);
     expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain(`PACK_ROOT="${repoRoot}"`);
-    expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/maintain-datalox-pack")]).status).not.toBe(0);
-    expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-trajectory-mcp")]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/maintain-datalox-agent-replay")]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-agent-replay")]).status).not.toBe(0);
   }, 15000);
 
   it("does not expose removed legacy write commands in help", () => {

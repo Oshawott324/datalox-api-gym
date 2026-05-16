@@ -1,12 +1,12 @@
 # Integration Guide: Pack ↔ Runtime
 
-Local end-to-end test for the cloud integration between `datalox-pack` (agent loop) and `datalox-knowledge-runtime` (skill registry + retrieval).
+Local end-to-end test for the cloud integration between `datalox-agent-replay` (agent loop) and `datalox-knowledge-runtime` (skill registry + retrieval).
 
 ## Prerequisites
 
 ```bash
 # Build the pack (one-time after code changes)
-cd ~/Downloads/datalox-pack
+cd ~/Downloads/datalox-agent-replay
 npm install && npx tsc
 
 # Enable runtime in pack config
@@ -53,7 +53,7 @@ curl -s -X POST http://localhost:3000/v1/skills/publish \
 ### 3. Resolve from pack (verify skill match)
 
 ```bash
-cd ~/Downloads/datalox-pack
+cd ~/Downloads/datalox-agent-replay
 node dist/src/cli/main.js resolve --repo . \
   --task "review ambiguous live dead gate" --json
 ```
@@ -83,7 +83,7 @@ curl -s http://localhost:3000/healthz
 ## Architecture
 
 ```
-datalox-pack (local)              datalox-knowledge-runtime (:3000)
+datalox-agent-replay (local)              datalox-knowledge-runtime (:3000)
 ─────────────────────             ────────────────────────────────
 resolveLoop()                     POST /v1/runtime/guidance
   ├─ local skill detection          └─ ContextCompiler.compileGuidance()

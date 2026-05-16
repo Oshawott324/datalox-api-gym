@@ -3,7 +3,7 @@
 ## Environment
 
 - Host: macOS Darwin 24.5.0
-- Pack root: `/Users/yifanjin/datalox-pack`
+- Pack root: `/Users/yifanjin/datalox-agent-replay`
 - Claude Code: running as IDE extension (VSCode native extension mode)
 - `claude` CLI binary: not present in shell PATH — running as IDE extension
 
@@ -18,7 +18,7 @@ npx vitest run tests/adoptionScripts.test.ts
   — each linked directory contains a root SKILL.md
   — disable removes Datalox-managed per-skill links
   — disable preserves unrelated user-owned skill directories
-  — old nested datalox-pack symlink is handled (removed if it targets the same pack)
+  — old nested datalox-agent-replay symlink is handled (removed if it targets the same pack)
 ✓ 9 tests passed
 ```
 
@@ -30,7 +30,7 @@ Bridge/wrapper regression: `npx vitest run tests/bridgeSurfaces.test.ts tests/wr
 
 Pre-install state of `~/.claude/skills/`:
 ```
-lrwxr-xr-x  datalox-pack -> /private/tmp/datalox-pack/skills   (stale link from prior temp-dir install)
+lrwxr-xr-x  datalox-agent-replay -> /private/tmp/datalox-agent-replay/skills   (stale link from prior temp-dir install)
 ```
 
 Command run:
@@ -40,11 +40,11 @@ node bin/datalox.js install claude --json
 
 Post-install state:
 ```
-lrwxr-xr-x  capture-web-knowledge    -> /Users/yifanjin/datalox-pack/skills/capture-web-knowledge
-lrwxr-xr-x  datalox-pack             -> /private/tmp/datalox-pack/skills   (unrelated — not touched)
-lrwxr-xr-x  github                   -> /Users/yifanjin/datalox-pack/skills/github
-lrwxr-xr-x  maintain-datalox-pack    -> /Users/yifanjin/datalox-pack/skills/maintain-datalox-pack
-lrwxr-xr-x  use-datalox-through-host-cli -> /Users/yifanjin/datalox-pack/skills/use-datalox-through-host-cli
+lrwxr-xr-x  capture-web-knowledge    -> /Users/yifanjin/datalox-agent-replay/skills/capture-web-knowledge
+lrwxr-xr-x  datalox-agent-replay             -> /private/tmp/datalox-agent-replay/skills   (unrelated — not touched)
+lrwxr-xr-x  github                   -> /Users/yifanjin/datalox-agent-replay/skills/github
+lrwxr-xr-x  maintain-datalox-agent-replay    -> /Users/yifanjin/datalox-agent-replay/skills/maintain-datalox-agent-replay
+lrwxr-xr-x  use-datalox-through-host-cli -> /Users/yifanjin/datalox-agent-replay/skills/use-datalox-through-host-cli
 ```
 
 `status --json` post-install confirms:
@@ -55,7 +55,7 @@ lrwxr-xr-x  use-datalox-through-host-cli -> /Users/yifanjin/datalox-pack/skills/
   "linked": [
     "/Users/yifanjin/.claude/skills/capture-web-knowledge",
     "/Users/yifanjin/.claude/skills/github",
-    "/Users/yifanjin/.claude/skills/maintain-datalox-pack",
+    "/Users/yifanjin/.claude/skills/maintain-datalox-agent-replay",
     "/Users/yifanjin/.claude/skills/use-datalox-through-host-cli"
   ],
   "missing": [],
@@ -73,7 +73,7 @@ The proof was run inside an active Claude Code session (IDE extension). The `cla
 - this session itself demonstrates Datalox guidance is active via `CLAUDE.md` (repo instructions surface) and the hook sidecar
 - a fresh interactive Claude Code session would pick up the canonical skill links from `~/.claude/skills/`
 
-The stale `~/.claude/skills/datalox-pack` link (pointing to `/private/tmp/`) was preserved because it does not target the current pack root; it is not a Datalox-managed link for this pack and the disable path will not touch it.
+The stale `~/.claude/skills/datalox-agent-replay` link (pointing to `/private/tmp/`) was preserved because it does not target the current pack root; it is not a Datalox-managed link for this pack and the disable path will not touch it.
 
 ## Proof summary
 
@@ -82,7 +82,7 @@ The stale `~/.claude/skills/datalox-pack` link (pointing to `/private/tmp/`) was
 | install in temp HOME creates canonical per-skill symlinks | PASS (test) |
 | disable removes Datalox-managed per-skill links | PASS (test) |
 | disable preserves unrelated user skills | PASS (test) |
-| old nested datalox-pack symlink handled safely | PASS (test) |
+| old nested datalox-agent-replay symlink handled safely | PASS (test) |
 | live Claude Code session / host limitation recorded | PASS (live) |
 | `npm run build` | PASS |
 | bridge/wrapper regression | PASS (54/54) |

@@ -11,34 +11,40 @@ mixed-domain task episode rows.
 
 ## One-Sentence Definition
 
-Datalox captures export-gated agent debugging sessions for B2B data/eval use and derives lean trajectory rows from those sessions when buyers need compact training examples.
+Datalox Agent Replay records agent-visible tool I/O and session evidence into export-gated replay bundles, then derives lean trajectory/eval rows when buyers need compact training examples.
 
 ## Product Focus
 
-The repo should optimize for the B2B session data and trajectory eval product.
+The repo should optimize for reproducible agent replay as the source product,
+with B2B replay/session data and trajectory/eval rows as export derivatives.
 
 The repo product pipeline is:
 
 ```text
-agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
+agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
 ```
 
 Do not preserve legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until they are migrated or isolated behind the session/trajectory data pipeline.
 
 ## Business Goal
 
-The commercial goal is to sell approved, anonymized agent debugging session datasets and derived trajectory/eval corpora to AI companies.
+The commercial goal is to give agent teams reproducible records of what their
+agents saw and did, then sell approved anonymized replay/session datasets and
+derived trajectory/eval corpora to AI companies.
 
 The operating model is:
 
 1. Users run an agent with Datalox MCP instrumentation enabled.
 2. Datalox records `agent_turn.v1` events from completed turns: prompts, tool actions, file edits, verification commands, and outcome evidence.
-3. Turn events are assembled into a session or task episode.
-4. A small export/redaction gate and outcome label are applied.
-5. Approved anonymized sessions can be packaged directly as source data.
-6. Compact `debugging_trajectory.v1` or `agent_task_trajectory.v1` rows are derived for buyers who need training/eval examples instead of full session replay.
+3. Tool I/O evidence is kept stable enough to support replay, audit, and reward/eval recomputation.
+4. Turn events and tool evidence are assembled into a replay/session bundle.
+5. A small export/redaction gate and outcome label are applied.
+6. Approved anonymized replay/session bundles can be packaged directly as source data.
+7. Compact `debugging_trajectory.v1` or `agent_task_trajectory.v1` rows are derived for buyers who need training/eval examples instead of full replay.
 
-The desktop or host agent is the source of agent runs. `AgentTurnV1` is the capture primitive. The approved session bundle is the source-of-truth asset; trajectory rows are a buyer-facing derivative.
+The desktop or host agent is the source of agent runs. `AgentTurnV1` is the
+capture primitive. The approved replay/session bundle is the source-of-truth
+asset; trajectory rows are a buyer-facing derivative.
 
 ## Why This Exists
 
@@ -64,16 +70,19 @@ That unit is useful for:
 - tool-use analysis
 - failure-mode analysis
 
-Datalox exists to capture each turn simply, assemble approved sessions, keep them export-gated, and derive the compact unit only when useful. Agents should not have to fill an audit-heavy schema during normal work.
+Datalox exists to capture each turn simply, preserve tool evidence for replay,
+assemble approved replay/session bundles, keep them export-gated, and derive
+the compact unit only when useful. Agents should not have to fill an
+audit-heavy schema during normal work.
 
 ## What We Are Building
 
 This repo builds one product pipeline with supporting infrastructure:
 
 1. **Datalox MCP**
-   Agent instrumentation, session/event capture, host adapters, outcome labeling, verification status, and export control.
-2. **Datalox Session Data**
-   The source B2B data product: approved anonymized agent sessions with prompts, tool actions, file edits, and verification evidence.
+   Agent instrumentation, session/event capture, tool I/O evidence capture, host adapters, outcome labeling, verification status, and export control.
+2. **Datalox Replay Data**
+   The source B2B data product: approved anonymized replay/session bundles with prompts, tool actions, tool observations, file edits, and verification evidence.
 3. **Datalox Trajectory Data**
    The derived B2B dataset/eval product: lean, outcome-labeled `debugging_trajectory.v1` and `agent_task_trajectory.v1` records and curated corpora.
 
@@ -83,7 +92,7 @@ store and they do not create a second note/promotion loop.
 The commercial source export structure is:
 
 - one `.datalox/events/agent-turns/` `agent_turn.v1` event per meaningful completed turn
-- one approved session bundle per meaningful agent work episode
+- one approved replay/session bundle per meaningful agent work episode
 - prompts, tool actions, file edits, diffs or changed snippets, verification commands, and outcome evidence
 - export/redaction status and source provenance
 
@@ -164,11 +173,11 @@ An exported trajectory can link:
 
 ## Product Boundary
 
-- `Datalox Session Data` = primary B2B source dataset product.
+- `Datalox Replay Data` = primary B2B source dataset product.
 - `Datalox Trajectory Data` = derived B2B dataset/eval product.
-- `Datalox MCP` = instrumentation, session capture, labeling, verification status, and export-control surface.
+- `Datalox MCP` = instrumentation, session capture, tool I/O capture, labeling, verification status, and export-control surface.
 - `Datalox Desktop` or a desktop agent = a capture client, not a separate product loop for this repo.
-- `datalox-trajectory-mcp` = repo-local implementation package, protocol, CLI, event capture, and export.
+- `datalox-agent-replay` = repo-local implementation package, protocol, CLI, event capture, and export.
 - `adapter` = host-specific enforcement and automation.
 
 MCP availability alone is not enforcement. Enforced host wrappers still matter because they inject guidance before the child run and can record after it.
@@ -180,7 +189,7 @@ Datalox should not be a raw log dump and should not be generic vector memory.
 The export progression is primary:
 
 ```text
-agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
+agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
 ```
 
 New product work should route through structured turn events first, assemble sessions, then derive trajectory rows when useful.
@@ -189,7 +198,7 @@ The system should prefer:
 
 - provenance-aware capture
 - explicit export blocking when data cannot be sold
-- approved anonymized session bundles
+- approved anonymized replay/session bundles
 - outcome-labeled rows
 - exportable structured derivatives
 - simple agent-readable capture outputs
@@ -211,18 +220,18 @@ We are not building:
 
 Use this sentence when describing the project:
 
-> Datalox captures approved agent debugging sessions and derives lean, outcome-labeled trajectories for coding-agent training and evaluation.
+> Datalox records agent tool I/O into reproducible replay bundles and derives lean, outcome-labeled trajectories for agent training and evaluation.
 
 ## Repo Rule
 
 When repo docs talk about Datalox, they should stay consistent with this definition:
 
-- B2B approved session data plus derived trajectory/evals are the primary product focus
+- B2B approved replay/session data plus derived trajectory/evals are the primary product focus
 - `AgentTurnV1` events are the simple capture primitive
-- approved session bundles are the source B2B data asset
+- approved replay/session bundles are the source B2B data asset
 - trajectory rows are compact training/eval derivatives
-- Datalox MCP is the instrumentation, capture, labeling, verification, and export-control layer
-- `datalox-trajectory-mcp` is the repo-local implementation package
+- Datalox MCP is the instrumentation, tool I/O capture, labeling, verification, and export-control layer
+- `datalox-agent-replay` is the repo-local implementation package
 - legacy note/skill promotion is not a product loop for this repo
 - unapproved raw traces are not sellable data
 - exported coding/debugging rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)

@@ -113,7 +113,7 @@ Implemented shape:
 
 Grounded proof:
 
-- [docs/same-repo-bootstrap-live-2026-04-24.md](/Users/yifanjin/datalox-pack/docs/same-repo-bootstrap-live-2026-04-24.md)
+- [docs/same-repo-bootstrap-live-2026-04-24.md](/Users/yifanjin/datalox-agent-replay/docs/same-repo-bootstrap-live-2026-04-24.md)
 
 ## Setup And Partial Adoption Recovery
 
@@ -122,7 +122,7 @@ Completed:
 - kept the safety block for partial Datalox-owned paths without an install stamp
 - added explicit recovery guidance to blocked bootstrap probe output
 - updated setup instructions to preserve the target repo path before changing into the source clone
-- clarified that `datalox-pack` is the source clone and the user's current project is the adoption target
+- clarified that `datalox-agent-replay` is the source clone and the user's current project is the adoption target
 - clarified that `bin/adopt-host-repo.sh` belongs to the source clone, while adopted host repos get host-local shims
 - updated the public `datalox.ai` source copy and manifest to use the same setup shape
 - added focused regression coverage for the reported partial-adoption state
@@ -133,8 +133,8 @@ Implemented shape:
 
 ```bash
 TARGET_REPO="$(pwd)"
-git clone https://github.com/Complexity-LLC/datalox-pack.git
-cd datalox-pack
+git clone https://github.com/Complexity-LLC/datalox-agent-replay.git
+cd datalox-agent-replay
 bash bin/setup-multi-agent.sh claude
 bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
@@ -208,15 +208,15 @@ Passed:
 
 Grounded proof:
 
-- [docs/periodic-trace-maintenance-live-2026-04-25.md](/Users/yifanjin/datalox-pack/docs/periodic-trace-maintenance-live-2026-04-25.md)
+- [docs/periodic-trace-maintenance-live-2026-04-25.md](/Users/yifanjin/datalox-agent-replay/docs/periodic-trace-maintenance-live-2026-04-25.md)
 
 ## Claude Native Skill Installation
 
 Completed:
 
-- changed Claude skill link installation from one nested `~/.claude/skills/datalox-pack` link to per-skill links at `~/.claude/skills/<skill-name>`
+- changed Claude skill link installation from one nested `~/.claude/skills/datalox-agent-replay` link to per-skill links at `~/.claude/skills/<skill-name>`
 - disable removes only Datalox-managed per-skill links; user-owned skill directories are preserved
-- disable handles old nested `datalox-pack` links (removes if they target this pack's `skills/` directory)
+- disable handles old nested `datalox-agent-replay` links (removes if they target this pack's `skills/` directory)
 - install status reports native Claude skill surfacing separately from hook/shim state
 - `status --json` exposes `nativeSkillLinks.installed`, `canonical`, `linked`, `missing`, and `legacyPackLink`
 - docs updated: README, DATALOX.md, docs/agent-configuration.md, START_HERE.md
@@ -225,7 +225,7 @@ Completed:
 
 Implemented shape:
 
-- `datalox install claude` links each pack skill to `~/.claude/skills/<skill-name>` and removes the old nested `datalox-pack` link if it targets the current pack
+- `datalox install claude` links each pack skill to `~/.claude/skills/<skill-name>` and removes the old nested `datalox-agent-replay` link if it targets the current pack
 - `datalox disable claude` removes each managed per-skill link; leaves unrelated user skill directories untouched
 - `status --json` exposes `nativeSkillLinks` under `adapters.claude`
 - `CLAUDE.md` and hook/wrapper paths remain the robust fallback when native skill surfacing is unavailable
@@ -236,14 +236,14 @@ Passed:
 2. each linked directory contains a root `SKILL.md`
 3. disable removes Datalox-managed per-skill links
 4. disable preserves unrelated user-owned skill directories
-5. old nested `datalox-pack` symlink is removed during install when it targets the same pack
+5. old nested `datalox-agent-replay` symlink is removed during install when it targets the same pack
 6. `status --json` correctly reports `nativeSkillLinks.canonical` after install
 7. `npm run build` passes
 8. bridge/wrapper regression passes (54/54)
 
 Grounded proof:
 
-- [docs/claude-native-skill-install-live-2026-04-27.md](/Users/yifanjin/datalox-pack/docs/claude-native-skill-install-live-2026-04-27.md)
+- [docs/claude-native-skill-install-live-2026-04-27.md](/Users/yifanjin/datalox-agent-replay/docs/claude-native-skill-install-live-2026-04-27.md)
 
 Live machine state (2026-04-27):
 
@@ -289,7 +289,7 @@ Passed:
 
 Grounded proof:
 
-- [docs/online-retrieval-live-2026-04-26.md](/Users/yifanjin/datalox-pack/docs/online-retrieval-live-2026-04-26.md)
+- [docs/online-retrieval-live-2026-04-26.md](/Users/yifanjin/datalox-agent-replay/docs/online-retrieval-live-2026-04-26.md)
 
 ## Maintenance Defaults And Skill Synthesis Boundary
 
@@ -495,7 +495,7 @@ Completed:
   - `DATALOX_ENFORCEMENT=wrapper`
 - added `currentSession` to `datalox status --json`
 - kept adapter install status separate from active-session status
-- documented live proof in [docs/native-codex-session-provenance-live-2026-04-30.md](/Users/yifanjin/datalox-pack/docs/native-codex-session-provenance-live-2026-04-30.md)
+- documented live proof in [docs/native-codex-session-provenance-live-2026-04-30.md](/Users/yifanjin/datalox-agent-replay/docs/native-codex-session-provenance-live-2026-04-30.md)
 
 Passed:
 
@@ -527,7 +527,7 @@ Completed:
 - kept existing raw `adapters.claude` fields for compatibility
 - added Claude-specific active-session notes so wrapper enforcement only counts when `currentSession.activeWrapper` is `"claude"` and `currentSession.wrapperEnforced` is `true`
 - documented the boundary in `CLAUDE.md`, `skills/use-datalox-through-host-cli/SKILL.md`, and `removed-wiki-store/notes/use-datalox-through-host-cli.md`
-- documented live proof in [docs/claude-code-surface-provenance-live-2026-05-02.md](/Users/yifanjin/datalox-pack/docs/claude-code-surface-provenance-live-2026-05-02.md)
+- documented live proof in [docs/claude-code-surface-provenance-live-2026-05-02.md](/Users/yifanjin/datalox-agent-replay/docs/claude-code-surface-provenance-live-2026-05-02.md)
 
 Passed:
 

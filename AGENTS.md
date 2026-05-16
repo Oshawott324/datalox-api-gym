@@ -10,7 +10,7 @@ Read in this order:
 6. `docs/agent-task-trajectory-schema.md` when the task touches mixed-domain agent episodes
 7. the selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
 
-Use the pack with this model:
+Use Datalox Agent Replay with this model:
 
 - source kinds: `trace`, `web`, `pdf`
 - capture primitive: `agent_turn.v1`
@@ -18,16 +18,16 @@ Use the pack with this model:
 - turn event root: `.datalox/events/agent-turns/`
 - debugging trajectory root: `.datalox/events/trajectory-rows/`
 - mixed-domain trajectory root: `.datalox/events/agent-task-trajectories/`
-- source export target: approved anonymized session bundle
+- source export target: approved anonymized replay/session bundle
 - trajectory derivative targets: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
 Business rule:
 
-- B2B approved session data plus derived trajectory/evals are the primary product focus.
+- B2B approved replay/session data plus derived trajectory/evals are the primary product focus.
 - Do not keep note/skill promotion as a second product loop in this repo.
 - New product data writes under `.datalox/`.
 - `agent_turn.v1` events are the simple capture primitive.
-- Approved anonymized session bundles are the source B2B data asset.
+- Approved anonymized replay/session bundles are the source B2B data asset.
 - Lean, outcome-labeled trajectory rows are compact training/eval derivatives.
 - Unapproved raw traces are not sellable data.
 

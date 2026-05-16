@@ -66,10 +66,10 @@ Use this roughly as-is:
 The demo script prints commands in this shape:
 
 ```bash
-node /abs/path/to/datalox-pack/bin/datalox.js resolve --repo "$DEMO_REPO" --task "stabilize repo onboarding for coding agents" --workflow agent_adoption
-node /abs/path/to/datalox-pack/bin/datalox.js patch --repo "$DEMO_REPO" --task "stabilize repo onboarding for coding agents" --workflow agent_adoption --summary "A first-run coding agent needs a visible and reversible onboarding path" --observation "repo has no visible install surface for the agent" --interpretation "hidden setup keeps causing repeated onboarding mistakes" --action "add a committed README setup step and a bootstrap command before the first autonomous run"
-node /abs/path/to/datalox-pack/bin/datalox.js resolve --repo "$DEMO_REPO" --task "stabilize repo onboarding for coding agents" --workflow agent_adoption
-node /abs/path/to/datalox-pack/bin/datalox.js lint --repo "$DEMO_REPO"
+node /abs/path/to/datalox-agent-replay/bin/datalox.js resolve --repo "$DEMO_REPO" --task "stabilize repo onboarding for coding agents" --workflow agent_adoption
+node /abs/path/to/datalox-agent-replay/bin/datalox.js patch --repo "$DEMO_REPO" --task "stabilize repo onboarding for coding agents" --workflow agent_adoption --summary "A first-run coding agent needs a visible and reversible onboarding path" --observation "repo has no visible install surface for the agent" --interpretation "hidden setup keeps causing repeated onboarding mistakes" --action "add a committed README setup step and a bootstrap command before the first autonomous run"
+node /abs/path/to/datalox-agent-replay/bin/datalox.js resolve --repo "$DEMO_REPO" --task "stabilize repo onboarding for coding agents" --workflow agent_adoption
+node /abs/path/to/datalox-agent-replay/bin/datalox.js lint --repo "$DEMO_REPO"
 ```
 
 ## Recording Tips

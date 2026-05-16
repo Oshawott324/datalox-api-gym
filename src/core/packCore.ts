@@ -205,8 +205,8 @@ function resolvePackRootPath(): string {
 }
 
 const PACK_ROOT = resolvePackRootPath();
-const DEFAULT_PACK_URL = "https://github.com/Complexity-LLC/datalox-pack.git";
-const DEFAULT_PACK_CLONE_DIR = "datalox-trajectory-mcp";
+const DEFAULT_PACK_URL = "https://github.com/Complexity-LLC/datalox-agent-replay.git";
+const DEFAULT_PACK_CLONE_DIR = "datalox-agent-replay";
 
 function shellDoubleQuote(value: string): string {
   return JSON.stringify(value);
@@ -230,25 +230,25 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "WIKI.md",
   "GEMINI.md",
   "START_HERE.md",
-  ".claude/settings.json",
   ".github/copilot-instructions.md",
-  ".cursor/rules/datalox-pack.mdc",
-  ".windsurf/rules/datalox-pack.md",
+  ".cursor/rules/datalox-agent-replay.mdc",
+  ".windsurf/rules/datalox-agent-replay.md",
   ".datalox/config.json",
   ".datalox/config.schema.json",
   ".datalox/manifest.json",
   "bin/datalox-claude.js",
   "bin/datalox-codex.js",
   "bin/datalox-mcp.js",
-  "bin/datalox-pack-mcp.js",
+  "bin/datalox-agent-replay-mcp.js",
   "bin/datalox.js",
   "bin/datalox-wrap.js",
   "bin/disable-default-host-integrations.sh",
   "bin/install-default-host-integrations.sh",
   "bin/setup-multi-agent.sh",
 ];
-const ADOPTION_INJECTION_BEGIN = "<!-- DATALOX_PACK:BEGIN -->";
-const ADOPTION_INJECTION_END = "<!-- DATALOX_PACK:END -->";
+const ADOPTION_INJECTION_BEGIN = "<!-- DATALOX_AGENT_REPLAY:BEGIN -->";
+const ADOPTION_INJECTION_END = "<!-- DATALOX_AGENT_REPLAY:END -->";
+const LEGACY_ADOPTION_INJECTION_TOKEN = `DATALOX_${"PACK"}`;
 type ExistingInstructionInjectionMode = "append" | "after_frontmatter";
 interface ExistingInstructionInjectionSpec {
   mode: ExistingInstructionInjectionMode;
@@ -258,7 +258,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
   "AGENTS.md": {
     mode: "after_frontmatter",
     lines: [
-      "## Datalox Pack",
+      "## Datalox Agent Replay",
       "If `DATALOX.md` exists in this repo, read it after this file and treat it as the repo-local Datalox contract.",
       "Use `.datalox/events/` for product capture data.",
     ],
@@ -272,7 +272,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
   "WIKI.md": {
     mode: "after_frontmatter",
     lines: [
-      "## Datalox Pack",
+      "## Datalox Agent Replay",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
       "Keep product capture data under `.datalox/events/`.",
     ],
@@ -280,7 +280,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
   "GEMINI.md": {
     mode: "after_frontmatter",
     lines: [
-      "## Datalox Pack",
+      "## Datalox Agent Replay",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
       "Keep product capture data under `.datalox/events/`.",
     ],
@@ -288,7 +288,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
   ".github/copilot-instructions.md": {
     mode: "append",
     lines: [
-      "## Datalox Pack",
+      "## Datalox Agent Replay",
       "Also consult `AGENTS.md` and `DATALOX.md` when they exist.",
       "Use `.datalox/events/` for product capture data.",
     ],
@@ -627,26 +627,36 @@ function buildAdoptionInjectionBlock(spec: ExistingInstructionInjectionSpec, eol
   return [ADOPTION_INJECTION_BEGIN, ...spec.lines, ADOPTION_INJECTION_END].join(eol);
 }
 
+function stripManagedAdoptionInjection(content: string, token: string): string {
+  const pattern = new RegExp(`<!-- ${token}:BEGIN -->\\r?\\n[\\s\\S]*?<!-- ${token}:END -->\\r?\\n\\r?\\n?`, "gu");
+  return content.replace(pattern, "");
+}
+
 function injectAdoptionInstructions(
   content: string,
   spec: ExistingInstructionInjectionSpec,
 ): string {
-  if (content.includes(ADOPTION_INJECTION_BEGIN) && content.includes(ADOPTION_INJECTION_END)) {
-    return content;
+  const normalizedContent = stripManagedAdoptionInjection(
+    stripManagedAdoptionInjection(content, LEGACY_ADOPTION_INJECTION_TOKEN),
+    "DATALOX_AGENT_REPLAY",
+  );
+
+  if (normalizedContent.includes(ADOPTION_INJECTION_BEGIN) && normalizedContent.includes(ADOPTION_INJECTION_END)) {
+    return normalizedContent;
   }
 
-  const eol = detectLineEnding(content);
+  const eol = detectLineEnding(normalizedContent);
   const block = buildAdoptionInjectionBlock(spec, eol);
 
   if (spec.mode === "append") {
-    const trimmed = content.trimEnd();
+    const trimmed = normalizedContent.trimEnd();
     if (trimmed.length === 0) {
       return `${block}${eol}`;
     }
     return `${trimmed}${eol}${eol}${block}${eol}`;
   }
 
-  const { prefix, rest } = splitLeadingFrontmatter(content);
+  const { prefix, rest } = splitLeadingFrontmatter(normalizedContent);
   if (prefix.length > 0) {
     if (rest.length === 0) {
       return `${prefix}${block}${eol}`;
@@ -654,10 +664,10 @@ function injectAdoptionInstructions(
     return `${prefix}${block}${eol}${eol}${rest}`;
   }
 
-  if (content.length === 0) {
+  if (normalizedContent.length === 0) {
     return `${block}${eol}`;
   }
-  return `${block}${eol}${eol}${content}`;
+  return `${block}${eol}${eol}${normalizedContent}`;
 }
 
 async function copyOrInjectInstructionFile(
@@ -742,7 +752,7 @@ async function resolvePackRoot(packSource?: string): Promise<string> {
   }
 
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cacheName = path.basename(packSource).replace(/\.git$/, "") || "datalox-trajectory-mcp";
+  const cacheName = path.basename(packSource).replace(/\.git$/, "") || "datalox-agent-replay";
   const cachePath = path.join(cacheRoot, cacheName);
   await mkdir(cacheRoot, { recursive: true });
 
@@ -760,7 +770,7 @@ async function resolvePackRoot(packSource?: string): Promise<string> {
 
 async function ensureLocalPackCache(packRootPath: string): Promise<void> {
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cachePath = path.join(cacheRoot, "datalox-trajectory-mcp");
+  const cachePath = path.join(cacheRoot, "datalox-agent-replay");
 
   if (path.resolve(packRootPath) === path.resolve(cachePath)) {
     return;

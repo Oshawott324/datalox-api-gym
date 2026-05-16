@@ -34,7 +34,7 @@ node dist/src/cli/main.js wrap prompt \
 
 The resolve path currently returns:
 
-- `repo-engineering.maintain-datalox-pack`
+- `repo-engineering.maintain-datalox-agent-replay`
 - `repo-engineering.use-datalox-through-host-cli`
 - `web-capture.capture-web-knowledge`
 
@@ -51,7 +51,7 @@ For this query:
 - the system should either return no candidate, or at most a very small set of structurally plausible candidates
 - `web-capture.capture-web-knowledge` should not appear from weak lexical overlap alone
 - a candidate should not be admitted only because a few broad terms overlap in free text
-- repo hints should not be enough to pull in `maintain-datalox-pack` unless the query already cleared a stronger admission rule
+- repo hints should not be enough to pull in `maintain-datalox-agent-replay` unless the query already cleared a stronger admission rule
 
 ## Recommended Next Fix
 

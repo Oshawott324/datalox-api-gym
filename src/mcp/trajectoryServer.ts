@@ -15,7 +15,7 @@ const TRAJECTORY_MCP_TOOL_NAMES = new Set([
 async function main(): Promise<void> {
   const commands = getSharedMcpCommands().filter((command) => TRAJECTORY_MCP_TOOL_NAMES.has(command.mcpTool));
   await runSharedMcpServer({
-    name: "datalox-trajectory-mcp",
+    name: "datalox-agent-replay",
     version: "0.1.0",
     commands,
     unavailableLoopPulseTools: ["adopt_pack"],

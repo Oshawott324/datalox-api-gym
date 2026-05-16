@@ -1,6 +1,6 @@
 # Gemini Instructions
 
-Use this pack for product session and trajectory capture.
+Use Datalox Agent Replay for product replay/session and trajectory capture.
 
 Read:
 

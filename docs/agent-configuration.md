@@ -5,10 +5,10 @@ The agent-facing contract is intentionally small.
 Product boundary:
 
 - Datalox MCP is the product-facing instrumentation and control layer.
-- `datalox-trajectory-mcp` is the repo-local implementation package.
-- Approved B2B session data and derived trajectory/evals are the primary product focus.
+- `datalox-agent-replay` is the repo-local implementation package.
+- Approved B2B replay/session data and derived trajectory/evals are the primary product focus.
 - `agent_turn.v1` is the simple per-turn capture primitive.
-- Approved anonymized sessions are the source dataset asset.
+- Approved anonymized replay/session bundles are the source dataset asset.
 - Lean, outcome-labeled trajectory exports are compact training/eval derivatives.
 - Local `skills/` are agent guidance only, not a product data store.
 
@@ -121,12 +121,12 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
 mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO"
+  git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex

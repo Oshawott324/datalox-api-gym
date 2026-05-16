@@ -1,20 +1,22 @@
 # Datalox
 
-This repo is the portable implementation package for Datalox Trajectory MCP.
+This repo is the portable implementation package for Datalox Agent Replay.
 
-Datalox captures approved agent sessions and derives lean, outcome-labeled
-trajectories for agent-company training and evaluation.
+Datalox records agent-visible prompts, tool actions, file edits, verification
+results, and replay evidence so teams can reproduce agent behavior later.
+Approved anonymized sessions and trajectory/eval rows are derived from that
+source data.
 
 The capture taxonomy is intentionally small:
 
 - source kinds: `trace`, `web`, `pdf`
 - capture primitive: `agent_turn.v1`
-- source export target: approved anonymized session bundle
+- source export target: approved anonymized replay/session bundle
 - trajectory derivative targets: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
 Primary product loop:
 
-`agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows`
+`agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows`
 
 Do not keep note/skill promotion as a second product loop in this repo.
 
@@ -80,7 +82,7 @@ before/after snippets or patch hunks for the key code edit. A local-file
 the user prompt when safe, a short assistant summary, meaningful tool calls, file
 change summaries, verification evidence, and export/redaction status.
 
-Approved session bundles are assembled from `agent_turn.v1` events. A
+Approved replay/session bundles are assembled from `agent_turn.v1` events. A
 trajectory row is derived only when compact training/eval packaging is useful.
 
 ## Trajectory Recording
@@ -137,9 +139,9 @@ The source clone should live outside the target repo:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
 mkdir -p "$(dirname "$PACK_REPO")"
-[ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO"
+[ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"

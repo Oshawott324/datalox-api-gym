@@ -1,12 +1,13 @@
 # Start Here
 
-Datalox records agent sessions that can become approved B2B session data and
-compact trajectory/eval derivatives.
+Datalox records agent tool I/O and session evidence so agent teams can replay
+and audit behavior later. Approved replay/session bundles can become B2B source
+data, with compact trajectory/eval rows as derivatives.
 
 Primary product loop:
 
 ```text
-agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
+agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
 ```
 
 The turn capture contract is
@@ -15,6 +16,8 @@ row contract is
 [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md). Mixed
 domain task rows use
 [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md).
+The concrete replay migration plan is
+[docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md).
 
 User-facing capture copy:
 
@@ -27,12 +30,12 @@ agent chatbox:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
 mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO"
+  git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
@@ -48,7 +51,7 @@ stamp, and host shims. Product data writes under `.datalox/events/`.
 Use this repo handoff:
 
 ```text
-Use this repo's Datalox Trajectory MCP. Read AGENTS.md and DATALOX.md before acting.
+Use this repo's Datalox Agent Replay. Read AGENTS.md and DATALOX.md before acting.
 ```
 
 To confirm state:
@@ -79,8 +82,8 @@ node bin/datalox.js status --repo . --json
 ## One-Click Options
 
 - Full setup from the target repo:
-  `TARGET_REPO="$(pwd)" && PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp" && mkdir -p "$(dirname "$PACK_REPO")" && ([ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO") && cd "$PACK_REPO" && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
-- Adopt a target repo from an existing source-pack clone:
+  `TARGET_REPO="$(pwd)" && PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay" && mkdir -p "$(dirname "$PACK_REPO")" && ([ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO") && cd "$PACK_REPO" && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
+- Adopt a target repo from an existing Datalox Agent Replay clone:
   `bash bin/adopt-host-repo.sh /path/to/host-repo`
 - Pull from GitHub and adopt:
   `bash bin/adopt-from-github.sh /path/to/host-repo`

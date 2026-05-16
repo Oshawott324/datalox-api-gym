@@ -1,14 +1,16 @@
-# datalox-trajectory-mcp
+# datalox-agent-replay
 
-`datalox-trajectory-mcp` is the session and trajectory focused repo-local
-implementation package for Datalox MCP.
+`datalox-agent-replay` is the repo-local implementation package for Datalox
+Agent Replay: an MCP-compatible recorder/replay layer for agent tool I/O.
 
-Datalox captures approved agent sessions and derives lean, outcome-labeled
-trajectories for agent-company training and evaluation.
+Datalox records agent-visible prompts, tool actions, file edits, verification
+results, and replay evidence so teams can reproduce agent behavior later.
+Approved anonymized sessions and trajectory/eval rows are derived from that
+source data.
 
 Primary product loop:
 
-`agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows`
+`agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows`
 
 This branch does not ship a parallel wiki/note/event product store.
 
@@ -52,12 +54,12 @@ send it. The agent should run it from the target repo root.
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
 mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Complexity-LLC/datalox-pack.git "$PACK_REPO"
+  git clone https://github.com/Complexity-LLC/datalox-agent-replay.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
@@ -69,8 +71,8 @@ Start to use `datalox-mcp` from now on to generate trajectory rows.
 
 This does two separate things:
 
-- `https://github.com/Complexity-LLC/datalox-pack.git` is the current public source repo.
-- `~/.datalox/cache/datalox-trajectory-mcp` is the local source directory and package identity.
+- `https://github.com/Complexity-LLC/datalox-agent-replay.git` is the current public source repo.
+- `~/.datalox/cache/datalox-agent-replay` is the local source directory and package identity.
 - `$TARGET_REPO` is the user's current project.
 - Default adoption writes instruction surfaces and `.datalox/install.json` into the target repo.
 - Fresh adoption does not create the removed wiki store or copy seed note/skill corpora.
@@ -79,7 +81,7 @@ Post-install checks from the target repo:
 
 ```bash
 which codex
-node "${HOME}/.datalox/cache/datalox-trajectory-mcp/bin/datalox.js" status --repo . --json
+node "${HOME}/.datalox/cache/datalox-agent-replay/bin/datalox.js" status --repo . --json
 codex exec "Check Datalox is active for this repo."
 ```
 
@@ -93,7 +95,7 @@ If the source clone already exists, use it directly:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-trajectory-mcp"
+PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
 cd "$PACK_REPO"
 git pull --ff-only
 bash bin/setup-multi-agent.sh codex
@@ -179,7 +181,7 @@ before/after snippets or patch hunks.
 - `trace`, `web`, and `pdf` are the only concrete source kinds.
 - `agent_turn.v1` is the simple capture primitive.
 - Product event data belongs under `.datalox/events/`.
-- Approved anonymized session bundles are the source product export target.
+- Approved anonymized replay/session bundles are the source product export target.
 - `debugging_trajectory.v1` rows are compact training/eval derivatives.
 - `agent_task_trajectory.v1` rows are compact mixed-domain task derivatives with domain-specific evidence blocks.
 - Verified trajectory rows are export artifacts, not repo-local knowledge page types or the complete source session.
@@ -189,6 +191,7 @@ before/after snippets or patch hunks.
 
 - [DATALOX.md](DATALOX.md)
 - [docs/product-definition.md](docs/product-definition.md)
+- [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md)
 - [docs/agent-turn-schema.md](docs/agent-turn-schema.md)
 - [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md)
 - [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md)

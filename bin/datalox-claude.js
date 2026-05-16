@@ -25,7 +25,7 @@ function resolveRuntimeRoot(root) {
   const candidates = [
     root,
     readInstallPackRoot(root),
-    path.join(os.homedir(), ".datalox", "cache", "datalox-trajectory-mcp"),
+    path.join(os.homedir(), ".datalox", "cache", "datalox-agent-replay"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
@@ -35,7 +35,7 @@ function resolveRuntimeRoot(root) {
     }
   }
 
-  throw new Error("Unable to resolve Datalox Trajectory MCP runtime root for datalox-claude.js");
+  throw new Error("Unable to resolve Datalox Agent Replay runtime root for datalox-claude.js");
 }
 
 const runtimeRoot = resolveRuntimeRoot(repoRoot);

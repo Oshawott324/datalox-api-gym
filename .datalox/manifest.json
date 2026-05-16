@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "kind": "trajectory_mcp_pack",
-  "name": "Datalox Trajectory MCP",
+  "kind": "agent_replay_mcp",
+  "name": "Datalox Agent Replay",
   "mode": "repo_only",
   "runtimeRequired": false,
   "configPath": ".datalox/config.json",
@@ -12,8 +12,8 @@
     "WIKI.md",
     "GEMINI.md",
     ".github/copilot-instructions.md",
-    ".cursor/rules/datalox-pack.mdc",
-    ".windsurf/rules/datalox-pack.md"
+    ".cursor/rules/datalox-agent-replay.mdc",
+    ".windsurf/rules/datalox-agent-replay.md"
   ],
   "eventStores": {
     "agentTurns": ".datalox/events/agent-turns",
@@ -23,7 +23,7 @@
     "approvals": ".datalox/approvals"
   },
   "productModel": {
-    "sourceAsset": "approved_anonymized_session_bundle",
+    "sourceAsset": "approved_anonymized_replay_session_bundle",
     "capturePrimitive": "agent_turn.v1",
     "derivatives": [
       "debugging_trajectory.v1",
@@ -50,20 +50,20 @@
     ]
   },
   "distribution": {
-    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp && cd datalox-trajectory-mcp && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
+    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Complexity-LLC/datalox-agent-replay.git datalox-agent-replay && cd datalox-agent-replay && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
     "multiAgentSetup": "bash bin/setup-multi-agent.sh codex",
     "friendlyEntryPoint": "START_HERE.md",
     "agentSetupPrompt": {
       "instruction": "Paste this into the agent chatbox from the repo you want Datalox to manage.",
       "commands": [
         "TARGET_REPO=\"$(pwd)\"",
-        "git clone https://github.com/Complexity-LLC/datalox-pack.git datalox-trajectory-mcp",
-        "cd datalox-trajectory-mcp",
+        "git clone https://github.com/Complexity-LLC/datalox-agent-replay.git datalox-agent-replay",
+        "cd datalox-agent-replay",
         "bash bin/setup-multi-agent.sh codex",
         "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
         "node bin/datalox.js status --repo \"$TARGET_REPO\" --json"
       ],
-      "sourcePackRole": "The public GitHub source repo is datalox-pack; the local checkout/package identity is datalox-trajectory-mcp and it owns bin/adopt-host-repo.sh.",
+      "sourceRole": "The public GitHub source repo is datalox-agent-replay; the local checkout/package identity is datalox-agent-replay and it owns bin/adopt-host-repo.sh.",
       "targetRepoRole": "$TARGET_REPO is the user's current project and receives the Datalox install stamp, instruction surfaces, .datalox config, and host shims."
     },
     "defaultBootstrapBundle": {

@@ -1,14 +1,14 @@
 {
-  "name": "datalox-trajectory-mcp",
+  "name": "datalox-agent-replay",
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "Trajectory-focused Datalox MCP for verified debugging trajectory data and eval export.",
+  "description": "Agent replay MCP for reproducible tool I/O, session bundles, and derived trajectory/eval export.",
   "bin": {
     "datalox": "./bin/datalox.js",
     "datalox-mcp": "./bin/datalox-mcp.js",
-    "datalox-trajectory-mcp": "./bin/datalox-mcp.js",
-    "datalox-pack-mcp": "./bin/datalox-pack-mcp.js",
+    "datalox-agent-replay": "./bin/datalox-mcp.js",
+    "datalox-agent-replay-mcp": "./bin/datalox-agent-replay-mcp.js",
     "datalox-claude": "./bin/datalox-claude.js",
     "datalox-codex": "./bin/datalox-codex.js",
     "datalox-wrap": "./bin/datalox-wrap.js"

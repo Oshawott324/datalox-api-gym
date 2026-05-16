@@ -64,7 +64,7 @@ function resolveRuntimeEntrypoint(root) {
   const candidates = [
     root,
     readInstallPackRoot(root),
-    path.join(os.homedir(), ".datalox", "cache", "datalox-trajectory-mcp"),
+    path.join(os.homedir(), ".datalox", "cache", "datalox-agent-replay"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
@@ -75,7 +75,7 @@ function resolveRuntimeEntrypoint(root) {
     }
   }
 
-  throw new Error("Unable to resolve Datalox MCP runtime root for datalox-pack-mcp.js");
+  throw new Error("Unable to resolve Datalox MCP runtime root for datalox-agent-replay-mcp.js");
 }
 
 const entrypoint = resolveRuntimeEntrypoint(repoRoot);

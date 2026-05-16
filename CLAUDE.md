@@ -9,9 +9,9 @@ Claude Code can see Datalox through separate surfaces:
 Product boundary:
 
 - Datalox MCP is the product-facing instrumentation and control layer for desktop agents.
-- B2B approved session data plus derived trajectory/evals are the primary product focus.
+- B2B approved replay/session data plus derived trajectory/evals are the primary product focus.
 - `agent_turn.v1` events are the simple capture primitive.
-- Approved anonymized session bundles are the source B2B data asset.
+- Approved anonymized replay/session bundles are the source B2B data asset.
 - Lean, outcome-labeled trajectory rows are compact training/eval derivatives.
 
 On each loop:

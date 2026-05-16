@@ -2,7 +2,7 @@
 
 Completed items were moved to:
 
-- [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+- [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
 
 That doc now holds:
 
@@ -31,27 +31,27 @@ That doc now holds:
   - `docs/trajectory-dataset-schema.md` says the row is a compact derivative, not the complete source session
   - no product-facing doc says a perfect trajectory row is required before the captured session has value
 
-- [x] Step 8.5: move future product event storage out of `agent-wiki/events`.
+- [x] Step 8.5: move future product event storage out of `removed-wiki-store/events`.
   Intent:
   - stop treating the legacy agent wiki event folder as the future product data store
-  - keep old `agent-wiki/events` rows readable for legacy traces and migration
+  - keep old `removed-wiki-store/events` rows readable for legacy traces and migration
   - make repo-local `.datalox/` the visible product evidence root for agents and users
   Storage boundary:
   - new turn events: `.datalox/events/agent-turns/`
   - new trajectory row events: `.datalox/events/trajectory-rows/`
   - future review candidates: `.datalox/session-candidates/`
   - future approval/block records: `.datalox/approvals/`
-  - legacy traces: `agent-wiki/events/` read-only for future product work
+  - legacy traces: `removed-wiki-store/events/` read-only for future product work
   Implementation:
   - update `record_trajectory` / `recordTrajectory` to write new `debugging_trajectory.v1` events under `.datalox/events/trajectory-rows/`
-  - keep trajectory export and grading deterministic across both `.datalox/events/trajectory-rows/` and legacy `agent-wiki/events/`
+  - keep trajectory export and grading deterministic across both `.datalox/events/trajectory-rows/` and legacy `removed-wiki-store/events/`
   - allow `repair_trajectory` to repair legacy event paths but write corrected rows to `.datalox/events/trajectory-rows/`
   - update wrapper default trajectory capture expectations to use `.datalox/events/trajectory-rows/`
   - update docs and instruction surfaces so new product work targets `.datalox/`
   Pass criteria:
   - recording a trajectory row returns an event path under `.datalox/events/trajectory-rows/`
   - invalid trajectory rows create no `.datalox/events/trajectory-rows/` files
-  - exporting trajectories includes both new `.datalox` rows and legacy `agent-wiki/events` rows
+  - exporting trajectories includes both new `.datalox` rows and legacy `removed-wiki-store/events` rows
   - grading can target a single `.datalox` row and can still scan legacy rows
   - repairing a legacy row writes the repaired row under `.datalox/events/trajectory-rows/`
   - focused trajectory and wrapper tests pass
@@ -231,7 +231,7 @@ That doc now holds:
   - `export.allowed: false` records the row but returns `sellable: false`
   - `export.redaction: "blocked"` records the row but returns `sellable: false`
   - invalid row input creates no event file
-  - no `skills/` or `agent-wiki/notes/` files are created or modified by `record_trajectory`
+  - no `skills/` or `removed-wiki-store/notes/` files are created or modified by `record_trajectory`
   - row recording works in a dirty worktree and does not require git clean state
   - one smoke test records at least three synthetic debugging rows through the MCP tool and exports them to JSONL
   - the smoke test uses local fixtures only: no paid model, no real desktop UI, no network
@@ -271,7 +271,7 @@ That doc now holds:
 - [x] Step 3: add the trajectory export module.
   Implementation:
   - create `src/core/trajectoryExport.ts`
-  - read `.datalox/events/trajectory-rows/*.json` and legacy `agent-wiki/events/*.json` in deterministic timestamp/path order
+  - read `.datalox/events/trajectory-rows/*.json` and legacy `removed-wiki-store/events/*.json` in deterministic timestamp/path order
   - collect only explicit `trajectoryRow` candidates from `.datalox/events/trajectory-rows/` plus legacy `payload.trajectoryRow` candidates when present
   - validate every candidate with `parseDebuggingTrajectoryV1`
   - write sellable rows to JSONL only when `isSellableTrajectoryRow(row)` passes
@@ -319,7 +319,7 @@ That doc now holds:
   - only include skill/note references when they already exist as optional curation tags or metadata
   - document the eventual removal/isolation point after row capture replaces legacy promotion for product work
   Pass criteria:
-  - exporter tests pass in a fixture repo with no `skills/` and no `agent-wiki/notes/`
+  - exporter tests pass in a fixture repo with no `skills/` and no `removed-wiki-store/notes/`
   - existing skill/note promotion tests still pass
   - no trajectory schema required field references `skill`, `note`, or `knowledge_feedback`
   - product docs keep note/skill promotion labeled as legacy/internal
@@ -495,7 +495,7 @@ That doc now holds:
     - add deterministic `not_self_contained` blocking diagnostics when the row's only fix evidence depends on external repo/source-event access
     - add helper functions rather than broad heuristics, for example:
       - `hasMeaningfulSnippetPair(file)` returns true only when both snippets exist, look code-like, are not placeholders, and are not external-reference-only
-      - `isExternalReferenceOnly(value)` catches standalone evidence such as `see src/foo.ts`, `open agent-wiki/events/...`, `refer to source_event_paths`, `see repo`, or `see attached file`
+      - `isExternalReferenceOnly(value)` catches standalone evidence such as `see src/foo.ts`, `open removed-wiki-store/events/...`, `refer to source_event_paths`, `see repo`, or `see attached file`
       - `hasStandaloneTrainingPayload(row)` requires at least one meaningful snippet pair plus either `final.patch` or a concrete `final.explanation`
     - keep source paths allowed when they accompany real inline evidence
     - keep TypeScript spread syntax and normal prose safe; do not flag `...(row.curation ?? {})`
@@ -508,7 +508,7 @@ That doc now holds:
     - add or adjust an export fixture so `export-trajectories --quality use` exports only standalone `quality: "use"` rows
     - ensure rows with `quality: "needs_review"` or blocking self-containment issues are not part of buyer-facing fixture output
   - re-grade real dogfood data after the stricter rule:
-    - legacy weak row: `agent-wiki/events/2026-05-04T05-54-50-295Z--trajectory-traj-training-grade-gate-20260504.json`
+    - legacy weak row: `removed-wiki-store/events/2026-05-04T05-54-50-295Z--trajectory-traj-training-grade-gate-20260504.json`
     - repaired row: `.datalox/events/trajectory-rows/2026-05-05T03-34-18-639Z--trajectory-traj-training-grade-gate-repaired-20260505.json`
     - repair the repaired row again only if it fails the stricter rule for a concrete reason
   - keep optional source/audit bundles separate from the default JSONL export contract
@@ -527,13 +527,13 @@ That doc now holds:
   - docs say paths are provenance only and inline snippets plus trajectory plus verification are the training payload
   - the legacy weak dogfood row fails grading because it contains placeholder evidence
   - the repaired `.datalox/events/trajectory-rows/...traj-training-grade-gate-repaired...json` row grades `quality: "use"` under the stricter standalone rule
-  - `export-trajectories --quality use` emits rows understandable without opening `agent-wiki/events`, `.datalox/events`, or source files
+  - `export-trajectories --quality use` emits rows understandable without opening `removed-wiki-store/events`, `.datalox/events`, or source files
   - tests cover a row that has file paths but no meaningful inline snippets and expect `not_self_contained`
   - tests cover a valid standalone row with compact exact snippets and passed verification
   - tests cover `source_event_paths` as allowed provenance when inline evidence is sufficient
   - tests cover `final.explanation` with "see file/source event" as insufficient when no patch is present
   - tests cover concrete `final.explanation` as sufficient when it is grounded in inline snippets
-  - `node dist/src/cli/main.js grade-trajectories --repo . --event-path agent-wiki/events/2026-05-04T05-54-50-295Z--trajectory-traj-training-grade-gate-20260504.json --json` reports a blocking issue on the weak legacy row
+  - `node dist/src/cli/main.js grade-trajectories --repo . --event-path removed-wiki-store/events/2026-05-04T05-54-50-295Z--trajectory-traj-training-grade-gate-20260504.json --json` reports a blocking issue on the weak legacy row
   - `node dist/src/cli/main.js grade-trajectories --repo . --event-path .datalox/events/trajectory-rows/2026-05-05T03-34-18-639Z--trajectory-traj-training-grade-gate-repaired-20260505.json --json` reports `useRows: 1`, `issueCounts: {}`, and no warnings
   - `node dist/src/cli/main.js export-trajectories --repo . --quality use --output /tmp/debugging_trajectory.v1.use.jsonl --json` succeeds and emits only standalone rows
   - `npx vitest run tests/trajectoryGrade.test.ts tests/trajectoryExport.test.ts` passes
@@ -718,7 +718,7 @@ That doc now holds:
   - export excludes `export.allowed: false` and `redaction: "blocked"` rows
   - export is deterministic for the same `.datalox/events/agent-task-trajectories/` directory
   - `record_trajectory` and `export-trajectories` behavior for `debugging_trajectory.v1` does not change
-  - no new `agent-wiki/events/` product writes are introduced
+  - no new `removed-wiki-store/events/` product writes are introduced
   - focused tests pass:
     - `npx vitest run tests/agentTaskTrajectorySchema.test.ts tests/agentTaskTrajectoryExport.test.ts tests/trajectorySchema.test.ts tests/trajectoryExport.test.ts`
   - `npm run check` passes
@@ -745,7 +745,7 @@ That doc now holds:
   Root causes:
   - `repair_trajectory` writes a new immutable event with the same `trajectoryRow.id` and `metadata.datalox_repaired_from_event_path`
   - `exportTrajectories` calls duplicate detection before applying `--quality use` and before deterministic `gradeTrajectoryRow`
-  - an installed target repo can have stale `datalox-trajectory-mcp` CLI code, making the active capture/export surface unclear
+  - an installed target repo can have stale `datalox-agent-replay` CLI code, making the active capture/export surface unclear
   Implementation:
   - update `src/core/trajectoryExport.ts`
     - keep schema validation before any filtering
@@ -764,14 +764,14 @@ That doc now holds:
     - fixture: export report lists superseded repair-chain rows with source event paths
   - update CLI/status diagnostics if needed
     - status should make the active pack root and installed pack commit/source obvious enough for agents to spot stale target installs
-    - README should recommend checking `node datalox-trajectory-mcp/bin/datalox.js status --repo <target> --json` and command availability after install/update
+    - README should recommend checking `node datalox-agent-replay/bin/datalox.js status --repo <target> --json` and command availability after install/update
   Pass criteria:
   - `export-trajectories --quality use` succeeds for a repair chain where only the final repaired row grades `use`
   - exported JSONL contains exactly one row for a repaired trajectory id: the latest non-superseded row that passes quality and grade filters
   - `needs_review` original rows and failed repair attempts do not block buyer-facing `--quality use` export
   - unrelated same-id `use` rows still fail with `duplicate_id`
   - reports include stable rejection reasons for `quality_filter`, `training_grade_filter`, and `superseded_by_repair`
-  - legacy `agent-wiki/events` rows remain readable but are not selected over a newer `.datalox/events/trajectory-rows` repair
+  - legacy `removed-wiki-store/events` rows remain readable but are not selected over a newer `.datalox/events/trajectory-rows` repair
   - focused tests pass:
     - `npx vitest run tests/trajectoryExport.test.ts`
   - dogfood command succeeds after patch:
@@ -854,29 +854,29 @@ That doc now holds:
     `record_agent_task_trajectory` stores it as `needs_review` with downgrade
     metadata and returns `qualityDowngraded: true`.
 
-- [x] Step 8.11: stop shipping `agent-wiki/` as a first-class trajectory-product artifact.
+- [x] Step 8.11: stop shipping `removed-wiki-store/` as a first-class trajectory-product artifact.
   Intent:
-  - make the trajectory-product branch install cleanly without presenting `agent-wiki/` as the active product store
-  - keep old repos readable, but stop teaching fresh agents to write product data or primary guidance through `agent-wiki/`
+  - make the trajectory-product branch install cleanly without presenting `removed-wiki-store/` as the active product store
+  - keep old repos readable, but stop teaching fresh agents to write product data or primary guidance through `removed-wiki-store/`
   - reduce confusion between legacy note/skill promotion and the current `.datalox/events/` session/trajectory product loop
   Product boundary:
   - `.datalox/events/` is the product data store
   - `.datalox/events/agent-turns/` is for turn capture
   - `.datalox/events/trajectory-rows/` is for `debugging_trajectory.v1`
   - `.datalox/events/agent-task-trajectories/` is for `agent_task_trajectory.v1`
-  - `agent-wiki/events/` is legacy read-only compatibility only
+  - `removed-wiki-store/events/` is legacy read-only compatibility only
   - useful stable agent guidance should live in `DATALOX.md`, `AGENTS.md`, and `docs/`; `skills/` is legacy/local guidance unless explicitly requested
   Implementation:
   - update install/adoption behavior:
     - inspect and patch `bin/adopt-host-repo.sh`
     - inspect and patch `src/core/packCore.ts`
     - inspect and patch `scripts/lib/agent-pack.mjs` only where fresh adoption copies or creates wiki artifacts
-    - fresh trajectory-product adoption should not create or copy `agent-wiki/events/`
-    - fresh trajectory-product adoption should not copy the seed `agent-wiki/` corpus unless explicitly requested by a legacy mode flag
+    - fresh trajectory-product adoption should not create or copy `removed-wiki-store/events/`
+    - fresh trajectory-product adoption should not copy the seed `removed-wiki-store/` corpus unless explicitly requested by a legacy mode flag
   - keep legacy read compatibility:
-    - `export-trajectories` may continue to read legacy `agent-wiki/events/` for old debugging rows
-    - maintenance/legacy commands may read existing `agent-wiki/notes/` only when the repo already has them or when legacy mode is explicit
-    - do not delete a host repo's existing `agent-wiki/` during adoption
+    - `export-trajectories` may continue to read legacy `removed-wiki-store/events/` for old debugging rows
+    - maintenance/legacy commands may read existing `removed-wiki-store/notes/` only when the repo already has them or when legacy mode is explicit
+    - do not delete a host repo's existing `removed-wiki-store/` during adoption
   - update command names and help text if needed:
     - make legacy write surfaces visibly legacy, for example `record-legacy-event`
     - ensure `datalox record --help`, `status`, and other introspection commands are read-only
@@ -887,19 +887,19 @@ That doc now holds:
     - `AGENTS.md`
     - `docs/product-definition.md`
     - `docs/task-orchestration.md`
-    - state that fresh product installs do not ship `agent-wiki/` as the active store
-    - state that legacy repos may still have `agent-wiki/` and agents may read it for compatibility
+    - state that fresh product installs do not ship `removed-wiki-store/` as the active store
+    - state that legacy repos may still have `removed-wiki-store/` and agents may read it for compatibility
   - update tests:
-    - adoption/bootstrap test: fresh trajectory-product install creates `.datalox/` and expected instruction surfaces, but does not create `agent-wiki/events/`
-    - adoption/bootstrap test: fresh product install does not copy seed `agent-wiki/` corpus by default
-    - legacy compatibility test: existing `agent-wiki/events/` debugging rows remain readable by `export-trajectories`
+    - adoption/bootstrap test: fresh trajectory-product install creates `.datalox/` and expected instruction surfaces, but does not create `removed-wiki-store/events/`
+    - adoption/bootstrap test: fresh product install does not copy seed `removed-wiki-store/` corpus by default
+    - legacy compatibility test: existing `removed-wiki-store/events/` debugging rows remain readable by `export-trajectories`
     - help/status test: `datalox record --help` or equivalent help path does not write events
     - product recording test: `record-trajectory` and `record-agent-task-trajectory` still write only under `.datalox/events/...`
   Pass criteria:
-  - a fresh adopted repo for the trajectory-product branch has no generated `agent-wiki/events/`
-  - fresh adoption does not ship the seed `agent-wiki/` corpus by default
-  - existing host `agent-wiki/` content is preserved and readable, not deleted
-  - legacy `agent-wiki/events/` rows can still be exported when present
+  - a fresh adopted repo for the trajectory-product branch has no generated `removed-wiki-store/events/`
+  - fresh adoption does not ship the seed `removed-wiki-store/` corpus by default
+  - existing host `removed-wiki-store/` content is preserved and readable, not deleted
+  - legacy `removed-wiki-store/events/` rows can still be exported when present
   - no help/status/introspection command writes a legacy event
   - product writes continue to use only `.datalox/events/`
   - focused tests pass:
@@ -908,12 +908,12 @@ That doc now holds:
   - `npm run check` passes
   - `git diff --check` passes
 
-- [x] Step 8.12: remove `agent-wiki/` cleanly from this branch instead of preserving it as deprecated compatibility.
+- [x] Step 8.12: remove `removed-wiki-store/` cleanly from this branch instead of preserving it as deprecated compatibility.
   Intent:
   - converge the branch on the current `.datalox/` product model without a parallel wiki/note/event path
-  - remove source-pack `agent-wiki/` content so fresh clones do not contain the old store even outside adopted target repos
-  - remove code paths that write, scan, promote, lint, or repair through `agent-wiki`
-  - keep user data safe by never deleting an existing host repo's `agent-wiki/` during adoption
+  - remove source-pack `removed-wiki-store/` content so fresh clones do not contain the old store even outside adopted target repos
+  - remove code paths that write, scan, promote, lint, or repair through `removed-wiki-store`
+  - keep user data safe by never deleting an existing host repo's `removed-wiki-store/` during adoption
   Product boundary:
   - `.datalox/events/agent-turns/` is the only turn capture event root
   - `.datalox/events/trajectory-rows/` is the only `debugging_trajectory.v1` event root
@@ -921,13 +921,13 @@ That doc now holds:
   - `docs/`, `DATALOX.md`, and `AGENTS.md` are the durable product guidance surfaces
   - legacy note/skill promotion is not part of this branch after this step
   Implementation:
-  - remove the tracked root `agent-wiki/` directory from the repo
-  - remove `agent-wiki` adoption/copy constants from `src/core/packCore.ts`
+  - remove the tracked root `removed-wiki-store/` directory from the repo
+  - remove `removed-wiki-store` adoption/copy constants from `src/core/packCore.ts`
     - delete `EVENTS_RELATIVE_DIR` / `NOTES_RELATIVE_DIR` usage when it exists only for wiki support
     - delete `includeLegacyWiki`
     - delete or collapse `includeLegacyGuidance` behavior if its only remaining purpose is wiki/skill compatibility
-    - ensure adoption never creates `agent-wiki/`
-  - remove legacy `agent-wiki/events` scanning from `src/core/trajectoryExport.ts`
+    - ensure adoption never creates `removed-wiki-store/`
+  - remove legacy `removed-wiki-store/events` scanning from `src/core/trajectoryExport.ts`
     - export should scan `.datalox/events/trajectory-rows/` only
     - repair should accept `.datalox/events/trajectory-rows/...` only
     - duplicate handling should no longer compare legacy and product rows
@@ -941,7 +941,7 @@ That doc now holds:
   - remove wiki-specific tests and fixtures
     - replace any legacy export fixture with `.datalox/events/...` fixtures
     - delete tests whose only purpose is legacy wiki promotion or maintenance
-    - keep tests proving adoption preserves existing user-owned `agent-wiki/` by not touching it if that case is still relevant
+    - keep tests proving adoption preserves existing user-owned `removed-wiki-store/` by not touching it if that case is still relevant
   - update docs and instruction surfaces
     - `README.md`
     - `DATALOX.md`
@@ -949,22 +949,22 @@ That doc now holds:
     - `docs/product-definition.md`
     - `docs/agent-configuration.md`
     - `docs/task-orchestration.md`
-    - remove "legacy agent-wiki remains readable" language
+    - remove "legacy removed-wiki-store remains readable" language
     - remove "use legacy skills/notes" language unless pointing to a separate legacy branch/package
   - decide the fate of `skills/`
-    - if skills remain, mark them as local agent guidance only and remove all `agent-wiki` note links from frontmatter
+    - if skills remain, mark them as local agent guidance only and remove all `removed-wiki-store` note links from frontmatter
     - if skills are removed with the wiki, migrate essential instructions into `docs/`, `DATALOX.md`, and `AGENTS.md`
   - update `docs/rl-trajectory.md` only as a design note after active product docs are aligned
   Pass criteria:
-  - a fresh checkout of this branch has no root `agent-wiki/` directory
-  - `rg -n "agent-wiki" src tests README.md DATALOX.md AGENTS.md docs .github .cursor .windsurf CLAUDE.md GEMINI.md WIKI.md` returns no active references, except an explicitly named migration/changelog file if one is kept
-  - adoption/bootstrap creates `.datalox/`, instruction surfaces, and shims only; it never creates `agent-wiki/`
+  - a fresh checkout of this branch has no root `removed-wiki-store/` directory
+  - `rg -n "removed-wiki-store" src tests README.md DATALOX.md AGENTS.md docs .github .cursor .windsurf CLAUDE.md GEMINI.md WIKI.md` returns no active references, except an explicitly named migration/changelog file if one is kept
+  - adoption/bootstrap creates `.datalox/`, instruction surfaces, and shims only; it never creates `removed-wiki-store/`
   - `record_trajectory`, `record_agent_task_trajectory`, and future `record_agent_turn` write only under `.datalox/events/...`
   - `export-trajectories` scans only `.datalox/events/trajectory-rows/`
   - legacy write commands either do not exist in help output or fail read-only with no filesystem writes
   - wrappers cannot create legacy wiki events from prose summaries
-  - no tracked tests require `agent-wiki` fixtures
-  - existing user-owned `agent-wiki/` in a host repo is not deleted by adoption
+  - no tracked tests require `removed-wiki-store` fixtures
+  - existing user-owned `removed-wiki-store/` in a host repo is not deleted by adoption
   - focused tests pass:
     - `npx vitest run tests/adoptionScripts.test.ts`
     - `npx vitest run tests/trajectoryExport.test.ts tests/agentTaskTrajectoryExport.test.ts`
@@ -1077,7 +1077,7 @@ That doc now holds:
 ## Bootstrap Payload Shape
 
 - Completed bootstrap payload work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   That includes:
   - problem confirmation
   - target contract
@@ -1098,7 +1098,7 @@ That doc now holds:
 ## Online Retrieval And Note Capture
 
 - Completed online retrieval / note-capture work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   That includes:
   - authoritative match boundary tightening
   - candidate-only retrieval contract
@@ -1111,23 +1111,23 @@ That doc now holds:
 ## Periodic Trace Maintenance And Skill Synthesis
 
 - Completed maintenance-loop work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   Grounded live proof:
-  - [docs/periodic-trace-maintenance-live-2026-04-25.md](/Users/yifanjin/datalox-pack/docs/periodic-trace-maintenance-live-2026-04-25.md)
+  - [docs/periodic-trace-maintenance-live-2026-04-25.md](/Users/yifanjin/datalox-agent-replay/docs/periodic-trace-maintenance-live-2026-04-25.md)
 
 
 ## Same-Repo Session And Agent Bootstrap
 
 - Completed same-repo bootstrap work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   Grounded live proof:
-  - [docs/same-repo-bootstrap-live-2026-04-24.md](/Users/yifanjin/datalox-pack/docs/same-repo-bootstrap-live-2026-04-24.md)
+  - [docs/same-repo-bootstrap-live-2026-04-24.md](/Users/yifanjin/datalox-agent-replay/docs/same-repo-bootstrap-live-2026-04-24.md)
 
 
 ## Claude Native Skill Installation
 
 - Completed native skill installation work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   That includes:
   - per-skill canonical link installation
   - disable/uninstall for new link shape
@@ -1135,13 +1135,13 @@ That doc now holds:
   - doc updates
   - focused proofs and live validation
   Grounded live proof:
-  - [docs/claude-native-skill-install-live-2026-04-27.md](/Users/yifanjin/datalox-pack/docs/claude-native-skill-install-live-2026-04-27.md)
+  - [docs/claude-native-skill-install-live-2026-04-27.md](/Users/yifanjin/datalox-agent-replay/docs/claude-native-skill-install-live-2026-04-27.md)
 
 
 ## Maintenance Defaults And Skill Synthesis Boundary
 
 - Completed work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   That includes:
   - default note-only maintenance
   - smaller default scan window
@@ -1152,12 +1152,12 @@ That doc now holds:
 ## Event Backlog Visibility And Maintenance Nudges
 
 - Completed work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   That includes:
   - shared backlog stats and policy evaluation
   - `status --json` backlog output
   - Claude hook and Codex wrapper warnings
-  - `agent-wiki/hot.md` next-turn visibility
+  - `removed-wiki-store/hot.md` next-turn visibility
   - configurable composite backlog policy
   - focused proofs
 
@@ -1165,10 +1165,10 @@ That doc now holds:
 ## Singleton Trace Rollup And Non-Repeated Event Drainage
 
 - Completed work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   That includes:
   - `summarized` trace drainage status
-  - bounded singleton rollup notes under `agent-wiki/notes/`
+  - bounded singleton rollup notes under `removed-wiki-store/notes/`
   - explicit singleton note preservation when structured evidence exists
   - rollup exclusion from skill synthesis
   - 100+ singleton backlog proof
@@ -1177,9 +1177,9 @@ That doc now holds:
 ## Native Codex MCP Loop Enforcement
 
 - Completed work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   Grounded live proof:
-  - [docs/native-codex-session-provenance-live-2026-04-30.md](/Users/yifanjin/datalox-pack/docs/native-codex-session-provenance-live-2026-04-30.md)
+  - [docs/native-codex-session-provenance-live-2026-04-30.md](/Users/yifanjin/datalox-agent-replay/docs/native-codex-session-provenance-live-2026-04-30.md)
   That includes:
   - explicit MCP-first guidance for native Codex
   - active-session `currentSession` status output
@@ -1246,7 +1246,7 @@ That doc now holds:
   Target files:
   - `CLAUDE.md`
   - `skills/use-datalox-through-host-cli/SKILL.md`
-  - `agent-wiki/notes/use-datalox-through-host-cli.md`
+  - `removed-wiki-store/notes/use-datalox-through-host-cli.md`
   - optional live proof doc under `docs/`
   Requirements:
   - say that Claude Code has separate wrapper, hook, native skill, and MCP surfaces
@@ -1278,8 +1278,8 @@ That doc now holds:
   Completed:
   - added `adapters.claude.surfaces.wrapper`, `stopHook`, `nativeSkills`, and `mcp` to `status --json`
   - kept raw `adapters.claude` fields for compatibility
-  - documented the boundary in `CLAUDE.md`, `skills/use-datalox-through-host-cli/SKILL.md`, and `agent-wiki/notes/use-datalox-through-host-cli.md`
-  - wrote live proof: [docs/claude-code-surface-provenance-live-2026-05-02.md](/Users/yifanjin/datalox-pack/docs/claude-code-surface-provenance-live-2026-05-02.md)
+  - documented the boundary in `CLAUDE.md`, `skills/use-datalox-through-host-cli/SKILL.md`, and `removed-wiki-store/notes/use-datalox-through-host-cli.md`
+  - wrote live proof: [docs/claude-code-surface-provenance-live-2026-05-02.md](/Users/yifanjin/datalox-agent-replay/docs/claude-code-surface-provenance-live-2026-05-02.md)
   - passed `npm run build`
   - passed `npx vitest run tests/adoptionScripts.test.ts tests/wrapperSurfaces.test.ts tests/hookIntegration.test.ts`
 
@@ -1340,7 +1340,7 @@ That doc now holds:
   - preserve `AGENTS.md` as the committed project instruction baseline
   - support `opencode run` as the first CLI wrapper target if a wrapper is needed
   - inspect or configure OpenCode MCP/plugin surfaces only when the shape is explicit
-  - fix or remove stale assumptions such as `~/.opencode/skills/datalox-pack` if current OpenCode docs do not support them
+  - fix or remove stale assumptions such as `~/.opencode/skills/datalox-agent-replay` if current OpenCode docs do not support them
   Pass criteria:
   - OpenCode install/status can be tested without hiding under `generic_cli`
   - OpenCode provenance records as `hostKind: "opencode"`
@@ -1359,7 +1359,7 @@ That doc now holds:
 ## Cross-Host Automatic Bounded Maintenance Trigger
 
 - Completed work was moved to:
-  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-pack/docs/completed-todo-items.md)
+  - [docs/completed-todo-items.md](/Users/yifanjin/datalox-agent-replay/docs/completed-todo-items.md)
   That includes:
   - shared automatic note-only maintenance helper
   - visible repo-local maintenance lock
@@ -1373,8 +1373,8 @@ That doc now holds:
 
 - Current foundation already exists:
   - `datalox maintain` / `maintain_knowledge` runs a bounded repo-local maintenance pass
-  - current maintenance scans `agent-wiki/events/`
-  - repeated unresolved traces compact into `agent-wiki/notes/`
+  - current maintenance scans `removed-wiki-store/events/`
+  - repeated unresolved traces compact into `removed-wiki-store/notes/`
   - covered events are marked so the same trace group does not keep re-promoting
   - note-backed skill synthesis runs only from existing notes, on an explicit later pass
   Service-backed work should reuse this materialization loop. Do not build a second note/skill promotion path.
@@ -1388,7 +1388,7 @@ That doc now holds:
     - leases / signals / checkpoints
     - maintenance coverage state
   - repo-owned:
-    - `agent-wiki/notes/`
+    - `removed-wiki-store/notes/`
     - `skills/`
     - visible control artifacts
     - repo-local materialized reusable knowledge
@@ -1458,7 +1458,7 @@ That doc now holds:
   Requirements:
   - online capture can still stay cheap
   - the existing `maintainKnowledge` planner reads a bounded unresolved trace set from the service for the current repo
-  - local `agent-wiki/events/` traces and service-backed traces use one normalized planner input shape
+  - local `removed-wiki-store/events/` traces and service-backed traces use one normalized planner input shape
   - no cross-repo bleed
   - current local note/skill retrieval remains repo-local
   - do not create a parallel service-only maintenance loop
@@ -1479,7 +1479,7 @@ That doc now holds:
   - note-backed synthesis stays the primary path for new skills
   - notes created during the current pass must stay excluded from skill synthesis until a later pass, matching current repo-local behavior
   - covered/compacted service events are marked so they do not keep exploding the maintenance input
-  - `repo_only` continues to scan only local `agent-wiki/events/`
+  - `repo_only` continues to scan only local `removed-wiki-store/events/`
   Pass criteria:
   - two service-backed traces from two different agents in the same repo compact into one repo-local note
   - repeating the same maintenance run does not re-promote the same unresolved traces forever

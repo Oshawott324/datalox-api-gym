@@ -13,13 +13,13 @@ Keep frontmatter minimal:
 
 ```yaml
 ---
-name: maintain-datalox-pack
-description: Use when changing the Datalox trajectory MCP package, schemas, CLI/MCP surfaces, wrappers, docs, or product guidance in this repo.
+name: maintain-datalox-agent-replay
+description: Use when changing the Datalox Agent Replay package, schemas, CLI/MCP surfaces, wrappers, docs, or product guidance in this repo.
 metadata:
   datalox:
-    id: repo-engineering.maintain-datalox-pack
+    id: repo-engineering.maintain-datalox-agent-replay
     workflow: repo_engineering
-    trigger: Datalox trajectory MCP package maintenance
+    trigger: Datalox Agent Replay package maintenance
 ---
 ```
 

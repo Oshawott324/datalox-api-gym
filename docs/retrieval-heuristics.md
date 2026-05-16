@@ -1,6 +1,6 @@
 # Retrieval Heuristics
 
-This note records the current heuristic boundary in `datalox-pack`.
+This note records the current heuristic boundary in `datalox-agent-replay`.
 
 It exists because the repo has already reduced heuristic behavior in promotion, but retrieval and some source-routing paths still rely on hand-written scoring and pattern matching.
 

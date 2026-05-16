@@ -23,15 +23,15 @@ The problem was not MCP itself. The problem was bootstrap/adoption payload shape
 
 ## Change
 
-In [src/core/packCore.ts](/Users/yifanjin/datalox-pack/src/core/packCore.ts):
+In [src/core/packCore.ts](/Users/yifanjin/datalox-agent-replay/src/core/packCore.ts):
 
 - removed whole-tree default adoption of:
   - `skills/`
   - `removed-wiki-store/notes/`
 - replaced it with a small core bootstrap bundle:
-- `skills/maintain-datalox-pack`
+- `skills/maintain-datalox-agent-replay`
 - `skills/use-datalox-through-host-cli`
-- `removed-wiki-store/notes/maintain-datalox-pack.md`
+- `removed-wiki-store/notes/maintain-datalox-agent-replay.md`
 - `removed-wiki-store/notes/use-datalox-through-host-cli.md`
   - `removed-wiki-store/notes/repo-engineering-multi-agent-bootstrap-surfaces.md`
 
@@ -49,7 +49,7 @@ into every adopted repo.
 
 That was changed in:
 
-- [tests/wrapperSurfaces.test.ts](/Users/yifanjin/datalox-pack/tests/wrapperSurfaces.test.ts)
+- [tests/wrapperSurfaces.test.ts](/Users/yifanjin/datalox-agent-replay/tests/wrapperSurfaces.test.ts)
 
 The flow-cytometry fixture is now created locally inside the test instead of being
 part of the product bootstrap bundle.
@@ -76,12 +76,12 @@ Fresh repo:
 
 Observed adopted skills:
 
-- `skills/maintain-datalox-pack/SKILL.md`
+- `skills/maintain-datalox-agent-replay/SKILL.md`
 - `skills/use-datalox-through-host-cli/SKILL.md`
 
 Observed adopted notes:
 
-- `removed-wiki-store/notes/maintain-datalox-pack.md`
+- `removed-wiki-store/notes/maintain-datalox-agent-replay.md`
 - `removed-wiki-store/notes/use-datalox-through-host-cli.md`
 - `removed-wiki-store/notes/repo-engineering-multi-agent-bootstrap-surfaces.md`
 
@@ -119,14 +119,14 @@ Run 2:
 
 Final repo skills:
 
-- `maintain-datalox-pack`
+- `maintain-datalox-agent-replay`
 - `use-datalox-through-host-cli`
 - `stabilize-manual-pack-adoption-in-non-technical-repos`
 
 Final repo notes:
 
 - `agent-adoption-stabilize-manual-pack-adoption-in-non-technical-repos.md`
-- `maintain-datalox-pack.md`
+- `maintain-datalox-agent-replay.md`
 - `use-datalox-through-host-cli.md`
 - `repo-engineering-multi-agent-bootstrap-surfaces.md`
 

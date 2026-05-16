@@ -5,7 +5,7 @@ import { getSharedMcpCommands } from "../surface/sharedCommands.js";
 
 async function main(): Promise<void> {
   await runSharedMcpServer({
-    name: "datalox-pack-mcp",
+    name: "datalox-agent-replay-mcp",
     version: "0.1.0",
     commands: getSharedMcpCommands(),
   });

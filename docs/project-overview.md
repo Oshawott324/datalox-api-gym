@@ -7,17 +7,17 @@ The filesystem-backed orchestration protocol lives in [task-orchestration.md](./
 
 Short version:
 
-- Approved Datalox session bundles are the source B2B dataset product.
+- Approved Datalox replay/session bundles are the source B2B dataset product.
 - `agent_turn.v1` events are the simple capture primitive.
 - `debugging_trajectory.v1` rows are compact training/eval derivatives.
-- Datalox MCP is the instrumentation, session capture, labeling, verification, and export-control layer.
-- `datalox-pack` is the repo-local implementation package.
+- Datalox MCP is the instrumentation, tool I/O capture, labeling, verification, and export-control layer.
+- `datalox-agent-replay` is the repo-local implementation package.
 - Local skills are internal guidance surfaces, not a second product loop.
 
 Primary product loop:
 
 ```text
-agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
+agent run -> AgentTurnV1 events + tool I/O evidence -> replay/session bundle -> export/redaction gate -> approved replay dataset -> optional trajectory/eval rows
 ```
 
 Do not model this repo around legacy note/skill promotion. New product work should route through captured turn events first, assemble sessions, then derive trajectory rows when useful.

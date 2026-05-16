@@ -2,7 +2,7 @@
 
 Status: completed.
 
-This pass upgraded note retrieval in `datalox-pack` without changing the core product boundary:
+This pass upgraded note retrieval in `datalox-agent-replay` without changing the core product boundary:
 
 - `skills/` stay the primary execution entrypoints
 - `removed-wiki-store/notes/` stays the primary knowledge body

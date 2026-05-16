@@ -287,7 +287,7 @@ function claudeSkillsDir(): string {
 }
 
 function claudeLegacyPackSkillsLink(): string {
-  return path.join(claudeSkillsDir(), "datalox-pack");
+  return path.join(claudeSkillsDir(), "datalox-agent-replay");
 }
 
 function validFullPackRoot(candidate: string): boolean {
@@ -299,7 +299,7 @@ function validFullPackRoot(candidate: string): boolean {
 
 async function ensureLocalPackCache(packRootPath: string): Promise<string> {
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cachePath = path.join(cacheRoot, "datalox-trajectory-mcp");
+  const cachePath = path.join(cacheRoot, "datalox-agent-replay");
 
   if (path.resolve(packRootPath) === path.resolve(cachePath)) {
     return cachePath;
@@ -377,7 +377,7 @@ async function skillLinkSpecs(host: InstallHost, packRootPath: string): Promise<
   if (selected.has("codex")) {
     specs.push({
       target: skillsDir,
-      destination: path.join(os.homedir(), ".codex", "skills", "datalox-trajectory-mcp"),
+      destination: path.join(os.homedir(), ".codex", "skills", "datalox-agent-replay"),
     });
   }
 
@@ -389,11 +389,11 @@ async function skillLinkSpecs(host: InstallHost, packRootPath: string): Promise<
     specs.push(
       {
         target: skillsDir,
-        destination: path.join(os.homedir(), ".opencode", "skills", "datalox-trajectory-mcp"),
+        destination: path.join(os.homedir(), ".opencode", "skills", "datalox-agent-replay"),
       },
       {
         target: skillsDir,
-        destination: path.join(os.homedir(), ".gemini", "skills", "datalox-trajectory-mcp"),
+        destination: path.join(os.homedir(), ".gemini", "skills", "datalox-agent-replay"),
       },
       {
         target: skillsDir,
