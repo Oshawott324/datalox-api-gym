@@ -22,10 +22,16 @@ function readInstallPackRoot(root) {
 }
 
 function isFullPackRoot(root) {
-  return (
-    existsSync(path.join(root, "package.json"))
-    && existsSync(path.join(root, "bin", "datalox.js"))
-  );
+  const packageJsonPath = path.join(root, "package.json");
+  if (!existsSync(packageJsonPath) || !existsSync(path.join(root, "bin", "datalox.js"))) {
+    return false;
+  }
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+    return packageJson?.name === "datalox-agent-replay";
+  } catch {
+    return false;
+  }
 }
 
 function ensureRuntimeReady(runtimeRoot) {

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { constants as fsConstants, existsSync } from "node:fs";
+import { constants as fsConstants, existsSync, readFileSync } from "node:fs";
 import { access, cp, mkdir, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -192,15 +192,25 @@ function resolvePackRootPath(): string {
   ];
 
   for (const candidate of candidates) {
-    if (
-      existsSync(path.join(candidate, "package.json"))
-      && existsSync(path.join(candidate, "bin", "datalox.js"))
-    ) {
+    if (isDataloxAgentReplayRoot(candidate)) {
       return candidate;
     }
   }
 
   return candidates[candidates.length - 1];
+}
+
+function isDataloxAgentReplayRoot(candidate: string): boolean {
+  const packageJsonPath = path.join(candidate, "package.json");
+  if (!existsSync(packageJsonPath) || !existsSync(path.join(candidate, "bin", "datalox.js"))) {
+    return false;
+  }
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
+    return packageJson.name === "datalox-agent-replay";
+  } catch {
+    return false;
+  }
 }
 
 const PACK_ROOT = resolvePackRootPath();
