@@ -3,6 +3,7 @@ import { copyFile, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promi
 import path from "node:path";
 
 import { sha256Hex } from "./hash.js";
+import { AGENT_TURNS_RELATIVE_DIR, getAgentTurnFromPayload } from "./agentTurnStore.js";
 import {
   parseReplayBundleChecksumsV1,
   parseReplayBundleV1,
@@ -13,7 +14,6 @@ import { parseToolIoRecordV1, type ToolIoRecordV1 } from "./toolIoSchema.js";
 import { TOOL_IO_RECORDS_RELATIVE_DIR } from "./toolIoStore.js";
 
 export const REPLAY_BUNDLES_RELATIVE_DIR = path.join(".datalox", "replay-bundles");
-export const AGENT_TURNS_RELATIVE_DIR = path.join(".datalox", "events", "agent-turns");
 
 type JsonObject = Record<string, unknown>;
 
@@ -201,6 +201,31 @@ export async function verifyReplayBundle(input: VerifyReplayBundleInput): Promis
   };
 }
 
+export function resolveReplayBundlePath(repoPath: string | undefined, bundlePath: string): string {
+  return resolveBundlePath(resolveRepoRoot(repoPath), bundlePath);
+}
+
+export async function readReplayBundleToolIoRecords(input: {
+  repoPath?: string;
+  bundlePath: string;
+}): Promise<ToolIoRecordV1[]> {
+  const absoluteBundlePath = resolveReplayBundlePath(input.repoPath, input.bundlePath);
+  const manifest = parseReplayBundleV1(JSON.parse(
+    await readFile(path.join(absoluteBundlePath, "manifest.json"), "utf8"),
+  ));
+  const records: ToolIoRecordV1[] = [];
+  for (const sourcePath of manifest.source.tool_io_record_paths) {
+    records.push(parseToolIoRecordV1(JSON.parse(
+      await readFile(resolveBundleRelativePath(absoluteBundlePath, sourcePath), "utf8"),
+    )));
+  }
+  return records.sort((first, second) => (
+    first.request_hash.localeCompare(second.request_hash)
+    || first.sequence_index - second.sequence_index
+    || first.id.localeCompare(second.id)
+  ));
+}
+
 async function collectToolIoArtifacts(repoRoot: string): Promise<SourceArtifact[]> {
   const recordsRoot = path.join(repoRoot, TOOL_IO_RECORDS_RELATIVE_DIR);
   if (!existsSync(recordsRoot)) {
@@ -243,45 +268,14 @@ async function collectAgentTurnArtifacts(repoRoot: string): Promise<SourceArtifa
 }
 
 function parseAgentTurnPayload(payload: unknown, sourcePath: string): ParsedAgentTurn {
-  const candidate = getAgentTurnCandidate(payload);
+  const candidate = getAgentTurnFromPayload(payload);
   if (!candidate) {
     throw new ReplayBundleError(`Agent turn event does not contain agent_turn.v1: ${sourcePath}`);
   }
-  const id = getString(candidate.id);
-  const sessionId = getString(candidate.session_id);
-  const turnIndex = candidate.turn_index;
-  const createdAt = getString(candidate.created_at);
-  const toolCalls = candidate.tool_calls;
-  const exportGate = getObject(candidate.export);
-  if (
-    !id
-    || !sessionId
-    || typeof turnIndex !== "number"
-    || !Number.isInteger(turnIndex)
-    || turnIndex < 0
-    || !createdAt
-    || !Array.isArray(toolCalls)
-    || typeof exportGate.allowed !== "boolean"
-    || !["none_needed", "applied", "blocked"].includes(String(exportGate.redaction))
-  ) {
-    throw new ReplayBundleError(`Invalid agent_turn.v1 event: ${sourcePath}`);
-  }
   return {
-    id,
-    sessionId,
+    id: candidate.id,
+    sessionId: candidate.session_id,
   };
-}
-
-function getAgentTurnCandidate(payload: unknown): JsonObject | null {
-  const object = getObject(payload);
-  if (object.schema_version === "agent_turn.v1") {
-    return object;
-  }
-  const wrapped = getObject(object.agentTurn);
-  if (wrapped.schema_version === "agent_turn.v1") {
-    return wrapped;
-  }
-  return null;
 }
 
 function collectSessionIds(toolArtifacts: SourceArtifact[], turnArtifacts: SourceArtifact[]): string[] {
@@ -482,14 +476,6 @@ function safeFileName(value: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 120);
   return safe.length > 0 ? safe : "artifact";
-}
-
-function getObject(value: unknown): JsonObject {
-  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonObject) : {};
-}
-
-function getString(value: unknown): string | null {
-  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 function resolveRepoRoot(repoPath: string | undefined): string {

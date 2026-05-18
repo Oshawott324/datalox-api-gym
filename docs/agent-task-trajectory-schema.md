@@ -96,6 +96,15 @@ type AgentTaskTrajectoryV1 = {
     evidence?: string;
   };
 
+  trajectory_type?: "success" | "failure" | "recovery";
+
+  first_wrong_step?: number;
+
+  replay_bundle_ref?: {
+    bundle_id: string;
+    bundle_path?: string;
+  };
+
   export: {
     allowed: boolean;
     redaction: "none_needed" | "applied" | "blocked";
@@ -243,6 +252,26 @@ buyer-facing `quality: "use"` export requires both.
   relevance?: string;
 }
 ```
+
+## Optional Derivative Annotations
+
+`trajectory_type`, `first_wrong_step`, and `replay_bundle_ref` follow the same
+semantics as in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md):
+
+- `trajectory_type` is a learning-role label (`success` / `failure` /
+  `recovery`) separate from `outcome.label`. A recoverable failure that
+  ultimately succeeded can be tagged `trajectory_type: "recovery"` with
+  `outcome.label: "success"`.
+- `first_wrong_step` is a zero-based index into `trajectory[]` for the first
+  step where the agent went off the correct path. Most valuable for
+  failure/recovery rows as a credit-assignment signal.
+- `replay_bundle_ref` points to the source `replay_bundle.v1` this row was
+  packaged from. When present, downstream consumers can recompute rewards,
+  replay tool I/O, or compare model behavior against the same recorded
+  environment.
+
+All three fields are optional and additive; rows without them remain valid
+`agent_task_trajectory.v1` records.
 
 ## Readiness Rules
 

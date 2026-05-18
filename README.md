@@ -70,9 +70,9 @@ bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
-After setup, use `datalox-mcp` as the replay capture surface. Until the replay
-MCP tools land, trajectory commands remain implementation-era derivative
-commands and should not be treated as the product capture path.
+After setup, use `datalox-mcp` as the replay capture surface. Trajectory
+commands are derivative-only implementation-era commands and are not the
+product capture path.
 
 This does two separate things:
 
@@ -116,9 +116,22 @@ node bin/datalox-mcp.js
 
 ## CLI
 
-Replay bundle commands land in Step 3 of the Option A plan. Current trajectory
-commands are derivative-only implementation-era commands and are not the source
-product capture path.
+Replay bundle commands:
+
+```bash
+node bin/datalox.js bundle pack --repo . --bundle-id <id> --json
+node bin/datalox.js bundle verify --repo . --bundle .datalox/replay-bundles/<id> --json
+```
+
+MCP VCR proxy commands:
+
+```bash
+node bin/datalox.js proxy --mode record --repo . --config datalox.replay.json --json
+node bin/datalox.js proxy --mode replay --repo . --bundle .datalox/replay-bundles/<id> --json
+```
+
+Current trajectory commands are derivative-only implementation-era commands and
+are not the source product capture path.
 
 Wrapper entrypoints:
 
@@ -161,11 +174,10 @@ Start the MCP server with:
 datalox-mcp
 ```
 
-For local source-tree testing, the current implementation still starts the
-legacy derivative server until Step 4 replaces it:
+For local source-tree testing:
 
 ```bash
-node dist/src/mcp/trajectoryServer.js
+node dist/src/mcp/replayServer.js
 ```
 
 For code-heavy `agent_task_trajectory.v1` rows, buyer-facing `--quality use`

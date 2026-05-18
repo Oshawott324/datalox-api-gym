@@ -15,6 +15,8 @@ import {
   type InstallHost,
 } from "../core/installCore.js";
 import { packReplayBundle, verifyReplayBundle } from "../core/replayBundle.js";
+import { readDataloxReplayProxyConfigFile } from "../core/mcpProxyConfig.js";
+import { runReplayProxyServer } from "../mcp/replayProxyServer.js";
 import { runClaudeWrapper } from "../adapters/claude/run.js";
 import { runCodexWrapper } from "../adapters/codex/run.js";
 import { runGenericWrapper } from "../adapters/generic/run.js";
@@ -53,6 +55,7 @@ function usage(): string {
     "  datalox auto-bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
     "  datalox bundle pack [--repo <path>] --bundle-id <id> [--json]",
     "  datalox bundle verify [--repo <path>] --bundle <bundle-path> [--json]",
+    "  datalox proxy --mode <record|replay> [--repo <path>] [--config <json-path>] [--bundle <bundle-path>] [--json]",
     "  datalox record-trajectory [--repo <path>] --trajectory-row <json-file> [--json]",
     "  datalox export-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
     "  datalox record-agent-task-trajectory [--repo <path>] --agent-task-trajectory <json-file> [--json]",
@@ -270,6 +273,31 @@ async function main(): Promise<void> {
         return;
       }
       throw new Error("bundle requires subcommand pack or verify");
+    }
+    case "proxy": {
+      const mode = typeof args.mode === "string" ? args.mode : undefined;
+      const repoPath = typeof args.repo === "string" ? args.repo : undefined;
+      if (mode === "record") {
+        const configPath = typeof args.config === "string" ? args.config : "datalox.replay.json";
+        await runReplayProxyServer({
+          mode,
+          repoPath,
+          config: await readDataloxReplayProxyConfigFile({ repoPath, configPath }),
+        });
+        return;
+      }
+      if (mode === "replay") {
+        if (typeof args.bundle !== "string") {
+          throw new Error("proxy --mode replay requires --bundle");
+        }
+        await runReplayProxyServer({
+          mode,
+          repoPath,
+          bundlePath: args.bundle,
+        });
+        return;
+      }
+      throw new Error("proxy requires --mode record or --mode replay");
     }
     case "wrap": {
       const subcommand = positional;

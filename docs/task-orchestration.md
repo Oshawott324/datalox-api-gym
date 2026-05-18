@@ -148,20 +148,21 @@ The orchestrator owns task-level events. Workers may write diagnostics in their
 result packets; they should not append to `events.jsonl` unless the assignment
 explicitly grants that path.
 
-## Trajectory Recording
+## Replay Recording
 
-The agent that performs the real implementation must record the implementation
-trajectory through `datalox-mcp`.
+The agent that performs the real implementation must record replay source
+evidence through `datalox-mcp`.
 
 - If an executor worker edits product code, tests, docs, schemas, or runtime
-  behavior, that executor must call `datalox-mcp` before returning `ok: true`.
+  behavior, that executor must call replay capture tools through `datalox-mcp`
+  before returning `ok: true`.
 - If the orchestrator personally performs the implementation instead of
-  delegating it, the orchestrator must record the trajectory before marking the
-  task completed.
+  delegating it, the orchestrator must record replay source evidence before
+  marking the task completed.
 - Planner, reviewer, viewer, and summarizer workers do not record implementation
-  trajectories unless they also perform implementation work.
+  replay evidence unless they also perform implementation work.
 - `events.jsonl` remains only the task coordination log. It is not a substitute
-  for the Datalox trajectory event.
+  for Datalox replay records.
 
 ## Lifecycle
 
@@ -219,13 +220,14 @@ For this repo, orchestration is process infrastructure. It must not reintroduce
 the legacy note/skill loop as a product model. Product work still flows through:
 
 ```txt
-agent run -> AgentTurnV1 events -> session/episode assembly -> export/redaction gate -> approved session dataset -> optional trajectory/eval rows
+agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-Use task state for coordination. Use `agent_turn.v1` events as the capture
-primitive, captured sessions as the source B2B data asset, and
-`debugging_trajectory.v1` rows as compact dataset/eval derivatives.
+Use task state for coordination. Use `tool_io_record.v1` records as the exact
+replay primitive, `agent_turn.v1` events as the review primitive, replay bundles
+as the source B2B data asset, and trajectory rows as compact dataset/eval
+derivatives.
 
-Fresh trajectory-product adoption keeps orchestration and product data under
+Fresh replay-product adoption keeps orchestration and product data under
 `.datalox/`. This branch does not create a parallel wiki, note, or event store
 for task state, session capture, or trajectory rows.

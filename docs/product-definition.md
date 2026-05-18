@@ -10,7 +10,7 @@ schemas define optional derivatives only.
 
 ## One-Sentence Definition
 
-Datalox Agent Replay records agent-visible tool I/O and session evidence into export-gated replay bundles, then derives lean trajectory/eval rows when buyers need compact training examples.
+Datalox Agent Replay records agent-visible tool I/O and session evidence into export-gated replay bundles, then derives lean trajectory/eval rows for AI teams doing agent training, evaluation, and agentic reinforcement learning.
 
 ## Product Focus
 
@@ -29,7 +29,8 @@ Do not preserve legacy note/skill promotion as a second product loop in this rep
 
 The commercial goal is to give agent teams reproducible records of what their
 agents saw and did, then sell approved anonymized replay bundle datasets and
-derived trajectory/eval corpora to AI companies.
+derived trajectory/eval corpora to AI teams doing agent training, evaluation,
+and agentic reinforcement learning.
 
 The operating model is:
 
@@ -48,18 +49,41 @@ buyer-facing derivatives.
 
 ## Why This Exists
 
-AI companies need more than final answers. For coding agents and debugging agents, the source asset is the real agent session with enough structure to inspect:
+AI teams doing agent training, evaluation, and reinforcement learning need
+more than final answers and more than static logs. They need replayable
+trajectories: enough structure to reproduce an agent episode later against a
+new model, a new rubric, or a new tool stack, and get a comparable score.
+
+For coding agents, debugging agents, browser agents, and tool-using agents,
+the source asset is the real agent episode with enough structure to inspect
+and replay:
 
 - user prompts
 - agent-visible actions
-- tool calls and command results
+- exact tool I/O with deterministic request hashes
 - file edits and diffs
 - verification commands and outcomes
 
-The compact learning unit derived from that session is:
+The replay value is operational, not just historical:
+
+- replay an episode against a new model version to compare behavior
+- replay against a new rubric to recompute reward without re-running
+  inference
+- regression-test that previously-passing trajectories still pass
+- generate preference pairs from success vs failure variants of the same
+  task
+- assemble agentic RL training sets where rewards can be recomputed
+  deterministically
+
+Frontier labs have built internal sandbox and trajectory replay systems for
+this exact reason. Most AI teams cannot afford to build that platform.
+Datalox exists to be the small, open replay layer for the teams that need
+replayable trajectories but cannot build a hyperscale sandbox themselves.
+
+The compact derivative unit packaged from a replay bundle is:
 
 ```text
-problem -> context -> trajectory -> final fix -> verification -> outcome
+problem -> context -> trajectory -> final outcome -> verification -> outcome label
 ```
 
 That unit is useful for:
@@ -67,13 +91,15 @@ That unit is useful for:
 - coding-agent evals
 - debugging-agent regression suites
 - post-training data
+- agentic RL training data
+- preference pairs and reward modeling
 - tool-use analysis
 - failure-mode analysis
 
-Datalox exists to capture each turn simply, preserve tool evidence for replay,
-assemble approved replay bundles, keep them export-gated, and derive
-the compact unit only when useful. Agents should not have to fill an
-audit-heavy schema during normal work.
+Datalox exists to capture each tool call and turn simply, assemble approved
+replay bundles, keep them export-gated, and derive compact derivative rows
+only when packaging is useful. Agents should not have to fill an audit-heavy
+schema during normal work.
 
 ## What We Are Building
 
@@ -217,6 +243,7 @@ We are not building:
 - a consumer data marketplace sold directly to end users
 - an unapproved collection of traces with no outcome or export gate
 - a parallel local skill/note product loop inside this trajectory export repo
+- a hyperscale sandbox execution platform (the layer below Datalox; teams bring their own Docker, k8s, Modal, e2b, Daytona, or equivalent)
 
 ## Stable Product Sentence
 
@@ -229,9 +256,10 @@ Use this sentence when describing the project:
 When repo docs talk about Datalox, they should stay consistent with this definition:
 
 - B2B approved replay bundle data plus derived trajectory/evals are the primary product focus
-- `AgentTurnV1` events are the simple capture primitive
+- `tool_io_record.v1` records are the exact replay primitive
+- `agent_turn.v1` events are the simple turn review primitive
 - approved replay bundles are the source B2B data asset
-- trajectory rows are optional compact training/eval derivatives
+- trajectory rows are optional compact training/eval derivatives that reference their source replay bundle
 - Datalox MCP is the instrumentation, tool I/O capture, labeling, verification, and export-control layer
 - `datalox-agent-replay` is the repo-local implementation package
 - legacy note/skill promotion is not a product loop for this repo

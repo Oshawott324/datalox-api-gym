@@ -29,6 +29,8 @@ describe("product adoption scripts", () => {
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/manifest.json");
     expect(await readFile(path.join(hostDir, ".datalox/install.json"), "utf8")).toContain("\"installMode\": \"manual\"");
     expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox Agent Replay runtime root for datalox.js");
+    expect(await readFile(path.join(hostDir, "bin/datalox-mcp.js"), "utf8")).toContain("replayServer.js");
+    expect(await readFile(path.join(hostDir, "bin/datalox-agent-replay-mcp.js"), "utf8")).toContain("replayServer.js");
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir)]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills")]).status).not.toBe(0);
   }, 30000);

@@ -29,7 +29,7 @@ function isFullPackRoot(root) {
 }
 
 function ensureRuntimeReady(runtimeRoot) {
-  const serverEntrypoint = path.join(runtimeRoot, "dist", "src", "mcp", "server.js");
+  const serverEntrypoint = path.join(runtimeRoot, "dist", "src", "mcp", "replayServer.js");
   if (existsSync(serverEntrypoint)) {
     return serverEntrypoint;
   }
@@ -75,7 +75,7 @@ function resolveRuntimeEntrypoint(root) {
     }
   }
 
-  throw new Error("Unable to resolve Datalox MCP runtime root for datalox-agent-replay-mcp.js");
+  throw new Error("Unable to resolve Datalox Agent Replay replay MCP runtime root for datalox-agent-replay-mcp.js");
 }
 
 const entrypoint = resolveRuntimeEntrypoint(repoRoot);

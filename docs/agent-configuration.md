@@ -163,6 +163,5 @@ To keep the wrapper but stop autonomous post-run recording:
 - set `DATALOX_DEFAULT_POST_RUN_MODE=off`
 - or pass `--post-run-mode off`
 
-Replay capture is the target wrapper default. Any remaining trajectory-mode
-wrapper behavior is an implementation gap tracked in the Option A plan, not the
-product contract.
+Replay capture is the target wrapper default. Trajectory rows are optional
+derivatives and are not the product capture contract.

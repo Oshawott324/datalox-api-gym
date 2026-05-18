@@ -119,6 +119,15 @@ type DebuggingTrajectoryV1 = {
     evidence?: string;
   };
 
+  trajectory_type?: "success" | "failure" | "recovery";
+
+  first_wrong_step?: number;
+
+  replay_bundle_ref?: {
+    bundle_id: string;
+    bundle_path?: string;
+  };
+
   export: {
     allowed: boolean;
     redaction: "none_needed" | "applied" | "blocked";
@@ -198,6 +207,41 @@ Prefer a unified diff in `patch` when available. If a patch is unavailable, use
 
 Rows with `failed`, `reviewed`, or `not_run` can still be useful for evals and
 failure-mode data, but the label must be explicit.
+
+### `trajectory_type`
+
+Optional learning-role label for the trajectory. Separate from `outcome.label`,
+which describes the task result.
+
+- `success`: a clean trajectory suitable for behavior cloning / SFT.
+- `failure`: a trajectory that took a wrong turn and did not recover. Useful
+  for preference pairs, reward model training, and regression sets. Do not
+  use failure trajectories directly for SFT.
+- `recovery`: a trajectory that initially went wrong and then recovered to a
+  correct outcome. Useful for teaching the model how to back out of
+  uncertainty, retries, and tool failures.
+
+Leave `trajectory_type` unset when the row is not yet annotated. Setting
+`trajectory_type: "failure"` does not require `outcome.label: "failure"`; a
+trajectory can be a recoverable failure that ultimately succeeded.
+
+### `first_wrong_step`
+
+Optional zero-based index into `trajectory[]` for the first step where the
+agent went off the correct path. Most valuable for `trajectory_type:
+"failure"` and `"recovery"` rows because it gives a credit-assignment
+signal: which step deserves the blame, not just whether the overall result
+was bad.
+
+Omit when the row is a clean success or when the failure point is unknown.
+
+### `replay_bundle_ref`
+
+Optional pointer to the source `replay_bundle.v1` this derivative row was
+packaged from. When present, downstream consumers can recompute rewards,
+replay tool I/O, or compare model behavior against the same recorded
+environment. `bundle_path` is repo-relative provenance and is not required
+for replay lookup.
 
 ### `export`
 

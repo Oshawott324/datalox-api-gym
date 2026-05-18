@@ -6,12 +6,12 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  AGENT_TURNS_RELATIVE_DIR,
   packReplayBundle,
   REPLAY_BUNDLES_RELATIVE_DIR,
   ReplayBundleVerificationError,
   verifyReplayBundle,
 } from "../src/core/replayBundle.js";
+import { AGENT_TURNS_RELATIVE_DIR } from "../src/core/agentTurnStore.js";
 import { recordToolIo, TOOL_IO_RECORDS_RELATIVE_DIR } from "../src/core/toolIoStore.js";
 
 const repoRoot = process.cwd();

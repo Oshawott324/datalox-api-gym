@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc",
     "datalox": "node dist/src/cli/main.js",
-    "mcp:stdio": "node dist/src/mcp/trajectoryServer.js",
+    "mcp:stdio": "node dist/src/mcp/replayServer.js",
     "mcp:full": "node dist/src/mcp/server.js",
     "prepare": "tsc",
     "check": "tsc --noEmit",

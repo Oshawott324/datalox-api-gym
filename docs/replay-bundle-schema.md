@@ -60,6 +60,20 @@ type ReplayBundleV1 = {
     turn_count: number;
     deterministic: boolean;
   };
+  runtime?: {
+    model_version?: string;
+    sampling?: {
+      temperature?: number;
+      top_p?: number;
+      seed?: number;
+    };
+    system_prompt_hash?: string;
+  };
+  env?: {
+    tool_versions?: Record<string, string>;
+    corpus_snapshot_hash?: string;
+    snapshot_at?: string;
+  };
   checksums_path: "checksums.json";
   export: {
     allowed: boolean;
@@ -72,6 +86,33 @@ type ReplayBundleV1 = {
   }>;
 };
 ```
+
+## Runtime And Env Rule
+
+`runtime` and `env` are optional reproducibility metadata. When present, they
+let a downstream consumer recompute rewards or compare model behavior against
+the same recorded environment three months later without guessing.
+
+- `runtime.model_version` should pin the model used during recording so a
+  replay against a new model is an explicit comparison, not a silent drift.
+- `runtime.sampling` should include any sampling parameters needed to
+  reproduce decoded outputs at the agent layer when the agent is not
+  deterministic.
+- `runtime.system_prompt_hash` should reference the system prompt by
+  content hash, not store it inline, so prompt changes are detectable
+  without leaking prompt text into every bundle.
+- `env.tool_versions` should pin the versions of agent-visible tools used
+  during recording. Replay does not require live tools, but mismatched tool
+  versions across recordings invalidate cross-bundle reward comparisons.
+- `env.corpus_snapshot_hash` should reference any indexed or retrievable
+  corpus the agent read against. Drift in the underlying corpus is the
+  single most common reason rewards stop reproducing.
+- `env.snapshot_at` is the wall-clock snapshot timestamp for the corpus or
+  external state.
+
+Missing `runtime` or `env` does not block bundle verification. Their absence
+means the bundle is replayable but not pinned for cross-time reward
+comparison.
 
 ## Checksum Rule
 

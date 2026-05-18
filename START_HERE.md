@@ -113,8 +113,13 @@ After setup, keep using the host normally.
   `claude --print "Update the onboarding docs."`
 
 The installed shims route supported runs through Datalox automatically. Replay
-capture is the target default. Any remaining trajectory-mode wrapper behavior is
-an implementation gap tracked in the Option A plan, not the product contract.
+capture is the target default. Use `datalox-mcp` for replay capture tools:
+
+- `record_tool_io`
+- `record_agent_turn`
+- `pack_replay_bundle`
+- `verify_replay_bundle`
+- `replay_tool_io`
 
 If a host only sees repo instructions or MCP tools, Datalox is guidance-only
 until a wrapper or plugin owns the loop.

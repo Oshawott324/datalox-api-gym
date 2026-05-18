@@ -121,6 +121,8 @@ Supported default paths:
 - Claude shim: `~/.local/bin/claude`
 - Generic wrapper: `datalox wrap`
 - MCP entrypoint: `datalox-mcp`
+- MCP VCR proxy: `datalox proxy --mode record --config datalox.replay.json` or
+  `datalox proxy --mode replay --bundle .datalox/replay-bundles/<id>`
 
 The Claude hook is sidecar post-run automation. It cannot prove Claude used the
 right guidance before acting. Wrapper/shim paths, MCP tools, and repo-local docs
