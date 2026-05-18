@@ -1,0 +1,7 @@
+{
+  "schema": "datalox.project_capabilities.v1",
+  "attached_capability_ids": [
+    "officecli"
+  ],
+  "active_capability_id": "officecli"
+}

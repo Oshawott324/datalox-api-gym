@@ -1,0 +1,6 @@
+# Datalox Rules
+
+Read `AGENTS.md` and `DATALOX.md`.
+
+Write product capture data under `.datalox/events/` only. Use explicit
+trajectory rows and the Datalox MCP/CLI recording commands for dataset work.

@@ -1,0 +1,39 @@
+{
+  "name": "datalox-agent-replay",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Agent replay MCP for reproducible tool I/O, session bundles, and derived trajectory/eval export.",
+  "bin": {
+    "datalox": "./bin/datalox.js",
+    "datalox-mcp": "./bin/datalox-mcp.js",
+    "datalox-agent-replay": "./bin/datalox-mcp.js",
+    "datalox-agent-replay-mcp": "./bin/datalox-agent-replay-mcp.js",
+    "datalox-claude": "./bin/datalox-claude.js",
+    "datalox-codex": "./bin/datalox-codex.js",
+    "datalox-wrap": "./bin/datalox-wrap.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "datalox": "node dist/src/cli/main.js",
+    "mcp:stdio": "node dist/src/mcp/replayServer.js",
+    "mcp:full": "node dist/src/mcp/server.js",
+    "prepare": "tsc",
+    "check": "tsc --noEmit",
+    "pretest": "npm run build",
+    "test": "vitest run tests"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1029.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
+    "playwright": "^1.59.1",
+    "zod": "^4.3.6"
+  }
+}

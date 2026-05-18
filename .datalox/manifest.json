@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "kind": "agent_replay_mcp",
+  "name": "Datalox Agent Replay",
+  "mode": "repo_only",
+  "runtimeRequired": false,
+  "configPath": ".datalox/config.json",
+  "instructionPaths": [
+    "DATALOX.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "WIKI.md",
+    "GEMINI.md",
+    ".github/copilot-instructions.md",
+    ".cursor/rules/datalox-agent-replay.mdc",
+    ".windsurf/rules/datalox-agent-replay.md"
+  ],
+  "eventStores": {
+    "agentTurns": ".datalox/events/agent-turns",
+    "toolIoRecords": ".datalox/tool-io/records",
+    "replayBundles": ".datalox/replay-bundles",
+    "approvals": ".datalox/approvals",
+    "trajectoryDerivatives": ".datalox/derivatives/trajectories"
+  },
+  "productModel": {
+    "sourceAsset": "approved_anonymized_replay_bundle",
+    "capturePrimitives": [
+      "action_observation.v1",
+      "tool_io_record.v1",
+      "agent_turn.v1"
+    ],
+    "bundleSchema": "replay_bundle.v1",
+    "derivatives": [
+      "debugging_trajectory.v1",
+      "agent_task_trajectory.v1"
+    ],
+    "guidanceSurfaces": [
+      "docs/",
+      "DATALOX.md",
+      "AGENTS.md",
+      "skills/"
+    ]
+  },
+  "startup": {
+    "readOnEveryLoop": true,
+    "readOrder": [
+      ".datalox/config.local.json",
+      ".datalox/config.json",
+      "docs/product-definition.md",
+      "docs/action-observation-schema.md",
+      "docs/tool-io-store-schema.md",
+      "docs/replay-bundle-schema.md",
+      "docs/agent-turn-schema.md",
+      "DATALOX.md",
+      "AGENTS.md",
+      "CLAUDE.md",
+      "WIKI.md",
+      "GEMINI.md"
+    ]
+  },
+  "distribution": {
+    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Oshawott324/datalox-agent-replay.git datalox-agent-replay && cd datalox-agent-replay && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
+    "multiAgentSetup": "bash bin/setup-multi-agent.sh codex",
+    "friendlyEntryPoint": "START_HERE.md",
+    "agentSetupPrompt": {
+      "instruction": "Paste this into the agent chatbox from the repo you want Datalox to manage.",
+      "commands": [
+        "TARGET_REPO=\"$(pwd)\"",
+        "git clone https://github.com/Oshawott324/datalox-agent-replay.git datalox-agent-replay",
+        "cd datalox-agent-replay",
+        "bash bin/setup-multi-agent.sh codex",
+        "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
+        "node bin/datalox.js status --repo \"$TARGET_REPO\" --json"
+      ],
+      "sourceRole": "The public GitHub source repo is datalox-agent-replay; the local checkout/package identity is datalox-agent-replay and it owns bin/adopt-host-repo.sh.",
+      "targetRepoRole": "$TARGET_REPO is the user's current project and receives the Datalox install stamp, instruction surfaces, .datalox config, and host shims."
+    },
+    "defaultBootstrapBundle": {
+      "toolIoRoot": ".datalox/tool-io/records",
+      "turnEventsRoot": ".datalox/events/agent-turns",
+      "replayBundlesRoot": ".datalox/replay-bundles",
+      "instructionSurfaces": [
+        "DATALOX.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "WIKI.md",
+        "GEMINI.md"
+      ]
+    },
+    "wrapperFallback": {
+      "claude": "node bin/datalox-claude.js --repo <repo> -- --print \"<prompt>\"",
+      "codex": "node bin/datalox-codex.js --repo <repo> --task \"<task>\" --prompt \"<prompt>\"",
+      "genericCli": "node bin/datalox-wrap.js command --repo <repo> --task \"<task>\" --prompt \"<prompt>\" -- <host-command> __DATALOX_PROMPT__"
+    }
+  }
+}

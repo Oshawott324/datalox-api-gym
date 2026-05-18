@@ -1,0 +1,12 @@
+{
+  "paths": {
+    "eventsRoot": ".datalox/events",
+    "agentTurnsDir": ".datalox/events/agent-turns",
+    "trajectoryRowsDir": ".datalox/events/trajectory-rows",
+    "agentTaskTrajectoriesDir": ".datalox/events/agent-task-trajectories"
+  },
+  "runtime": {
+    "baseUrl": "https://api.example.datalox.com",
+    "defaultWorkflow": "trajectory_export"
+  }
+}

@@ -1,0 +1,340 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://datalox.dev/schemas/config.schema.json",
+  "title": "Datalox Agent Config",
+  "type": "object",
+  "required": [
+    "version",
+    "mode",
+    "project",
+    "sources",
+    "agent",
+    "paths",
+    "retrieval",
+    "runtime",
+    "auth"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "repo_only",
+        "service_backed"
+      ]
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name",
+          "enabled",
+          "root"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "local_repo",
+              "runtime_retrieval"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "root": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "agent": {
+      "type": "object",
+      "required": [
+        "profile",
+        "nativeSkillPolicy",
+        "detectOnEveryLoop",
+        "configReadOrder",
+        "interfaceOrder"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": [
+            "local_first",
+            "runtime_first"
+          ]
+        },
+        "nativeSkillPolicy": {
+          "type": "string",
+          "enum": [
+            "preserve"
+          ]
+        },
+        "detectOnEveryLoop": {
+          "type": "boolean"
+        },
+        "configReadOrder": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "interfaceOrder": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "skill_loop",
+              "runtime_compile"
+            ]
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "paths": {
+      "type": "object",
+      "required": [
+        "seedSkillsDir",
+        "seedNotesDir",
+        "hostSkillsDir",
+        "hostNotesDir"
+      ],
+      "properties": {
+        "seedSkillsDir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seedNotesDir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seedPatternsDir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hostSkillsDir": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "hostNotesDir": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "hostPatternsDir": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "retrieval": {
+      "type": "object",
+      "required": [
+        "notesBackend"
+      ],
+      "properties": {
+        "notesBackend": {
+          "type": "string",
+          "enum": [
+            "native",
+            "qmd"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "maintenance": {
+      "type": "object",
+      "properties": {
+        "maxEvents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minNoteOccurrences": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minSkillOccurrences": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "automatic": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "write": {
+              "type": "boolean"
+            },
+            "lockStaleMs": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "backlog": {
+          "type": "object",
+          "properties": {
+            "warn": {
+              "$ref": "#/$defs/backlogThreshold"
+            },
+            "urgent": {
+              "$ref": "#/$defs/backlogThreshold"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "baseUrl",
+        "defaultWorkflow",
+        "requestTimeoutMs",
+        "endpoints"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "baseUrl": {
+          "type": "string",
+          "minLength": 1
+        },
+        "defaultWorkflow": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requestTimeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endpoints": {
+          "type": "object",
+          "required": [
+            "compile",
+            "guidance",
+            "publish",
+            "search",
+            "install",
+            "ingest",
+            "register"
+          ],
+          "properties": {
+            "compile": {
+              "type": "string"
+            },
+            "guidance": {
+              "type": "string"
+            },
+            "publish": {
+              "type": "string"
+            },
+            "search": {
+              "type": "string"
+            },
+            "install": {
+              "type": "string"
+            },
+            "ingest": {
+              "type": "string"
+            },
+            "register": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "auth": {
+      "type": "object",
+      "required": [
+        "apiKeyEnv",
+        "contributorKeyEnv"
+      ],
+      "properties": {
+        "apiKeyEnv": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contributorKeyEnv": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "backlogThreshold": {
+      "type": "object",
+      "properties": {
+        "uncovered": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "oldestAgeDays": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maintainableGroups": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "./config.schema.json",
+  "version": 1,
+  "mode": "repo_only",
+  "project": {
+    "id": "datalox-agent-replay",
+    "name": "Datalox Agent Replay"
+  },
+  "sources": [
+    {
+      "kind": "local_repo",
+      "name": "repo-agent-replay",
+      "enabled": true,
+      "root": ".datalox"
+    }
+  ],
+  "agent": {
+    "profile": "local_first",
+    "nativeSkillPolicy": "preserve",
+    "detectOnEveryLoop": true,
+    "configReadOrder": [
+      "env:DATALOX_CONFIG_JSON",
+      ".datalox/config.local.json",
+      ".datalox/config.json",
+      "AGENTS.md"
+    ],
+    "interfaceOrder": [
+      "skill_loop",
+      "runtime_compile"
+    ]
+  },
+  "paths": {
+    "seedSkillsDir": "skills",
+    "seedNotesDir": ".datalox/guidance/notes",
+    "hostSkillsDir": null,
+    "hostNotesDir": null
+  },
+  "retrieval": {
+    "notesBackend": "native"
+  },
+  "maintenance": {
+    "maxEvents": 12,
+    "minNoteOccurrences": 2,
+    "minSkillOccurrences": 3,
+    "automatic": {
+      "enabled": true,
+      "write": true,
+      "lockStaleMs": 300000
+    },
+    "backlog": {
+      "warn": {
+        "uncovered": 50,
+        "oldestAgeDays": 7,
+        "maintainableGroups": 1
+      },
+      "urgent": {
+        "uncovered": 100,
+        "oldestAgeDays": 14,
+        "maintainableGroups": 5
+      }
+    }
+  },
+  "runtime": {
+    "enabled": false,
+    "baseUrl": "http://localhost:3000",
+    "defaultWorkflow": "flow_cytometry",
+    "requestTimeoutMs": 10000,
+    "endpoints": {
+      "compile": "/v1/runtime/compile",
+      "guidance": "/v1/runtime/guidance",
+      "publish": "/v1/skills/publish",
+      "search": "/v1/skills/search",
+      "install": "/v1/skills/:name/install",
+      "ingest": "/v1/files/ingest",
+      "register": "/v1/contributor/register"
+    }
+  },
+  "auth": {
+    "apiKeyEnv": "DATALOX_API_KEY",
+    "contributorKeyEnv": "DATALOX_CONTRIBUTOR_KEY"
+  }
+}
