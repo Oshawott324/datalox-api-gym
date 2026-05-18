@@ -22,14 +22,14 @@ Canonical path:
 Canonical pipeline:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 The related normalized view is defined in
 [action-observation-schema.md](./action-observation-schema.md):
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle
+tool_io_record.v1 -> action_observation.v1 -> replay_bundle.v1
 ```
 
 `action_observation.v1` is a strict view over tool I/O records. It is not a

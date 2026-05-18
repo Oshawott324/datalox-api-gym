@@ -259,7 +259,8 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Agent Replay",
       "If `DATALOX.md` exists in this repo, read it after this file and treat it as the repo-local Datalox contract.",
-      "Use `.datalox/events/` for product capture data.",
+      "Use `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/` for replay capture data.",
+      "Do not create a parallel wiki/note/event store.",
     ],
   },
   "CLAUDE.md": {
@@ -273,7 +274,8 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Agent Replay",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
-      "Keep product capture data under `.datalox/events/`.",
+      "Keep replay capture data under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.",
+      "Do not create a parallel wiki/note/event store.",
     ],
   },
   "GEMINI.md": {
@@ -281,7 +283,8 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Agent Replay",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
-      "Keep product capture data under `.datalox/events/`.",
+      "Keep replay capture data under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.",
+      "Do not create a parallel wiki/note/event store.",
     ],
   },
   ".github/copilot-instructions.md": {
@@ -289,7 +292,8 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     lines: [
       "## Datalox Agent Replay",
       "Also consult `AGENTS.md` and `DATALOX.md` when they exist.",
-      "Use `.datalox/events/` for product capture data.",
+      "Use `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/` for replay capture data.",
+      "Do not create a parallel wiki/note/event store.",
     ],
   },
 };

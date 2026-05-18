@@ -107,6 +107,9 @@ describe("install-facing replay MCP server", () => {
         "replay_tool_io",
       ]);
       expect(toolNames.some((name) => name.includes("trajectory"))).toBe(false);
+      expect(toolNames.some((name) => name.includes("grade"))).toBe(false);
+      expect(toolNames.some((name) => name.includes("repair"))).toBe(false);
+      expect(toolNames.some((name) => name.includes("export"))).toBe(false);
 
       const recordToolResult = extractStructuredResult(await client.callTool({
         name: "record_tool_io",

@@ -1,25 +1,25 @@
 # Gemini Instructions
 
-Use Datalox Agent Replay for product replay capture.
+Use Datalox Agent Replay for replay capture.
 
-Primary product loop:
+Primary replay loop:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 Read:
 
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
-3. `docs/product-definition.md`
+3. `docs/project-definition.md`
 4. `docs/action-observation-schema.md` when raw trace normalization or action schema is involved
 5. `docs/tool-io-store-schema.md` when tool-call capture or replay is involved
 6. `docs/replay-bundle-schema.md` when replay bundles, approval, or export are involved
 7. `docs/agent-turn-schema.md` when turn review data is involved
 8. trajectory schema docs only when deriving optional trajectory/eval rows
 
-Product source data belongs under `.datalox/tool-io/records/`,
+Replay data belongs under `.datalox/tool-io/records/`,
 `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`. Do not create a
 parallel wiki/note/event store.
 

@@ -1,13 +1,14 @@
 # Start Here
 
-Datalox converts messy agent traces into validated action/observation records
-so agent teams can replay and audit behavior later. Approved replay bundles are
-the source product, with compact trajectory/eval rows as optional derivatives.
+Datalox Agent Replay is an MCP-compatible VCR for agent tools. It records exact
+agent-visible tool requests and observations, stores them by deterministic
+request hash, packs sealed replay bundles, and replays the same observations
+later without live upstream tools.
 
-Primary product loop:
+Primary replay loop:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 The normalized action schema is
@@ -21,7 +22,7 @@ The concrete replay migration plan is
 
 User-facing capture copy:
 
-> Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
+> Datalox captured replay evidence for this agent session. It includes tool requests, tool observations, optional turn context, file edits, and verification results. You can keep it private, review it, or share an approved anonymized replay bundle with your organization/data program.
 
 ## Fastest Path
 
@@ -44,7 +45,7 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
 Fresh adoption creates instruction surfaces, `.datalox/` config, the install
-stamp, and host shims. Product replay data writes under `.datalox/tool-io/`,
+stamp, and host shims. Replay data writes under `.datalox/tool-io/`,
 `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.
 
 ## New Session In The Same Repo
@@ -65,7 +66,7 @@ node bin/datalox.js status --repo . --json
 
 - `.datalox/tool-io/records/`: exact replay records
 - `.datalox/events/agent-turns/`: turn review events
-- `.datalox/replay-bundles/`: source replay bundles
+- `.datalox/replay-bundles/`: portable replay bundles
 - `.datalox/approvals/`: future approval records
 - `.datalox/derivatives/trajectories/`: optional trajectory/eval derivatives
 - `DATALOX.md`, `AGENTS.md`, and host instruction files
@@ -75,7 +76,7 @@ node bin/datalox.js status --repo . --json
 
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
-3. `docs/product-definition.md`
+3. `docs/project-definition.md`
 4. `docs/action-observation-schema.md` when the work touches raw trace normalization or action schema
 5. `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
 6. `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
@@ -97,7 +98,7 @@ node bin/datalox.js status --repo . --json
 - Stop machine-level host interception:
   `bash bin/disable-default-host-integrations.sh`
 
-Fresh adopted repos get only the product bootstrap bundle by default:
+Fresh adopted repos get only the replay bootstrap bundle by default:
 
 - runtime/instruction surfaces
 - `.datalox/config.json`

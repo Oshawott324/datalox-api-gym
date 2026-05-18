@@ -111,7 +111,7 @@ describe("trajectory recording and export", () => {
     await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
   });
 
-  it("records a trajectory row only under the product event root", async () => {
+  it("records a trajectory row only under the derivative event root", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-record-"));
     tempDirs.push(tempDir);
 
@@ -184,7 +184,7 @@ describe("trajectory recording and export", () => {
     expect(lines.map((line) => JSON.parse(line).id)).toEqual(["new-row"]);
   });
 
-  it("repairs only product trajectory event paths", async () => {
+  it("repairs only derivative trajectory event paths", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-repair-"));
     tempDirs.push(tempDir);
 

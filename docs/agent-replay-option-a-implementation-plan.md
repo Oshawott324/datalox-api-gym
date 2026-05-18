@@ -3,43 +3,43 @@
 This is the concrete implementation plan for turning this repo into Option A:
 an MCP-compatible VCR for agent tools.
 
-## Product Boundary
+## Project Boundary
 
 Datalox Agent Replay is not a trajectory-first tool.
 
-Primary product:
+Primary replay loop:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 Trajectory rows are optional downstream derivatives. They may remain only under
 a derivative boundary. They must not be the install-facing MCP surface, wrapper
-default, or first-read product story.
+default, or first-read project story.
 
-After the `rl-trajectory.md` author feedback, the entry wedge is sharper:
+After the replay design review, the entry wedge is sharper:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle
+tool_io_record.v1 -> action_observation.v1 -> replay_bundle.v1
 ```
 
 MCP standardizes tool calling. Datalox should standardize replayable
 action/observation evidence across agent hosts, tool wrappers, and raw traces.
-Replay bundles remain the source package, but the next implementation layer must
+Replay bundles remain the portable package, but the next implementation layer must
 prove stable action schema normalization before adding richer derivative rows.
 
 ## Step 0: Freeze The Rename Baseline
 
 Goal:
 
-- finish the `datalox-agent-replay` identity cut before changing product logic
+- finish the `datalox-agent-replay` identity cut before changing project logic
 
 Change:
 
 - keep package name as `datalox-agent-replay`
 - keep cache path as `.datalox/cache/datalox-agent-replay`
 - keep install docs pointed at the new repo URL
-- keep active docs and instruction files free of old product names and legacy
+- keep active docs and instruction files free of old project names and legacy
   store names
 
 Pass criteria:
@@ -54,7 +54,7 @@ Pass criteria:
 
 Goal:
 
-- define the source product before adding runtime behavior
+- define the replay artifact before adding runtime behavior
 
 Add:
 
@@ -63,7 +63,7 @@ Add:
 
 Update:
 
-- `docs/product-definition.md`
+- `docs/project-definition.md`
 - `docs/agent-turn-schema.md`
 - `README.md`
 - `START_HERE.md`
@@ -83,14 +83,14 @@ Canonical paths:
 
 Pass criteria:
 
-- first-read docs describe replay bundles as the source product
+- first-read docs describe replay bundles as the portable replay artifact
 - first-read docs describe trajectory rows only as optional derivatives
 - no setup instruction tells agents to generate trajectory rows as the normal
-  product capture step
+  replay capture step
 - active docs contain the replay pipeline:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 ## Step 2: Implement The Content-Addressed Tool I/O Store
@@ -274,7 +274,7 @@ Pass criteria:
 
 Goal:
 
-- remove trajectory-first behavior from the product core
+- remove trajectory-first behavior from the replay core
 
 Allowed final state:
 
@@ -295,7 +295,7 @@ Remove from primary docs and runtime:
 - trajectory MCP server files
 - trajectory default wrapper mode
 - trajectory row environment markers
-- trajectory event roots as first-class product stores
+- trajectory event roots as first-class replay stores
 - trajectory commands from first-read docs
 
 Pass criteria:
@@ -344,14 +344,14 @@ Goal:
 
 Why this step exists:
 
-- customer discovery says the accessible product gap is action schema
+- customer discovery says the accessible standardization gap is action schema
   standardization
 - environment replay and reward engines can stay as references/provenance for
   now
 - Datalox should prove it can normalize traces from different agent hosts into
   one replayable action/observation unit
 
-Product rule:
+Replay rule:
 
 ```text
 raw trace -> adapter -> action_observation.v1 view over tool_io_record.v1 -> replay_bundle.v1 -> optional derivative
@@ -364,7 +364,7 @@ action/observation unit is stable.
 Update:
 
 - `docs/tool-io-store-schema.md`
-- `docs/product-definition.md`
+- `docs/project-definition.md`
 - `README.md`
 - `DATALOX.md`
 - `.datalox/manifest.json` if canonical schema docs are listed there
@@ -437,7 +437,7 @@ Implementation details:
 - keep `tool_io_record.v1` as the persisted replay primitive under
   `.datalox/tool-io/records/`
 - implement `ActionObservationV1` as a strict normalized view over
-  `tool_io_record.v1`, not a second product store
+  `tool_io_record.v1`, not a second replay store
 - normalize tool names deterministically without aliases or fuzzy matching
 - preserve exact `arguments` and `observation` values as agent-visible JSON
 - derive `request_hash` only from canonical JSON of `{ tool_name, arguments }`
@@ -553,7 +553,7 @@ Stale active-reference scan must fail on:
 
 Pass criteria:
 
-- fresh adoption creates replay-focused product surfaces only
+- fresh adoption creates replay-focused replay surfaces only
 - fresh adoption does not create legacy stores
 - install-facing MCP is replay-first
 - action/observation normalization remains strict and deterministic
@@ -571,5 +571,5 @@ This migration is done only when:
 - replay bundles are deterministic and verifiable
 - wrapper default capture mode is replay
 - trajectory rows are derivative-only or removed
-- fresh adoption produces no legacy product paths
+- fresh adoption produces no legacy replay paths
 - tests enforce all of the above

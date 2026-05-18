@@ -1,9 +1,9 @@
-# Datalox Product Guidance
+# Datalox Replay Guidance
 
-This branch uses `.datalox/` as the replay product data store:
+This branch uses `.datalox/` as the replay replay data store:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 - `.datalox/tool-io/records/`
@@ -12,4 +12,4 @@ messy agent traces -> validated action/observation records -> replay bundle -> a
 - `.datalox/approvals/`
 - `.datalox/derivatives/trajectories/`
 
-Use `DATALOX.md` and `AGENTS.md` for the current product contract.
+Use `DATALOX.md` and `AGENTS.md` for the current replay contract.

@@ -3,21 +3,20 @@
 `datalox-agent-replay` is the repo-local implementation package for Datalox
 Agent Replay: an MCP-compatible recorder/replay layer for agent tool I/O.
 
-Datalox converts messy agent traces into validated action/observation records,
-then records agent-visible prompts, tool actions, file edits, verification
-results, and replay evidence so teams can reproduce agent behavior later.
-Approved replay bundles are the source data product. Trajectory/eval rows are
-optional derivatives from those bundles.
+Datalox acts like a VCR for agent tools. It records the exact agent-visible
+tool request and observation, stores that pair by deterministic request hash,
+packs the records into sealed replay bundles, and can replay the same
+observations later without calling live upstream tools.
 
-Primary product loop:
+Primary replay loop:
 
-`messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives`
+`agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`
 
-This branch does not ship a parallel wiki/note/event product store.
+This branch does not ship a parallel wiki/note/event replay store.
 
 ## What It Writes
 
-In an adopted repo, product data and review state live under `.datalox/`:
+In an adopted repo, replay data and review state live under `.datalox/`:
 
 ```text
 .datalox/
@@ -36,21 +35,22 @@ AGENTS.md
 
 Use:
 
-- `.datalox/tool-io/records/` for `tool_io_record.v1` replay records
-- `action_observation.v1` as the strict normalized action/observation view over tool I/O
-- `.datalox/events/agent-turns/` for `agent_turn.v1` review events
-- `.datalox/replay-bundles/` for `replay_bundle.v1` source product artifacts
-- `.datalox/approvals/` for review/approval artifacts
-- `.datalox/derivatives/trajectories/` for optional compact trajectory/eval derivatives
+- `.datalox/tool-io/records/` for exact `tool_io_record.v1` request/observation records
+- `.datalox/events/agent-turns/` for optional `agent_turn.v1` review events that point at recorded tool I/O
+- `.datalox/replay-bundles/` for portable `replay_bundle.v1` artifacts with manifests and checksums
+- `.datalox/approvals/` for review/approval metadata
+- `.datalox/derivatives/trajectories/` for optional compact training/eval adapters
 
-Unapproved raw traces are not sellable data. The source asset is an approved
-anonymized replay bundle assembled from tool I/O records and turns.
-`debugging_trajectory.v1` and `agent_task_trajectory.v1` are compact row
-derivatives for training/eval packaging.
+The durable replay primitive is `tool_io_record.v1`. `action_observation.v1`
+is a strict normalized view over recorded tool I/O and imported raw traces; it
+is not a second store. `agent_turn.v1` is optional review context. A
+`replay_bundle.v1` is the portable artifact that can be verified and replayed.
+`debugging_trajectory.v1` and `agent_task_trajectory.v1` rows are downstream
+derivatives when a team wants compact examples instead of full replay bundles.
 
 User-facing capture copy:
 
-> Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
+> Datalox captured replay evidence for this agent session. It includes tool requests, tool observations, optional turn context, file edits, and verification results. You can keep it private, review it, or share an approved anonymized replay bundle with your organization/data program.
 
 ## Install
 
@@ -73,7 +73,7 @@ node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
 After setup, use `datalox-mcp` as the replay capture surface. Trajectory rows
-are derivative-only artifacts and are not the product capture path.
+are derivative-only artifacts and are not the replay capture path.
 
 This does two separate things:
 
@@ -136,7 +136,7 @@ is not exposed by the install-facing CLI or MCP surface.
 
 Action/observation normalization lives in `src/core/actionObservation*.ts`. It
 is a strict view over tool I/O records and raw trace events; it does not create
-a second product store.
+a second replay store.
 
 Wrapper entrypoints:
 
@@ -187,28 +187,25 @@ For local source-tree testing:
 node dist/src/mcp/replayServer.js
 ```
 
-For code-heavy `agent_task_trajectory.v1` rows, buyer-facing `--quality use`
-export requires at least one exact `code_change` evidence block. Local code
+For code-heavy `agent_task_trajectory.v1` rows, a use-quality derivative export
+requires at least one exact `code_change` evidence block. Local code
 `source_reference` blocks are useful provenance, but they do not replace
 before/after snippets or patch hunks.
 
-## Current Best Practice
+## Core Contract
 
-- `trace`, `web`, and `pdf` are the only concrete source kinds.
-- `action_observation.v1` is the strict normalized action/observation view.
-- `agent_turn.v1` is the simple capture primitive.
-- Exact replay data belongs under `.datalox/tool-io/records/`.
-- Turn review data belongs under `.datalox/events/agent-turns/`.
-- Approved anonymized replay bundles are the source product export target.
-- `debugging_trajectory.v1` rows are optional compact training/eval derivatives.
-- `agent_task_trajectory.v1` rows are optional compact mixed-domain task derivatives with domain-specific evidence blocks.
-- Verified trajectory rows are derivative artifacts, not repo-local knowledge page types or the complete source session.
-- Keep training rows small; store detailed consent, license, redaction, and provenance evidence in source events or curation systems.
+- Record exact tool I/O first; derive everything else from replay evidence.
+- Use `request_hash + sequence_index` as the replay lookup key.
+- Never synthesize replay records from prose summaries.
+- Replay mode returns recorded observations or fails clearly; it does not call live tools as a hidden fallback.
+- `action_observation.v1` is the normalized view over replay records and imported traces.
+- `agent_turn.v1` adds compact turn review context when useful, but the replayable evidence remains in `.datalox/tool-io/records/`.
+- `debugging_trajectory.v1` and `agent_task_trajectory.v1` are optional downstream adapters, not the capture layer.
 
 ## Docs
 
 - [DATALOX.md](DATALOX.md)
-- [docs/product-definition.md](docs/product-definition.md)
+- [docs/project-definition.md](docs/project-definition.md)
 - [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md)
 - [docs/action-observation-schema.md](docs/action-observation-schema.md)
 - [docs/tool-io-store-schema.md](docs/tool-io-store-schema.md)

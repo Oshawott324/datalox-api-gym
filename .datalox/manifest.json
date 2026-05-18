@@ -22,15 +22,16 @@
     "approvals": ".datalox/approvals",
     "trajectoryDerivatives": ".datalox/derivatives/trajectories"
   },
-  "productModel": {
-    "sourceAsset": "approved_anonymized_replay_bundle",
+  "replayModel": {
+    "primaryLoop": "agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives",
+    "replayArtifact": "replay_bundle.v1",
     "capturePrimitives": [
-      "action_observation.v1",
       "tool_io_record.v1",
+      "action_observation.v1",
       "agent_turn.v1"
     ],
     "bundleSchema": "replay_bundle.v1",
-    "derivatives": [
+    "derivativeAdapters": [
       "debugging_trajectory.v1",
       "agent_task_trajectory.v1"
     ],
@@ -46,7 +47,7 @@
     "readOrder": [
       ".datalox/config.local.json",
       ".datalox/config.json",
-      "docs/product-definition.md",
+      "docs/project-definition.md",
       "docs/action-observation-schema.md",
       "docs/tool-io-store-schema.md",
       "docs/replay-bundle-schema.md",

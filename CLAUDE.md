@@ -6,27 +6,27 @@ Claude Code can see Datalox through separate surfaces:
 - Claude Stop hook: post-turn sidecar automation; it cannot force pre-turn behavior.
 - Claude MCP tools: guidance-only unless Claude Code actually calls them.
 
-Product boundary:
+Project boundary:
 
-- Datalox MCP is the product-facing instrumentation and control layer for desktop agents.
-- B2B approved replay bundles plus derived trajectory/evals are the primary product focus.
-- `action_observation.v1` is the strict normalized action/observation view.
+- Datalox MCP is the install-facing instrumentation and control layer for desktop agents.
+- Reproducible tool-call replay is the primary project focus.
+- `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` records are the exact replay primitive.
-- `agent_turn.v1` events are the simple turn review primitive.
-- Approved anonymized replay bundles are the source B2B data asset.
-- Lean, outcome-labeled trajectory rows are optional compact training/eval derivatives.
+- `agent_turn.v1` events are optional turn review context.
+- `replay_bundle.v1` is the portable artifact that can be verified and replayed.
+- Lean, outcome-labeled trajectory rows are optional compact training/eval adapters.
 
-Primary product loop:
+Primary replay loop:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 On each loop:
 
-1. read `docs/product-definition.md`, `docs/action-observation-schema.md`, `docs/tool-io-store-schema.md`, `docs/replay-bundle-schema.md`, and `docs/agent-turn-schema.md` when export/data fields are involved
+1. read `docs/project-definition.md`, `docs/action-observation-schema.md`, `docs/tool-io-store-schema.md`, `docs/replay-bundle-schema.md`, and `docs/agent-turn-schema.md` when export/data fields are involved
 2. record replay source evidence under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`
-3. route new product behavior through action/observation normalization first, persist tool I/O records, assemble replay bundles, then derive trajectory rows when useful
+3. record exact tool I/O first, assemble replay bundles, and derive trajectory rows only when useful
 4. do not create a parallel wiki/note/event store
 
 Useful commands:

@@ -116,7 +116,7 @@ export function gradeTrajectoryRow(
       code: "export_blocked",
       path: "export",
       message: `Trajectory is not exportable: ${blocker}.`,
-      repair_action: "Keep this row out of buyer-facing exports or fix the export gate after redaction review.",
+      repair_action: "Keep this row out of use-quality exports or fix the export gate after redaction review.",
     });
   }
 

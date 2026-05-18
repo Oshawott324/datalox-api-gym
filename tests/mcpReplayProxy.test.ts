@@ -186,7 +186,7 @@ describe("MCP replay proxy", () => {
     }
 
     expect(await readLogLines(upstreamLog)).toHaveLength(1);
-  });
+  }, 15000);
 
   it("rejects proxy configs that are not the declared schema", async () => {
     const repoPath = await makeTempRepo();

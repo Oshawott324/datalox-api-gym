@@ -10,7 +10,7 @@ metadata:
 
 # Use Datalox Through Host CLI
 
-Use this skill when you need to record Datalox product data from a host that did
+Use this skill when you need to record Datalox replay data from a host that did
 not expose MCP tools directly.
 
 ## Workflow
@@ -37,7 +37,7 @@ DATALOX_TRAJECTORY_ROW_FILE: .datalox/trajectory-rows/<stable-id>.json
 
 ## Boundaries
 
-- Do not record product data through removed legacy write commands.
+- Do not record replay data through removed legacy write commands.
 - Do not create a parallel wiki/note/event store.
 - Do not mark a trajectory row `quality: "use"` unless the row has enough concrete evidence for deterministic grading.
 - For code-heavy mixed-domain rows, include exact `code_change` evidence blocks.

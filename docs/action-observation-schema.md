@@ -6,17 +6,17 @@ this document wins for `action_observation.v1`.
 
 ## Purpose
 
-The accessible product gap is action schema standardization:
+The accessible standardization gap is replayable action schema normalization:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle
+tool_io_record.v1 -> action_observation.v1 -> replay_bundle.v1
 ```
 
 MCP standardizes how tools are called. Datalox standardizes the replayable
 action/observation evidence that can be packed, verified, replayed, and later
 converted into optional trajectory/eval derivatives.
 
-`action_observation.v1` is a strict normalized view. It is not a second product
+`action_observation.v1` is a strict normalized view. It is not a second replay
 store. The persisted replay primitive remains `tool_io_record.v1` under:
 
 ```text
