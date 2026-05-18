@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -31,15 +31,25 @@ function resolveCliPackRoot(): string {
   ];
 
   for (const candidate of candidates) {
-    if (
-      existsSync(path.join(candidate, "package.json"))
-      && existsSync(path.join(candidate, "bin", "datalox.js"))
-    ) {
+    if (isDataloxAgentReplayRoot(candidate)) {
       return candidate;
     }
   }
 
   return candidates[candidates.length - 1];
+}
+
+function isDataloxAgentReplayRoot(candidate: string): boolean {
+  const packageJsonPath = path.join(candidate, "package.json");
+  if (!existsSync(packageJsonPath) || !existsSync(path.join(candidate, "bin", "datalox.js"))) {
+    return false;
+  }
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
+    return packageJson.name === "datalox-agent-replay";
+  } catch {
+    return false;
+  }
 }
 
 function usage(): string {

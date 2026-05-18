@@ -19,6 +19,7 @@ describe("replay adoption scripts", () => {
   it("adopts replay surfaces without creating the removed wiki store", async () => {
     const hostDir = await mkdtemp(path.join(tmpdir(), "datalox-host-adopt-"));
     tempDirs.push(hostDir);
+    await writeFile(path.join(hostDir, "package.json"), JSON.stringify({ name: "host-without-build-script" }, null, 2), "utf8");
 
     const result = spawnSync("bash", [path.join(repoRoot, "bin/adopt-host-repo.sh"), hostDir], {
       cwd: repoRoot,
@@ -42,6 +43,14 @@ describe("replay adoption scripts", () => {
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir)]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "derivatives", "trajectories")]).status).not.toBe(0);
+
+    const status = spawnSync("node", [path.join(hostDir, "bin", "datalox.js"), "status", "--repo", hostDir, "--json"], {
+      cwd: hostDir,
+      encoding: "utf8",
+    });
+    expect(status.status).toBe(0);
+    expect(status.stderr).not.toContain("Missing script");
+    expect(JSON.parse(status.stdout)).toMatchObject({ repo: { bootstrapStatus: "ready" } });
   }, 30000);
 
   it("injects replay-only instructions into existing host instruction files", async () => {

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { constants as fsConstants, existsSync } from "node:fs";
+import { constants as fsConstants, existsSync, readFileSync } from "node:fs";
 import { access, chmod, lstat, mkdir, readFile, readdir, readlink, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -291,10 +291,16 @@ function claudeLegacyPackSkillsLink(): string {
 }
 
 function validFullPackRoot(candidate: string): boolean {
-  return (
-    existsSync(path.join(candidate, "package.json"))
-    && existsSync(path.join(candidate, "bin", "datalox.js"))
-  );
+  const packageJsonPath = path.join(candidate, "package.json");
+  if (!existsSync(packageJsonPath) || !existsSync(path.join(candidate, "bin", "datalox.js"))) {
+    return false;
+  }
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
+    return packageJson.name === "datalox-agent-replay";
+  } catch {
+    return false;
+  }
 }
 
 async function ensureLocalPackCache(packRootPath: string): Promise<string> {
