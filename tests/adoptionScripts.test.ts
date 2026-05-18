@@ -31,6 +31,9 @@ describe("replay adoption scripts", () => {
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/tool-io/records/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/events/agent-turns/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/replay-bundles/");
+    expect(await readFile(path.join(hostDir, "docs", "project-definition.md"), "utf8")).toContain("Datalox Agent Replay is an MCP-compatible VCR for agent tools.");
+    expect(await readFile(path.join(hostDir, "docs", "tool-io-store-schema.md"), "utf8")).toContain('schema contract for Datalox tool I/O records');
+    expect(spawnSync("test", ["-e", path.join(hostDir, "docs", "product-definition.md")]).status).not.toBe(0);
     expect(await readFile(path.join(hostDir, ".datalox/install.json"), "utf8")).toContain("\"installMode\": \"manual\"");
     expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox Agent Replay runtime root for datalox.js");
     expect(await readFile(path.join(hostDir, "bin/datalox-mcp.js"), "utf8")).toContain("replayServer.js");
