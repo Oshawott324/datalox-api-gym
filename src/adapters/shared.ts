@@ -6,9 +6,8 @@ import {
   autoBootstrapIfSafe,
   type AutoBootstrapResult,
 } from "../core/packCore.js";
-import { recordTrajectory } from "../core/trajectoryExport.js";
 
-export type WrapperPostRunMode = "off" | "trajectory";
+export type WrapperPostRunMode = "off" | "replay";
 
 export interface LoopEnvelopeInput {
   repoPath?: string;
@@ -102,9 +101,9 @@ export interface WrapperReviewResult {
 }
 
 export interface WrapperPostRunResult {
-  mode: "off" | "trajectory";
-  trigger: "disabled" | "missing_trajectory_row" | "trajectory_row";
-  result: Awaited<ReturnType<typeof recordTrajectory>> | null;
+  mode: "off" | "replay";
+  trigger: "disabled" | "replay_capture_pending";
+  result: null;
   review: null;
   backlog: null;
   maintenance: null;
@@ -118,8 +117,6 @@ export interface WrappedLoopResult {
 
 interface ParsedMarkers {
   cleanedText: string;
-  trajectoryRow?: unknown;
-  trajectoryRowFile?: string;
 }
 
 const CONTROL_TEXT_PATTERN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
@@ -157,13 +154,10 @@ export function renderWrappedPrompt(envelope: LoopEnvelope): string {
     return envelope.originalPrompt;
   }
   return [
-    "# Datalox Trajectory Capture",
-    "For coding-debugging or mixed-domain agent work, write one explicit row file after the fix or investigation is complete.",
-    "Use `debugging_trajectory.v1` for narrow debugging rows and `agent_task_trajectory.v1` for broader mixed-domain task episodes.",
-    "Rows must be grounded in observed prompts, tool actions, file edits, verification results, and outcome labels.",
-    "Do not infer missing facts from prose. If a row is not justified for this run, omit the marker.",
-    "When a row file exists, append this marker at the very end of your response:",
-    "- DATALOX_TRAJECTORY_ROW_FILE: .datalox/trajectory-rows/<stable-id>.json",
+    "# Datalox Agent Replay",
+    "Use replay evidence as the source product: tool I/O records, agent turns, and replay bundles.",
+    "When MCP is available, call replay tools such as `record_tool_io`, `record_agent_turn`, and `pack_replay_bundle` for concrete evidence.",
+    "Do not synthesize replay data from prose summaries. If no agent-visible tool I/O was captured, leave post-run recording empty.",
     "",
     "# Original Prompt",
     envelope.originalPrompt,
@@ -185,7 +179,7 @@ export async function buildLoopEnvelope(input: LoopEnvelopeInput): Promise<LoopE
     bootstrap,
     guidance: {
       workflow,
-      selectionBasis: active ? "product_trajectory_capture" : "bootstrap_unavailable",
+      selectionBasis: active ? "product_replay_capture" : "bootstrap_unavailable",
       matchedSkillId: null,
       candidateSkills: [],
       whyMatched: [],
@@ -288,44 +282,16 @@ export function runWrappedCommand(
   };
 }
 
-function parseMarkerLine(line: string, parsed: ParsedMarkers): boolean {
-  const match = line.match(/^DATALOX_([A-Z_]+):\s*(.+)$/);
-  if (!match) {
-    return false;
-  }
-  const [, rawKey, rawValue] = match;
-  const value = rawValue.trim();
-  switch (rawKey) {
-    case "TRAJECTORY_ROW":
-      parsed.trajectoryRow = JSON.parse(value);
-      return true;
-    case "TRAJECTORY_ROW_FILE":
-      parsed.trajectoryRowFile = value;
-      return true;
-    default:
-      return false;
-  }
-}
-
 function extractMarkers(text: string): ParsedMarkers {
   const parsed: ParsedMarkers = {
-    cleanedText: "",
+    cleanedText: text.trim(),
   };
-  const keptLines: string[] = [];
-  for (const line of text.split(/\r?\n/)) {
-    if (!parseMarkerLine(line, parsed)) {
-      keptLines.push(line);
-    }
-  }
-  parsed.cleanedText = keptLines.join("\n").trim();
   return parsed;
 }
 
 function mergeMarkers(left: ParsedMarkers, right: ParsedMarkers): ParsedMarkers {
   return {
     cleanedText: "",
-    trajectoryRow: left.trajectoryRow ?? right.trajectoryRow,
-    trajectoryRowFile: left.trajectoryRowFile ?? right.trajectoryRowFile,
   };
 }
 
@@ -343,30 +309,6 @@ export function sanitizeWrappedCommandResult(result: WrappedCommandResult): {
     },
     markers: mergeMarkers(stdoutMarkers, stderrMarkers),
   };
-}
-
-async function loadTrajectoryRowMarker(
-  repoPath: string,
-  markers: ParsedMarkers,
-): Promise<unknown | null> {
-  if (markers.trajectoryRow !== undefined && markers.trajectoryRowFile !== undefined) {
-    throw new Error("Use either DATALOX_TRAJECTORY_ROW or DATALOX_TRAJECTORY_ROW_FILE, not both.");
-  }
-  if (markers.trajectoryRow !== undefined) {
-    return markers.trajectoryRow;
-  }
-  if (markers.trajectoryRowFile === undefined) {
-    return null;
-  }
-
-  const resolvedPath = path.isAbsolute(markers.trajectoryRowFile)
-    ? path.resolve(markers.trajectoryRowFile)
-    : path.resolve(repoPath, markers.trajectoryRowFile);
-  const relativePath = path.relative(repoPath, resolvedPath);
-  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-    throw new Error("DATALOX_TRAJECTORY_ROW_FILE must point inside the repo.");
-  }
-  return JSON.parse(await readFile(resolvedPath, "utf8"));
 }
 
 export async function sanitizeCodexOutputFile(repoPath: string, outputPath: string | undefined): Promise<void> {
@@ -393,7 +335,7 @@ export async function finalizeWrappedRun(
   child: WrappedCommandResult | null,
   input: WrapperPostRunInput & { hostKind: string; reviewer?: WrapperReviewRunner | null },
 ): Promise<WrapperPostRunResult> {
-  const postRunMode = input.postRunMode ?? "trajectory";
+  const postRunMode = input.postRunMode ?? "replay";
   if (!child || !envelope.active || postRunMode === "off") {
     return {
       mode: "off",
@@ -405,27 +347,11 @@ export async function finalizeWrappedRun(
     };
   }
 
-  const sanitized = sanitizeWrappedCommandResult(child);
-  const trajectoryRow = await loadTrajectoryRowMarker(envelope.repoPath, sanitized.markers);
-  if (trajectoryRow === null) {
-    return {
-      mode: "trajectory",
-      trigger: "missing_trajectory_row",
-      result: null,
-      review: null,
-      backlog: null,
-      maintenance: null,
-    };
-  }
-
-  const recordedTrajectory = await recordTrajectory({
-    repoPath: envelope.repoPath,
-    trajectoryRow,
-  });
+  sanitizeWrappedCommandResult(child);
   return {
-    mode: "trajectory",
-    trigger: "trajectory_row",
-    result: recordedTrajectory,
+    mode: "replay",
+    trigger: "replay_capture_pending",
+    result: null,
     review: null,
     backlog: null,
     maintenance: null,

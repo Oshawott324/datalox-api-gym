@@ -5,7 +5,7 @@ import {
   isSellableTrajectoryRow,
   parseDebuggingTrajectoryV1,
   serializeTrajectoryJsonlRow,
-} from "../src/core/trajectorySchema.js";
+} from "../../../src/core/derivatives/trajectory/trajectorySchema.js";
 
 function makeRow(id = "schema-row") {
   return {
@@ -124,7 +124,7 @@ function makeSchemaDocExample() {
     export: {
       allowed: true,
       redaction: "none_needed",
-      source_event_paths: [".datalox/events/trajectory-rows/example.json"],
+      source_event_paths: [".datalox/derivatives/trajectories/debugging/example.json"],
     },
     curation: {
       quality: "use",

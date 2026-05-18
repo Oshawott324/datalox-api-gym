@@ -22,4 +22,4 @@ Product source data belongs under `.datalox/tool-io/records/`,
 `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`. Do not create a
 parallel wiki/note/event store.
 
-Current trajectory commands are derivative-only until replay MCP tools land.
+Trajectory derivation code is derivative-only and is not exposed by the install-facing MCP surface.

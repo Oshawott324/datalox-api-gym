@@ -56,16 +56,10 @@ function usage(): string {
     "  datalox bundle pack [--repo <path>] --bundle-id <id> [--json]",
     "  datalox bundle verify [--repo <path>] --bundle <bundle-path> [--json]",
     "  datalox proxy --mode <record|replay> [--repo <path>] [--config <json-path>] [--bundle <bundle-path>] [--json]",
-    "  datalox record-trajectory [--repo <path>] --trajectory-row <json-file> [--json]",
-    "  datalox export-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
-    "  datalox record-agent-task-trajectory [--repo <path>] --agent-task-trajectory <json-file> [--json]",
-    "  datalox export-agent-task-trajectories [--repo <path>] [--output <jsonl-path>] [--include-blocked-report <json-path>] [--split <train|validation|test|eval>] [--quality <use|needs-review|discard>] [--json]",
-    "  datalox grade-trajectories [--repo <path>] [--event-path <event-json>] [--max-row-chars <n>] [--max-patch-chars <n>] [--max-snippet-chars <n>] [--max-metadata-chars <n>] [--json]",
-    "  datalox repair-trajectory [--repo <path>] --event-path <event-json> --trajectory-row <json-file> [--json]",
     "  datalox wrap prompt [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--json]",
-    "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
-    "  datalox claude [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory>] [--review-model <model>] [--claude-bin <path>] [--json] [-- <claude args>]",
-    "  datalox codex [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|trajectory>] [--review-model <model>] [--codex-bin <path>] [--json] [-- <codex exec args>]",
+    "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|replay>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
+    "  datalox claude [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|replay>] [--review-model <model>] [--claude-bin <path>] [--json] [-- <claude args>]",
+    "  datalox codex [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|replay>] [--review-model <model>] [--codex-bin <path>] [--json] [-- <codex exec args>]",
   ].join("\n");
 }
 
@@ -96,7 +90,7 @@ function parsePostRunMode(
 
   switch (raw) {
     case "off":
-    case "trajectory":
+    case "replay":
       return raw;
     default:
       return undefined;

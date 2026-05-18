@@ -774,7 +774,7 @@ if should_wrap "$@"; then
   export DATALOX_HOST_KIND="codex"
   export DATALOX_ENFORCEMENT="wrapper"
   export DATALOX_CODEX_BIN="$REAL_CODEX_BIN"
-  : "\${DATALOX_DEFAULT_POST_RUN_MODE:=trajectory}"
+  : "\${DATALOX_DEFAULT_POST_RUN_MODE:=replay}"
   : "\${DATALOX_DEFAULT_REVIEW_MODEL:=gpt-5.4-mini}"
   export DATALOX_DEFAULT_POST_RUN_MODE
   export DATALOX_DEFAULT_REVIEW_MODEL
@@ -883,7 +883,7 @@ if should_wrap "$@"; then
   export DATALOX_HOST_KIND="claude"
   export DATALOX_ENFORCEMENT="wrapper"
   export DATALOX_CLAUDE_BIN="$REAL_CLAUDE_BIN"
-  : "\${DATALOX_DEFAULT_POST_RUN_MODE:=trajectory}"
+  : "\${DATALOX_DEFAULT_POST_RUN_MODE:=replay}"
   : "\${DATALOX_DEFAULT_REVIEW_MODEL:=gpt-5.4-mini}"
   export DATALOX_DEFAULT_POST_RUN_MODE
   export DATALOX_DEFAULT_REVIEW_MODEL
@@ -1092,7 +1092,7 @@ export async function inspectEnforcementStatus(input: {
     generatedAt: new Date().toISOString(),
     packRootPath: normalizePath(packRootPath),
     reviewDefaults: {
-      postRunMode: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? "trajectory",
+      postRunMode: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? "replay",
       reviewModel: process.env.DATALOX_DEFAULT_REVIEW_MODEL ?? "gpt-5.4-mini",
     },
     adapters,

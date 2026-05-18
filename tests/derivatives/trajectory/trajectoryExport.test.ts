@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -7,15 +6,13 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR,
   exportTrajectories,
-  PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR,
   recordTrajectory,
   TrajectoryExportError,
-} from "../src/core/trajectoryExport.js";
-import { repairTrajectory } from "../src/core/trajectoryRepair.js";
+} from "../../../src/core/derivatives/trajectory/trajectoryExport.js";
+import { repairTrajectory } from "../../../src/core/derivatives/trajectory/trajectoryRepair.js";
 
-const repoRoot = process.cwd();
-const builtCliPath = path.join(repoRoot, "dist", "src", "cli", "main.js");
 const legacyWikiDir = ["agent", "wiki"].join("-");
 
 function makeRow(id: string) {
@@ -107,14 +104,6 @@ function makeWeakUseRow(id: string) {
   };
 }
 
-function runBuiltCli(cwd: string, args: string[]) {
-  return spawnSync("node", [builtCliPath, ...args], {
-    cwd,
-    encoding: "utf8",
-    env: process.env,
-  });
-}
-
 describe("trajectory recording and export", () => {
   const tempDirs: string[] = [];
 
@@ -144,7 +133,7 @@ describe("trajectory recording and export", () => {
     expect(event.eventKind).toBe("trajectory_row");
     expect(event.trajectoryRow.schema_version).toBe("debugging_trajectory.v1");
     expect(event.trajectoryRow.export.source_event_paths).toContain(result.eventPath);
-    expect(result.eventPath).toContain(`${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
+    expect(result.eventPath).toContain(`${DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR}/`);
     expect(existsSync(path.join(tempDir, legacyWikiDir))).toBe(false);
     expect(existsSync(path.join(tempDir, "skills"))).toBe(false);
   });
@@ -212,7 +201,7 @@ describe("trajectory recording and export", () => {
     });
 
     expect(repair.originalEventPath).toBe(recorded.eventPath);
-    expect(repair.repairEventPath).toContain(`${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
+    expect(repair.repairEventPath).toContain(`${DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR}/`);
     expect(repair.trajectoryId).toBe("repair-row");
   });
 
@@ -238,26 +227,5 @@ describe("trajectory recording and export", () => {
       outputPath: "out/use.jsonl",
       quality: "use",
     })).rejects.toBeInstanceOf(TrajectoryExportError);
-  });
-
-  it("records explicit rows through the built CLI", async () => {
-    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-cli-record-"));
-    tempDirs.push(tempDir);
-    const rowPath = path.join(tempDir, "row.json");
-    await writeFile(rowPath, JSON.stringify(makeRow("record-cli-row"), null, 2));
-
-    const record = runBuiltCli(tempDir, [
-      "record-trajectory",
-      "--repo",
-      tempDir,
-      "--trajectory-row",
-      rowPath,
-      "--json",
-    ]);
-
-    expect(record.status).toBe(0);
-    const parsed = JSON.parse(record.stdout);
-    expect(parsed.trajectoryId).toBe("record-cli-row");
-    expect(parsed.eventPath).toContain(`${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
   });
 });

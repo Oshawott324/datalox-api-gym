@@ -5,7 +5,7 @@ import {
   isSellableAgentTaskTrajectoryRow,
   parseAgentTaskTrajectoryV1,
   serializeAgentTaskTrajectoryJsonlRow,
-} from "../src/core/agentTaskTrajectorySchema.js";
+} from "../../../src/core/derivatives/trajectory/agentTaskTrajectorySchema.js";
 
 function makeMixedRow(id = "agent-task-schema-row") {
   return {

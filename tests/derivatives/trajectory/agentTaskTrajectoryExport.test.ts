@@ -1,11 +1,8 @@
-import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -14,12 +11,8 @@ import {
   exportAgentTaskTrajectories,
   gradeAgentTaskTrajectoryRow,
   recordAgentTaskTrajectory,
-} from "../src/core/agentTaskTrajectoryExport.js";
-import { parseAgentTaskTrajectoryV1 } from "../src/core/agentTaskTrajectorySchema.js";
-
-const repoRoot = process.cwd();
-const builtCliPath = path.join(repoRoot, "dist", "src", "cli", "main.js");
-const builtMcpPath = path.join(repoRoot, "dist", "src", "mcp", "trajectoryServer.js");
+} from "../../../src/core/derivatives/trajectory/agentTaskTrajectoryExport.js";
+import { parseAgentTaskTrajectoryV1 } from "../../../src/core/derivatives/trajectory/agentTaskTrajectorySchema.js";
 
 function makeRow(id: string) {
   return {
@@ -249,7 +242,7 @@ function makeFlowCytoStyleWeakCodeHeavyRow(id: string) {
       redaction: "none_needed",
       source_event_paths: [
         "src/core/preview.ts",
-        ".datalox/events/agent-task-trajectories/example.json",
+        ".datalox/derivatives/trajectories/agent-task/example.json",
       ],
     },
     curation: {
@@ -310,7 +303,7 @@ function makeRestApiStyleSourceOnlyCodeHeavyRow(id: string) {
       allowed: true,
       redaction: "none_needed",
       source_event_paths: [
-        ".datalox/events/agent-task-trajectories/rest-api-source.json",
+        ".datalox/derivatives/trajectories/agent-task/rest-api-source.json",
       ],
     },
     curation: {
@@ -334,7 +327,7 @@ function makeRowWithSourceEventPaths(id: string, sourceEventPaths: string[]) {
 function makePatchEvidenceRow(id: string) {
   return {
     ...makeRowWithSourceEventPaths(id, [
-      ".datalox/events/agent-task-trajectories/source-event.json",
+      ".datalox/derivatives/trajectories/agent-task/source-event.json",
     ]),
     evidence_blocks: [
       {
@@ -363,37 +356,6 @@ function makePatchEvidenceRow(id: string) {
       },
     ],
   };
-}
-
-function runBuiltCli(cwd: string, args: string[]) {
-  return spawnSync("node", [builtCliPath, ...args], {
-    cwd,
-    encoding: "utf8",
-    env: process.env,
-  });
-}
-
-function extractStructuredResult(result: unknown) {
-  const resolved = (typeof result === "object" && result !== null && "toolResult" in result)
-    ? (result as { toolResult: unknown }).toolResult
-    : result;
-
-  if (
-    resolved
-    && typeof resolved === "object"
-    && "structuredContent" in resolved
-    && (resolved as { structuredContent?: unknown }).structuredContent
-    && typeof (resolved as { structuredContent?: unknown }).structuredContent === "object"
-  ) {
-    return (resolved as { structuredContent: { result: unknown } }).structuredContent.result;
-  }
-
-  const content = (resolved as { content?: Array<{ type: string; text?: string }> }).content;
-  const text = content?.find((item) => item.type === "text")?.text;
-  if (!text) {
-    throw new Error("No structured MCP result found");
-  }
-  return JSON.parse(text) as unknown;
 }
 
 describe("agent_task_trajectory.v1 recording and export", () => {
@@ -618,7 +580,7 @@ describe("agent_task_trajectory.v1 recording and export", () => {
           issue_codes: expect.arrayContaining([
             "code_heavy_row_missing_code_change",
             "source_reference_prose_only_code_excerpt",
-            "export_source_event_path_not_event",
+            "export_source_event_path_not_datalox_provenance",
           ]),
         }),
       }),
@@ -632,7 +594,7 @@ describe("agent_task_trajectory.v1 recording and export", () => {
     await recordAgentTaskTrajectory({
       repoPath: tempDir,
       agentTaskTrajectory: makeRowWithSourceEventPaths("code-heavy-use", [
-        ".datalox/events/agent-task-trajectories/source-event.json",
+        ".datalox/derivatives/trajectories/agent-task/source-event.json",
       ]),
       now: new Date("2026-05-08T04:00:00.000Z"),
     });
@@ -698,7 +660,7 @@ describe("agent_task_trajectory.v1 recording and export", () => {
         trajectoryId: "bad-source-event-path",
         reason: "readiness_filter",
         detail: expect.objectContaining({
-          issue_codes: expect.arrayContaining(["export_source_event_path_not_event"]),
+          issue_codes: expect.arrayContaining(["export_source_event_path_not_datalox_provenance"]),
         }),
       }),
     ]);
@@ -736,92 +698,5 @@ describe("agent_task_trajectory.v1 recording and export", () => {
     await expect(exportAgentTaskTrajectories({ repoPath: tempDir, outputPath: "out/rows.jsonl" }))
       .rejects
       .toThrow(AgentTaskTrajectoryExportError);
-  });
-
-  it("records and exports through the built CLI", async () => {
-    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-cli-"));
-    tempDirs.push(tempDir);
-    const rowPath = path.join(tempDir, "row.json");
-    await writeFile(rowPath, JSON.stringify(makeRow("cli-row"), null, 2), "utf8");
-
-    const recordResult = runBuiltCli(repoRoot, [
-      "record-agent-task-trajectory",
-      "--repo",
-      tempDir,
-      "--agent-task-trajectory",
-      rowPath,
-      "--json",
-    ]);
-    expect(recordResult.status).toBe(0);
-    expect(JSON.parse(recordResult.stdout)).toMatchObject({
-      trajectoryId: "cli-row",
-      sellable: true,
-    });
-
-    const exportResult = runBuiltCli(repoRoot, [
-      "export-agent-task-trajectories",
-      "--repo",
-      tempDir,
-      "--output",
-      "out/cli.jsonl",
-      "--quality",
-      "use",
-      "--json",
-    ]);
-    expect(exportResult.status).toBe(0);
-    expect(JSON.parse(exportResult.stdout)).toMatchObject({ exportedRows: 1 });
-  });
-
-  it("exposes agent task trajectory tools through the lean MCP server", async () => {
-    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-mcp-"));
-    tempDirs.push(tempDir);
-    const transport = new StdioClientTransport({
-      command: process.execPath,
-      args: [builtMcpPath],
-      cwd: repoRoot,
-      stderr: "pipe",
-    });
-    const client = new Client({ name: "agent-task-trajectory-test-client", version: "1.0.0" }, { capabilities: {} });
-
-    try {
-      await client.connect(transport);
-      const tools = await client.listTools();
-      const toolNames = tools.tools.map((tool) => tool.name);
-      expect(toolNames).toEqual([
-        "record_trajectory",
-        "export_trajectories",
-        "record_agent_task_trajectory",
-        "export_agent_task_trajectories",
-        "grade_trajectories",
-        "repair_trajectory",
-      ]);
-
-      const recordResult = await client.callTool({
-        name: "record_agent_task_trajectory",
-        arguments: {
-          repo_path: tempDir,
-          agent_task_trajectory: makeRow("mcp-agent-task-row"),
-        },
-      });
-      expect(extractStructuredResult(recordResult)).toMatchObject({
-        trajectoryId: "mcp-agent-task-row",
-        sellable: true,
-        readinessQuality: "use",
-      });
-
-      const exportResult = await client.callTool({
-        name: "export_agent_task_trajectories",
-        arguments: {
-          repo_path: tempDir,
-          output_path: "out/mcp.jsonl",
-          quality: "use",
-        },
-      });
-      expect(extractStructuredResult(exportResult)).toMatchObject({
-        exportedRows: 1,
-      });
-    } finally {
-      await client.close();
-    }
   });
 });

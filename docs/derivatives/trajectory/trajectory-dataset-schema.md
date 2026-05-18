@@ -8,7 +8,7 @@ If other docs describe exported dataset rows differently, this document wins.
 This document intentionally covers only `debugging_trajectory.v1`. For mixed
 task episodes where evidence crosses code, documents, spreadsheets, analysis,
 lab workflow, or source review, use
-[agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md) and
+[agent-task-trajectory-schema.md](./derivatives/trajectory/agent-task-trajectory-schema.md) and
 `agent_task_trajectory.v1` instead.
 
 ## Design Goal
@@ -321,7 +321,7 @@ belong here as optional tags, not required row structure.
   "export": {
     "allowed": true,
     "redaction": "none_needed",
-    "source_event_paths": [".datalox/events/trajectory-rows/example.json"]
+    "source_event_paths": [".datalox/derivatives/trajectories/debugging/example.json"]
   },
   "curation": {
     "quality": "use",

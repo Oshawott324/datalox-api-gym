@@ -25,36 +25,10 @@ async function exists(filePath: string): Promise<boolean> {
 
 function deriveLoopHint(command: string): Pick<LoopPulse, "recommended_next_tool" | "action_hint"> {
   switch (command) {
-    case "record_trajectory":
-      return {
-        recommended_next_tool: "grade_trajectories",
-        action_hint: "Trajectory row recorded. Grade training readiness before buyer-facing export.",
-      };
-    case "record_agent_task_trajectory":
-      return {
-        recommended_next_tool: "export_agent_task_trajectories",
-        action_hint: "Agent-task trajectory recorded. Export approved rows when curation is complete.",
-      };
-    case "grade_trajectories":
-      return {
-        recommended_next_tool: "repair_trajectory",
-        action_hint: "Trajectory grading completed. Repair rows with blocking diagnostics, or export curated rows with a quality filter.",
-      };
-    case "repair_trajectory":
-      return {
-        recommended_next_tool: "grade_trajectories",
-        action_hint: "Corrected trajectory row recorded as a new event. Grade the repaired row before export.",
-      };
-    case "export_trajectories":
-    case "export_agent_task_trajectories":
-      return {
-        recommended_next_tool: null,
-        action_hint: "Trajectory export completed. Review blocked or rejected rows before sharing the JSONL corpus.",
-      };
     case "adopt_pack":
       return {
         recommended_next_tool: null,
-        action_hint: "Product surfaces were copied into the repo. Record new data under .datalox/events.",
+        action_hint: "Product surfaces were copied into the repo. Record source replay data under .datalox/tool-io, .datalox/events/agent-turns, and .datalox/replay-bundles.",
       };
     default:
       return {

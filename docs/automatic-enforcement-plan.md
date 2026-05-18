@@ -20,7 +20,7 @@ Product boundary:
 - `Datalox MCP` = product-facing instrumentation, session capture, and control surface
 - `datalox-agent-replay` = portable protocol, CLI, durable local knowledge, and adoption assets
 - `adapter` = host-specific enforcement
-- `trajectory dataset` = derived export product defined by [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
+- `trajectory dataset` = derived export product defined by [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md)
 
 ## Non-Goals
 

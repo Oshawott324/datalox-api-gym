@@ -4,7 +4,7 @@ The canonical product definition lives in [product-definition.md](./product-defi
 The canonical tool I/O schema lives in [tool-io-store-schema.md](./tool-io-store-schema.md).
 The canonical replay bundle schema lives in [replay-bundle-schema.md](./replay-bundle-schema.md).
 The canonical per-turn review schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
-The canonical derivative trajectory schema lives in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md).
+The canonical derivative trajectory schema lives in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md).
 The filesystem-backed orchestration protocol lives in [task-orchestration.md](./task-orchestration.md).
 
 Short version:
@@ -37,7 +37,7 @@ The repo is centered on:
 - `docs/tool-io-store-schema.md`
 - `docs/replay-bundle-schema.md`
 - `docs/agent-turn-schema.md`
-- `docs/trajectory-dataset-schema.md`
+- `docs/derivatives/trajectory/trajectory-dataset-schema.md`
 - local `skills/` only where current host guidance still requires them
 
 New product data writes to `.datalox/` paths.

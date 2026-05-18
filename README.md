@@ -70,9 +70,8 @@ bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
-After setup, use `datalox-mcp` as the replay capture surface. Trajectory
-commands are derivative-only implementation-era commands and are not the
-product capture path.
+After setup, use `datalox-mcp` as the replay capture surface. Trajectory rows
+are derivative-only artifacts and are not the product capture path.
 
 This does two separate things:
 
@@ -130,8 +129,8 @@ node bin/datalox.js proxy --mode record --repo . --config datalox.replay.json --
 node bin/datalox.js proxy --mode replay --repo . --bundle .datalox/replay-bundles/<id> --json
 ```
 
-Current trajectory commands are derivative-only implementation-era commands and
-are not the source product capture path.
+Trajectory derivation code lives under `src/core/derivatives/trajectory/` and
+is not exposed by the install-facing CLI or MCP surface.
 
 Wrapper entrypoints:
 
@@ -142,9 +141,7 @@ node bin/datalox-wrap.js command --repo /path/to/repo --task "update docs" --pro
 ```
 
 The installed shims infer the repo from the current working directory. Replay
-capture is the target default; existing trajectory post-run behavior is an
-implementation gap tracked in
-[docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md).
+capture is the wrapper default; wrappers do not write trajectory rows.
 
 To stop Datalox-managed host interception later:
 
@@ -205,7 +202,7 @@ before/after snippets or patch hunks.
 - [docs/tool-io-store-schema.md](docs/tool-io-store-schema.md)
 - [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md)
 - [docs/agent-turn-schema.md](docs/agent-turn-schema.md)
-- [docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md)
-- [docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md)
+- [docs/derivatives/trajectory/trajectory-dataset-schema.md](docs/derivatives/trajectory/trajectory-dataset-schema.md)
+- [docs/derivatives/trajectory/agent-task-trajectory-schema.md](docs/derivatives/trajectory/agent-task-trajectory-schema.md)
 - [docs/task-orchestration.md](docs/task-orchestration.md)
 - [docs/agent-configuration.md](docs/agent-configuration.md)

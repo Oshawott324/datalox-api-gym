@@ -16,8 +16,9 @@ import {
 
 export const AGENT_TASK_TRAJECTORY_EVENTS_RELATIVE_DIR = path.join(
   ".datalox",
-  "events",
-  "agent-task-trajectories",
+  "derivatives",
+  "trajectories",
+  "agent-task",
 );
 
 const DEFAULT_AGENT_TASK_EXPORT_RELATIVE_PATH = path.join(
@@ -761,12 +762,15 @@ function gradeSourceEventPaths(row: AgentTaskTrajectoryV1): AgentTaskTrajectoryG
   const issues: AgentTaskTrajectoryGradeIssue[] = [];
   row.export.source_event_paths?.forEach((sourcePath, index) => {
     const normalized = normalizeRelativePath(sourcePath);
-    if (!normalized.startsWith(".datalox/events/")) {
+    if (
+      !normalized.startsWith(".datalox/events/")
+      && !normalized.startsWith(".datalox/derivatives/trajectories/")
+    ) {
       issues.push(buildIssue(
-        "export_source_event_path_not_event",
+        "export_source_event_path_not_datalox_provenance",
         `export.source_event_paths.${index}`,
-        "export.source_event_paths must contain .datalox event provenance paths only.",
-        "Move source files into context.source_paths or final.changed_artifacts and keep only .datalox/events/... paths here.",
+        "export.source_event_paths must contain .datalox provenance paths only.",
+        "Move source files into context.source_paths or final.changed_artifacts and keep only .datalox/events/... or .datalox/derivatives/trajectories/... paths here.",
       ));
     }
   });

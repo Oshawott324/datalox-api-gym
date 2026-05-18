@@ -87,14 +87,17 @@ describe("product adoption scripts", () => {
     expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-agent-replay")]).status).not.toBe(0);
   }, 15000);
 
-  it("does not expose removed legacy write commands in help", () => {
+  it("does not expose removed legacy or derivative write commands in help", () => {
     const result = spawnSync("node", [path.join(repoRoot, "bin/datalox.js"), "--help"], {
       cwd: repoRoot,
       encoding: "utf8",
     });
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("record-trajectory");
+    expect(result.stdout).not.toContain("record-trajectory");
+    expect(result.stdout).not.toContain("export-trajectories");
+    expect(result.stdout).not.toContain("grade-trajectories");
+    expect(result.stdout).not.toContain("repair-trajectory");
     expect(result.stdout).not.toContain(" datalox record ");
     expect(result.stdout).not.toContain(" datalox promote ");
     expect(result.stdout).not.toContain(" datalox maintain ");

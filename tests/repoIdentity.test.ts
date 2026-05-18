@@ -1,11 +1,14 @@
 import { existsSync } from "node:fs";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
 const repoRoot = process.cwd();
 const expectedRepoUrl = "https://github.com/Oshawott324/datalox-agent-replay.git";
+const execFileAsync = promisify(execFile);
 
 const ignoredDirectories = new Set([
   ".git",
@@ -50,35 +53,30 @@ const removedLegacyPaths = [
   "skills/maintain-datalox-pack",
 ];
 
-async function collectActiveFiles(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
+async function collectTrackedActiveFiles(): Promise<string[]> {
+  const { stdout } = await execFileAsync("git", ["ls-files", "-z"], {
+    cwd: repoRoot,
+    encoding: "buffer",
+    maxBuffer: 10 * 1024 * 1024,
+  });
   const files: string[] = [];
 
-  for (const entry of entries) {
-    const absolutePath = path.join(directory, entry.name);
-    const relativePath = path.relative(repoRoot, absolutePath).replaceAll(path.sep, "/");
-
-    if (entry.isDirectory()) {
-      if (ignoredDirectories.has(entry.name)) {
-        continue;
-      }
-      if (ignoredRelativePrefixes.some((prefix) => `${relativePath}/`.startsWith(prefix))) {
-        continue;
-      }
-      files.push(...await collectActiveFiles(absolutePath));
+  for (const rawRelativePath of stdout.toString("utf8").split("\0")) {
+    if (rawRelativePath.length === 0) {
       continue;
     }
-
-    if (!entry.isFile()) {
-      continue;
-    }
+    const relativePath = rawRelativePath.replaceAll(path.sep, "/");
     if (ignoredFiles.has(relativePath)) {
+      continue;
+    }
+    if (relativePath.split("/").some((part) => ignoredDirectories.has(part))) {
       continue;
     }
     if (ignoredRelativePrefixes.some((prefix) => relativePath.startsWith(prefix))) {
       continue;
     }
 
+    const absolutePath = path.join(repoRoot, relativePath);
     const fileStat = await stat(absolutePath);
     if (fileStat.size > 2_000_000) {
       continue;
@@ -91,7 +89,7 @@ async function collectActiveFiles(directory: string): Promise<string[]> {
 
 describe("repo identity regression guard", () => {
   it("keeps active surfaces on the Datalox Agent Replay identity", async () => {
-    const files = await collectActiveFiles(repoRoot);
+    const files = await collectTrackedActiveFiles();
     const violations: string[] = [];
 
     for (const file of files) {

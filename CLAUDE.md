@@ -30,4 +30,4 @@ On each loop:
 
 Useful commands:
 
-- current trajectory commands are derivative-only until replay MCP tools land
+- trajectory derivation code is derivative-only and is not exposed by the install-facing MCP surface

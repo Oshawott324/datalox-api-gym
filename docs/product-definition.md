@@ -126,8 +126,8 @@ The commercial source export structure is:
 The derived trajectory export structure is:
 
 - optional trajectory rows under `.datalox/derivatives/trajectories/`
-- coding/debugging schema defined in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
-- mixed-domain schema defined in [agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md)
+- coding/debugging schema defined in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md)
+- mixed-domain schema defined in [agent-task-trajectory-schema.md](./derivatives/trajectory/agent-task-trajectory-schema.md)
 - records include the problem, context, agent trajectory, final fix, outcome label, verification state, and a small export gate
 
 The agent capture structure is:
@@ -242,7 +242,7 @@ We are not building:
 - a human-first wiki with agent support added later
 - a consumer data marketplace sold directly to end users
 - an unapproved collection of traces with no outcome or export gate
-- a parallel local skill/note product loop inside this trajectory export repo
+- a parallel local skill/note product loop inside this agent replay repo
 - a hyperscale sandbox execution platform (the layer below Datalox; teams bring their own Docker, k8s, Modal, e2b, Daytona, or equivalent)
 
 ## Stable Product Sentence
@@ -264,6 +264,6 @@ When repo docs talk about Datalox, they should stay consistent with this definit
 - `datalox-agent-replay` is the repo-local implementation package
 - legacy note/skill promotion is not a product loop for this repo
 - unapproved raw traces are not sellable data
-- exported coding/debugging rows must follow [trajectory-dataset-schema.md](./trajectory-dataset-schema.md)
-- exported mixed-domain rows must follow [agent-task-trajectory-schema.md](./agent-task-trajectory-schema.md)
+- exported coding/debugging rows must follow [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md)
+- exported mixed-domain rows must follow [agent-task-trajectory-schema.md](./derivatives/trajectory/agent-task-trajectory-schema.md)
 - agent-first operation and setup

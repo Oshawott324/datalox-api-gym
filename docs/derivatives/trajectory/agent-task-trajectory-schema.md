@@ -4,7 +4,7 @@ This document defines `agent_task_trajectory.v1`, the generic mixed-domain task
 episode row. Use it when a real agent task crosses domains or when the evidence
 is not purely coding/debugging.
 
-Use [trajectory-dataset-schema.md](./trajectory-dataset-schema.md) for the
+Use [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md) for the
 narrow `debugging_trajectory.v1` coding/debugging row.
 
 ## Design Goal
@@ -34,7 +34,7 @@ pure coding/debugging rows.
 Recorded candidate events are written under:
 
 ```text
-.datalox/events/agent-task-trajectories/
+.datalox/derivatives/trajectories/agent-task/
 ```
 
 Buyer-facing JSONL defaults to:
@@ -44,7 +44,7 @@ exports/trajectories/agent_task_trajectory.v1.jsonl
 ```
 
 New `agent_task_trajectory.v1` rows are recorded under
-`.datalox/events/agent-task-trajectories/`.
+`.datalox/derivatives/trajectories/agent-task/`.
 
 ## Required Row
 
@@ -256,7 +256,7 @@ buyer-facing `quality: "use"` export requires both.
 ## Optional Derivative Annotations
 
 `trajectory_type`, `first_wrong_step`, and `replay_bundle_ref` follow the same
-semantics as in [trajectory-dataset-schema.md](./trajectory-dataset-schema.md):
+semantics as in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md):
 
 - `trajectory_type` is a learning-role label (`success` / `failure` /
   `recovery`) separate from `outcome.label`. A recoverable failure that
@@ -333,19 +333,12 @@ Good code-heavy evidence:
 }
 ```
 
-## CLI And MCP
+## Module Boundary
 
-CLI:
-
-```bash
-datalox record-agent-task-trajectory --repo . --agent-task-trajectory row.json --json
-datalox export-agent-task-trajectories --repo . --quality use --json
-```
-
-MCP:
-
-- `record_agent_task_trajectory`
-- `export_agent_task_trajectories`
+This schema is derivative-only. The install-facing CLI and MCP surfaces do not
+expose agent-task trajectory recording or export tools. Derivative builders may
+use the source modules under `src/core/derivatives/trajectory/` after a replay
+bundle is verified.
 
 ## Examples
 

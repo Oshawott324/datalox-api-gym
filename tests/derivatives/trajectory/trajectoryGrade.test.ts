@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -6,19 +5,16 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR,
+  DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR,
   recordTrajectory,
-} from "../src/core/trajectoryExport.js";
-import { repairTrajectory } from "../src/core/trajectoryRepair.js";
+} from "../../../src/core/derivatives/trajectory/trajectoryExport.js";
+import { repairTrajectory } from "../../../src/core/derivatives/trajectory/trajectoryRepair.js";
 import {
   gradeTrajectories,
   gradeTrajectoryRow,
   TrajectoryGradeError,
-} from "../src/core/trajectoryGrade.js";
-import type { DebuggingTrajectoryV1 } from "../src/core/trajectorySchema.js";
-
-const repoRoot = process.cwd();
-const builtCliPath = path.join(repoRoot, "dist", "src", "cli", "main.js");
+} from "../../../src/core/derivatives/trajectory/trajectoryGrade.js";
+import type { DebuggingTrajectoryV1 } from "../../../src/core/derivatives/trajectory/trajectorySchema.js";
 
 function makeTrainingRow(id: string): DebuggingTrajectoryV1 {
   return {
@@ -105,14 +101,6 @@ function issueCodes(row: DebuggingTrajectoryV1): string[] {
   return gradeTrajectoryRow(row).blocking_issues.map((issue) => issue.code);
 }
 
-function runBuiltCli(cwd: string, args: string[]) {
-  return spawnSync("node", [builtCliPath, ...args], {
-    cwd,
-    encoding: "utf8",
-    env: process.env,
-  });
-}
-
 describe("trajectory training-readiness grading", () => {
   const tempDirs: string[] = [];
 
@@ -177,7 +165,7 @@ describe("trajectory training-readiness grading", () => {
     await expect(gradeTrajectories({
       repoPath: tempDir,
       eventPath: "source.json",
-    })).rejects.toThrow("eventPath must point under .datalox/events/trajectory-rows.");
+    })).rejects.toThrow("eventPath must point under .datalox/derivatives/trajectories/debugging.");
   });
 
   it("repairs product trajectory events by writing a corrected product event", async () => {
@@ -197,35 +185,10 @@ describe("trajectory training-readiness grading", () => {
     });
 
     expect(repair.originalEventPath).toBe(source.eventPath);
-    expect(repair.repairEventPath).toContain(`${PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR}/`);
+    expect(repair.repairEventPath).toContain(`${DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR}/`);
     const repaired = JSON.parse(await readFile(path.join(tempDir, repair.repairEventPath), "utf8"));
     expect(repaired.trajectoryRow.id).toBe("repair-corrected");
   });
-
-  it("returns a grading report from the built CLI", async () => {
-    const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-grade-cli-"));
-    tempDirs.push(tempDir);
-
-    const recorded = await recordTrajectory({
-      repoPath: tempDir,
-      trajectoryRow: makeTrainingRow("cli-ready"),
-      now: new Date("2026-05-04T02:00:00.000Z"),
-    });
-    const result = runBuiltCli(tempDir, [
-      "grade-trajectories",
-      "--repo",
-      tempDir,
-      "--event-path",
-      recorded.eventPath,
-      "--json",
-    ]);
-
-    expect(result.status).toBe(0);
-    const parsed = JSON.parse(result.stdout);
-    expect(parsed.grades[0].grade.trajectory_id).toBe("cli-ready");
-    expect(parsed.grades[0].grade.quality).toBe("use");
-  });
-
   it("throws a typed error for malformed recorded events", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-grade-malformed-"));
     tempDirs.push(tempDir);
@@ -236,7 +199,7 @@ describe("trajectory training-readiness grading", () => {
       now: new Date("2026-05-04T02:00:00.000Z"),
     });
     await writeFile(
-      path.join(tempDir, PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR, "malformed.json"),
+      path.join(tempDir, DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR, "malformed.json"),
       "{ not json",
     );
 

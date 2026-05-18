@@ -46,8 +46,8 @@ The repo-local product data surfaces are:
 - `docs/tool-io-store-schema.md`
 - `docs/replay-bundle-schema.md`
 - `docs/agent-turn-schema.md`
-- `docs/trajectory-dataset-schema.md`
-- `docs/agent-task-trajectory-schema.md`
+- `docs/derivatives/trajectory/trajectory-dataset-schema.md`
+- `docs/derivatives/trajectory/agent-task-trajectory-schema.md`
 
 Fresh product adoption creates `.datalox/`, instruction surfaces, and shims. It
 does not create a parallel wiki/note/event store.
@@ -90,8 +90,8 @@ training/eval packaging is useful.
 ## Optional Derivative Trajectory Rows
 
 Trajectory rows are derivative artifacts. They are valid only when they follow
-[docs/trajectory-dataset-schema.md](docs/trajectory-dataset-schema.md) or
-[docs/agent-task-trajectory-schema.md](docs/agent-task-trajectory-schema.md)
+[docs/derivatives/trajectory/trajectory-dataset-schema.md](docs/derivatives/trajectory/trajectory-dataset-schema.md) or
+[docs/derivatives/trajectory/agent-task-trajectory-schema.md](docs/derivatives/trajectory/agent-task-trajectory-schema.md)
 and include grounded evidence, a final outcome, and an export gate.
 
 For mixed-domain implementation work, code-heavy derivative rows must include

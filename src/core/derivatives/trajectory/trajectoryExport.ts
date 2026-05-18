@@ -13,10 +13,11 @@ import {
   withDefaultTrajectoryCurationQuality,
 } from "./trajectorySchema.js";
 
-export const PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR = path.join(
+export const DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR = path.join(
   ".datalox",
-  "events",
-  "trajectory-rows",
+  "derivatives",
+  "trajectories",
+  "debugging",
 );
 const DEFAULT_EXPORT_RELATIVE_PATH = path.join(
   "exports",
@@ -108,7 +109,7 @@ export async function recordTrajectory(input: RecordTrajectoryInput): Promise<Re
   const timestamp = now.toISOString();
   const relativePath = normalizeRelativePath(
     path.join(
-      PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR,
+      DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR,
       `${safeTimestamp(timestamp)}--trajectory-${slugify(parsedRow.id)}.json`,
     ),
   );
@@ -405,13 +406,13 @@ export async function readRecordedTrajectoryEventPayloads(
 }
 
 export async function listRecordedTrajectoryEventPaths(repoRoot: string): Promise<string[]> {
-  const eventsRoot = path.join(repoRoot, PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR);
+  const eventsRoot = path.join(repoRoot, DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR);
   if (!existsSync(eventsRoot)) {
     return [];
   }
   const filenames = (await readdir(eventsRoot)).filter((filename) => filename.endsWith(".json"));
   return filenames
-    .map((filename) => normalizeRelativePath(path.join(PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR, filename)))
+    .map((filename) => normalizeRelativePath(path.join(DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR, filename)))
     .sort();
 }
 
@@ -423,7 +424,7 @@ export function resolveRecordedTrajectoryEventPath(repoRoot: string, eventPath: 
   }
   const normalized = normalizeRelativePath(relativePath);
   if (!isRecordedTrajectoryEventPath(normalized)) {
-    throw new Error("eventPath must point under .datalox/events/trajectory-rows.");
+    throw new Error("eventPath must point under .datalox/derivatives/trajectories/debugging.");
   }
   return resolved;
 }
@@ -434,7 +435,7 @@ export function getTrajectoryRowInput(eventPayload: unknown): unknown {
 }
 
 function isRecordedTrajectoryEventPath(relativePath: string): boolean {
-  return relativePath.startsWith(`${normalizeRelativePath(PRODUCT_TRAJECTORY_EVENTS_RELATIVE_DIR)}/`);
+  return relativePath.startsWith(`${normalizeRelativePath(DEBUGGING_TRAJECTORY_DERIVATIVES_RELATIVE_DIR)}/`);
 }
 
 function selectRepairLineageExportCandidates(

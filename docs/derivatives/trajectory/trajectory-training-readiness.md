@@ -171,7 +171,7 @@ This is schema-shaped prose, not training data. The grader should keep it in
     "explanation": "Open source_event_paths for the actual patch."
   },
   "export": {
-    "source_event_paths": [".datalox/events/trajectory-rows/source.json"]
+    "source_event_paths": [".datalox/derivatives/trajectories/debugging/source.json"]
   }
 }
 ```
@@ -198,33 +198,19 @@ repo or source-event access to understand the edit.
     "explanation": "The before snippet reads from the Promise; the after snippet awaits fetchUser before property access."
   },
   "export": {
-    "source_event_paths": [".datalox/events/trajectory-rows/source.json"]
+    "source_event_paths": [".datalox/derivatives/trajectories/debugging/source.json"]
   }
 }
 ```
 
 Here the paths remain useful for audit, but the learning signal is inline.
 
-## Commands
+## Module Boundary
 
-Grade existing trajectory events without rewriting them:
-
-```bash
-datalox grade-trajectories --repo . --json
-datalox grade-trajectories --repo . --event-path .datalox/events/trajectory-rows/example.json --json
-```
-
-Repair by writing a new corrected row event:
-
-```bash
-datalox repair-trajectory --repo . --event-path .datalox/events/trajectory-rows/example.json --trajectory-row corrected-row.json --json
-```
-
-Export only accepted buyer-facing rows:
-
-```bash
-datalox export-trajectories --repo . --quality use --json
-```
+This is derivative-only guidance. The install-facing CLI and MCP surfaces do
+not expose trajectory recording, grading, repair, or export commands. Use the
+source modules under `src/core/derivatives/trajectory/` only when explicitly
+building replay-bundle derivatives.
 
 Deterministic grading never calls a model and never writes notes, skills, or
 curation artifacts. Model-backed review is a separate explicit workflow.

@@ -76,7 +76,6 @@ export interface RecordTurnResultInput {
   matchedNotePaths?: string[];
   sessionId?: string;
   hostKind?: string;
-  trajectoryRow?: unknown;
 }
 
 export interface PromoteGapInput extends RecordTurnResultInput {
@@ -333,7 +332,6 @@ interface RecordedEventPayload {
   summarizedAt?: string | null;
   maintenanceRollupKind?: string | null;
   maintenanceStatus?: string | null;
-  trajectoryRow?: unknown;
 }
 
 function normalizePath(value: string): string {
@@ -933,7 +931,7 @@ function removedLegacyWriteResult(operation: string, repoPath?: string) {
     operation,
     status: "removed_from_this_branch",
     written: false,
-    reason: "This branch records product data under .datalox/events through explicit trajectory and turn schemas.",
+    reason: "This branch records source replay data through tool I/O records, agent turns, and replay bundles.",
   };
 }
 
