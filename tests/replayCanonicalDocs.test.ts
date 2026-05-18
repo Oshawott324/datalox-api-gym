@@ -33,6 +33,66 @@ describe("replay canonical schema docs", () => {
     expect(replayBundleSchema).toContain(actionPipeline);
   });
 
+  it("keeps action/observation docs aligned with strict TypeScript validators", async () => {
+    const [schemaDoc, schemaSource, normalizeSource] = await Promise.all([
+      read("docs/action-observation-schema.md"),
+      read("src/core/actionObservationSchema.ts"),
+      read("src/core/actionObservationNormalize.ts"),
+    ]);
+    const requiredActionFields = [
+      'schema_version: "action_observation.v1"',
+      'type: "tool_call"',
+      "name: string",
+      "version?: string",
+      "arguments: unknown",
+      "argument_schema_ref?: string",
+      "request_hash: string",
+      "sequence_index: number",
+    ];
+    const requiredObservationFields = [
+      'status: "ok" | "error"',
+      "content?: unknown",
+      "error_code?: string",
+      "error_message?: string",
+      "observation_schema_ref?: string",
+    ];
+    const requiredProvenanceFields = [
+      'source_kind: "mcp" | "wrapper" | "raw_trace"',
+      "source_path?: string",
+      "host?: string",
+      "session_id?: string",
+      "turn_id?: string",
+      "call_id: string",
+    ];
+
+    for (const field of [...requiredActionFields, ...requiredObservationFields, ...requiredProvenanceFields]) {
+      expect(schemaDoc).toContain(field);
+    }
+    for (const schemaToken of [
+      'schema_version: z.literal("action_observation.v1")',
+      'type: z.literal("tool_call")',
+      'source_kind: z.enum(["mcp", "wrapper", "raw_trace"])',
+      ".strict()",
+      "canonicalJson(row.action.arguments)",
+      "buildToolIoRequestHash(row.action.name, row.action.arguments)",
+      "canonicalJson(row.observation)",
+    ]) {
+      expect(schemaSource).toContain(schemaToken);
+    }
+    for (const normalizeToken of [
+      "actionObservationFromToolIoRecord",
+      "actionObservationFromRawTrace",
+      "rawActionObservationTraceInputSchema",
+      "observation: toolIoObservationV1Schema",
+      "tool_version",
+      "argument_schema_ref",
+      "observation_schema_ref",
+      "sequence_index",
+    ]) {
+      expect(normalizeSource).toContain(normalizeToken);
+    }
+  });
+
   it("keeps first-read docs replay-first", async () => {
     const firstReadDocs = [
       "README.md",

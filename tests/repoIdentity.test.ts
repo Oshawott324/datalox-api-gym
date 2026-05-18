@@ -39,7 +39,45 @@ const forbiddenActiveStrings = [
   "DATALOX_PACK",
   "agent-wiki",
   "auto-promote",
+  "claude-global-auto-promote",
+  "datalox-auto-promote",
   "Complexity-LLC/datalox-agent-replay",
+];
+
+const installFacingFiles = [
+  "package.json",
+  "bin/datalox.js",
+  "bin/datalox-mcp.js",
+  "bin/datalox-agent-replay-mcp.js",
+  "bin/datalox-codex.js",
+  "bin/datalox-claude.js",
+  "src/cli/main.ts",
+  "src/adapters/shared.ts",
+  "src/adapters/codex/run.ts",
+  "src/adapters/claude/run.ts",
+  "src/adapters/generic/run.ts",
+  "src/core/installCore.ts",
+  "src/core/packCore.ts",
+  "src/mcp/replayServer.ts",
+  "src/mcp/replayProxyServer.ts",
+  "src/mcp/server.ts",
+  "src/mcp/sharedServer.ts",
+  "src/surface/sharedCommands.ts",
+];
+
+const forbiddenInstallFacingStrings = [
+  "record_trajectory",
+  "record-trajectory",
+  "export_trajectory",
+  "export-trajectories",
+  "grade_trajectory",
+  "grade-trajectories",
+  "repair_trajectory",
+  "repair-trajectory",
+  "trajectory-rows",
+  "DATALOX_TRAJECTORY",
+  "DATALOX_DEFAULT_POST_RUN_MODE:=trajectory",
+  "postRunMode: \"trajectory\"",
 ];
 
 const removedLegacyPaths = [
@@ -132,5 +170,20 @@ describe("repo identity regression guard", () => {
     }
 
     expect(missing).toEqual([]);
+  });
+
+  it("keeps install-facing code replay-first and free of trajectory write surfaces", async () => {
+    const violations: string[] = [];
+
+    for (const relativePath of installFacingFiles) {
+      const content = await readFile(path.join(repoRoot, relativePath), "utf8");
+      for (const forbidden of forbiddenInstallFacingStrings) {
+        if (content.includes(forbidden)) {
+          violations.push(`${relativePath} contains ${forbidden}`);
+        }
+      }
+    }
+
+    expect(violations).toEqual([]);
   });
 });

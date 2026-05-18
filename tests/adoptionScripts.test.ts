@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const repoRoot = process.cwd();
 const legacyWikiDir = ["agent", "wiki"].join("-");
+const legacyPackToken = `DATALOX_${"PACK"}`;
 
 describe("product adoption scripts", () => {
   const tempDirs: string[] = [];
@@ -27,12 +28,57 @@ describe("product adoption scripts", () => {
     expect(result.status).toBe(0);
     expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("source kinds: `trace`, `web`, `pdf`");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/manifest.json");
+    expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/tool-io/records/");
+    expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/events/agent-turns/");
+    expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/replay-bundles/");
     expect(await readFile(path.join(hostDir, ".datalox/install.json"), "utf8")).toContain("\"installMode\": \"manual\"");
     expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox Agent Replay runtime root for datalox.js");
     expect(await readFile(path.join(hostDir, "bin/datalox-mcp.js"), "utf8")).toContain("replayServer.js");
     expect(await readFile(path.join(hostDir, "bin/datalox-agent-replay-mcp.js"), "utf8")).toContain("replayServer.js");
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir)]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills")]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "derivatives", "trajectories")]).status).not.toBe(0);
+  }, 30000);
+
+  it("injects replay-only instructions into existing host instruction files", async () => {
+    const hostDir = await mkdtemp(path.join(tmpdir(), "datalox-host-existing-instructions-"));
+    tempDirs.push(hostDir);
+    await mkdir(path.join(hostDir, ".github"), { recursive: true });
+    await writeFile(path.join(hostDir, "AGENTS.md"), [
+      "# Existing Agent Instructions",
+      "",
+      `<!-- ${legacyPackToken}:BEGIN -->`,
+      `Use ${legacyWikiDir}/events for legacy pack events.`,
+      `<!-- ${legacyPackToken}:END -->`,
+      "",
+      "Keep this project-specific instruction.",
+      "",
+    ].join("\n"), "utf8");
+    await writeFile(path.join(hostDir, ".github", "copilot-instructions.md"), [
+      "# Existing Copilot Instructions",
+      "",
+      "Keep Copilot local instruction.",
+      "",
+    ].join("\n"), "utf8");
+
+    const result = spawnSync("bash", [path.join(repoRoot, "bin/adopt-host-repo.sh"), hostDir], {
+      cwd: repoRoot,
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    for (const relativePath of ["AGENTS.md", ".github/copilot-instructions.md"]) {
+      const content = await readFile(path.join(hostDir, relativePath), "utf8");
+      expect(content).toContain("DATALOX_AGENT_REPLAY:BEGIN");
+      expect(content).toContain(".datalox/tool-io/records/");
+      expect(content).toContain(".datalox/events/agent-turns/");
+      expect(content).toContain(".datalox/replay-bundles/");
+      expect(content).not.toContain(legacyPackToken);
+      expect(content).not.toContain(legacyWikiDir);
+    }
+    expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain("Keep this project-specific instruction.");
+    expect(await readFile(path.join(hostDir, ".github", "copilot-instructions.md"), "utf8")).toContain("Keep Copilot local instruction.");
+    expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir)]).status).not.toBe(0);
   }, 30000);
 
   it("preserves an existing user-owned legacy wiki directory without adopting into it", async () => {
