@@ -220,12 +220,13 @@ For this repo, orchestration is process infrastructure. It must not reintroduce
 the legacy note/skill loop as a product model. Product work still flows through:
 
 ```txt
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-Use task state for coordination. Use `tool_io_record.v1` records as the exact
-replay primitive, `agent_turn.v1` events as the review primitive, replay bundles
-as the source B2B data asset, and trajectory rows as compact dataset/eval
+Use task state for coordination. Use `action_observation.v1` as the strict
+normalized action view, `tool_io_record.v1` records as the exact replay
+primitive, `agent_turn.v1` events as the review primitive, replay bundles as
+the source B2B data asset, and trajectory rows as compact dataset/eval
 derivatives.
 
 Fresh replay-product adoption keeps orchestration and product data under

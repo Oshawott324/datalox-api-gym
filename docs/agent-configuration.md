@@ -7,6 +7,7 @@ Product boundary:
 - Datalox MCP is the product-facing instrumentation and control layer.
 - `datalox-agent-replay` is the repo-local implementation package.
 - Approved B2B replay bundles and derived trajectory/evals are the primary product focus.
+- `action_observation.v1` is the strict normalized action/observation view.
 - `tool_io_record.v1` is the exact replay primitive.
 - `agent_turn.v1` is the simple per-turn review primitive.
 - Approved anonymized replay bundles are the source dataset asset.
@@ -16,7 +17,7 @@ Product boundary:
 Primary product loop:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
 ## Main Surfaces
@@ -44,11 +45,12 @@ skills/
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md`
-4. `docs/tool-io-store-schema.md` when touching tool-call capture or replay
-5. `docs/replay-bundle-schema.md` when touching replay bundles, approval, or export
-6. `docs/agent-turn-schema.md` when touching turn review data
-7. trajectory schema docs only when deriving optional trajectory/eval rows
-8. selected `skills/<name>/SKILL.md` only when the task matches that skill
+4. `docs/action-observation-schema.md` when touching raw trace normalization or action schema
+5. `docs/tool-io-store-schema.md` when touching tool-call capture or replay
+6. `docs/replay-bundle-schema.md` when touching replay bundles, approval, or export
+7. `docs/agent-turn-schema.md` when touching turn review data
+8. trajectory schema docs only when deriving optional trajectory/eval rows
+9. selected `skills/<name>/SKILL.md` only when the task matches that skill
 
 ## Write Rule
 
@@ -76,11 +78,13 @@ Concrete source kinds only:
 ## Product Export Targets
 
 - `tool_io_record.v1` as the exact replay primitive
+- `action_observation.v1` as the strict normalized action/observation view
 - `agent_turn.v1` as the turn review primitive
 - `replay_bundle.v1` as the source product artifact
 - `debugging_trajectory.v1` as an optional coding/debugging derivative
 - `agent_task_trajectory.v1` as an optional mixed-domain derivative
 
+Action/observation normalization must follow [action-observation-schema.md](./action-observation-schema.md).
 Tool I/O capture must follow [tool-io-store-schema.md](./tool-io-store-schema.md).
 Replay bundles must follow [replay-bundle-schema.md](./replay-bundle-schema.md).
 Turn review capture must follow [agent-turn-schema.md](./agent-turn-schema.md).

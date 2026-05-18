@@ -3,14 +3,18 @@
 This is the canonical definition of what this repo is building.
 
 If other docs drift, this document wins. For exact tool-call capture,
-[tool-io-store-schema.md](./tool-io-store-schema.md) wins. For replay bundles,
-[replay-bundle-schema.md](./replay-bundle-schema.md) wins. For the per-turn
-capture shape, [agent-turn-schema.md](./agent-turn-schema.md) wins. Trajectory
-schemas define optional derivatives only.
+[tool-io-store-schema.md](./tool-io-store-schema.md) wins. For normalized
+action/observation evidence, [action-observation-schema.md](./action-observation-schema.md)
+wins. For replay bundles, [replay-bundle-schema.md](./replay-bundle-schema.md)
+wins. For the per-turn capture shape, [agent-turn-schema.md](./agent-turn-schema.md)
+wins. Trajectory schemas define optional derivatives only.
 
 ## One-Sentence Definition
 
-Datalox Agent Replay records agent-visible tool I/O and session evidence into export-gated replay bundles, then derives lean trajectory/eval rows for AI teams doing agent training, evaluation, and agentic reinforcement learning.
+Datalox Agent Replay converts messy agent traces into validated
+action/observation records, packages them into export-gated replay bundles, and
+then derives lean trajectory/eval rows for AI teams doing agent training,
+evaluation, and agentic reinforcement learning.
 
 ## Product Focus
 
@@ -20,7 +24,7 @@ with B2B replay bundle data and trajectory/eval rows as export derivatives.
 The repo product pipeline is:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
 Do not preserve legacy note/skill promotion as a second product loop in this repo. Existing skills and notes are legacy or internal agent-guidance surfaces until they are migrated or isolated behind the replay data pipeline.
@@ -34,8 +38,8 @@ and agentic reinforcement learning.
 
 The operating model is:
 
-1. Users run an agent with Datalox MCP instrumentation enabled.
-2. Datalox records `tool_io_record.v1` records for agent-visible tool calls and observations.
+1. Users run an agent with Datalox MCP instrumentation, wrapper capture, or raw trace adapter input.
+2. Datalox normalizes agent-visible tool actions and observations into strict `action_observation.v1` views backed by `tool_io_record.v1` records.
 3. Datalox records `agent_turn.v1` events from completed turns: prompts, tool actions, file edits, verification commands, and outcome evidence.
 4. Tool I/O records and turn events are assembled into a replay bundle.
 5. A small export/redaction gate and outcome label are applied.
@@ -60,6 +64,7 @@ and replay:
 
 - user prompts
 - agent-visible actions
+- normalized action/observation records
 - exact tool I/O with deterministic request hashes
 - file edits and diffs
 - verification commands and outcomes
@@ -96,10 +101,10 @@ That unit is useful for:
 - tool-use analysis
 - failure-mode analysis
 
-Datalox exists to capture each tool call and turn simply, assemble approved
-replay bundles, keep them export-gated, and derive compact derivative rows
-only when packaging is useful. Agents should not have to fill an audit-heavy
-schema during normal work.
+Datalox exists to normalize each tool action/observation and turn simply,
+assemble approved replay bundles, keep them export-gated, and derive compact
+derivative rows only when packaging is useful. Agents should not have to fill
+an audit-heavy schema during normal work.
 
 ## What We Are Building
 
@@ -118,6 +123,7 @@ store and they do not create a second note/promotion loop.
 The commercial source export structure is:
 
 - one `.datalox/tool-io/records/` `tool_io_record.v1` event per replayable tool call
+- one strict `action_observation.v1` normalized view over each replayable action/observation
 - one `.datalox/events/agent-turns/` `agent_turn.v1` event per meaningful completed turn
 - one `.datalox/replay-bundles/` `replay_bundle.v1` artifact per meaningful agent work episode
 - prompts, tool actions, file edits, diffs or changed snippets, verification commands, and outcome evidence
@@ -132,7 +138,7 @@ The derived trajectory export structure is:
 
 The agent capture structure is:
 
-- host adapters produce `.datalox/tool-io/records/` replay records
+- host adapters produce strict action/observation evidence backed by `.datalox/tool-io/records/` replay records
 - agents or host adapters produce `.datalox/events/agent-turns/` review events
 - replay bundles preserve enough context, action, evidence, and verification material for export
 - approved replay bundles can be sold as anonymized source data or used to derive trajectory rows after labels and export-blocking issues are handled
@@ -140,6 +146,7 @@ The agent capture structure is:
 The first-class capture surface is Datalox MCP:
 
 - `record_tool_io` should record one explicit `tool_io_record.v1` record
+- `action_observation.v1` should be used as the normalized view for raw traces and stored tool I/O
 - `record_agent_turn` should record one explicit `agent_turn.v1` event as `payload.agentTurn`
 - `pack_replay_bundle` should assemble turn events and tool I/O records into `replay_bundle.v1`
 - `verify_replay_bundle` should verify bundle checksums and replay readiness
@@ -183,7 +190,7 @@ derivative.
 
 The event capture and dataset export should stay direct:
 
-- `trace` inputs record what happened during an agent run and should be normalized into `tool_io_record.v1` records plus `agent_turn.v1` events for replay export
+- `trace` inputs record what happened during an agent run and should be normalized into strict action/observation evidence backed by `tool_io_record.v1` records plus `agent_turn.v1` events for replay export
 - `web` and `pdf` inputs provide source evidence
 - verified debugging episodes can become derived trajectory dataset rows
 - verified mixed-domain episodes can become `agent_task_trajectory.v1` rows when a task combines code, documents, spreadsheets, analysis, lab workflow, or source-review evidence
@@ -216,11 +223,12 @@ Datalox should not be a raw log dump and should not be generic vector memory.
 The export progression is primary:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-New product work should route through tool I/O records first, assemble replay
-bundles, then derive trajectory or eval rows when useful.
+New product work should route through action/observation normalization first,
+persist exact tool I/O records, assemble replay bundles, then derive trajectory
+or eval rows when useful.
 
 The system should prefer:
 

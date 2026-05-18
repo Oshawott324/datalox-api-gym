@@ -1,7 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { recordAgentTurn } from "../core/agentTurnStore.js";
+import { readToolIoRecords } from "../core/toolIoStore.js";
+import type { ToolIoRecordV1 } from "../core/toolIoSchema.js";
 import {
   autoBootstrapIfSafe,
   type AutoBootstrapResult,
@@ -64,6 +68,7 @@ export interface WrapperPostRunInput {
   minSkillOccurrences?: number;
   sessionId?: string;
   reviewModel?: string;
+  replayEvidenceBefore?: WrapperReplayEvidenceSnapshot;
 }
 
 export interface WrapperReviewDecision {
@@ -102,11 +107,23 @@ export interface WrapperReviewResult {
 
 export interface WrapperPostRunResult {
   mode: "off" | "replay";
-  trigger: "disabled" | "replay_capture_pending";
-  result: null;
+  trigger: "disabled" | "replay_evidence_recorded" | "replay_capture_empty";
+  reason: string;
+  result: {
+    toolRecordCount: number;
+    toolRecordIds: string[];
+    event?: {
+      relativePath: string;
+      turnId: string;
+    };
+  } | null;
   review: null;
   backlog: null;
   maintenance: null;
+}
+
+export interface WrapperReplayEvidenceSnapshot {
+  toolRecordIds: string[];
 }
 
 export interface WrappedLoopResult {
@@ -135,6 +152,10 @@ function sanitizeWrappedText(text: string): string {
   return text.replace(/\r\n/g, "\n").replace(CONTROL_TEXT_PATTERN, "");
 }
 
+function generatedSessionId(): string {
+  return `datalox-wrapper-${randomUUID()}`;
+}
+
 export function stripDataloxMarkers(text: string): string {
   return extractMarkers(sanitizeWrappedText(text)).cleanedText;
 }
@@ -157,6 +178,7 @@ export function renderWrappedPrompt(envelope: LoopEnvelope): string {
     "# Datalox Agent Replay",
     "Use replay evidence as the source product: tool I/O records, agent turns, and replay bundles.",
     "When MCP is available, call replay tools such as `record_tool_io`, `record_agent_turn`, and `pack_replay_bundle` for concrete evidence.",
+    "Use `DATALOX_SESSION_ID` as `session_id` so wrapper post-run can attach new tool I/O to the completed turn.",
     "Do not synthesize replay data from prose summaries. If no agent-visible tool I/O was captured, leave post-run recording empty.",
     "",
     "# Original Prompt",
@@ -170,9 +192,10 @@ export async function buildLoopEnvelope(input: LoopEnvelopeInput): Promise<LoopE
   const bootstrap = await autoBootstrapIfSafe({ repoPath });
   const active = bootstrap.probeAfter.status === "ready";
   const workflow = input.workflow ?? UNKNOWN_WORKFLOW;
+  const sessionId = input.sessionId ?? nonEmptyString(process.env.DATALOX_SESSION_ID) ?? generatedSessionId();
   const baseEnvelope: LoopEnvelope = {
     repoPath,
-    sessionId: input.sessionId ?? null,
+    sessionId,
     active,
     originalPrompt,
     resolution: null,
@@ -214,6 +237,13 @@ export function buildWrapperEnv(envelope: LoopEnvelope, hostKind?: string): Node
           DATALOX_ENFORCEMENT: "wrapper",
         }
       : {}),
+  };
+}
+
+export async function captureReplayEvidenceSnapshot(repoPath: string): Promise<WrapperReplayEvidenceSnapshot> {
+  const records = await readToolIoRecords(repoPath);
+  return {
+    toolRecordIds: records.map((record) => record.id),
   };
 }
 
@@ -340,6 +370,11 @@ export async function finalizeWrappedRun(
     return {
       mode: "off",
       trigger: "disabled",
+      reason: !child
+        ? "No child process ran, so wrapper post-run recording was skipped."
+        : !envelope.active
+          ? "Datalox was not active for this repo, so wrapper post-run recording was skipped."
+          : "Wrapper post-run recording is disabled by DATALOX_DEFAULT_POST_RUN_MODE=off or --post-run-mode off.",
       result: null,
       review: null,
       backlog: null,
@@ -348,12 +383,85 @@ export async function finalizeWrappedRun(
   }
 
   sanitizeWrappedCommandResult(child);
+  const beforeIds = new Set(input.replayEvidenceBefore?.toolRecordIds ?? []);
+  const recordsAfter = await readToolIoRecords(envelope.repoPath);
+  const newToolRecords = recordsAfter.filter((record) => !beforeIds.has(record.id));
+  if (newToolRecords.length === 0) {
+    return {
+      mode: "replay",
+      trigger: "replay_capture_empty",
+      reason: "No explicit tool_io_record.v1 records were created during this wrapped run; Datalox did not synthesize replay evidence from prose.",
+      result: null,
+      review: null,
+      backlog: null,
+      maintenance: null,
+    };
+  }
+
+  const turnResult = await recordAgentTurn({
+    repoPath: envelope.repoPath,
+    agentTurn: buildWrapperAgentTurn(envelope, child, input.hostKind, newToolRecords),
+  });
+
   return {
     mode: "replay",
-    trigger: "replay_capture_pending",
-    result: null,
+    trigger: "replay_evidence_recorded",
+    reason: `Recorded agent_turn.v1 from ${newToolRecords.length} explicit tool_io_record.v1 record(s) created during this wrapped run.`,
+    result: {
+      toolRecordCount: newToolRecords.length,
+      toolRecordIds: newToolRecords.map((record) => record.id),
+      event: {
+        relativePath: turnResult.event.relativePath,
+        turnId: turnResult.turnId,
+      },
+    },
     review: null,
     backlog: null,
     maintenance: null,
   };
+}
+
+function buildWrapperAgentTurn(
+  envelope: LoopEnvelope,
+  child: WrappedCommandResult,
+  hostKind: string,
+  toolRecords: ToolIoRecordV1[],
+) {
+  const now = new Date().toISOString();
+  return {
+    schema_version: "agent_turn.v1",
+    id: `wrapper-${safeTimestamp(now)}`,
+    session_id: envelope.sessionId ?? generatedSessionId(),
+    turn_index: 0,
+    created_at: now,
+    ...(envelope.originalPrompt.trim().length > 0 ? { user_prompt: envelope.originalPrompt } : {}),
+    assistant_summary: `Datalox wrapper recorded ${toolRecords.length} explicit tool I/O record(s) from the ${hostKind} child run.`,
+    tool_calls: toolRecords.map((record) => ({
+      tool: record.tool_name,
+      call_id: record.call_id,
+      tool_io_ref: {
+        record_id: record.id,
+        request_hash: record.request_hash,
+        sequence_index: record.sequence_index,
+      },
+      ...(record.source?.command ? { command: record.source.command } : {}),
+    })),
+    verification: {
+      command: [child.command, ...child.args].join(" "),
+      status: child.exitCode === 0 ? "passed" : "failed",
+      evidence: `Child process exited with code ${child.exitCode}.`,
+    },
+    export: {
+      allowed: false,
+      redaction: "blocked",
+    },
+  };
+}
+
+function safeTimestamp(timestamp: string): string {
+  return timestamp.replace(/[:.]/g, "-");
+}
+
+function nonEmptyString(value: string | undefined): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }

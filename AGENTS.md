@@ -5,19 +5,21 @@ Read in this order:
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md`
-4. `docs/tool-io-store-schema.md` when the task touches tool-call capture or replay
-5. `docs/replay-bundle-schema.md` when the task touches replay bundles, approval, or export
-6. `docs/agent-turn-schema.md` when the task touches turn review data
-7. trajectory schema docs only when deriving optional trajectory/eval rows
-8. the selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
+4. `docs/action-observation-schema.md` when the task touches raw trace normalization or action schema
+5. `docs/tool-io-store-schema.md` when the task touches tool-call capture or replay
+6. `docs/replay-bundle-schema.md` when the task touches replay bundles, approval, or export
+7. `docs/agent-turn-schema.md` when the task touches turn review data
+8. trajectory schema docs only when deriving optional trajectory/eval rows
+9. the selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
 
 Use Datalox Agent Replay with this model:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
 - source kinds: `trace`, `web`, `pdf`
+- normalized action/observation view: `action_observation.v1`
 - replay primitive: `tool_io_record.v1`
 - review primitive: `agent_turn.v1`
 - product replay stores: `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, `.datalox/replay-bundles/`
@@ -32,6 +34,7 @@ Business rule:
 - B2B approved replay bundle data plus derived trajectory/evals are the primary product focus.
 - Do not keep note/skill promotion as a second product loop in this repo.
 - New product data writes under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.
+- `action_observation.v1` is the strict normalized action/observation view over raw traces and tool I/O records.
 - `tool_io_record.v1` records are the exact replay primitive.
 - `agent_turn.v1` events are the simple turn review primitive.
 - Approved anonymized replay bundles are the source B2B data asset.
@@ -50,6 +53,7 @@ Fresh product adoption creates `.datalox/`, instruction surfaces, and shims. It
 does not create a parallel wiki/note/event store.
 
 If docs disagree on what Datalox is, `docs/product-definition.md` wins.
+If docs disagree on action/observation normalization, `docs/action-observation-schema.md` wins.
 If docs disagree on tool I/O capture, `docs/tool-io-store-schema.md` wins.
 If docs disagree on replay bundles, `docs/replay-bundle-schema.md` wins.
 If docs disagree on turn review capture, `docs/agent-turn-schema.md` wins.

@@ -83,6 +83,10 @@ describe("product adoption scripts", () => {
     expect(install.status).toBe(0);
     expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain(`PACK_ROOT="${repoRoot}"`);
     expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain(`PACK_ROOT="${repoRoot}"`);
+    expect(await readFile(path.join(homeDir, ".local/bin/codex"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE:=replay");
+    expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE:=replay");
+    expect(await readFile(path.join(repoRoot, "bin", "datalox-codex.js"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? \"replay\"");
+    expect(await readFile(path.join(repoRoot, "bin", "datalox-claude.js"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? \"replay\"");
     expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/maintain-datalox-agent-replay")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-agent-replay")]).status).not.toBe(0);
   }, 15000);

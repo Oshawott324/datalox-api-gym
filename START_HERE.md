@@ -1,19 +1,20 @@
 # Start Here
 
-Datalox records agent tool I/O and turn evidence so agent teams can replay and
-audit behavior later. Approved replay bundles are the source product, with
-compact trajectory/eval rows as optional derivatives.
+Datalox converts messy agent traces into validated action/observation records
+so agent teams can replay and audit behavior later. Approved replay bundles are
+the source product, with compact trajectory/eval rows as optional derivatives.
 
 Primary product loop:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-The exact replay primitive is
-[docs/tool-io-store-schema.md](docs/tool-io-store-schema.md). The source bundle
-contract is [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md). The
-turn review contract is [docs/agent-turn-schema.md](docs/agent-turn-schema.md).
+The normalized action schema is
+[docs/action-observation-schema.md](docs/action-observation-schema.md). The
+exact replay primitive is [docs/tool-io-store-schema.md](docs/tool-io-store-schema.md).
+The source bundle contract is [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md).
+The turn review contract is [docs/agent-turn-schema.md](docs/agent-turn-schema.md).
 Compact trajectory rows use the trajectory schemas only as derivatives.
 The concrete replay migration plan is
 [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md).
@@ -75,12 +76,13 @@ node bin/datalox.js status --repo . --json
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/product-definition.md`
-4. `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
-5. `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
-6. `docs/agent-turn-schema.md` when the work touches turn review data
-7. trajectory schema docs only when deriving optional trajectory/eval rows
-8. `DATALOX.md`
-9. the selected `skills/<name>/SKILL.md` only when the task matches that skill
+4. `docs/action-observation-schema.md` when the work touches raw trace normalization or action schema
+5. `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
+6. `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
+7. `docs/agent-turn-schema.md` when the work touches turn review data
+8. trajectory schema docs only when deriving optional trajectory/eval rows
+9. `DATALOX.md`
+10. the selected `skills/<name>/SKILL.md` only when the task matches that skill
 
 ## One-Click Options
 

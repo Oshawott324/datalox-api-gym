@@ -1,5 +1,6 @@
 import {
   buildLoopEnvelope,
+  captureReplayEvidenceSnapshot,
   finalizeWrappedRun,
   hasExplicitPromptPlaceholder,
   runWrappedCommand,
@@ -166,6 +167,7 @@ export async function runClaudeWrapper(input: ClaudeWrapperInput) {
     finalArgs = [...claudeArgs, envelope.wrappedPrompt];
   }
 
+  const replayEvidenceBefore = await captureReplayEvidenceSnapshot(envelope.repoPath);
   const executed = runWrappedCommand(claudeBin, finalArgs, envelope, {
     cwd: envelope.repoPath,
     hostKind: "claude",
@@ -185,6 +187,7 @@ export async function runClaudeWrapper(input: ClaudeWrapperInput) {
       tags: input.tags,
       eventKind: input.eventKind,
       postRunMode: input.postRunMode,
+      replayEvidenceBefore,
       minWikiOccurrences: input.minWikiOccurrences,
       minSkillOccurrences: input.minSkillOccurrences,
       reviewModel: input.reviewModel,

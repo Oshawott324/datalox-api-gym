@@ -25,6 +25,7 @@
   "productModel": {
     "sourceAsset": "approved_anonymized_replay_bundle",
     "capturePrimitives": [
+      "action_observation.v1",
       "tool_io_record.v1",
       "agent_turn.v1"
     ],
@@ -46,6 +47,7 @@
       ".datalox/config.local.json",
       ".datalox/config.json",
       "docs/product-definition.md",
+      "docs/action-observation-schema.md",
       "docs/tool-io-store-schema.md",
       "docs/replay-bundle-schema.md",
       "docs/agent-turn-schema.md",

@@ -5,9 +5,10 @@ data.
 
 If other docs describe turn capture differently, this document wins for
 `agent_turn.v1`. Exact tool-call capture belongs to
-[tool-io-store-schema.md](./tool-io-store-schema.md). Replay bundle assembly
-belongs to [replay-bundle-schema.md](./replay-bundle-schema.md). Trajectory
-schemas define optional derivatives only.
+[tool-io-store-schema.md](./tool-io-store-schema.md). Normalized action schema
+belongs to [action-observation-schema.md](./action-observation-schema.md).
+Replay bundle assembly belongs to [replay-bundle-schema.md](./replay-bundle-schema.md).
+Trajectory schemas define optional derivatives only.
 
 ## Design Goal
 
@@ -20,12 +21,13 @@ turn without replaying the whole raw Codex or Claude session log.
 The boundary is:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
-The exact replay unit is `tool_io_record.v1`. The review unit is one completed
-turn. The commercial source unit is usually a verified replay bundle assembled
-from tool I/O records and turns.
+The normalized action view is `action_observation.v1`, the exact persisted
+replay unit is `tool_io_record.v1`, and the review unit is one completed turn.
+The commercial source unit is usually a verified replay bundle assembled from
+tool I/O records and turns.
 
 ## Required Shape
 

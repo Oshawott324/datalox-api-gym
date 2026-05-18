@@ -2,7 +2,8 @@
 
 This repo is the portable implementation package for Datalox Agent Replay.
 
-Datalox records agent-visible tool I/O, turn summaries, file edits, and
+Datalox converts messy agent traces into validated action/observation records,
+then records agent-visible tool I/O, turn summaries, file edits, and
 verification evidence so teams can reproduce agent behavior later. Approved
 replay bundles are the source product, and trajectory/eval rows are optional
 derivatives.
@@ -10,6 +11,7 @@ derivatives.
 The capture taxonomy is intentionally small:
 
 - source kinds: `trace`, `web`, `pdf`
+- normalized action/observation view: `action_observation.v1`
 - replay primitive: `tool_io_record.v1`
 - review primitive: `agent_turn.v1`
 - source export target: approved anonymized `replay_bundle.v1`
@@ -17,7 +19,7 @@ The capture taxonomy is intentionally small:
 
 Primary product loop:
 
-`agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives`
+`messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives`
 
 Do not keep note/skill promotion as a second product loop in this repo.
 
@@ -28,11 +30,12 @@ On each loop:
 1. read `.datalox/manifest.json`
 2. read `.datalox/config.json`
 3. read `docs/product-definition.md` when it exists
-4. read `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
-5. read `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
-6. read `docs/agent-turn-schema.md` when the work touches turn review data
-7. read trajectory schema docs only when deriving optional trajectory/eval rows
-8. read a selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
+4. read `docs/action-observation-schema.md` when the work touches raw trace normalization or action schema
+5. read `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
+6. read `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
+7. read `docs/agent-turn-schema.md` when the work touches turn review data
+8. read trajectory schema docs only when deriving optional trajectory/eval rows
+9. read a selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
 
 ## Knowledge Surfaces
 
@@ -43,6 +46,7 @@ The repo-local product data surfaces are:
 - `.datalox/replay-bundles/`
 - `.datalox/approvals/`
 - `.datalox/derivatives/trajectories/`
+- `docs/action-observation-schema.md`
 - `docs/tool-io-store-schema.md`
 - `docs/replay-bundle-schema.md`
 - `docs/agent-turn-schema.md`
@@ -74,9 +78,12 @@ User-facing capture copy:
 
 ## Turn Recording
 
-`tool_io_record.v1` is the exact replay primitive. It records one agent-visible
-tool request and observation with a deterministic request hash and sequence
-index.
+`action_observation.v1` is the strict normalized view of one replayable action
+and observation. It is not a second store.
+
+`tool_io_record.v1` is the exact persisted replay primitive. It records one
+agent-visible tool request and observation with a deterministic request hash
+and sequence index.
 
 `AgentTurnV1` is the simple turn review primitive. It records one completed
 turn with the user prompt when safe, a short assistant summary, meaningful tool

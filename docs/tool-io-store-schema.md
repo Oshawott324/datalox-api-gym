@@ -6,7 +6,8 @@ If other docs describe tool-call capture differently, this document wins for
 
 ## Purpose
 
-The tool I/O store is the source replay primitive.
+The tool I/O store is the source replay primitive and the persisted backing
+store for normalized action/observation evidence.
 
 It records what an agent-visible tool received and returned, in a deterministic
 form that can later be packed into a replay bundle. It is not a summary layer,
@@ -21,8 +22,18 @@ Canonical path:
 Canonical pipeline:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
+
+The related normalized view is defined in
+[action-observation-schema.md](./action-observation-schema.md):
+
+```text
+messy agent traces -> validated action/observation records -> replay bundle
+```
+
+`action_observation.v1` is a strict view over tool I/O records. It is not a
+second store.
 
 ## Record Shape
 
@@ -111,6 +122,20 @@ is `tool_io_record.v1`.
 Turn events can reference tool I/O records by id, request hash, and sequence
 index. Replay bundles should include both the turn summaries and the exact tool
 I/O records needed to reproduce the episode.
+
+## Relationship To Action/Observation Normalization
+
+`tool_io_record.v1` maps directly into `action_observation.v1`:
+
+- `tool_name` becomes `action.name`
+- `arguments` becomes `action.arguments`
+- `request_hash` becomes `action.request_hash`
+- `sequence_index` becomes `action.sequence_index`
+- `observation` becomes `observation`
+- `session_id`, `turn_id`, and `call_id` become provenance fields
+
+Normalization must not alias tool names, infer missing observations from prose,
+or add schema/version metadata that the source did not provide.
 
 ## Export Readiness
 

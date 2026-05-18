@@ -1,7 +1,8 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -59,7 +60,7 @@ describe("wrapper surfaces", () => {
     expect(result.stdout).not.toContain("Candidate skills");
   });
 
-  it("defaults wrapper post-run to replay capture without writing derivative rows", async () => {
+  it("defaults wrapper post-run to empty replay capture without writing derivative rows when tool I/O is missing", async () => {
     const hostDir = await adoptHostRepo();
     const result = spawnSync(
       "node",
@@ -88,10 +89,80 @@ describe("wrapper surfaces", () => {
     );
 
     expect(result.status).toBe(0);
-    expect(result.stderr).toContain("[datalox-wrap] replay | replay_capture_pending");
+    expect(result.stderr).toContain("[datalox-wrap] replay | replay_capture_empty");
+    expect(result.stderr).toContain("No explicit tool_io_record.v1 records were created during this wrapped run");
+    expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "events", "agent-turns")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "events", "trajectory-rows")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "derivatives", "trajectories")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir, "events")]).status).not.toBe(0);
+  });
+
+  it("records an agent turn when a wrapped run creates explicit tool I/O evidence", async () => {
+    const hostDir = await adoptHostRepo();
+    const recordToolIoModuleUrl = pathToFileURL(path.join(repoRoot, "dist", "src", "core", "toolIoStore.js")).href;
+    const recordScript = [
+      `const { recordToolIo } = await import(${JSON.stringify(recordToolIoModuleUrl)});`,
+      "await recordToolIo({",
+      "  repoPath: process.env.DATALOX_REPO_PATH,",
+      "  sessionId: process.env.DATALOX_SESSION_ID,",
+      "  callId: 'call-1',",
+      "  toolName: 'fake_tool',",
+      "  arguments: { query: 'wrapper evidence' },",
+      "  observation: { status: 'ok', content: { answer: 42 } },",
+      "  source: { host: process.env.DATALOX_HOST_KIND, command: 'fake_tool wrapper evidence' },",
+      "});",
+      "process.stdout.write('recorded explicit tool io');",
+    ].join("\n");
+
+    const result = spawnSync(
+      "node",
+      [
+        builtCliPath,
+        "wrap",
+        "command",
+        "--repo",
+        hostDir,
+        "--task",
+        "Record wrapper replay evidence.",
+        "--workflow",
+        "agent_replay",
+        "--prompt",
+        "Record wrapper replay evidence.",
+        "--",
+        "node",
+        "--input-type=module",
+        "-e",
+        recordScript,
+        "__DATALOX_PROMPT__",
+      ],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("recorded explicit tool io");
+    expect(result.stderr).toContain("[datalox-wrap] replay | replay_evidence_recorded");
+    expect(result.stderr).toContain("Recorded agent_turn.v1 from 1 explicit tool_io_record.v1 record");
+
+    const turnEventsRoot = path.join(hostDir, ".datalox", "events", "agent-turns");
+    const turnEventNames = await readdir(turnEventsRoot);
+    expect(turnEventNames).toHaveLength(1);
+    const turnEvent = JSON.parse(await readFile(path.join(turnEventsRoot, turnEventNames[0]), "utf8"));
+    expect(turnEvent.eventKind).toBe("agent_turn");
+    expect(turnEvent.agentTurn.schema_version).toBe("agent_turn.v1");
+    expect(turnEvent.agentTurn.session_id).toMatch(/^datalox-wrapper-/);
+    expect(turnEvent.agentTurn.user_prompt).toBe("Record wrapper replay evidence.");
+    expect(turnEvent.agentTurn.tool_calls).toHaveLength(1);
+    expect(turnEvent.agentTurn.tool_calls[0]).toMatchObject({
+      tool: "fake_tool",
+      call_id: "call-1",
+      command: "fake_tool wrapper evidence",
+    });
+    expect(turnEvent.agentTurn.tool_calls[0].tool_io_ref.record_id).toMatch(/^toolio-/);
+    expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "events", "trajectory-rows")]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "derivatives", "trajectories")]).status).not.toBe(0);
   });
 
   it("does not create a legacy event from prose summaries", async () => {
@@ -124,7 +195,7 @@ describe("wrapper surfaces", () => {
     );
 
     expect(result.status).toBe(0);
-    expect(result.stderr).toContain("[datalox-wrap] replay | replay_capture_pending");
+    expect(result.stderr).toContain("[datalox-wrap] replay | replay_capture_empty");
     expect(await readFile(path.join(hostDir, legacyWikiDir, "hot.md"), "utf8")).toBe("# existing\n");
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir, "events")]).status).not.toBe(0);
   });

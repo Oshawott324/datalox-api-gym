@@ -48,7 +48,7 @@ const child = spawn(process.execPath, [entrypoint, "claude", ...process.argv.sli
     DATALOX_ACTIVE_WRAPPER: "claude",
     DATALOX_HOST_KIND: "claude",
     DATALOX_ENFORCEMENT: "wrapper",
-    DATALOX_DEFAULT_POST_RUN_MODE: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? "trajectory",
+    DATALOX_DEFAULT_POST_RUN_MODE: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? "replay",
     DATALOX_DEFAULT_REVIEW_MODEL: process.env.DATALOX_DEFAULT_REVIEW_MODEL ?? "gpt-5.4-mini",
   },
 });

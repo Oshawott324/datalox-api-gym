@@ -10,12 +10,23 @@ Datalox Agent Replay is not a trajectory-first tool.
 Primary product:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
 Trajectory rows are optional downstream derivatives. They may remain only under
 a derivative boundary. They must not be the install-facing MCP surface, wrapper
 default, or first-read product story.
+
+After the `rl-trajectory.md` author feedback, the entry wedge is sharper:
+
+```text
+messy agent traces -> validated action/observation records -> replay bundle
+```
+
+MCP standardizes tool calling. Datalox should standardize replayable
+action/observation evidence across agent hosts, tool wrappers, and raw traces.
+Replay bundles remain the source package, but the next implementation layer must
+prove stable action schema normalization before adding richer derivative rows.
 
 ## Step 0: Freeze The Rename Baseline
 
@@ -79,7 +90,7 @@ Pass criteria:
 - active docs contain the replay pipeline:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
 ## Step 2: Implement The Content-Addressed Tool I/O Store
@@ -324,7 +335,166 @@ Pass criteria:
 - missing replay evidence records nothing and reports a clear agent-readable
   reason
 
-## Step 8: Export Derivatives From Replay Bundles
+## Step 8: Canonicalize Action/Observation Records
+
+Goal:
+
+- turn messy agent/tool traces into stable, validated action/observation
+  records before packaging them into replay bundles
+
+Why this step exists:
+
+- customer discovery says the accessible product gap is action schema
+  standardization
+- environment replay and reward engines can stay as references/provenance for
+  now
+- Datalox should prove it can normalize traces from different agent hosts into
+  one replayable action/observation unit
+
+Product rule:
+
+```text
+raw trace -> adapter -> action_observation.v1 view over tool_io_record.v1 -> replay_bundle.v1 -> optional derivative
+```
+
+Do not add reward-engine, sandbox-runtime, or environment-factory logic in this
+step. Keep those as future references on replay bundles after the core
+action/observation unit is stable.
+
+Update:
+
+- `docs/tool-io-store-schema.md`
+- `docs/product-definition.md`
+- `README.md`
+- `DATALOX.md`
+- `.datalox/manifest.json` if canonical schema docs are listed there
+
+Add:
+
+- `docs/action-observation-schema.md`
+- `src/core/actionObservationSchema.ts`
+- `src/core/actionObservationNormalize.ts`
+- `tests/actionObservationNormalize.test.ts`
+
+Optional schema extension, only if implementation needs metadata beyond the
+current `tool_io_record.v1` fields:
+
+```ts
+type ToolIoRecordV1 = {
+  schema_version: "tool_io_record.v1";
+  call_id: string;
+  tool_name: string;
+  tool_version?: string;
+  arguments: unknown;
+  argument_schema_ref?: string;
+  request_hash: string;
+  sequence_index: number;
+  observation: {
+    status: "ok" | "error";
+    content?: unknown;
+    error_code?: string;
+    error_message?: string;
+  };
+  observation_schema_ref?: string;
+  created_at: string;
+};
+```
+
+Canonical action/observation view:
+
+```ts
+type ActionObservationV1 = {
+  schema_version: "action_observation.v1";
+  action: {
+    type: "tool_call";
+    name: string;
+    version?: string;
+    arguments: unknown;
+    argument_schema_ref?: string;
+    request_hash: string;
+    sequence_index: number;
+  };
+  observation: {
+    status: "ok" | "error";
+    content?: unknown;
+    error_code?: string;
+    error_message?: string;
+    observation_schema_ref?: string;
+  };
+  provenance: {
+    source_kind: "mcp" | "wrapper" | "raw_trace";
+    source_path?: string;
+    host?: string;
+    session_id?: string;
+    turn_id?: string;
+    call_id: string;
+  };
+};
+```
+
+Implementation details:
+
+- keep `tool_io_record.v1` as the persisted replay primitive under
+  `.datalox/tool-io/records/`
+- implement `ActionObservationV1` as a strict normalized view over
+  `tool_io_record.v1`, not a second product store
+- normalize tool names deterministically without aliases or fuzzy matching
+- preserve exact `arguments` and `observation` values as agent-visible JSON
+- derive `request_hash` only from canonical JSON of `{ tool_name, arguments }`
+  unless the schema version is explicitly changed
+- keep `sequence_index` ordering per identical request hash
+- expose a normalization API that accepts:
+  - an existing `ToolIoRecordV1`
+  - a minimal raw trace event shaped like `{ tool, arguments, observation }`
+  - wrapper-created tool I/O records
+- reject ambiguous raw trace events with agent-readable validation errors
+- do not infer missing observations from stdout prose
+- do not infer tool versions or schema refs unless the source provides them
+- keep reward/environment metadata out of this step except as explicit future
+  fields documented as not implemented
+
+Raw trace adapter input:
+
+```ts
+type RawActionObservationTraceInput = {
+  source_kind: "raw_trace";
+  source_path?: string;
+  host?: string;
+  session_id?: string;
+  turn_id?: string;
+  call_id: string;
+  tool_name: string;
+  tool_version?: string;
+  arguments: unknown;
+  argument_schema_ref?: string;
+  observation: {
+    status: "ok" | "error";
+    content?: unknown;
+    error_code?: string;
+    error_message?: string;
+  };
+  observation_schema_ref?: string;
+  sequence_index?: number;
+};
+```
+
+Pass criteria:
+
+- `ActionObservationV1` parser is strict and rejects unknown top-level fields
+- normalizing a `ToolIoRecordV1` produces a stable
+  `action_observation.v1` view with the same request hash and sequence index
+- normalizing a raw trace event with the same tool name and arguments produces
+  the same request hash as `recordToolIo`
+- key order differences in raw arguments do not change the request hash
+- repeated identical actions retain replay order through sequence index
+- invalid raw traces fail deterministically with a clear error path
+- no alias matching, fuzzy tool-name matching, or stdout/prose inference exists
+- docs and TypeScript schemas agree on every implemented field
+- `npm test`
+- `npm run check`
+- `git diff --check`
+
+## Step 9: Export Derivatives From Replay Bundles
 
 Goal:
 
@@ -349,7 +519,7 @@ Pass criteria:
 - derivative JSONL rows are standalone enough for training/eval
 - source replay bundle remains the source-of-truth asset
 
-## Step 9: Regression Gates
+## Step 10: Regression Gates
 
 Goal:
 
@@ -378,12 +548,15 @@ Stale active-reference scan must fail on:
 - removed hook/autonomous promotion paths
 - install-facing trajectory MCP names
 - trajectory default wrapper mode
+- docs/code schema drift for action/observation fields
+- prose-derived replay or derivative artifacts
 
 Pass criteria:
 
 - fresh adoption creates replay-focused product surfaces only
 - fresh adoption does not create legacy stores
 - install-facing MCP is replay-first
+- action/observation normalization remains strict and deterministic
 - full test suite and stale-reference scan pass
 
 ## Final Done Definition
@@ -393,6 +566,8 @@ This migration is done only when:
 - the repo name, install docs, package identity, and remote repo are
   `datalox-agent-replay`
 - the primary MCP surface records and replays tool I/O
+- messy host/tool traces can be normalized into strict action/observation
+  records
 - replay bundles are deterministic and verifiable
 - wrapper default capture mode is replay
 - trajectory rows are derivative-only or removed

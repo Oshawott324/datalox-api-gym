@@ -3,7 +3,7 @@
 This branch uses `.datalox/` as the replay product data store:
 
 ```text
-agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives
+messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
 ```
 
 - `.datalox/tool-io/records/`

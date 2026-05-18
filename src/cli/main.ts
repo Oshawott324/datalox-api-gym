@@ -147,8 +147,10 @@ function writePostRunSummary(prefix: string, postRun: unknown): void {
   const typed = postRun as {
     mode?: string;
     trigger?: string;
+    reason?: string;
     result?: {
       event?: { relativePath?: string };
+      toolRecordCount?: number;
       decision?: { action?: string; reason?: string; occurrenceCount?: number };
     } | null;
   };
@@ -161,7 +163,7 @@ function writePostRunSummary(prefix: string, postRun: unknown): void {
     return;
   }
   process.stderr.write(
-    `[${prefix}] ${typed.mode ?? "record"} | ${typed.trigger ?? "record_only"}${eventPath ? ` | ${eventPath}` : ""}\n`,
+    `[${prefix}] ${typed.mode ?? "record"} | ${typed.trigger ?? "record_only"}${typed.reason ? ` | ${typed.reason}` : ""}${eventPath ? ` | ${eventPath}` : ""}\n`,
   );
 }
 

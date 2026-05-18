@@ -1,5 +1,6 @@
 import {
   buildLoopEnvelope,
+  captureReplayEvidenceSnapshot,
   finalizeWrappedRun,
   hasExplicitPromptPlaceholder,
   runWrappedCommand,
@@ -39,6 +40,7 @@ export async function runGenericWrapper(input: GenericWrapInput): Promise<Generi
     throw new Error("Generic wrapped commands require a __DATALOX_PROMPT__ placeholder when Datalox guidance is active.");
   }
 
+  const replayEvidenceBefore = await captureReplayEvidenceSnapshot(envelope.repoPath);
   const executed = runWrappedCommand(input.command, input.args ?? [], envelope, {
     cwd: envelope.repoPath,
     hostKind: "generic",
@@ -59,6 +61,7 @@ export async function runGenericWrapper(input: GenericWrapInput): Promise<Generi
       tags: input.tags,
       eventKind: input.eventKind,
       postRunMode: input.postRunMode,
+      replayEvidenceBefore,
       minWikiOccurrences: input.minWikiOccurrences,
       minSkillOccurrences: input.minSkillOccurrences,
       reviewModel: input.reviewModel,

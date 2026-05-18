@@ -3,6 +3,7 @@ import path from "node:path";
 
 import {
   buildLoopEnvelope,
+  captureReplayEvidenceSnapshot,
   finalizeWrappedRun,
   hasExplicitPromptPlaceholder,
   runWrappedCommand,
@@ -198,6 +199,7 @@ export async function runCodexWrapper(input: CodexWrapperInput) {
   } else {
     finalArgs = [...codexArgs, envelope.wrappedPrompt];
   }
+  const replayEvidenceBefore = await captureReplayEvidenceSnapshot(envelope.repoPath);
   const executed = runWrappedCommand(codexBin, finalArgs, envelope, {
     cwd: envelope.repoPath,
     hostKind: "codex",
@@ -218,6 +220,7 @@ export async function runCodexWrapper(input: CodexWrapperInput) {
       tags: input.tags,
       eventKind: input.eventKind,
       postRunMode: input.postRunMode,
+      replayEvidenceBefore,
       minWikiOccurrences: input.minWikiOccurrences,
       minSkillOccurrences: input.minSkillOccurrences,
       reviewModel: input.reviewModel,

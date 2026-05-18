@@ -3,14 +3,15 @@
 `datalox-agent-replay` is the repo-local implementation package for Datalox
 Agent Replay: an MCP-compatible recorder/replay layer for agent tool I/O.
 
-Datalox records agent-visible prompts, tool actions, file edits, verification
+Datalox converts messy agent traces into validated action/observation records,
+then records agent-visible prompts, tool actions, file edits, verification
 results, and replay evidence so teams can reproduce agent behavior later.
 Approved replay bundles are the source data product. Trajectory/eval rows are
 optional derivatives from those bundles.
 
 Primary product loop:
 
-`agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives`
+`messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives`
 
 This branch does not ship a parallel wiki/note/event product store.
 
@@ -36,6 +37,7 @@ AGENTS.md
 Use:
 
 - `.datalox/tool-io/records/` for `tool_io_record.v1` replay records
+- `action_observation.v1` as the strict normalized action/observation view over tool I/O
 - `.datalox/events/agent-turns/` for `agent_turn.v1` review events
 - `.datalox/replay-bundles/` for `replay_bundle.v1` source product artifacts
 - `.datalox/approvals/` for review/approval artifacts
@@ -132,6 +134,10 @@ node bin/datalox.js proxy --mode replay --repo . --bundle .datalox/replay-bundle
 Trajectory derivation code lives under `src/core/derivatives/trajectory/` and
 is not exposed by the install-facing CLI or MCP surface.
 
+Action/observation normalization lives in `src/core/actionObservation*.ts`. It
+is a strict view over tool I/O records and raw trace events; it does not create
+a second product store.
+
 Wrapper entrypoints:
 
 ```bash
@@ -141,7 +147,11 @@ node bin/datalox-wrap.js command --repo /path/to/repo --task "update docs" --pro
 ```
 
 The installed shims infer the repo from the current working directory. Replay
-capture is the wrapper default; wrappers do not write trajectory rows.
+capture is the wrapper default. If a wrapped run creates explicit
+`tool_io_record.v1` records, the wrapper records an `agent_turn.v1` event that
+references those exact records. If no tool I/O evidence appears, the wrapper
+records nothing and reports why; it does not synthesize replay data from prose.
+Wrappers do not write trajectory rows.
 
 To stop Datalox-managed host interception later:
 
@@ -185,6 +195,7 @@ before/after snippets or patch hunks.
 ## Current Best Practice
 
 - `trace`, `web`, and `pdf` are the only concrete source kinds.
+- `action_observation.v1` is the strict normalized action/observation view.
 - `agent_turn.v1` is the simple capture primitive.
 - Exact replay data belongs under `.datalox/tool-io/records/`.
 - Turn review data belongs under `.datalox/events/agent-turns/`.
@@ -199,6 +210,7 @@ before/after snippets or patch hunks.
 - [DATALOX.md](DATALOX.md)
 - [docs/product-definition.md](docs/product-definition.md)
 - [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md)
+- [docs/action-observation-schema.md](docs/action-observation-schema.md)
 - [docs/tool-io-store-schema.md](docs/tool-io-store-schema.md)
 - [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md)
 - [docs/agent-turn-schema.md](docs/agent-turn-schema.md)

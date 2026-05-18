@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = process.cwd();
-const replayPipeline = "agent run -> tool I/O records -> replay bundle -> approval/export -> optional derivatives";
+const actionPipeline = "messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives";
 
 async function read(relativePath: string): Promise<string> {
   return readFile(path.join(repoRoot, relativePath), "utf8");
@@ -12,20 +12,25 @@ async function read(relativePath: string): Promise<string> {
 
 describe("replay canonical schema docs", () => {
   it("defines the replay source schemas and canonical paths", async () => {
-    const [toolIoSchema, replayBundleSchema] = await Promise.all([
+    const [actionObservationSchema, toolIoSchema, replayBundleSchema] = await Promise.all([
+      read("docs/action-observation-schema.md"),
       read("docs/tool-io-store-schema.md"),
       read("docs/replay-bundle-schema.md"),
     ]);
 
+    expect(actionObservationSchema).toContain('schema_version: "action_observation.v1"');
+    expect(actionObservationSchema).toContain("messy agent traces -> validated action/observation records -> replay bundle");
+    expect(actionObservationSchema).toContain(".datalox/tool-io/records/");
+
     expect(toolIoSchema).toContain('schema_version: "tool_io_record.v1"');
     expect(toolIoSchema).toContain(".datalox/tool-io/records/");
     expect(toolIoSchema).toContain("request_hash + sequence_index");
-    expect(toolIoSchema).toContain(replayPipeline);
+    expect(toolIoSchema).toContain(actionPipeline);
 
     expect(replayBundleSchema).toContain('schema_version: "replay_bundle.v1"');
     expect(replayBundleSchema).toContain(".datalox/replay-bundles/");
     expect(replayBundleSchema).toContain("checksums.json");
-    expect(replayBundleSchema).toContain(replayPipeline);
+    expect(replayBundleSchema).toContain(actionPipeline);
   });
 
   it("keeps first-read docs replay-first", async () => {
@@ -46,7 +51,7 @@ describe("replay canonical schema docs", () => {
     const missing = [];
     for (const relativePath of firstReadDocs) {
       const content = await read(relativePath);
-      if (!content.includes(replayPipeline)) {
+      if (!content.includes(actionPipeline)) {
         missing.push(relativePath);
       }
     }
@@ -106,7 +111,7 @@ describe("replay canonical schema docs", () => {
     });
     expect(manifest.productModel).toMatchObject({
       sourceAsset: "approved_anonymized_replay_bundle",
-      capturePrimitives: ["tool_io_record.v1", "agent_turn.v1"],
+      capturePrimitives: ["action_observation.v1", "tool_io_record.v1", "agent_turn.v1"],
       bundleSchema: "replay_bundle.v1",
       derivatives: ["debugging_trajectory.v1", "agent_task_trajectory.v1"],
     });
