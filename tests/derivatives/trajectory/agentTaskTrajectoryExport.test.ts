@@ -512,7 +512,7 @@ describe("agent_task_trajectory.v1 recording and export", () => {
     ]);
   });
 
-  it("grades source references with only URL/path as not buyer-ready", () => {
+  it("grades source references with only URL/path as not use-quality", () => {
     const grade = gradeAgentTaskTrajectoryRow(parseAgentTaskTrajectoryV1(makeSourceOnlyRow("source-only")));
 
     expect(grade.quality).toBe("needs_review");
@@ -636,7 +636,7 @@ describe("agent_task_trajectory.v1 recording and export", () => {
     });
   });
 
-  it("excludes source file paths from export.source_event_paths in buyer-ready export", async () => {
+  it("excludes source file paths from export.source_event_paths in use-quality export", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-agent-task-source-event-path-"));
     tempDirs.push(tempDir);
 

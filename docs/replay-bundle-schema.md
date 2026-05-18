@@ -1,16 +1,16 @@
 # Replay Bundle Schema
 
-This document is the canonical schema contract for approved Datalox replay
-bundles. If other docs describe the source product differently, this document
+This document is the canonical schema contract for Datalox replay bundles. If
+other docs describe replay bundles differently, this document
 wins for `replay_bundle.v1`.
 
 ## Purpose
 
-A replay bundle is the source product artifact for Datalox Agent Replay.
+A replay bundle is the portable replay artifact for Datalox Agent Replay.
 
 It seals the agent turn summaries and exact tool I/O records needed to inspect,
 audit, and replay an agent episode. Trajectory and eval rows are optional
-derivatives from a replay bundle, not the canonical capture product.
+derivatives from a replay bundle, not the canonical capture layer.
 
 Canonical path:
 
@@ -21,7 +21,7 @@ Canonical path:
 Canonical pipeline:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 ## Bundle Layout
@@ -108,8 +108,8 @@ fall back to live execution when a record is missing.
 
 ## Approval Rule
 
-Unapproved replay bundles are private source artifacts. They are not sellable
-data.
+Unapproved replay bundles are private source artifacts. They are not export
+artifacts.
 
 An approved replay bundle can be exported when:
 

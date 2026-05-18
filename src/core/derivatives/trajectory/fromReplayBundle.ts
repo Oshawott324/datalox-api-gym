@@ -194,7 +194,7 @@ function buildAgentTaskTrajectoryRow(input: {
       ...(input.split !== undefined ? { split: input.split } : {}),
       quality: input.quality ?? "needs_review",
       tags: buildTags(manifest, evidenceBlocks),
-      notes: "Derived from a verified replay bundle. Review before buyer-facing export.",
+      notes: "Derived from a verified replay bundle. Review before use-quality export.",
     },
     metadata: {
       source_replay_bundle_id: manifest.id,

@@ -26,7 +26,6 @@ const ignoredFiles = new Set([
   ".claude/settings.local.json",
   ".datalox/install.json",
   ".git",
-  "docs/rl-trajectory.md",
   "tests/repoIdentity.test.ts",
 ]);
 
@@ -115,6 +114,9 @@ async function collectTrackedActiveFiles(): Promise<string[]> {
     }
 
     const absolutePath = path.join(repoRoot, relativePath);
+    if (!existsSync(absolutePath)) {
+      continue;
+    }
     const fileStat = await stat(absolutePath);
     if (fileStat.size > 2_000_000) {
       continue;
@@ -145,7 +147,7 @@ describe("repo identity regression guard", () => {
     expect(violations).toEqual([]);
   });
 
-  it("does not restore removed legacy product paths", () => {
+  it("does not restore removed legacy replay paths", () => {
     const existing = removedLegacyPaths.filter((relativePath) => existsSync(path.join(repoRoot, relativePath)));
 
     expect(existing).toEqual([]);

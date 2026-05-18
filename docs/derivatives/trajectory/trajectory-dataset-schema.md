@@ -1,34 +1,35 @@
 # Trajectory Dataset Schema
 
-This document is the canonical schema contract for the B2B debugging trajectory
-data/eval product.
+This document is the canonical schema contract for the debugging trajectory
+training/eval derivative.
 
 If other docs describe exported dataset rows differently, this document wins.
 
 This document intentionally covers only `debugging_trajectory.v1`. For mixed
 task episodes where evidence crosses code, documents, spreadsheets, analysis,
 lab workflow, or source review, use
-[agent-task-trajectory-schema.md](./derivatives/trajectory/agent-task-trajectory-schema.md) and
+[agent-task-trajectory-schema.md](agent-task-trajectory-schema.md) and
 `agent_task_trajectory.v1` instead.
 
 ## Design Goal
 
-The schema must be adopted by agents and buyers, so it stays small.
+The schema must be easy for agents and eval runners to adopt, so it stays small.
 
 The row is a compact training/eval derivative, not the complete source session
 or audit log. `agent_turn.v1` events are the simple capture primitive. The
-captured session remains the source asset after turns are assembled with prompts,
-tool actions, file edits, verification results, and export/redaction evidence.
+captured session remains source evidence after turns are assembled with
+prompts, tool actions, file edits, verification results, and export/redaction
+evidence.
 Agents should be able to emit the row from a normal debugging run without
 inventing fields, doing manual classification, or filling compliance-heavy
 objects.
 
-## Product Meaning
+## Derivative Meaning
 
-The trajectory row product is not raw traces.
+The trajectory row derivative is not raw traces.
 
-The source product can be an approved anonymized session bundle. The trajectory
-row product is:
+The source replay artifact can be a verified replay bundle. The trajectory
+row derivative is:
 
 ```text
 high-signal debugging trajectories with labeled outcomes
@@ -256,7 +257,7 @@ live in source events or curation systems, not in every training row.
 
 ### `curation`
 
-Use `curation` for buyer-facing packaging decisions. Do not make agents fill it
+Use `curation` for use-quality packaging decisions. Do not make agents fill it
 during normal work unless the value is already known.
 
 Pattern labels, failure categories, knowledge ids, and dataset split decisions

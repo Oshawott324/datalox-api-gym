@@ -1,8 +1,13 @@
 # Automatic Enforcement Plan
 
-This document defines what "automatic enforcement" means for `datalox-agent-replay`, what counts as supported, and the minimum implementation plan for this repo.
+This document defines what "automatic enforcement" means for
+`datalox-agent-replay`, what counts as supported, and the minimum implementation
+plan for this repo.
 
-The product-facing goal is approved Datalox session data plus derived trajectory data: capture agent debugging turns through Datalox MCP, assemble sessions, then package approved anonymized sessions directly or derive lean outcome-labeled rows for coding-agent training and evaluation.
+The install-facing goal is replay capture: record exact agent-visible tool I/O,
+pack sealed replay bundles, and replay recorded observations without live tool
+fallback. Compact trajectory/eval rows are optional derivatives after replay
+evidence exists.
 
 ## Target
 
@@ -12,15 +17,15 @@ For this repo, automatic enforcement means:
 - the repo stays the source of truth
 - unsupported hosts degrade to guidance-only, and the docs say that plainly
 
-Product boundary:
+Project boundary:
 
-- `Datalox Session Data` = primary B2B source dataset product
-- `AgentTurnV1` = simple per-turn capture primitive defined by [agent-turn-schema.md](./agent-turn-schema.md)
-- `Datalox Trajectory Data` = compact derived B2B dataset/eval product
-- `Datalox MCP` = product-facing instrumentation, session capture, and control surface
+- `tool_io_record.v1` = exact replay primitive defined by [tool-io-store-schema.md](./tool-io-store-schema.md)
+- `replay_bundle.v1` = portable replay artifact defined by [replay-bundle-schema.md](./replay-bundle-schema.md)
+- `AgentTurnV1` = optional per-turn review context defined by [agent-turn-schema.md](./agent-turn-schema.md)
+- `Datalox MCP` = install-facing instrumentation, tool I/O capture, replay lookup, and control surface
 - `datalox-agent-replay` = portable protocol, CLI, durable local knowledge, and adoption assets
 - `adapter` = host-specific enforcement
-- `trajectory dataset` = derived export product defined by [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md)
+- `trajectory rows` = optional derivative adapters defined by [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md) and [agent-task-trajectory-schema.md](./derivatives/trajectory/agent-task-trajectory-schema.md)
 
 ## Non-Goals
 
@@ -38,7 +43,8 @@ Today the repo already has:
 - Codex and Claude wrapper entrypoints
 - a generic CLI wrapper
 - a post-turn hook path
-- MCP tools for resolve, record, capture, promote, and lint
+- MCP tools for recording tool I/O, recording turn context, packing bundles,
+  verifying bundles, and replaying tool observations
 
 But the automatic boundary is still partial:
 
@@ -53,7 +59,7 @@ The current enforcement mechanism is not "MCP auto-calls itself". It is:
 1. install-time host interception
 2. shared pre-run loop assembly
 3. wrapped child execution
-4. shared post-run record or review
+4. shared post-run replay evidence capture
 5. provenance-backed durable writes
 
 ### 1. Install-time host interception
@@ -80,10 +86,8 @@ Current steps:
 
 1. resolve repo path
 2. auto-bootstrap the pack when safe
-3. inspect the prompt for source routes such as `pdf`
-4. if no source route wins, resolve loop guidance
-5. render one wrapped prompt
-6. export one wrapper env bundle
+3. render one wrapped prompt
+4. export one wrapper env bundle
 
 Concrete code:
 
@@ -112,7 +116,7 @@ Concrete code:
 
 This is where enforcement stops being "guidance" and becomes "the child did or did not receive the Datalox envelope".
 
-### 4. Shared post-run record or review
+### 4. Shared post-run replay evidence capture
 
 After the child exits, the wrapper goes back through shared post-run logic in `src/adapters/shared.ts`.
 
@@ -120,18 +124,16 @@ Current steps:
 
 1. sanitize transcript and output
 2. collect changed files
-3. classify the run as `trace` or `candidate`
-4. build one observed-turn payload
-5. always record an event
-6. optionally run second-pass review
-7. optionally compile or promote the recorded event
+3. attach any explicit `tool_io_record.v1` records created during the run
+4. record an `agent_turn.v1` event only when replay evidence or useful review
+   context exists
+5. report clearly when no replay evidence was captured
 
 Concrete code:
 
 - `src/adapters/shared.ts`
   - `finalizeWrappedRun()`
-  - `buildObservedTurnPayload()`
-  - `recordObservedTurnPayload()`
+  - `buildWrapperAgentTurn()`
 
 This is the real post-run enforcement boundary today.
 
@@ -160,11 +162,10 @@ Already real:
 - generic wrapper fail-closed prompt injection
 - shared loop envelope assembly
 - shared post-run record path
-- optional second-pass review on supported wrapper paths
 - hook reuse of shared observed-turn payload builders
 - `src/adapters/capabilities.ts` as one host-support registry
 - `datalox status --json`
-- provenance-gated durable writes for `patch` and `promote`
+- replay-first MCP/CLI surfaces for record, pack, verify, and replay
 
 Planned but not fully implemented:
 
@@ -193,19 +194,15 @@ Every `enforced` adapter should implement the same contract.
 
 1. Detect repo.
 2. Ensure the pack is bootstrapped.
-3. Detect source kinds: `pdf`, `web`, `trace`.
-4. If source-grounded, capture first.
-5. If routing matters, resolve loop guidance.
-6. Build one wrapped prompt/evidence bundle.
-7. Inject that bundle into the host command.
+3. Build one wrapped prompt/evidence bundle.
+4. Inject that bundle into the host command.
 
 ### Post-run
 
 1. Sanitize transcript and child output.
-2. Always record an event.
-3. Optionally run second-pass review.
-4. Preserve enough structured evidence for later `debugging_trajectory.v1` export.
-5. Only persist note or skill changes through provenance-backed write paths.
+2. Attach exact tool I/O records when they exist.
+3. Record optional turn context when it points at concrete replay evidence.
+4. Never synthesize replay records from prose summaries.
 
 This contract should live centrally, not be reimplemented ad hoc in each host adapter.
 
@@ -380,9 +377,9 @@ Keep `AGENTS.md`, `CLAUDE.md`, and `DATALOX.md` as visible protocol surfaces, no
 - `datalox status --json` reports the same enforcement classification the docs describe
 - note or skill writes fail without provenance
 
-## Product Shape
+## Replay Shape
 
-The intended product shape for this repo is:
+The intended replay shape for this repo is:
 
 - portable pack first
 - mandatory adapters where supported

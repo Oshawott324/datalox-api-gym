@@ -3,14 +3,14 @@
 This guide defines the quality gate above
 [debugging_trajectory.v1](trajectory-dataset-schema.md).
 
-`agent_turn.v1` events are the capture primitive. The captured session is the
-source asset after turns are assembled. It can include prompts, tool actions,
-file edits, diffs, verification commands, and outcome evidence. The trajectory
-row is the compact training/eval derivative.
+`tool_io_record.v1` records are the replay primitive. `agent_turn.v1` events
+are optional review context after turns are assembled. A replay bundle can
+include prompts, tool actions, file edits, diffs, verification commands, and
+outcome evidence. The trajectory row is the compact training/eval derivative.
 
 The schema answers: "Is this row shaped correctly?"
 
-Training readiness answers: "Can a buyer or eval runner learn the debugging move
+Training readiness answers: "Can an eval runner learn the debugging move
 from this row without replaying a transcript?"
 
 ## Row States
@@ -176,8 +176,8 @@ This is schema-shaped prose, not training data. The grader should keep it in
 }
 ```
 
-This is useful provenance, but not a standalone training row. A buyer would need
-repo or source-event access to understand the edit.
+This is useful provenance, but not a standalone training row. An eval runner
+would need repo or source-event access to understand the edit.
 
 ## Good Standalone Shape
 

@@ -153,7 +153,7 @@ explicitly grants that path.
 The agent that performs the real implementation must record replay source
 evidence through `datalox-mcp`.
 
-- If an executor worker edits product code, tests, docs, schemas, or runtime
+- If an executor worker edits project code, tests, docs, schemas, or runtime
   behavior, that executor must call replay capture tools through `datalox-mcp`
   before returning `ok: true`.
 - If the orchestrator personally performs the implementation instead of
@@ -214,21 +214,21 @@ Before writing `final.md`, the orchestrator should:
 8. Write `final.md` after the orchestrator integrates results.
 9. Keep task orchestration events separate from `debugging_trajectory.v1` rows.
 
-## Product Boundary
+## Project Boundary
 
 For this repo, orchestration is process infrastructure. It must not reintroduce
-the legacy note/skill loop as a product model. Product work still flows through:
+the legacy note/skill loop as a project model. Replay work still flows through:
 
 ```txt
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 Use task state for coordination. Use `action_observation.v1` as the strict
 normalized action view, `tool_io_record.v1` records as the exact replay
 primitive, `agent_turn.v1` events as the review primitive, replay bundles as
-the source B2B data asset, and trajectory rows as compact dataset/eval
-derivatives.
+portable replay artifacts, and trajectory rows as compact dataset/eval
+adapters.
 
-Fresh replay-product adoption keeps orchestration and product data under
+Fresh replay adoption keeps orchestration and replay data under
 `.datalox/`. This branch does not create a parallel wiki, note, or event store
 for task state, session capture, or trajectory rows.

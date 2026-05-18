@@ -176,7 +176,7 @@ export function renderWrappedPrompt(envelope: LoopEnvelope): string {
   }
   return [
     "# Datalox Agent Replay",
-    "Use replay evidence as the source product: tool I/O records, agent turns, and replay bundles.",
+    "Record exact replay evidence first: tool I/O records, optional agent turns, and replay bundles.",
     "When MCP is available, call replay tools such as `record_tool_io`, `record_agent_turn`, and `pack_replay_bundle` for concrete evidence.",
     "Use `DATALOX_SESSION_ID` as `session_id` so wrapper post-run can attach new tool I/O to the completed turn.",
     "Do not synthesize replay data from prose summaries. If no agent-visible tool I/O was captured, leave post-run recording empty.",
@@ -202,7 +202,7 @@ export async function buildLoopEnvelope(input: LoopEnvelopeInput): Promise<LoopE
     bootstrap,
     guidance: {
       workflow,
-      selectionBasis: active ? "product_replay_capture" : "bootstrap_unavailable",
+      selectionBasis: active ? "replay_capture" : "bootstrap_unavailable",
       matchedSkillId: null,
       candidateSkills: [],
       whyMatched: [],

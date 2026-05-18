@@ -21,13 +21,13 @@ turn without replaying the whole raw Codex or Claude session log.
 The boundary is:
 
 ```text
-messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives
+agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
 The normalized action view is `action_observation.v1`, the exact persisted
 replay unit is `tool_io_record.v1`, and the review unit is one completed turn.
-The commercial source unit is usually a verified replay bundle assembled from
-tool I/O records and turns.
+The portable replay artifact is a verified replay bundle assembled from tool
+I/O records and optional turn review events.
 
 ## Required Shape
 
@@ -118,10 +118,9 @@ type ReplayBundleTurnIndexV1 = {
 };
 ```
 
-Replay bundles are the direct B2B source data product when approved and
-anonymized. `debugging_trajectory.v1` and `agent_task_trajectory.v1` rows are
-optional compact derivatives for buyers who want training or eval examples
-instead of replay.
+Replay bundles are the direct replay artifacts. `debugging_trajectory.v1` and
+`agent_task_trajectory.v1` rows are optional compact derivatives for teams that
+want training or eval examples instead of full replay bundles.
 
 ## Readiness Rule
 

@@ -138,7 +138,7 @@ describe("trajectory training-readiness grading", () => {
     expect(issueCodes(row)).toContain("relevant_file_snippet_external_reference");
   });
 
-  it("grades recorded product events by event path", async () => {
+  it("grades recorded derivative events by event path", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-grade-recorded-"));
     tempDirs.push(tempDir);
 
@@ -157,7 +157,7 @@ describe("trajectory training-readiness grading", () => {
     expect(grade.quality).toBe("use");
   });
 
-  it("rejects grading event paths outside the product trajectory root", async () => {
+  it("rejects grading event paths outside the derivative trajectory root", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-grade-invalid-path-"));
     tempDirs.push(tempDir);
     await writeFile(path.join(tempDir, "source.json"), JSON.stringify({ trajectoryRow: makeTrainingRow("bad") }));
@@ -168,7 +168,7 @@ describe("trajectory training-readiness grading", () => {
     })).rejects.toThrow("eventPath must point under .datalox/derivatives/trajectories/debugging.");
   });
 
-  it("repairs product trajectory events by writing a corrected product event", async () => {
+  it("repairs derivative trajectory events by writing a corrected derivative event", async () => {
     const tempDir = await mkdtemp(path.join(tmpdir(), "datalox-trajectory-repair-"));
     tempDirs.push(tempDir);
 

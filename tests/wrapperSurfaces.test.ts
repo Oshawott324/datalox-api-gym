@@ -28,7 +28,7 @@ describe("wrapper surfaces", () => {
     return hostDir;
   }
 
-  it("builds a product-only wrapped prompt", async () => {
+  it("builds a replay-only wrapped prompt", async () => {
     const hostDir = await adoptHostRepo();
     const result = spawnSync(
       "node",

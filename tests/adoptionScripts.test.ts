@@ -9,14 +9,14 @@ const repoRoot = process.cwd();
 const legacyWikiDir = ["agent", "wiki"].join("-");
 const legacyPackToken = `DATALOX_${"PACK"}`;
 
-describe("product adoption scripts", () => {
+describe("replay adoption scripts", () => {
   const tempDirs: string[] = [];
 
   afterEach(async () => {
     await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
   });
 
-  it("adopts product surfaces without creating the removed wiki store", async () => {
+  it("adopts replay surfaces without creating the removed wiki store", async () => {
     const hostDir = await mkdtemp(path.join(tmpdir(), "datalox-host-adopt-"));
     tempDirs.push(hostDir);
 
@@ -26,7 +26,7 @@ describe("product adoption scripts", () => {
     });
 
     expect(result.status).toBe(0);
-    expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("source kinds: `trace`, `web`, `pdf`");
+    expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/manifest.json");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/tool-io/records/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/events/agent-turns/");

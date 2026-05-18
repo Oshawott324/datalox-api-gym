@@ -4,7 +4,7 @@ This document defines `agent_task_trajectory.v1`, the generic mixed-domain task
 episode row. Use it when a real agent task crosses domains or when the evidence
 is not purely coding/debugging.
 
-Use [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md) for the
+Use [trajectory-dataset-schema.md](trajectory-dataset-schema.md) for the
 narrow `debugging_trajectory.v1` coding/debugging row.
 
 ## Design Goal
@@ -239,7 +239,7 @@ Use for biotech, lab, assay, protocol, or measurement planning work.
 
 Use for web, PDF, or local-file grounding. `excerpt` and `relevance` are optional
 at schema validation time so weak captures can be saved as `needs_review`, but
-buyer-facing `quality: "use"` export requires both.
+use-quality `quality: "use"` export requires both.
 
 ```ts
 {
@@ -256,7 +256,7 @@ buyer-facing `quality: "use"` export requires both.
 ## Optional Derivative Annotations
 
 `trajectory_type`, `first_wrong_step`, and `replay_bundle_ref` follow the same
-semantics as in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md):
+semantics as in [trajectory-dataset-schema.md](trajectory-dataset-schema.md):
 
 - `trajectory_type` is a learning-role label (`success` / `failure` /
   `recovery`) separate from `outcome.label`. A recoverable failure that
@@ -275,14 +275,14 @@ All three fields are optional and additive; rows without them remain valid
 
 ## Readiness Rules
 
-Schema-valid does not mean buyer-ready. `export-agent-task-trajectories --quality
+Schema-valid does not mean use-quality. `export-agent-task-trajectories --quality
 use` applies deterministic readiness checks:
 
 - `evidence_blocks` must be non-empty.
 - Unknown evidence block types and unknown fields are rejected by schema.
 - `code_change` evidence must carry exact code or patch evidence, not prose.
 - Code-heavy rows must include at least one concrete `code_change` block before
-  buyer-facing `quality: "use"` export. A row is code-heavy when task domains or
+  use-quality `quality: "use"` export. A row is code-heavy when task domains or
   artifact paths indicate code, tests, package metadata, runtime behavior, or
   implementation work.
 - `source_reference` entries for local code files are provenance/context only.

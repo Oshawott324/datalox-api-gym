@@ -1,27 +1,26 @@
 # Datalox
 
-This repo is the portable implementation package for Datalox Agent Replay.
+This repo is the portable implementation package for Datalox Agent Replay: an
+MCP-compatible VCR for agent tools.
 
-Datalox converts messy agent traces into validated action/observation records,
-then records agent-visible tool I/O, turn summaries, file edits, and
-verification evidence so teams can reproduce agent behavior later. Approved
-replay bundles are the source product, and trajectory/eval rows are optional
-derivatives.
+Datalox records exact agent-visible tool requests and observations, stores them
+by deterministic request hash, packs sealed replay bundles, and replays the
+same observations later without live upstream tools.
 
-The capture taxonomy is intentionally small:
+Core replay surfaces:
 
-- source kinds: `trace`, `web`, `pdf`
-- normalized action/observation view: `action_observation.v1`
-- replay primitive: `tool_io_record.v1`
-- review primitive: `agent_turn.v1`
-- source export target: approved anonymized `replay_bundle.v1`
-- optional derivative targets: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
+- exact replay primitive: `tool_io_record.v1`
+- replay lookup key: `request_hash + sequence_index`
+- normalized view over replay records and imported traces: `action_observation.v1`
+- optional turn review context: `agent_turn.v1`
+- portable replay artifact: `replay_bundle.v1`
+- optional downstream adapters: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
-Primary product loop:
+Primary replay loop:
 
-`messy agent traces -> validated action/observation records -> replay bundle -> approval/export -> optional derivatives`
+`agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`
 
-Do not keep note/skill promotion as a second product loop in this repo.
+Do not keep note/skill promotion as a second loop in this repo.
 
 ## Read Order
 
@@ -29,7 +28,7 @@ On each loop:
 
 1. read `.datalox/manifest.json`
 2. read `.datalox/config.json`
-3. read `docs/product-definition.md` when it exists
+3. read `docs/project-definition.md` when it exists
 4. read `docs/action-observation-schema.md` when the work touches raw trace normalization or action schema
 5. read `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
 6. read `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
@@ -39,7 +38,7 @@ On each loop:
 
 ## Knowledge Surfaces
 
-The repo-local product data surfaces are:
+The repo-local replay data surfaces are:
 
 - `.datalox/events/agent-turns/`
 - `.datalox/tool-io/records/`
@@ -53,15 +52,14 @@ The repo-local product data surfaces are:
 - `docs/derivatives/trajectory/trajectory-dataset-schema.md`
 - `docs/derivatives/trajectory/agent-task-trajectory-schema.md`
 
-Fresh product adoption creates `.datalox/`, instruction surfaces, and shims. It
+Fresh replay adoption creates `.datalox/`, instruction surfaces, and shims. It
 does not create a parallel wiki/note/event store.
 
 ## Replay Bundle Rule
 
-Unapproved raw traces are not sellable data.
+Raw traces and prose summaries are not replay records.
 
-The source data product is an approved anonymized replay bundle. It should
-preserve:
+A replay bundle should preserve:
 
 - `agent_turn.v1` source turn ids or event paths
 - `tool_io_record.v1` source record ids or record paths
@@ -74,7 +72,7 @@ preserve:
 
 User-facing capture copy:
 
-> Datalox captured this agent session. It includes prompts, tool actions, file edits, and verification results. You can keep it private, review it, or share approved anonymized sessions with your organization/data program.
+> Datalox captured replay evidence for this agent session. It includes tool requests, tool observations, optional turn context, file edits, and verification results. You can keep it private, review it, or share an approved anonymized replay bundle with your organization/data program.
 
 ## Turn Recording
 
@@ -90,7 +88,7 @@ turn with the user prompt when safe, a short assistant summary, meaningful tool
 call references, file change summaries, verification evidence, and
 export/redaction status.
 
-Approved replay bundles are assembled from `tool_io_record.v1` records and
+Replay bundles are assembled from `tool_io_record.v1` records and optional
 `agent_turn.v1` events. A trajectory row is derived only when compact
 training/eval packaging is useful.
 
@@ -102,7 +100,7 @@ Trajectory rows are derivative artifacts. They are valid only when they follow
 and include grounded evidence, a final outcome, and an export gate.
 
 For mixed-domain implementation work, code-heavy derivative rows must include
-exact `code_change` evidence before buyer-facing `quality: "use"` export. Use
+exact `code_change` evidence before `quality: "use"` derivative export. Use
 compact before/after snippets or patch hunks for the key code edit. A
 local-file `source_reference` is provenance and context; it does not replace
 `code_change`.
