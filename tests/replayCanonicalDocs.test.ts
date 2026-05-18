@@ -14,10 +14,11 @@ async function read(relativePath: string): Promise<string> {
 
 describe("replay canonical schema docs", () => {
   it("defines the replay source schemas and canonical paths", async () => {
-    const [actionObservationSchema, toolIoSchema, replayBundleSchema] = await Promise.all([
+    const [actionObservationSchema, toolIoSchema, replayBundleSchema, replayQuickstart] = await Promise.all([
       read("docs/action-observation-schema.md"),
       read("docs/tool-io-store-schema.md"),
       read("docs/replay-bundle-schema.md"),
+      read("docs/replay-quickstart.md"),
     ]);
 
     expect(actionObservationSchema).toContain('schema_version: "action_observation.v1"');
@@ -34,6 +35,11 @@ describe("replay canonical schema docs", () => {
     expect(replayBundleSchema).toContain(".datalox/replay-bundles/");
     expect(replayBundleSchema).toContain("checksums.json");
     expect(replayBundleSchema).toContain(replayLoop);
+
+    expect(replayQuickstart).toContain("record_tool_io -> replay_tool_io -> pack_replay_bundle -> verify_replay_bundle");
+    expect(replayQuickstart).toContain(".datalox/tool-io/records/");
+    expect(replayQuickstart).toContain(".datalox/replay-bundles/demo-replay-bundle/");
+    expect(replayQuickstart).toContain("Do not call live tools during replay as a hidden fallback.");
   });
 
   it("keeps action/observation docs aligned with strict TypeScript validators", async () => {
@@ -130,6 +136,7 @@ describe("replay canonical schema docs", () => {
       "GEMINI.md",
       "WIKI.md",
       "docs/project-definition.md",
+      "docs/replay-quickstart.md",
       "docs/agent-turn-schema.md",
       "docs/agent-configuration.md",
       "docs/project-overview.md",
@@ -156,6 +163,7 @@ describe("replay canonical schema docs", () => {
       "GEMINI.md",
       "WIKI.md",
       "docs/project-definition.md",
+      "docs/replay-quickstart.md",
       "docs/agent-turn-schema.md",
       "docs/agent-configuration.md",
       "docs/project-overview.md",
