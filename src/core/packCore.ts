@@ -259,6 +259,7 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   ".datalox/config.json",
   ".datalox/config.schema.json",
   ".datalox/manifest.json",
+  "bin/package.json",
   "bin/datalox-claude.js",
   "bin/datalox-codex.js",
   "bin/datalox-mcp.js",
