@@ -2,6 +2,15 @@ import { z } from "zod";
 
 const nonEmptyString = z.string().min(1);
 
+const trajectoryTypeSchema = z.enum(["success", "failure", "recovery"]);
+
+const replayBundleRefSchema = z
+  .object({
+    bundle_id: nonEmptyString,
+    bundle_path: z.string().optional(),
+  })
+  .strict();
+
 export const debuggingTrajectoryV1Schema = z.object({
   schema_version: z.literal("debugging_trajectory.v1"),
   id: nonEmptyString,
@@ -61,6 +70,9 @@ export const debuggingTrajectoryV1Schema = z.object({
       evidence: z.string().optional(),
     })
     .strict(),
+  trajectory_type: trajectoryTypeSchema.optional(),
+  first_wrong_step: z.number().int().nonnegative().optional(),
+  replay_bundle_ref: replayBundleRefSchema.optional(),
   export: z
     .object({
       allowed: z.boolean(),

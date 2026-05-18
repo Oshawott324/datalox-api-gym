@@ -2,6 +2,7 @@
 
 Read `AGENTS.md` and `DATALOX.md` before changing this repo.
 
-Use `.datalox/events/` for product capture data. Do not create a parallel
-wiki/note/event store. For trajectory work, use the schema docs and MCP/CLI
-recording commands.
+Use `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and
+`.datalox/replay-bundles/` for product capture data. Do not create a parallel
+wiki/note/event store. Trajectory rows are derivative-only and must be derived
+from replay evidence.

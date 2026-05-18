@@ -7,6 +7,14 @@ const curationSplitSchema = z.enum(["train", "validation", "test", "eval"]);
 const outcomeLabelSchema = z.enum(["success", "failure", "partial"]);
 const verificationSchema = z.enum(["passed", "failed", "not_run", "reviewed"]);
 const redactionSchema = z.enum(["none_needed", "applied", "blocked"]);
+const trajectoryTypeSchema = z.enum(["success", "failure", "recovery"]);
+
+const replayBundleRefSchema = z
+  .object({
+    bundle_id: nonEmptyString,
+    bundle_path: z.string().optional(),
+  })
+  .strict();
 
 const codeChangeEvidenceBlockSchema = z
   .object({
@@ -173,6 +181,9 @@ export const agentTaskTrajectoryV1Schema = z
         evidence: z.string().optional(),
       })
       .strict(),
+    trajectory_type: trajectoryTypeSchema.optional(),
+    first_wrong_step: z.number().int().nonnegative().optional(),
+    replay_bundle_ref: replayBundleRefSchema.optional(),
     export: z
       .object({
         allowed: z.boolean(),
