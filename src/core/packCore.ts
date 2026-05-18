@@ -231,6 +231,7 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "START_HERE.md",
   "docs/project-definition.md",
   "docs/project-overview.md",
+  "docs/replay-quickstart.md",
   "docs/action-observation-schema.md",
   "docs/tool-io-store-schema.md",
   "docs/replay-bundle-schema.md",

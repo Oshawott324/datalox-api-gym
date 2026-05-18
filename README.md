@@ -206,6 +206,7 @@ before/after snippets or patch hunks.
 
 - [DATALOX.md](DATALOX.md)
 - [docs/project-definition.md](docs/project-definition.md)
+- [docs/replay-quickstart.md](docs/replay-quickstart.md)
 - [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md)
 - [docs/action-observation-schema.md](docs/action-observation-schema.md)
 - [docs/tool-io-store-schema.md](docs/tool-io-store-schema.md)

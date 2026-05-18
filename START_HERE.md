@@ -16,6 +16,7 @@ The normalized action schema is
 exact replay primitive is [docs/tool-io-store-schema.md](docs/tool-io-store-schema.md).
 The source bundle contract is [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md).
 The turn review contract is [docs/agent-turn-schema.md](docs/agent-turn-schema.md).
+The smallest record/replay loop is [docs/replay-quickstart.md](docs/replay-quickstart.md).
 Compact trajectory rows use the trajectory schemas only as derivatives.
 The concrete replay migration plan is
 [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md).
