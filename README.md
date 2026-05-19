@@ -8,6 +8,12 @@ tool request and observation, stores that pair by deterministic request hash,
 packs the records into sealed replay bundles, and can replay the same
 observations later without calling live upstream tools.
 
+In the broader agentic RL stack, Datalox owns the tool-I/O record/replay layer.
+It is complementary to sandbox runtimes, environment builders, behavioral mocks,
+and reward engines. During replay, recorded observations can act like
+record-based mocks, but Datalox does not construct fake stateful environments or
+invent unseen behavior.
+
 Primary replay loop:
 
 `agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`
@@ -216,6 +222,7 @@ before/after snippets or patch hunks.
 
 - [DATALOX.md](DATALOX.md)
 - [docs/project-definition.md](docs/project-definition.md)
+- [docs/agentic-rl-layer-map.md](docs/agentic-rl-layer-map.md)
 - [docs/replay-quickstart.md](docs/replay-quickstart.md)
 - [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md)
 - [docs/action-observation-schema.md](docs/action-observation-schema.md)

@@ -5,6 +5,7 @@ The canonical action/observation schema lives in [action-observation-schema.md](
 The canonical tool I/O schema lives in [tool-io-store-schema.md](./tool-io-store-schema.md).
 The canonical replay bundle schema lives in [replay-bundle-schema.md](./replay-bundle-schema.md).
 The canonical per-turn review schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
+The canonical layer boundary lives in [agentic-rl-layer-map.md](./agentic-rl-layer-map.md).
 The canonical derivative trajectory schema lives in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md).
 The filesystem-backed orchestration protocol lives in [task-orchestration.md](./task-orchestration.md).
 
@@ -17,6 +18,7 @@ Short version:
 - `agent_turn.v1` events are optional turn review context.
 - `replay_bundle.v1` is the portable artifact that can be verified and replayed.
 - `debugging_trajectory.v1` rows are optional compact training/eval adapters.
+- Datalox owns tool-I/O record/replay, not sandbox runtime, environment construction, or reward rules.
 - Datalox MCP is the instrumentation, tool I/O capture, replay, verification, and export-control layer.
 - `datalox-agent-replay` is the repo-local implementation package.
 - Local skills are internal guidance surfaces, not a second replay loop.

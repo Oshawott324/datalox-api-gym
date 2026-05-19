@@ -15,6 +15,12 @@ Project boundary:
 - Lean, outcome-labeled trajectory exports are optional compact training/eval adapters.
 - Local `skills/` are agent guidance only, not a replay data store.
 
+Layer boundary:
+
+- Datalox owns tool-I/O record/replay.
+- Datalox does not own sandbox runtimes, environment construction, behavioral
+  mock construction, reward functions, or judge agents.
+
 Primary replay loop:
 
 ```text

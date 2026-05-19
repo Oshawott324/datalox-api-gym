@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-19T13-47-07-165Z--agent-turn-turn-agentic-rl-layer-map-2026-05-19",
+  "timestamp": "2026-05-19T13:47:07.165Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-19",
+  "turnId": "turn-agentic-rl-layer-map-2026-05-19",
+  "summary": "Added a canonical agentic RL layer-map doc positioning Datalox as the tool-I/O VCR / record-based mocking layer, with explicit non-ownership of sandbox/runtime, environment construction, behavioral mock construction, reward functions, judge agents, and RL algorithms. Updated first-read docs and canonical project docs to point future agents at this boundary, and added regression coverage to keep the new doc part of active replay surfaces.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-agentic-rl-layer-map-2026-05-19",
+    "session_id": "codex-cli-2026-05-19",
+    "turn_index": 1,
+    "created_at": "2026-05-19T13:46:47Z",
+    "user_prompt": "record this into doc, including future plan(with technical details), update current docs if necessary",
+    "assistant_summary": "Added a canonical agentic RL layer-map doc positioning Datalox as the tool-I/O VCR / record-based mocking layer, with explicit non-ownership of sandbox/runtime, environment construction, behavioral mock construction, reward functions, judge agents, and RL algorithms. Updated first-read docs and canonical project docs to point future agents at this boundary, and added regression coverage to keep the new doc part of active replay surfaces.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts tests/adoptionScripts.test.ts",
+        "exit_code": 0,
+        "output_summary": "Passed: 3 test files, 16 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm run check",
+        "exit_code": 0,
+        "output_summary": "Passed TypeScript no-emit check."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm test",
+        "exit_code": 0,
+        "output_summary": "Passed full suite: 16 test files, 100 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Passed whitespace/error check."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "test ! -e legacy datalox-pack/wiki sidecar paths",
+        "exit_code": 0,
+        "output_summary": "Confirmed removed legacy wiki/pack sidecar paths are absent."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "docs/agentic-rl-layer-map.md",
+        "action": "created",
+        "diff_summary": "New canonical layer-map doc with Datalox as Layer 1.5 tool-I/O record/replay, record-based vs behavioral mocking vocabulary, buyer discovery question, product boundary, and phased technical plan."
+      },
+      {
+        "path": "docs/project-definition.md",
+        "action": "modified",
+        "diff_summary": "References the layer-map doc as product boundary inside the broader sandbox/env/reward stack and adds explicit non-goals for stateful environment/mock construction and reward/judge engines."
+      },
+      {
+        "path": "README.md",
+        "action": "modified",
+        "diff_summary": "Adds top-level wording that Datalox owns tool-I/O record/replay, is complementary to sandbox/runtime/env/reward systems, and does not invent unseen stateful behavior."
+      },
+      {
+        "path": "DATALOX.md",
+        "action": "modified",
+        "diff_summary": "Adds layer-boundary guidance and includes agentic-rl-layer-map.md in repo-local replay data surfaces."
+      },
+      {
+        "path": "AGENTS.md",
+        "action": "modified",
+        "diff_summary": "Adds layer-map read guidance for sandbox, environment, mock, reward, and agentic RL positioning tasks."
+      },
+      {
+        "path": "CLAUDE.md",
+        "action": "modified",
+        "diff_summary": "Adds the same layer boundary to Claude instructions."
+      },
+      {
+        "path": "GEMINI.md",
+        "action": "modified",
+        "diff_summary": "Adds the same layer boundary to Gemini instructions."
+      },
+      {
+        "path": "START_HERE.md",
+        "action": "modified",
+        "diff_summary": "Adds the layer-map doc to first-read guidance."
+      },
+      {
+        "path": "docs/agent-configuration.md",
+        "action": "modified",
+        "diff_summary": "Adds layer boundary bullets for tool-I/O record/replay ownership and non-ownership of runtime/env/mock/reward/judge layers."
+      },
+      {
+        "path": "docs/project-overview.md",
+        "action": "modified",
+        "diff_summary": "Links the canonical layer boundary doc and adds the non-ownership summary."
+      },
+      {
+        "path": "tests/replayCanonicalDocs.test.ts",
+        "action": "modified",
+        "diff_summary": "Adds tests ensuring the layer-map doc is read with canonical replay docs and remains part of active replay surfaces."
+      }
+    ],
+    "verification": {
+      "command": "npm test && npm run check && git diff --check",
+      "status": "passed",
+      "evidence": "Full suite passed: 16 test files, 100 tests. TypeScript no-emit check passed. git diff --check passed."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

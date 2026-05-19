@@ -14,11 +14,12 @@ async function read(relativePath: string): Promise<string> {
 
 describe("replay canonical schema docs", () => {
   it("defines the replay source schemas and canonical paths", async () => {
-    const [actionObservationSchema, toolIoSchema, replayBundleSchema, replayQuickstart] = await Promise.all([
+    const [actionObservationSchema, toolIoSchema, replayBundleSchema, replayQuickstart, layerMap] = await Promise.all([
       read("docs/action-observation-schema.md"),
       read("docs/tool-io-store-schema.md"),
       read("docs/replay-bundle-schema.md"),
       read("docs/replay-quickstart.md"),
+      read("docs/agentic-rl-layer-map.md"),
     ]);
 
     expect(actionObservationSchema).toContain('schema_version: "action_observation.v1"');
@@ -42,6 +43,11 @@ describe("replay canonical schema docs", () => {
     expect(replayQuickstart).toContain(".datalox/mcp-tool-catalogs/");
     expect(replayQuickstart).toContain(".datalox/replay-bundles/demo-replay-bundle/");
     expect(replayQuickstart).toContain("Do not call live tools during replay as a hidden fallback.");
+
+    expect(layerMap).toContain("Layer 1.5: Tool-I/O Record/Replay");
+    expect(layerMap).toContain("Datalox does not own this layer.");
+    expect(layerMap).toContain("Datalox implements the first kind for agent-visible tool I/O.");
+    expect(layerMap).toContain(replayLoop);
   });
 
   it("keeps action/observation docs aligned with strict TypeScript validators", async () => {
@@ -167,6 +173,7 @@ describe("replay canonical schema docs", () => {
       "docs/agent-turn-schema.md",
       "docs/agent-configuration.md",
       "docs/project-overview.md",
+      "docs/agentic-rl-layer-map.md",
       "docs/action-observation-schema.md",
       "docs/tool-io-store-schema.md",
       "docs/replay-bundle-schema.md",

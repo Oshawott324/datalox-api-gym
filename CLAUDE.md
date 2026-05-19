@@ -10,6 +10,8 @@ Project boundary:
 
 - Datalox MCP is the install-facing instrumentation and control layer for desktop agents.
 - Reproducible tool-call replay is the primary project focus.
+- Datalox owns tool-I/O record/replay, not sandbox runtimes, environment
+  construction, behavioral mocks, reward functions, or judge agents.
 - `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` records are the exact replay primitive.
 - `agent_turn.v1` events are optional turn review context.
@@ -24,7 +26,7 @@ agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay
 
 On each loop:
 
-1. read `docs/project-definition.md`, `docs/action-observation-schema.md`, `docs/tool-io-store-schema.md`, `docs/replay-bundle-schema.md`, and `docs/agent-turn-schema.md` when export/data fields are involved
+1. read `docs/project-definition.md`, `docs/agentic-rl-layer-map.md`, `docs/action-observation-schema.md`, `docs/tool-io-store-schema.md`, `docs/replay-bundle-schema.md`, and `docs/agent-turn-schema.md` when export/data fields, sandbox, environment, mock, reward, or agentic RL positioning are involved
 2. record replay source evidence under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`
 3. record exact tool I/O first, assemble replay bundles, and derive trajectory rows only when useful
 4. do not create a parallel wiki/note/event store
