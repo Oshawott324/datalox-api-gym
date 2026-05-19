@@ -658,34 +658,405 @@ Pass criteria:
 - any remaining trajectory code is under `derivatives/trajectory`
 - full test suite passes after move/delete
 
-## Step 7: Change Wrapper Defaults To Replay
+## Step 7: Make Wrapper Replay Defaults Boring And Enforced
 
 Goal:
 
-- make enforced host runs produce replay evidence by default
+- make every supported wrapper path replay-first by default
+- make wrapper enforcement visible to the child agent through stable environment
+  sentinels
+- make post-run behavior deterministic enough that an agent can reason about it
+  without human interpretation
+- prevent wrapper runs from silently producing trajectory rows, wiki events, or
+  synthesized replay evidence
 
-Update:
+Why this step matters:
 
-- `src/core/installCore.ts`
-- wrapper adapters under `src/adapters/`
-- `bin/datalox-claude.js`
-- `bin/datalox-codex.js`
-- `bin/datalox-wrap.js`
-- wrapper tests
+- MCP VCR proxy is the cleanest enforced capture boundary when an agent uses MCP
+  tools directly.
+- Wrappers are the broader host boundary. They catch Codex, Claude, and generic
+  CLI runs where the model can still call local MCP tools or code paths that
+  create `tool_io_record.v1` records.
+- The wrapper must not pretend that stdout, summaries, final answers, or prose
+  are replay records. Its job is to enforce guidance and attach turn context to
+  explicit tool I/O evidence that already exists.
 
-New default:
+Current state:
+
+- `WrapperPostRunMode` is already narrowed to `off | replay`.
+- `finalizeWrappedRun` already defaults missing `postRunMode` to `replay`.
+- `bin/datalox-codex.js`, `bin/datalox-claude.js`, and generated host shims set
+  `DATALOX_DEFAULT_POST_RUN_MODE` to `replay` when unset.
+- `tests/wrapperSurfaces.test.ts` already covers replay-only prompt injection,
+  empty replay capture, and `agent_turn.v1` creation when explicit
+  `tool_io_record.v1` records appear.
+- This step is complete only when the default is documented, enforced by the
+  adopted shims, rejected when invalid, and protected against regression by
+  wrapper and adoption tests.
+
+Non-goals:
+
+- do not build a transcript parser
+- do not infer tool calls from stdout, stderr, shell logs, final answers, or
+  assistant summaries
+- do not make trajectory rows from wrapper output
+- do not run reward, grading, or trajectory export as part of wrapper post-run
+- do not hide missing replay evidence behind a generated placeholder record
+- do not make wrapper behavior depend on an LLM review decision
+
+Definition of boring:
+
+```text
+pre-run:  inject replay guidance and stable environment sentinels
+child:    run the real agent host command
+post-run: compare tool_io_record.v1 ids before/after the child run
+if new records exist: create one agent_turn.v1 that references them
+if no records exist: create nothing and report replay_capture_empty
+```
+
+The wrapper should have no clever classifier. It should not inspect child output
+to decide whether replay evidence exists. The only accepted replay evidence is
+a valid `tool_io_record.v1` already written under:
+
+```text
+.datalox/tool-io/records/
+```
+
+Definition of enforced:
+
+```text
+the host command path routes through Datalox wrapper code
+AND the child process receives DATALOX_ENFORCEMENT=wrapper
+AND the child process receives DATALOX_SESSION_ID
+AND wrapper post-run mode resolves to replay unless explicitly disabled
+```
+
+Guidance-only surfaces such as native instructions, MCP availability, or chat
+memory do not count as enforced wrapper runs. They can help the model choose the
+right behavior, but they cannot prove the child process went through Datalox.
+
+Default contract:
 
 ```bash
 DATALOX_DEFAULT_POST_RUN_MODE=replay
 ```
 
+Allowed post-run modes:
+
+```text
+replay
+off
+```
+
+Rules:
+
+- missing `--post-run-mode` means `replay`
+- missing `DATALOX_DEFAULT_POST_RUN_MODE` means `replay`
+- `--post-run-mode replay` records only replay turn context
+- `--post-run-mode off` disables post-run recording for that run
+- `DATALOX_DEFAULT_POST_RUN_MODE=off` disables post-run recording until changed
+- any other explicit CLI value must fail with an agent-readable error
+- any other environment value must fail with an agent-readable error before the
+  child command runs
+- there is no `trajectory` post-run mode
+
+Wrapper entrypoints:
+
+```text
+bin/datalox-codex.js
+bin/datalox-claude.js
+bin/datalox-wrap.js
+src/cli/main.ts datalox codex
+src/cli/main.ts datalox claude
+src/cli/main.ts datalox wrap command
+src/cli/main.ts datalox wrap prompt
+generated Codex shim from src/core/installCore.ts
+generated Claude shim from src/core/installCore.ts
+```
+
+Host-specific enforcement:
+
+- Codex shim wraps `codex exec`, `codex e`, and `codex review`.
+- Claude shim wraps prompt-bearing Claude runs and avoids wrapping management
+  commands such as config, MCP setup, update, help, and version.
+- Generic wrapper is enforced only when the caller explicitly invokes
+  `datalox wrap command` and passes a concrete child command after `--`.
+- `datalox wrap prompt` is guidance rendering only. It does not run a child
+  command and must not create replay events.
+
+Environment contract for wrapped child processes:
+
+```text
+DATALOX_REPO_PATH=<absolute target repo path>
+DATALOX_SESSION_ID=<stable wrapper session id>
+DATALOX_ORIGINAL_PROMPT=<user prompt before Datalox guidance>
+DATALOX_PROMPT=<wrapped prompt with replay guidance>
+DATALOX_GUIDANCE_JSON=<machine-readable guidance envelope>
+DATALOX_SELECTION_BASIS=replay_capture | bootstrap_unavailable
+DATALOX_WORKFLOW=<optional workflow>
+DATALOX_MATCHED_SKILL=<optional skill id>
+DATALOX_ACTIVE_WRAPPER=codex | claude | generic
+DATALOX_HOST_KIND=codex | claude | generic
+DATALOX_ENFORCEMENT=wrapper
+DATALOX_DEFAULT_POST_RUN_MODE=replay | off
+DATALOX_DEFAULT_REVIEW_MODEL=<cheap default model for future review hooks>
+```
+
+Rules:
+
+- `DATALOX_SESSION_ID` is the join key between records created during the child
+  run and the wrapper-created `agent_turn.v1`.
+- Child agents and tools should pass `DATALOX_SESSION_ID` into
+  `record_tool_io` or `recordToolIo`.
+- Wrapper post-run must only attach records that were created after the
+  pre-run snapshot.
+- Existing records in `.datalox/tool-io/records/` must not be attached to a new
+  turn just because they are present.
+- Wrapper-owned environment variables are process-local. They must not be
+  written into replay records except as explicit source metadata such as
+  `source.host`.
+
+Wrapped prompt contract:
+
+The wrapped prompt should tell the child agent:
+
+- record exact replay evidence first
+- use `record_tool_io`, `record_agent_turn`, and `pack_replay_bundle` when MCP
+  tools are available
+- use `DATALOX_SESSION_ID` as `session_id`
+- do not synthesize replay data from prose summaries
+- leave post-run recording empty when no agent-visible tool I/O was captured
+
+The prompt should not mention trajectory rows as the normal capture path.
+
+Post-run algorithm:
+
+1. Build the loop envelope.
+   - resolve `repoPath`
+   - auto-bootstrap only when safe
+   - generate or reuse `sessionId`
+   - render replay-first wrapped prompt
+2. Snapshot replay evidence before the child command.
+   - call `readToolIoRecords(repoPath)`
+   - store only record ids in memory
+3. Run the child command.
+   - replace explicit placeholders such as `__DATALOX_PROMPT__`
+   - pass the wrapper environment contract
+   - preserve the child exit code, stdout, and stderr
+4. Resolve post-run mode.
+   - CLI flag wins over environment
+   - default is `replay`
+   - invalid values fail closed before any child process runs
+5. If mode is `off`, create no events and report `disabled`.
+6. If the repo is not active, create no events and report `disabled`.
+7. If no child process ran, create no events and report `disabled`.
+8. Read replay evidence after the child command.
+   - call `readToolIoRecords(repoPath)` again
+   - compute `newToolRecords = after - before` by record id
+9. If `newToolRecords` is empty:
+   - create no `agent_turn.v1`
+   - create no trajectory derivative
+   - report `replay_capture_empty`
+   - include the reason:
+
+```text
+No explicit tool_io_record.v1 records were created during this wrapped run;
+Datalox did not synthesize replay evidence from prose.
+```
+
+10. If `newToolRecords` is non-empty:
+    - create exactly one `agent_turn.v1`
+    - include the original prompt when available
+    - include one `tool_calls[]` entry per new tool record
+    - include `tool_io_ref.record_id`
+    - include `tool_io_ref.request_hash`
+    - include `tool_io_ref.sequence_index`
+    - include child command verification status from the child exit code
+    - set export to blocked by default
+    - report `replay_evidence_recorded`
+
+`agent_turn.v1` mapping:
+
+```text
+wrapper session id              -> agent_turn.session_id
+original prompt                 -> agent_turn.user_prompt
+child host kind                 -> assistant_summary
+new tool_io_record.v1.tool_name -> tool_calls[].tool
+new tool_io_record.v1.call_id   -> tool_calls[].call_id
+record id/hash/index            -> tool_calls[].tool_io_ref
+child command + args            -> verification.command
+child exit code 0               -> verification.status="passed"
+child exit code nonzero         -> verification.status="failed"
+default export                  -> export.allowed=false, redaction="blocked"
+```
+
+Implementation order:
+
+1. Tighten post-run mode parsing.
+   - keep `WrapperPostRunMode = "off" | "replay"`
+   - make invalid `--post-run-mode` fail before the child command runs
+   - make invalid `DATALOX_DEFAULT_POST_RUN_MODE` fail before the child command
+     runs
+   - remove any stale mode strings from code, docs, tests, and help output
+2. Normalize wrapper entrypoint defaults.
+   - set `DATALOX_DEFAULT_POST_RUN_MODE` to `replay` in `bin/datalox-codex.js`
+   - set `DATALOX_DEFAULT_POST_RUN_MODE` to `replay` in `bin/datalox-claude.js`
+   - make generated Codex and Claude shims export the same default
+   - make generic `datalox wrap command` resolve the same default even when no
+     shim is involved
+3. Make enforcement visible.
+   - set `DATALOX_ACTIVE_WRAPPER`
+   - set `DATALOX_HOST_KIND`
+   - set `DATALOX_ENFORCEMENT=wrapper`
+   - expose wrapper enforcement in `datalox status --json`
+   - keep native sessions without wrapper sentinels marked as `guidance_only`
+4. Keep the child-agent contract explicit.
+   - include `DATALOX_SESSION_ID` in the wrapped prompt
+   - include replay MCP tools in the wrapped prompt
+   - keep the prompt short enough that it does not become the task
+   - do not instruct the child to write trajectory rows
+5. Make post-run evidence attachment deterministic.
+   - snapshot record ids before the child command
+   - attach only new records by id
+   - create one turn event for all new records
+   - create nothing when no records were added
+   - never parse child stdout/stderr for replay evidence
+6. Keep output channels predictable.
+   - child stdout stays on stdout
+   - child stderr stays on stderr
+   - wrapper post-run summary goes to stderr for command wrappers
+   - `--json` returns structured wrapper result and preserves child exit code
+7. Keep install/adoption replay-first.
+   - generated host shims route supported host runs through wrappers
+   - adopted instruction surfaces describe wrapper replay capture
+   - no adopted first-read file tells agents to create trajectory rows as the
+     default capture step
+8. Add regression gates.
+   - wrapper behavior tests
+   - adoption script tests
+   - canonical docs tests
+   - stale mode scan for removed post-run modes
+
+Required code changes:
+
+- `src/cli/main.ts`
+  - strict `parsePostRunMode`
+  - CLI help lists only `<off|replay>`
+  - invalid explicit mode errors before child execution
+- `src/adapters/shared.ts`
+  - keep replay as `finalizeWrappedRun` default
+  - keep before/after `tool_io_record.v1` snapshot logic
+  - keep `replay_capture_empty` as the no-evidence result
+  - keep `agent_turn.v1` creation grounded only in new tool records
+- `bin/datalox-codex.js`
+  - default `DATALOX_DEFAULT_POST_RUN_MODE` to `replay`
+  - set wrapper sentinels for direct wrapper entrypoint runs
+- `bin/datalox-claude.js`
+  - default `DATALOX_DEFAULT_POST_RUN_MODE` to `replay`
+  - set wrapper sentinels for direct wrapper entrypoint runs
+- `bin/datalox-wrap.js`
+  - keep generic wrapper thin and route behavior through `src/cli/main.ts`
+- `src/core/installCore.ts`
+  - generated Codex shim sets wrapper sentinels and replay default
+  - generated Claude shim sets wrapper sentinels and replay default
+  - status reports wrapper-enforced only when sentinels prove wrapper execution
+- `tests/wrapperSurfaces.test.ts`
+  - prove prompt, default, empty capture, explicit evidence, invalid mode, and
+    no derivative writes
+- `tests/adoptionScripts.test.ts`
+  - prove adopted shims and docs use replay defaults
+- `tests/replayCanonicalDocs.test.ts`
+  - prove first-read docs stay replay-first
+
 Pass criteria:
 
-- wrapper records replay evidence when explicit tool I/O records exist
-- wrapper does not synthesize fake replay data from prose summaries
-- wrapper does not write trajectory rows by default
-- missing replay evidence records nothing and reports a clear agent-readable
-  reason
+Default and mode parsing:
+
+- `datalox wrap command` with no `--post-run-mode` resolves to `replay`
+- `datalox codex` with no `--post-run-mode` resolves to `replay`
+- `datalox claude` with no `--post-run-mode` resolves to `replay`
+- `DATALOX_DEFAULT_POST_RUN_MODE=replay` resolves to `replay`
+- `DATALOX_DEFAULT_POST_RUN_MODE=off` resolves to `off`
+- `--post-run-mode off` disables post-run recording for that run
+- `--post-run-mode replay` records replay turn context when evidence exists
+- invalid `--post-run-mode` fails before the child command runs
+- invalid `DATALOX_DEFAULT_POST_RUN_MODE` fails before the child command runs
+- no code path accepts or emits a trajectory post-run mode
+
+Prompt and enforcement:
+
+- wrapped prompt contains `# Datalox Agent Replay`
+- wrapped prompt contains `record_tool_io`
+- wrapped prompt contains `DATALOX_SESSION_ID`
+- wrapped prompt says not to synthesize replay data from prose summaries
+- wrapped prompt does not tell the child to write trajectory rows
+- child process receives `DATALOX_ACTIVE_WRAPPER`
+- child process receives `DATALOX_HOST_KIND`
+- child process receives `DATALOX_ENFORCEMENT=wrapper`
+- child process receives `DATALOX_REPO_PATH`
+- child process receives `DATALOX_SESSION_ID`
+- `datalox status --json` reports wrapper-enforced only when wrapper sentinels
+  are present
+
+No-evidence behavior:
+
+- a wrapped child command that writes no `tool_io_record.v1` exits with the
+  child exit code
+- post-run result is `mode="replay"` and `trigger="replay_capture_empty"`
+- no `agent_turn.v1` event is created
+- no trajectory derivative directory is created
+- no legacy event directory is created
+- summary is agent-readable and says no explicit tool I/O records were created
+- stdout/stderr prose from the child is not converted into replay data
+
+Evidence behavior:
+
+- when the child creates one new `tool_io_record.v1`, wrapper creates one
+  `agent_turn.v1`
+- the turn references the exact record id, request hash, and sequence index
+- the turn uses the wrapper `DATALOX_SESSION_ID`
+- the turn includes the original prompt when available
+- the turn verification status follows the child exit code
+- existing pre-run tool records are not attached to the new turn
+- two new tool records in one child run create one turn with two tool-call refs
+- default export state is blocked
+
+Shim and adoption behavior:
+
+- generated Codex shim routes supported Codex commands through
+  `bin/datalox-codex.js`
+- generated Claude shim routes prompt-bearing Claude runs through
+  `bin/datalox-claude.js`
+- generated shims export `DATALOX_DEFAULT_POST_RUN_MODE=replay` when unset
+- management commands that should not be wrapped still call the real host binary
+- adopted docs describe wrapper capture as replay capture
+- adopted docs do not present trajectory rows as wrapper output
+
+Output and exit behavior:
+
+- child stdout is preserved
+- child stderr is preserved
+- wrapper post-run summary is written to stderr in non-json command mode
+- `--json` output includes the post-run result
+- wrapper process exits with the child exit code
+- disabled post-run mode returns `trigger="disabled"`
+- inactive repo returns `trigger="disabled"` without writing events
+
+Regression commands:
+
+```bash
+npm run check
+npx vitest run tests/wrapperSurfaces.test.ts
+npx vitest run tests/adoptionScripts.test.ts
+npx vitest run tests/replayCanonicalDocs.test.ts
+git diff --check
+```
+
+Full gate when unrelated repo identity drift is clean:
+
+```bash
+npm test
+```
 
 ## Step 8: Canonicalize Action/Observation Records
 

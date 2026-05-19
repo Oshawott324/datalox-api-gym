@@ -43,6 +43,7 @@ describe("replay adoption scripts", () => {
     expect(await readFile(path.join(hostDir, "bin/datalox-mcp.js"), "utf8")).toContain("replayServer.js");
     expect(await readFile(path.join(hostDir, "bin/datalox-agent-replay-mcp.js"), "utf8")).toContain("replayServer.js");
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir)]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(hostDir, "WIKI.md")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "derivatives", "trajectories")]).status).not.toBe(0);
 

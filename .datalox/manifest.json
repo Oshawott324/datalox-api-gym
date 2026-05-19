@@ -9,7 +9,6 @@
     "DATALOX.md",
     "AGENTS.md",
     "CLAUDE.md",
-    "WIKI.md",
     "GEMINI.md",
     ".github/copilot-instructions.md",
     ".cursor/rules/datalox-agent-replay.mdc",
@@ -56,7 +55,6 @@
       "DATALOX.md",
       "AGENTS.md",
       "CLAUDE.md",
-      "WIKI.md",
       "GEMINI.md"
     ]
   },
@@ -86,7 +84,6 @@
         "DATALOX.md",
         "AGENTS.md",
         "CLAUDE.md",
-        "WIKI.md",
         "GEMINI.md"
       ]
     },

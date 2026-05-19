@@ -92,19 +92,21 @@ function parsePositiveInt(value: string | string[] | boolean | undefined): numbe
 function parsePostRunMode(
   value: string | string[] | boolean | undefined,
 ): WrapperPostRunMode | undefined {
-  const raw = typeof value === "string"
-    ? value
-    : typeof process.env.DATALOX_DEFAULT_POST_RUN_MODE === "string"
-      ? process.env.DATALOX_DEFAULT_POST_RUN_MODE
-      : undefined;
-
-  switch (raw) {
-    case "off":
-    case "replay":
-      return raw;
-    default:
-      return undefined;
+  if (value !== undefined) {
+    if (value === "off" || value === "replay") {
+      return value;
+    }
+    throw new Error(`Invalid --post-run-mode ${JSON.stringify(value)}. Allowed values: off, replay.`);
   }
+
+  const envValue = process.env.DATALOX_DEFAULT_POST_RUN_MODE;
+  if (envValue === undefined) {
+    return undefined;
+  }
+  if (envValue === "off" || envValue === "replay") {
+    return envValue;
+  }
+  throw new Error(`Invalid DATALOX_DEFAULT_POST_RUN_MODE ${JSON.stringify(envValue)}. Allowed values: off, replay.`);
 }
 
 function parseOptionalString(

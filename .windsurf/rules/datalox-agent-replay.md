@@ -2,5 +2,10 @@
 
 Read `AGENTS.md` and `DATALOX.md`.
 
-Write product capture data under `.datalox/events/` only. Use explicit
-trajectory rows and the Datalox MCP/CLI recording commands for dataset work.
+Use Datalox Agent Replay as an MCP-compatible VCR for agent tools.
+
+Write replay evidence under `.datalox/tool-io/records/`,
+`.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.
+
+Do not create a parallel wiki, note, or event store. Trajectory rows are
+optional derivatives only after replay evidence exists.

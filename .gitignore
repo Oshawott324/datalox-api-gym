@@ -5,3 +5,4 @@ coverage/
 .datalox/config.local.json
 .datalox/install.json
 .datalox/tasks/
+.claude/settings.local.json

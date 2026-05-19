@@ -54,10 +54,12 @@ describe("wrapper surfaces", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("# Datalox Agent Replay");
     expect(result.stdout).toContain("record_tool_io");
+    expect(result.stdout).toContain("DATALOX_SESSION_ID");
     expect(result.stdout).toContain("# Original Prompt");
     expect(result.stdout).toContain("Fix the wrapper smoke.");
     expect(result.stdout).not.toContain("Reusable-Gap");
     expect(result.stdout).not.toContain("Candidate skills");
+    expect(result.stdout).not.toContain("trajectory rows");
   });
 
   it("defaults wrapper post-run to empty replay capture without writing derivative rows when tool I/O is missing", async () => {
@@ -95,6 +97,140 @@ describe("wrapper surfaces", () => {
     expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "events", "trajectory-rows")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "derivatives", "trajectories")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir, "events")]).status).not.toBe(0);
+  });
+
+  it("rejects an invalid CLI post-run mode before running the child command", async () => {
+    const hostDir = await adoptHostRepo();
+    const markerPath = path.join(hostDir, "child-ran-cli-mode");
+    const result = spawnSync(
+      "node",
+      [
+        builtCliPath,
+        "wrap",
+        "command",
+        "--repo",
+        hostDir,
+        "--task",
+        "Reject bad CLI mode.",
+        "--post-run-mode",
+        "invalid",
+        "--",
+        "node",
+        "-e",
+        `require('node:fs').writeFileSync(${JSON.stringify(markerPath)}, 'ran')`,
+        "__DATALOX_PROMPT__",
+      ],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Invalid --post-run-mode");
+    expect(result.stderr).toContain("Allowed values: off, replay");
+    expect(spawnSync("test", ["-e", markerPath]).status).not.toBe(0);
+  });
+
+  it("rejects an invalid env post-run mode before running the child command", async () => {
+    const hostDir = await adoptHostRepo();
+    const markerPath = path.join(hostDir, "child-ran-env-mode");
+    const result = spawnSync(
+      "node",
+      [
+        builtCliPath,
+        "wrap",
+        "command",
+        "--repo",
+        hostDir,
+        "--task",
+        "Reject bad env mode.",
+        "--",
+        "node",
+        "-e",
+        `require('node:fs').writeFileSync(${JSON.stringify(markerPath)}, 'ran')`,
+        "__DATALOX_PROMPT__",
+      ],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          DATALOX_DEFAULT_POST_RUN_MODE: "bogus",
+        },
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Invalid DATALOX_DEFAULT_POST_RUN_MODE");
+    expect(result.stderr).toContain("Allowed values: off, replay");
+    expect(spawnSync("test", ["-e", markerPath]).status).not.toBe(0);
+  });
+
+  it("does not accept trajectory as a wrapper post-run mode", async () => {
+    const hostDir = await adoptHostRepo();
+    const markerPath = path.join(hostDir, "child-ran-trajectory-mode");
+    const result = spawnSync(
+      "node",
+      [
+        builtCliPath,
+        "wrap",
+        "command",
+        "--repo",
+        hostDir,
+        "--task",
+        "Reject trajectory mode.",
+        "--post-run-mode",
+        "trajectory",
+        "--",
+        "node",
+        "-e",
+        `require('node:fs').writeFileSync(${JSON.stringify(markerPath)}, 'ran')`,
+        "__DATALOX_PROMPT__",
+      ],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Invalid --post-run-mode");
+    expect(result.stderr).toContain("Allowed values: off, replay");
+    expect(spawnSync("test", ["-e", markerPath]).status).not.toBe(0);
+  });
+
+  it("preserves explicit off post-run mode", async () => {
+    const hostDir = await adoptHostRepo();
+    const result = spawnSync(
+      "node",
+      [
+        builtCliPath,
+        "wrap",
+        "command",
+        "--repo",
+        hostDir,
+        "--task",
+        "Run with post-run disabled.",
+        "--post-run-mode",
+        "off",
+        "--",
+        "node",
+        "-e",
+        "process.stdout.write('child still ran')",
+        "__DATALOX_PROMPT__",
+      ],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("child still ran");
+    expect(result.stderr).toContain("[datalox-wrap] off | disabled");
+    expect(result.stderr).toContain("Wrapper post-run recording is disabled");
+    expect(spawnSync("test", ["-e", path.join(hostDir, ".datalox", "events", "agent-turns")]).status).not.toBe(0);
   });
 
   it("records an agent turn when a wrapped run creates explicit tool I/O evidence", async () => {

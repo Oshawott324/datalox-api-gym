@@ -236,7 +236,6 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "DATALOX.md",
   "AGENTS.md",
   "CLAUDE.md",
-  "WIKI.md",
   "GEMINI.md",
   "START_HERE.md",
   "docs/project-definition.md",
@@ -292,15 +291,6 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
     mode: "after_frontmatter",
     lines: [
       "@DATALOX.md",
-    ],
-  },
-  "WIKI.md": {
-    mode: "after_frontmatter",
-    lines: [
-      "## Datalox Agent Replay",
-      "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
-      "Keep replay capture data under `.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.",
-      "Do not create a parallel wiki/note/event store.",
     ],
   },
   "GEMINI.md": {
