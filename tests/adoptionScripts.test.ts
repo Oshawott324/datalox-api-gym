@@ -30,6 +30,7 @@ describe("replay adoption scripts", () => {
     expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/manifest.json");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/tool-io/records/");
+    expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/mcp-tool-catalogs/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/events/agent-turns/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/replay-bundles/");
     expect(await readFile(path.join(hostDir, "docs", "project-definition.md"), "utf8")).toContain("Datalox Agent Replay is an MCP-compatible VCR for agent tools.");
@@ -85,6 +86,7 @@ describe("replay adoption scripts", () => {
       const content = await readFile(path.join(hostDir, relativePath), "utf8");
       expect(content).toContain("DATALOX_AGENT_REPLAY:BEGIN");
       expect(content).toContain(".datalox/tool-io/records/");
+      expect(content).toContain(".datalox/mcp-tool-catalogs/");
       expect(content).toContain(".datalox/events/agent-turns/");
       expect(content).toContain(".datalox/replay-bundles/");
       expect(content).not.toContain(legacyPackToken);

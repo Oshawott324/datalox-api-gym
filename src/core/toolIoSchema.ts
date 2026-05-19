@@ -40,6 +40,7 @@ export const toolIoRecordV1Schema = z
       .object({
         allowed: z.boolean(),
         redaction: z.enum(["none_needed", "applied", "blocked"]),
+        approval_id: z.string().optional(),
       })
       .strict(),
   })

@@ -31,6 +31,8 @@ agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay
   manifest.json
   tool-io/
     <record-id>.json
+  mcp-tool-catalogs/
+    <catalog-id>.json
   agent-turns/
     <turn-id>.json
   checksums.json
@@ -54,6 +56,7 @@ type ReplayBundleV1 = {
     session_ids: string[];
     turn_event_paths: string[];
     tool_io_record_paths: string[];
+    mcp_tool_catalog_paths?: string[];
   };
   replay: {
     tool_record_count: number;
@@ -81,6 +84,25 @@ current strict `replay_bundle.v1` schema. Until code accepts those fields, store
 that information in bundled tool I/O records, agent turns, or external
 provenance artifacts referenced by approved derivatives.
 
+## MCP Tool Catalog Metadata
+
+When the MCP VCR proxy records through an upstream MCP server, it should persist
+the agent-visible `tools/list` catalog as `mcp_tool_catalog.v1` under:
+
+```text
+.datalox/mcp-tool-catalogs/
+```
+
+Bundled catalog artifacts live under `mcp-tool-catalogs/*.json` and are listed
+in `source.mcp_tool_catalog_paths`. They preserve upstream tool names,
+descriptions, `inputSchema`, `outputSchema`, annotations, `_meta`, and other
+MCP tool-list fields that are visible to the agent. Replay mode may use this
+catalog to answer `tools/list` without starting the upstream server.
+
+Existing bundles without `source.mcp_tool_catalog_paths` remain valid. Replay
+implementations may expose a strict passthrough object schema for those legacy
+bundles, but new proxy-recorded bundles should include the catalog.
+
 ## Checksum Rule
 
 Every file in the bundle except `checksums.json` must have a SHA-256 checksum
@@ -92,6 +114,7 @@ Verification must fail when:
 - a listed file has a different checksum
 - an unlisted file appears in the bundle
 - `manifest.json` points outside the bundle directory
+- a bundled `mcp_tool_catalog.v1` artifact is invalid
 
 ## Replay Rule
 

@@ -24,6 +24,7 @@ In an adopted repo, replay data and review state live under `.datalox/`:
     agent-turns/
   tool-io/
     records/
+  mcp-tool-catalogs/
   replay-bundles/
   approvals/
   derivatives/
@@ -36,6 +37,7 @@ AGENTS.md
 Use:
 
 - `.datalox/tool-io/records/` for exact `tool_io_record.v1` request/observation records
+- `.datalox/mcp-tool-catalogs/` for `mcp_tool_catalog.v1` snapshots of agent-visible MCP `tools/list` metadata
 - `.datalox/events/agent-turns/` for optional `agent_turn.v1` review events that point at recorded tool I/O
 - `.datalox/replay-bundles/` for portable `replay_bundle.v1` artifacts with manifests and checksums
 - `.datalox/approvals/` for review/approval metadata
@@ -43,7 +45,9 @@ Use:
 
 The durable replay primitive is `tool_io_record.v1`. `action_observation.v1`
 is a strict normalized view over recorded tool I/O and imported raw traces; it
-is not a second store. `agent_turn.v1` is optional review context. A
+is not a second store. `mcp_tool_catalog.v1` preserves the MCP proxy tool list
+metadata needed to replay `tools/list` without live upstream tools.
+`agent_turn.v1` is optional review context. A
 `replay_bundle.v1` is the portable artifact that can be verified and replayed.
 `debugging_trajectory.v1` and `agent_task_trajectory.v1` rows are downstream
 derivatives when a team wants compact examples instead of full replay bundles.
@@ -130,6 +134,12 @@ MCP VCR proxy commands:
 node bin/datalox.js proxy --mode record --repo . --config datalox.replay.json --json
 node bin/datalox.js proxy --mode replay --repo . --bundle .datalox/replay-bundles/<id> --json
 ```
+
+Record-mode proxy snapshots upstream MCP `tools/list` into
+`.datalox/mcp-tool-catalogs/` and records exact tool calls into
+`.datalox/tool-io/records/`. Replay-mode proxy verifies a replay bundle and
+serves both `tools/list` and `tools/call` from bundled artifacts without
+starting upstream.
 
 Trajectory derivation code lives under `src/core/derivatives/trajectory/` and
 is not exposed by the install-facing CLI or MCP surface.

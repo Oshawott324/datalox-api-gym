@@ -33,11 +33,13 @@ describe("replay canonical schema docs", () => {
 
     expect(replayBundleSchema).toContain('schema_version: "replay_bundle.v1"');
     expect(replayBundleSchema).toContain(".datalox/replay-bundles/");
+    expect(replayBundleSchema).toContain("mcp_tool_catalog.v1");
     expect(replayBundleSchema).toContain("checksums.json");
     expect(replayBundleSchema).toContain(replayLoop);
 
     expect(replayQuickstart).toContain("record_tool_io -> replay_tool_io -> pack_replay_bundle -> verify_replay_bundle");
     expect(replayQuickstart).toContain(".datalox/tool-io/records/");
+    expect(replayQuickstart).toContain(".datalox/mcp-tool-catalogs/");
     expect(replayQuickstart).toContain(".datalox/replay-bundles/demo-replay-bundle/");
     expect(replayQuickstart).toContain("Do not call live tools during replay as a hidden fallback.");
   });
@@ -253,6 +255,7 @@ describe("replay canonical schema docs", () => {
     expect(manifest.eventStores).toMatchObject({
       agentTurns: ".datalox/events/agent-turns",
       toolIoRecords: ".datalox/tool-io/records",
+      mcpToolCatalogs: ".datalox/mcp-tool-catalogs",
       replayBundles: ".datalox/replay-bundles",
       approvals: ".datalox/approvals",
       trajectoryDerivatives: ".datalox/derivatives/trajectories",

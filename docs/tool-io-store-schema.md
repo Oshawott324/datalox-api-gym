@@ -63,6 +63,7 @@ type ToolIoRecordV1 = {
   export: {
     allowed: boolean;
     redaction: "none_needed" | "applied" | "blocked";
+    approval_id?: string;
   };
 };
 ```

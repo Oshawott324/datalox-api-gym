@@ -13,6 +13,7 @@ Short version:
 - Datalox Agent Replay is an MCP-compatible VCR for agent tools.
 - `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` records are the exact replay primitive.
+- `mcp_tool_catalog.v1` artifacts preserve MCP proxy `tools/list` metadata.
 - `agent_turn.v1` events are optional turn review context.
 - `replay_bundle.v1` is the portable artifact that can be verified and replayed.
 - `debugging_trajectory.v1` rows are optional compact training/eval adapters.
@@ -34,6 +35,7 @@ The repo is centered on:
 
 - `.datalox/events/agent-turns/`
 - `.datalox/tool-io/records/`
+- `.datalox/mcp-tool-catalogs/`
 - `.datalox/replay-bundles/`
 - `.datalox/approvals/`
 - `.datalox/derivatives/trajectories/`
@@ -61,10 +63,12 @@ Current durable local replay outputs:
 
 - `.datalox/events/agent-turns/`
 - `.datalox/tool-io/records/`
+- `.datalox/mcp-tool-catalogs/`
 - `.datalox/replay-bundles/`
 - `.datalox/derivatives/trajectories/`
 
 Tool I/O records are the exact replay source units, not raw host transcripts.
+MCP tool catalog records preserve the agent-visible tool list for proxy replay.
 Action/observation records are strict normalized views over tool I/O evidence.
 Turn events are review units. Trajectory dataset rows are export derivatives,
 not new repo-local knowledge page types and not the complete source replay

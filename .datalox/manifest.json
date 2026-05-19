@@ -18,6 +18,7 @@
   "eventStores": {
     "agentTurns": ".datalox/events/agent-turns",
     "toolIoRecords": ".datalox/tool-io/records",
+    "mcpToolCatalogs": ".datalox/mcp-tool-catalogs",
     "replayBundles": ".datalox/replay-bundles",
     "approvals": ".datalox/approvals",
     "trajectoryDerivatives": ".datalox/derivatives/trajectories"
@@ -78,6 +79,7 @@
     },
     "defaultBootstrapBundle": {
       "toolIoRoot": ".datalox/tool-io/records",
+      "mcpToolCatalogsRoot": ".datalox/mcp-tool-catalogs",
       "turnEventsRoot": ".datalox/events/agent-turns",
       "replayBundlesRoot": ".datalox/replay-bundles",
       "instructionSurfaces": [

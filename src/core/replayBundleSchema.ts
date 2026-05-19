@@ -24,6 +24,7 @@ const replayBundleSourceSchema = z
     session_ids: z.array(z.string()),
     turn_event_paths: z.array(relativeBundlePath),
     tool_io_record_paths: z.array(relativeBundlePath),
+    mcp_tool_catalog_paths: z.array(relativeBundlePath).optional(),
   })
   .strict();
 

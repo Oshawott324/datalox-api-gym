@@ -12,6 +12,7 @@ Core replay surfaces:
 - exact replay primitive: `tool_io_record.v1`
 - replay lookup key: `request_hash + sequence_index`
 - normalized view over replay records and imported traces: `action_observation.v1`
+- proxy tool catalog metadata: `mcp_tool_catalog.v1`
 - optional turn review context: `agent_turn.v1`
 - portable replay artifact: `replay_bundle.v1`
 - optional downstream adapters: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
@@ -42,6 +43,7 @@ The repo-local replay data surfaces are:
 
 - `.datalox/events/agent-turns/`
 - `.datalox/tool-io/records/`
+- `.datalox/mcp-tool-catalogs/`
 - `.datalox/replay-bundles/`
 - `.datalox/approvals/`
 - `.datalox/derivatives/trajectories/`
@@ -63,6 +65,7 @@ A replay bundle should preserve:
 
 - `agent_turn.v1` source turn ids or event paths
 - `tool_io_record.v1` source record ids or record paths
+- `mcp_tool_catalog.v1` source catalog ids or catalog paths when captured by the MCP VCR proxy
 - prompts or task requests
 - agent-visible actions
 - tool calls and command results

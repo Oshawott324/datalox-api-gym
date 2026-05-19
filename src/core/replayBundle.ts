@@ -5,6 +5,14 @@ import path from "node:path";
 import { sha256Hex } from "./hash.js";
 import { AGENT_TURNS_RELATIVE_DIR, getAgentTurnFromPayload } from "./agentTurnStore.js";
 import {
+  compareMcpToolCatalogs,
+  MCP_TOOL_CATALOGS_RELATIVE_DIR,
+} from "./mcpToolCatalogStore.js";
+import {
+  parseMcpToolCatalogV1,
+  type McpToolCatalogV1,
+} from "./mcpToolCatalogSchema.js";
+import {
   parseReplayBundleChecksumsV1,
   parseReplayBundleV1,
   type ReplayBundleChecksumsV1,
@@ -14,8 +22,6 @@ import { parseToolIoRecordV1, type ToolIoRecordV1 } from "./toolIoSchema.js";
 import { TOOL_IO_RECORDS_RELATIVE_DIR } from "./toolIoStore.js";
 
 export const REPLAY_BUNDLES_RELATIVE_DIR = path.join(".datalox", "replay-bundles");
-
-type JsonObject = Record<string, unknown>;
 
 interface SourceArtifact {
   sourcePath: string;
@@ -93,6 +99,7 @@ export async function packReplayBundle(input: PackReplayBundleInput): Promise<Pa
 
   const toolArtifacts = await collectToolIoArtifacts(repoRoot);
   const turnArtifacts = await collectAgentTurnArtifacts(repoRoot);
+  const catalogArtifacts = await collectMcpToolCatalogArtifacts(repoRoot);
   const sessionIds = collectSessionIds(toolArtifacts, turnArtifacts);
   const manifest = parseReplayBundleV1({
     schema_version: "replay_bundle.v1",
@@ -105,6 +112,9 @@ export async function packReplayBundle(input: PackReplayBundleInput): Promise<Pa
       session_ids: sessionIds,
       turn_event_paths: turnArtifacts.map((artifact) => artifact.targetPath),
       tool_io_record_paths: toolArtifacts.map((artifact) => artifact.targetPath),
+      ...(catalogArtifacts.length > 0
+        ? { mcp_tool_catalog_paths: catalogArtifacts.map((artifact) => artifact.targetPath) }
+        : {}),
     },
     replay: {
       tool_record_count: toolArtifacts.length,
@@ -125,7 +135,11 @@ export async function packReplayBundle(input: PackReplayBundleInput): Promise<Pa
   await mkdir(path.dirname(absoluteBundlePath), { recursive: true });
   await mkdir(absoluteBundlePath, { recursive: false });
   try {
-    await writeBundleArtifacts(absoluteBundlePath, [...toolArtifacts, ...turnArtifacts]);
+    await writeBundleArtifacts(absoluteBundlePath, [
+      ...toolArtifacts,
+      ...turnArtifacts,
+      ...catalogArtifacts,
+    ]);
     const absoluteManifestPath = path.join(absoluteBundlePath, "manifest.json");
     await writeJsonFile(absoluteManifestPath, manifest);
     const checksums = await buildReplayBundleChecksums(absoluteBundlePath, manifest.id);
@@ -184,6 +198,7 @@ export async function verifyReplayBundle(input: VerifyReplayBundleInput): Promis
 
   if (manifest) {
     issues.push(...await verifyBundledToolRecords(absoluteBundlePath, manifest));
+    issues.push(...await verifyBundledMcpToolCatalogs(absoluteBundlePath, manifest));
   }
 
   if (issues.length > 0 || !manifest || !checksums) {
@@ -226,6 +241,23 @@ export async function readReplayBundleToolIoRecords(input: {
   ));
 }
 
+export async function readReplayBundleMcpToolCatalogs(input: {
+  repoPath?: string;
+  bundlePath: string;
+}): Promise<McpToolCatalogV1[]> {
+  const absoluteBundlePath = resolveReplayBundlePath(input.repoPath, input.bundlePath);
+  const manifest = parseReplayBundleV1(JSON.parse(
+    await readFile(path.join(absoluteBundlePath, "manifest.json"), "utf8"),
+  ));
+  const catalogs: McpToolCatalogV1[] = [];
+  for (const sourcePath of manifest.source.mcp_tool_catalog_paths ?? []) {
+    catalogs.push(parseMcpToolCatalogV1(JSON.parse(
+      await readFile(resolveBundleRelativePath(absoluteBundlePath, sourcePath), "utf8"),
+    )));
+  }
+  return catalogs.sort(compareMcpToolCatalogs);
+}
+
 async function collectToolIoArtifacts(repoRoot: string): Promise<SourceArtifact[]> {
   const recordsRoot = path.join(repoRoot, TOOL_IO_RECORDS_RELATIVE_DIR);
   if (!existsSync(recordsRoot)) {
@@ -260,6 +292,26 @@ async function collectAgentTurnArtifacts(repoRoot: string): Promise<SourceArtifa
     const targetPath = normalizeRelativePath(path.join("agent-turns", `${safeFileName(parsed.id)}.json`));
     if (targetPaths.has(targetPath)) {
       throw new ReplayBundleError(`Duplicate bundled agent turn target path: ${targetPath}`);
+    }
+    targetPaths.add(targetPath);
+    artifacts.push({ sourcePath, targetPath, parsed });
+  }
+  return artifacts.sort((first, second) => first.targetPath.localeCompare(second.targetPath));
+}
+
+async function collectMcpToolCatalogArtifacts(repoRoot: string): Promise<SourceArtifact[]> {
+  const catalogsRoot = path.join(repoRoot, MCP_TOOL_CATALOGS_RELATIVE_DIR);
+  if (!existsSync(catalogsRoot)) {
+    return [];
+  }
+  const sourcePaths = await listJsonFiles(catalogsRoot);
+  const artifacts: SourceArtifact[] = [];
+  const targetPaths = new Set<string>();
+  for (const sourcePath of sourcePaths.sort()) {
+    const parsed = parseMcpToolCatalogV1(JSON.parse(await readFile(sourcePath, "utf8")));
+    const targetPath = normalizeRelativePath(path.join("mcp-tool-catalogs", `${safeFileName(parsed.id)}.json`));
+    if (targetPaths.has(targetPath)) {
+      throw new ReplayBundleError(`Duplicate bundled MCP tool catalog target path: ${targetPath}`);
     }
     targetPaths.add(targetPath);
     artifacts.push({ sourcePath, targetPath, parsed });
@@ -345,6 +397,11 @@ function verifyManifestBundlePaths(manifest: ReplayBundleV1): string[] {
       issues.push(`manifest_turn_path_outside_bundle: ${sourcePath}`);
     }
   }
+  for (const sourcePath of manifest.source.mcp_tool_catalog_paths ?? []) {
+    if (!sourcePath.startsWith("mcp-tool-catalogs/")) {
+      issues.push(`manifest_mcp_tool_catalog_path_outside_bundle: ${sourcePath}`);
+    }
+  }
   if (manifest.checksums_path !== "checksums.json") {
     issues.push(`manifest_checksums_path_invalid: ${manifest.checksums_path}`);
   }
@@ -415,6 +472,28 @@ async function verifyBundledToolRecords(
     issues.push("manifest_replay_not_deterministic");
   }
 
+  return issues;
+}
+
+async function verifyBundledMcpToolCatalogs(
+  bundlePath: string,
+  manifest: ReplayBundleV1,
+): Promise<string[]> {
+  const issues: string[] = [];
+  const catalogIds = new Set<string>();
+  for (const sourcePath of manifest.source.mcp_tool_catalog_paths ?? []) {
+    try {
+      const catalog = parseMcpToolCatalogV1(JSON.parse(
+        await readFile(resolveBundleRelativePath(bundlePath, sourcePath), "utf8"),
+      ));
+      if (catalogIds.has(catalog.id)) {
+        issues.push(`duplicate_mcp_tool_catalog_id: ${catalog.id}`);
+      }
+      catalogIds.add(catalog.id);
+    } catch (error) {
+      issues.push(`invalid_mcp_tool_catalog: ${sourcePath}: ${formatError(error)}`);
+    }
+  }
   return issues;
 }
 

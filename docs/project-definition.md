@@ -32,6 +32,7 @@ system, or a general memory layer.
 The project boundary is:
 
 - record exact tool I/O
+- preserve MCP proxy tool catalogs when Datalox sits in front of an upstream MCP server
 - preserve deterministic request hashes and sequence indexes
 - pack tool I/O records and optional turn context into a replay bundle
 - verify bundle integrity through checksums
@@ -91,6 +92,20 @@ checksums under:
 Replay mode reads a verified bundle and returns recorded observations. It must
 not silently call live tools when a record is missing.
 
+### `mcp_tool_catalog.v1`
+
+Optional proxy metadata for the MCP VCR path.
+
+When Datalox records through `datalox proxy --mode record`, it snapshots the
+agent-visible upstream MCP `tools/list` result under:
+
+```text
+.datalox/mcp-tool-catalogs/
+```
+
+Replay bundles can include those catalog artifacts so replay mode can answer
+`tools/list` without starting upstream.
+
 ### `action_observation.v1`
 
 The strict normalized view over replay records and imported raw traces.
@@ -123,6 +138,7 @@ New replay data writes to:
 .datalox/
   tool-io/
     records/
+  mcp-tool-catalogs/
   events/
     agent-turns/
   replay-bundles/

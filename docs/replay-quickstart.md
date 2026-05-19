@@ -109,6 +109,53 @@ Call `verify_replay_bundle`:
 The result must report `verified: true` before downstream systems use the
 bundle as replay evidence.
 
+## 5. Use The MCP VCR Proxy
+
+When an agent already calls an upstream MCP server, point the agent at Datalox
+instead of asking it to call `record_tool_io` manually.
+
+Record mode:
+
+```bash
+datalox proxy --mode record --repo . --config datalox.replay.json --json
+```
+
+Example proxy config:
+
+```json
+{
+  "schema_version": "datalox_replay_proxy_config.v1",
+  "upstream": {
+    "command": "node",
+    "args": ["server.js"],
+    "cwd": "."
+  }
+}
+```
+
+Record mode forwards `tools/list` and `tools/call` to the upstream MCP server.
+It records exact `tool_io_record.v1` observations under
+`.datalox/tool-io/records/` and snapshots the upstream tool catalog as
+`mcp_tool_catalog.v1` under `.datalox/mcp-tool-catalogs/`.
+
+After recording, pack and verify a bundle:
+
+```bash
+datalox bundle pack --repo . --bundle-id demo-replay-bundle --json
+datalox bundle verify --repo . --bundle .datalox/replay-bundles/demo-replay-bundle --json
+```
+
+Replay mode:
+
+```bash
+datalox proxy --mode replay --repo . --bundle .datalox/replay-bundles/demo-replay-bundle --json
+```
+
+Replay mode verifies the bundle before serving requests. It answers
+`tools/list` from bundled MCP catalog metadata and answers `tools/call` from
+bundled tool I/O records. It must not start upstream or call live tools as a
+fallback.
+
 ## Contract
 
 - Do not create replay records from assistant summaries.

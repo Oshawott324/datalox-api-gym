@@ -9,6 +9,7 @@ Project boundary:
 - Reproducible tool-call replay is the primary project focus.
 - `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` is the exact replay primitive.
+- `mcp_tool_catalog.v1` preserves MCP proxy `tools/list` metadata.
 - `agent_turn.v1` is optional per-turn review context.
 - `replay_bundle.v1` is the portable artifact that can be verified and replayed.
 - Lean, outcome-labeled trajectory exports are optional compact training/eval adapters.
@@ -28,6 +29,7 @@ agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay
   config.json
   tool-io/
     records/
+  mcp-tool-catalogs/
   replay-bundles/
   events/
     agent-turns/
@@ -58,19 +60,22 @@ New replay writes go only to:
 
 - `.datalox/events/agent-turns/`
 - `.datalox/tool-io/records/`
+- `.datalox/mcp-tool-catalogs/`
 - `.datalox/replay-bundles/`
 - `.datalox/approvals/`
 - `.datalox/derivatives/trajectories/`
 - deterministic export artifacts under the chosen export output path
 
-`.datalox/tool-io/records/` and `.datalox/events/agent-turns/` are the source
-evidence surfaces. They can later be assembled into replay bundles, reviewed,
-anonymized, shared, or used to derive compact trajectory rows.
+`.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, and
+`.datalox/events/agent-turns/` are the source evidence surfaces. They can later
+be assembled into replay bundles, reviewed, anonymized, shared, or used to
+derive compact trajectory rows.
 
 ## Replay Schema Targets
 
 - `tool_io_record.v1` as the exact replay primitive
 - `action_observation.v1` as the strict normalized view over replay records and imported traces
+- `mcp_tool_catalog.v1` as MCP proxy `tools/list` metadata
 - `agent_turn.v1` as optional turn review context
 - `replay_bundle.v1` as the portable replay artifact
 - `debugging_trajectory.v1` as an optional coding/debugging derivative

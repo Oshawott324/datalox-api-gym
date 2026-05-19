@@ -22,9 +22,10 @@ agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay
 - exact replay primitive: `tool_io_record.v1`
 - replay lookup key: `request_hash + sequence_index`
 - optional turn review context: `agent_turn.v1`
-- replay stores: `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, `.datalox/replay-bundles/`
+- replay stores: `.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, `.datalox/events/agent-turns/`, `.datalox/replay-bundles/`
 - turn event root: `.datalox/events/agent-turns/`
 - tool I/O root: `.datalox/tool-io/records/`
+- MCP tool catalog root: `.datalox/mcp-tool-catalogs/`
 - replay bundle root: `.datalox/replay-bundles/`
 - portable replay artifact: `replay_bundle.v1`
 - optional derivative root: `.datalox/derivatives/trajectories/`
@@ -33,7 +34,7 @@ Business rule:
 
 - Reproducible tool-call replay is the primary project focus.
 - Do not keep note/skill promotion as a second loop in this repo.
-- New replay data writes under `.datalox/tool-io/records/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.
+- New replay data writes under `.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.
 - `action_observation.v1` is the strict normalized action/observation view over raw traces and tool I/O records.
 - `tool_io_record.v1` records are the exact replay primitive.
 - `agent_turn.v1` events are the simple turn review primitive.

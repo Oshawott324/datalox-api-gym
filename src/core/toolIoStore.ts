@@ -27,6 +27,7 @@ export interface RecordToolIoInput {
   export?: {
     allowed: boolean;
     redaction: "none_needed" | "applied" | "blocked";
+    approval_id?: string;
   };
   now?: Date;
 }
