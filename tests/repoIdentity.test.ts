@@ -127,6 +127,19 @@ async function collectTrackedActiveFiles(): Promise<string[]> {
   return files;
 }
 
+async function collectTrackedRelativePaths(): Promise<string[]> {
+  const { stdout } = await execFileAsync("git", ["ls-files", "-z"], {
+    cwd: repoRoot,
+    encoding: "buffer",
+    maxBuffer: 10 * 1024 * 1024,
+  });
+
+  return stdout.toString("utf8")
+    .split("\0")
+    .filter((relativePath) => relativePath.length > 0)
+    .map((relativePath) => relativePath.replaceAll(path.sep, "/"));
+}
+
 describe("repo identity regression guard", () => {
   it("keeps active surfaces on the Datalox Agent Replay identity", async () => {
     const files = await collectTrackedActiveFiles();
@@ -185,6 +198,40 @@ describe("repo identity regression guard", () => {
         }
       }
     }
+
+    expect(violations).toEqual([]);
+  });
+
+  it("keeps trajectory implementation under derivative boundaries", async () => {
+    const relativePaths = await collectTrackedRelativePaths();
+    const violations = relativePaths.filter((relativePath) => {
+      const normalized = relativePath.toLowerCase();
+      if (!normalized.includes("trajectory")) {
+        return false;
+      }
+      if (relativePath.startsWith("src/core/derivatives/trajectory/")) {
+        return false;
+      }
+      if (relativePath.startsWith("tests/derivatives/trajectory/")) {
+        return false;
+      }
+      if (relativePath.startsWith("docs/derivatives/trajectory/")) {
+        return false;
+      }
+      if (relativePath === "docs/agent-replay-option-a-implementation-plan.md") {
+        return false;
+      }
+      if (relativePath === "docs/action-observation-schema.md") {
+        return false;
+      }
+      if (relativePath === "docs/tool-io-store-schema.md") {
+        return false;
+      }
+      if (relativePath === "tests/repoIdentity.test.ts") {
+        return false;
+      }
+      return true;
+    });
 
     expect(violations).toEqual([]);
   });

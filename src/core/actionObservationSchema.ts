@@ -42,23 +42,34 @@ export const actionObservationV1Schema = z
   })
   .strict()
   .superRefine((row, context) => {
-    try {
-      canonicalJson(row.action.arguments);
-    } catch (error) {
-      addCanonicalJsonIssue(context, ["action", "arguments"], error);
+    const hasArguments = hasOwnProperty(row.action, "arguments");
+    if (!hasArguments) {
+      context.addIssue({
+        code: "custom",
+        path: ["action", "arguments"],
+        message: "arguments is required.",
+      });
     }
 
-    try {
-      const expectedHash = buildToolIoRequestHash(row.action.name, row.action.arguments);
-      if (row.action.request_hash !== expectedHash) {
-        context.addIssue({
-          code: "custom",
-          path: ["action", "request_hash"],
-          message: `request_hash must equal sha256(canonical_json({ tool_name, arguments })); expected ${expectedHash}.`,
-        });
+    if (hasArguments) {
+      try {
+        canonicalJson(row.action.arguments);
+      } catch (error) {
+        addCanonicalJsonIssue(context, ["action", "arguments"], error);
       }
-    } catch {
-      return;
+
+      try {
+        const expectedHash = buildToolIoRequestHash(row.action.name, row.action.arguments);
+        if (row.action.request_hash !== expectedHash) {
+          context.addIssue({
+            code: "custom",
+            path: ["action", "request_hash"],
+            message: `request_hash must equal sha256(canonical_json({ tool_name, arguments })); expected ${expectedHash}.`,
+          });
+        }
+      } catch {
+        return;
+      }
     }
 
     try {
@@ -86,6 +97,10 @@ export function parseActionObservationV1(input: unknown): ActionObservationV1 {
     throw new ActionObservationValidationError(parsed.error.issues);
   }
   return parsed.data;
+}
+
+function hasOwnProperty(value: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }
 
 function addCanonicalJsonIssue(

@@ -108,9 +108,9 @@ Do not inline raw host session JSONL, hidden reasoning, credentials, full files,
 or long command output into turn events. Store long artifacts by path when they
 need to remain available for later review.
 
-## Trajectory Export
+## Optional Derivative Export
 
-The exported debugging trajectory row is the compact derivative:
+A debugging trajectory row is an optional compact derivative:
 
 ```text
 problem -> context -> trajectory -> final fix -> verification -> outcome

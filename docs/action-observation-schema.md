@@ -58,6 +58,8 @@ type ActionObservationV1 = {
 ## Normalization Rules
 
 - preserve exact `arguments` and `observation` values as agent-visible JSON
+- require an explicit `arguments` field; use `null` when the source action
+  truly had no arguments
 - derive `request_hash` from `sha256(canonical_json({ tool_name, arguments }))`
 - preserve `sequence_index` from the source `tool_io_record.v1`
 - use `sequence_index: 0` for a single raw trace event unless the source

@@ -90,6 +90,27 @@ describe("action_observation.v1 normalization", () => {
     });
   });
 
+  it("normalizes MCP tool I/O records as MCP source actions", async () => {
+    const repoPath = await makeTempRepo();
+    const recorded = await recordToolIo({
+      repoPath,
+      callId: "mcp-call-1",
+      toolName: "policy_search",
+      arguments: { query: "travel reimbursement" },
+      observation: { status: "ok", content: { result: ["policy-a"] } },
+      source: { mcp_server: "policy-mcp", command: "node policy-server.js" },
+      now: new Date("2026-05-18T00:00:00.000Z"),
+    });
+
+    const normalized = actionObservationFromToolIoRecord(recorded.record);
+
+    expect(normalized.provenance.source_kind).toBe("mcp");
+    expect(normalized.provenance.host).toBeUndefined();
+    expect(normalized.action.name).toBe("policy_search");
+    expect(normalized.action.arguments).toEqual({ query: "travel reimbursement" });
+    expect(normalized.observation).toEqual({ status: "ok", content: { result: ["policy-a"] } });
+  });
+
   it("normalizes raw traces with the same request hash as recordToolIo", async () => {
     const repoPath = await makeTempRepo();
     const args = {
@@ -185,6 +206,30 @@ describe("action_observation.v1 normalization", () => {
       return;
     }
     throw new Error("expected invalid raw trace to throw");
+  });
+
+  it("rejects missing raw trace arguments before canonicalization", () => {
+    expect(() => actionObservationFromRawTrace({
+      source_kind: "raw_trace",
+      call_id: "call-missing-args",
+      tool_name: "search_policy",
+      observation: { status: "ok", content: ["policy"] },
+    })).toThrow(RawActionObservationTraceValidationError);
+
+    try {
+      actionObservationFromRawTrace({
+        source_kind: "raw_trace",
+        call_id: "call-missing-args",
+        tool_name: "search_policy",
+        observation: { status: "ok", content: ["policy"] },
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(RawActionObservationTraceValidationError);
+      expect(String(error)).toContain("arguments");
+      expect(String(error)).toContain("required");
+      return;
+    }
+    throw new Error("expected raw trace without arguments to throw");
   });
 
   it("does not infer observations, aliases, tool versions, or schema refs from prose", () => {

@@ -26,7 +26,16 @@ const rawActionObservationTraceInputSchema = z
     observation_schema_ref: z.string().optional(),
     sequence_index: z.number().int().nonnegative().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((row, context) => {
+    if (!hasOwnProperty(row, "arguments")) {
+      context.addIssue({
+        code: "custom",
+        path: ["arguments"],
+        message: "arguments is required.",
+      });
+    }
+  });
 
 export type RawActionObservationTraceInput = z.infer<typeof rawActionObservationTraceInputSchema>;
 
@@ -112,6 +121,10 @@ function inferToolIoRecordSourceKind(record: ToolIoRecordV1): "mcp" | "wrapper" 
     return "wrapper";
   }
   return "raw_trace";
+}
+
+function hasOwnProperty(value: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }
 
 function formatZodIssues(issues: z.ZodIssue[]): string {
