@@ -28,6 +28,47 @@ action/observation evidence across agent hosts, tool wrappers, and raw traces.
 Replay bundles remain the portable package, but the next implementation layer must
 prove stable action schema normalization before adding richer derivative rows.
 
+## Implementation Status
+
+Status date: 2026-05-20.
+
+Option A is implemented and regression-gated in this repo.
+
+| Step | Status | Evidence |
+| --- | --- | --- |
+| Step 0: Freeze rename baseline | Done | Repo/package/install-facing surfaces use `datalox-agent-replay`; `tests/repoIdentity.test.ts` guards identity and legacy paths. |
+| Step 1: Replay canonical schema layer | Done | First-read docs use `agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`; `tests/replayCanonicalDocs.test.ts` guards drift. |
+| Step 2: Content-addressed tool I/O store | Done | `src/core/toolIoStore.ts`, `src/core/toolIoSchema.ts`, and `tests/toolIoStore.test.ts` cover request hash and sequence index replay keys. |
+| Step 3: Replay bundles | Done | `src/core/replayBundle.ts` and `tests/replayBundle.test.ts` cover pack, verify, checksums, MCP catalogs, and sealed-bundle verification. |
+| Step 4: Install-facing MCP surface | Done | `src/mcp/replayServer.ts` exposes replay tools only; `tests/replayMcp.test.ts` guards the install-facing surface. |
+| Step 5: MCP VCR proxy | Done | `src/mcp/replayProxyServer.ts` records upstream MCP calls and replays verified bundles without upstream fallback; `tests/mcpReplayProxy.test.ts` covers success, repeated calls, errors, replay misses, and catalog tampering. |
+| Step 6: Trajectory boundary cleanup | Done | Trajectory schemas/code live under derivative boundaries; `tests/repoIdentity.test.ts` guards install-facing surfaces. |
+| Step 7: Wrapper replay defaults | Done | Wrappers accept `off` or `replay`; trajectory is not a post-run mode; `tests/wrapperSurfaces.test.ts` guards defaults and failure modes. |
+| Step 8: Action/observation canonicalization | Done | `action_observation.v1` is a strict normalized view over replay evidence; `tests/actionObservationNormalize.test.ts` and canonical-doc tests guard strict fields. |
+| Step 9: Export derivatives from replay bundles | Done | `src/core/derivatives/trajectory/fromReplayBundle.ts` derives compact candidates only after bundle verification; `tests/derivatives/trajectory/fromReplayBundle.test.ts` covers verified, tampered, and weak candidates. |
+| Step 10: Regression gates | Done | Full suite, stale-reference scans, adoption smoke tests, wrapper tests, proxy tests, reference-bundle tests, `npm run check`, and `git diff --check` are the close-out gates. |
+
+Current proof artifacts:
+
+- `.datalox/replay-bundles/ref-mcp-success`
+- `.datalox/replay-bundles/ref-mcp-repeated-call`
+- `.datalox/replay-bundles/ref-mcp-error-observation`
+
+These reference bundles were generated through the MCP VCR proxy and verify as
+sealed `replay_bundle.v1` artifacts. They are not required for the Option A
+migration to work, but they make the format concrete for demos and design
+partner conversations.
+
+Out of scope for Option A:
+
+- hosted replay infrastructure
+- sandbox/runtime orchestration
+- task environment construction
+- behavioral mock construction
+- reward functions or judge agents
+- broad external runtime adapters beyond the current MCP proxy and wrapper
+  paths
+
 ## Step 0: Freeze The Rename Baseline
 
 Goal:
@@ -1219,6 +1260,8 @@ Pass criteria:
 
 ## Step 9: Export Derivatives From Replay Bundles
 
+Status: done as of 2026-05-20.
+
 Goal:
 
 - make trajectory/eval rows derive from approved replay bundles, not from
@@ -1242,7 +1285,15 @@ Pass criteria:
 - derivative JSONL rows are standalone enough for training/eval
 - source replay bundle remains the source-of-truth asset
 
+Verification:
+
+- `tests/derivatives/trajectory/fromReplayBundle.test.ts`
+- `tests/derivatives/trajectory/agentTaskTrajectoryExport.test.ts`
+- `tests/derivatives/trajectory/trajectoryExport.test.ts`
+
 ## Step 10: Regression Gates
+
+Status: done as of 2026-05-20.
 
 Goal:
 
@@ -1282,7 +1333,22 @@ Pass criteria:
 - action/observation normalization remains strict and deterministic
 - full test suite and stale-reference scan pass
 
+Verification:
+
+- `tests/repoIdentity.test.ts`
+- `tests/adoptionScripts.test.ts`
+- `tests/replayMcp.test.ts`
+- `tests/mcpReplayProxy.test.ts`
+- `tests/wrapperSurfaces.test.ts`
+- `tests/replayCanonicalDocs.test.ts`
+- `tests/referenceBundles.test.ts`
+- `npm test`
+- `npm run check`
+- `git diff --check`
+
 ## Final Done Definition
+
+Status: complete as of 2026-05-20.
 
 This migration is done only when:
 

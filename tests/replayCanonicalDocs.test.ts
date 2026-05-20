@@ -110,6 +110,18 @@ describe("replay canonical schema docs", () => {
     }
   });
 
+  it("keeps the Option A implementation plan closed out against replay evidence", async () => {
+    const plan = await read("docs/agent-replay-option-a-implementation-plan.md");
+
+    expect(plan).toContain("Option A is implemented and regression-gated in this repo.");
+    expect(plan).toContain("| Step 9: Export derivatives from replay bundles | Done |");
+    expect(plan).toContain("| Step 10: Regression gates | Done |");
+    expect(plan).toContain("Status: complete as of 2026-05-20.");
+    expect(plan).toContain(".datalox/replay-bundles/ref-mcp-success");
+    expect(plan).toContain("sandbox/runtime orchestration");
+    expect(plan).toContain("reward functions or judge agents");
+  });
+
   it("keeps first-read docs replay-first", async () => {
     const readme = await read("README.md");
     const deprecatedReplayPhrases = [
@@ -174,6 +186,9 @@ describe("replay canonical schema docs", () => {
       "docs/agent-configuration.md",
       "docs/project-overview.md",
       "docs/agentic-rl-layer-map.md",
+      "docs/reference-bundle-plan.md",
+      "docs/local-to-server-engine-plan.html",
+      "docs/pitch-deck.md",
       "docs/action-observation-schema.md",
       "docs/tool-io-store-schema.md",
       "docs/replay-bundle-schema.md",

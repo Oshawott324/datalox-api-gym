@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-20T00-54-50-106Z--agent-turn-turn-clean-untracked-drafts-2026-05-20",
+  "timestamp": "2026-05-20T00:54:50.106Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-20",
+  "turnId": "turn-clean-untracked-drafts-2026-05-20",
+  "summary": "Cleaned the two untracked draft docs into current-boundary repo documents. Rewrote the reference-bundle plan around three verified MCP replay bundles and strict schema gates. Rewrote the pitch outline around Datalox as the Layer 1.5 tool-I/O VCR, with current shipped state and explicit claims to avoid. Linked both docs from README and project overview, and added them to replay canonical docs regression coverage.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-clean-untracked-drafts-2026-05-20",
+    "session_id": "codex-cli-2026-05-20",
+    "turn_index": 1,
+    "created_at": "2026-05-20T00:54:36Z",
+    "user_prompt": "do clean the two untracked drafts",
+    "assistant_summary": "Cleaned the two untracked draft docs into current-boundary repo documents. Rewrote the reference-bundle plan around three verified MCP replay bundles and strict schema gates. Rewrote the pitch outline around Datalox as the Layer 1.5 tool-I/O VCR, with current shipped state and explicit claims to avoid. Linked both docs from README and project overview, and added them to replay canonical docs regression coverage.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts",
+        "exit_code": 0,
+        "output_summary": "Passed: 2 test files, 11 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm run check",
+        "exit_code": 0,
+        "output_summary": "Passed TypeScript no-emit check."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Passed whitespace/error check."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "docs/reference-bundle-plan.md",
+        "action": "created",
+        "diff_summary": "Replaced the loose 2-4 week dataset-style draft with a strict plan for 3 public reference replay bundles: success, repeated call, and error observation; includes workflow, bundle requirements, hard gates, publication shape, and future schema-extension rules."
+      },
+      {
+        "path": "docs/pitch-deck.md",
+        "action": "created",
+        "diff_summary": "Replaced stale pitch outline with current positioning: Datalox as open-source tool-I/O VCR layer; MCP proxy and replay bundle path are described as built; claims around sandbox, stateful mocks, reward, and hidden chain-of-thought are explicitly avoided."
+      },
+      {
+        "path": "README.md",
+        "action": "modified",
+        "diff_summary": "Linked the cleaned reference-bundle plan and pitch deck from the docs list."
+      },
+      {
+        "path": "docs/project-overview.md",
+        "action": "modified",
+        "diff_summary": "Linked the reference-bundle plan and pitch deck and updated normal read path for positioning/reference/fundraising tasks."
+      },
+      {
+        "path": "tests/replayCanonicalDocs.test.ts",
+        "action": "modified",
+        "diff_summary": "Added the two cleaned docs to active replay surfaces so stale legacy replay wording is caught."
+      }
+    ],
+    "verification": {
+      "command": "npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts && npm run check && git diff --check",
+      "status": "passed",
+      "evidence": "Focused docs/identity tests passed: 11 tests. TypeScript no-emit passed. git diff --check passed."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

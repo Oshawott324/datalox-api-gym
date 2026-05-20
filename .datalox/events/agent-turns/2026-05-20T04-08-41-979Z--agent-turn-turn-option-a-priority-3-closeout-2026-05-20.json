@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-20T04-08-41-979Z--agent-turn-turn-option-a-priority-3-closeout-2026-05-20",
+  "timestamp": "2026-05-20T04:08:41.979Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-20",
+  "turnId": "turn-option-a-priority-3-closeout-2026-05-20",
+  "summary": "Closed Priority 3 by marking Option A implemented and regression-gated in the implementation plan, adding pass-gate evidence for Steps 9 and 10, guarding the close-out in replay canonical docs tests, cleaning regenerated legacy Datalox Pack surfaces, and verifying the focused gates plus full test suite, TypeScript check, and git diff whitespace check.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-option-a-priority-3-closeout-2026-05-20",
+    "session_id": "codex-cli-2026-05-20",
+    "turn_index": 3,
+    "created_at": "2026-05-20T04:08:23Z",
+    "user_prompt": "do priority 3 till pass",
+    "assistant_summary": "Closed Priority 3 by marking Option A implemented and regression-gated in the implementation plan, adding pass-gate evidence for Steps 9 and 10, guarding the close-out in replay canonical docs tests, cleaning regenerated legacy Datalox Pack surfaces, and verifying the focused gates plus full test suite, TypeScript check, and git diff whitespace check.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts tests/adoptionScripts.test.ts tests/wrapperSurfaces.test.ts tests/replayMcp.test.ts tests/mcpReplayProxy.test.ts tests/referenceBundles.test.ts tests/derivatives/trajectory/fromReplayBundle.test.ts",
+        "exit_code": 0,
+        "output_summary": "Focused Priority 3 gate suite passed: 8 test files, 43 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm run check",
+        "exit_code": 0,
+        "output_summary": "TypeScript no-emit check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Whitespace/error check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm test",
+        "exit_code": 0,
+        "output_summary": "Full suite passed: 17 test files, 106 tests."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "docs/agent-replay-option-a-implementation-plan.md",
+        "action": "modified",
+        "diff_summary": "Added implementation status table marking Steps 0-10 done, listed current reference replay bundles as proof artifacts, clarified Option A out-of-scope boundaries, and added Step 9/10/final done verification status."
+      },
+      {
+        "path": "tests/replayCanonicalDocs.test.ts",
+        "action": "modified",
+        "diff_summary": "Added regression coverage that keeps the Option A implementation plan closed out against replay evidence and includes reference-bundle and pitch docs in stale wording checks."
+      },
+      {
+        "path": "AGENTS.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy Datalox Pack block while preserving current Datalox Agent Replay instructions."
+      },
+      {
+        "path": "CLAUDE.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy Datalox Pack include block while preserving current replay-first Claude guidance."
+      },
+      {
+        "path": "GEMINI.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy Datalox Pack block while preserving current replay-first Gemini guidance."
+      },
+      {
+        "path": ".github/copilot-instructions.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy Datalox Pack block while preserving current replay capture guidance."
+      }
+    ],
+    "verification": {
+      "command": "npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts tests/adoptionScripts.test.ts tests/wrapperSurfaces.test.ts tests/replayMcp.test.ts tests/mcpReplayProxy.test.ts tests/referenceBundles.test.ts tests/derivatives/trajectory/fromReplayBundle.test.ts && npm run check && git diff --check && npm test",
+      "status": "passed",
+      "evidence": "Focused Priority 3 gates passed: 8 files, 43 tests. TypeScript no-emit check passed. git diff --check passed. Full npm test passed: 17 files, 106 tests."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "replay_bundle_checksums.v1",
+  "replay_bundle_id": "ref-mcp-success",
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "manifest.json",
+      "sha256": "69ad8aad4aa1ae3241c7f30cce04e98347e94bcdbc4f25314656b8de4a5df732"
+    },
+    {
+      "path": "mcp-tool-catalogs/mcp-tool-catalog-f9054013319416b09d088ed3.json",
+      "sha256": "f61721af7210114901252dd3f52653238607edf45c6e73d012f7cb0349cad3a1"
+    },
+    {
+      "path": "tool-io/toolio-a0da7d36aa0e8a9c-0-proxy-call-0.json",
+      "sha256": "617a40f4e1a9d82a7b1d8a9595d82d454ad7a561c1fe185af5d7fc1d07a1aaaf"
+    }
+  ]
+}

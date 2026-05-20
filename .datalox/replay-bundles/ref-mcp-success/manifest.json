@@ -1,0 +1,40 @@
+{
+  "schema_version": "replay_bundle.v1",
+  "id": "ref-mcp-success",
+  "created_at": "2026-05-20T02:12:04.611Z",
+  "title": "Reference MCP Success Replay Bundle",
+  "task": {
+    "prompt": "Record and replay one successful deterministic MCP tool call.",
+    "domains": [
+      "mcp",
+      "reference"
+    ],
+    "workflows": [
+      "tool_io_replay"
+    ]
+  },
+  "source": {
+    "repo_path": ".",
+    "session_ids": [
+      "ref-mcp-success-session"
+    ],
+    "turn_event_paths": [],
+    "tool_io_record_paths": [
+      "tool-io/toolio-a0da7d36aa0e8a9c-0-proxy-call-0.json"
+    ],
+    "mcp_tool_catalog_paths": [
+      "mcp-tool-catalogs/mcp-tool-catalog-f9054013319416b09d088ed3.json"
+    ]
+  },
+  "replay": {
+    "tool_record_count": 1,
+    "turn_count": 0,
+    "deterministic": true
+  },
+  "checksums_path": "checksums.json",
+  "export": {
+    "allowed": true,
+    "redaction": "none_needed",
+    "approval_id": "reference-public"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "tool_io_record.v1",
+  "id": "toolio-507356e4c5d81061-0-proxy-call-0",
+  "session_id": "ref-mcp-repeated-call-session",
+  "turn_id": "ref-mcp-repeated-call-turn",
+  "call_id": "proxy-call-0",
+  "tool_name": "policy_lookup",
+  "arguments": {
+    "query": "identical policy lookup",
+    "top_k": 2
+  },
+  "request_hash": "507356e4c5d810611d809076fa9f437a28952647d7b7b1d030d7848c7c9ae9b0",
+  "sequence_index": 0,
+  "observation": {
+    "status": "ok",
+    "content": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"query\":\"identical policy lookup\",\"top_k\":2,\"call_index\":0,\"matches\":[{\"id\":\"policy-0-a\",\"title\":\"Reference taxi reimbursement policy\",\"excerpt\":\"Deterministic policy match A for identical policy lookup.\"},{\"id\":\"policy-0-b\",\"title\":\"Reference travel expense policy\",\"excerpt\":\"Deterministic policy match B for identical policy lookup.\"}]}"
+        }
+      ],
+      "structuredContent": {
+        "query": "identical policy lookup",
+        "top_k": 2,
+        "call_index": 0,
+        "matches": [
+          {
+            "id": "policy-0-a",
+            "title": "Reference taxi reimbursement policy",
+            "excerpt": "Deterministic policy match A for identical policy lookup."
+          },
+          {
+            "id": "policy-0-b",
+            "title": "Reference travel expense policy",
+            "excerpt": "Deterministic policy match B for identical policy lookup."
+          }
+        ]
+      }
+    }
+  },
+  "created_at": "2026-05-20T02:12:05.116Z",
+  "source": {
+    "mcp_server": "upstream",
+    "command": "node examples/reference-bundles/fixtures/reference-upstream.mjs"
+  },
+  "export": {
+    "allowed": true,
+    "redaction": "none_needed",
+    "approval_id": "reference-public"
+  }
+}

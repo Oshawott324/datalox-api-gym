@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-20T02-16-58-156Z--agent-turn-turn-reference-replay-bundles-2026-05-20",
+  "timestamp": "2026-05-20T02:16:58.156Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-20",
+  "turnId": "turn-reference-replay-bundles-2026-05-20",
+  "summary": "Built three reference replay bundles through the MCP VCR proxy: ref-mcp-success, ref-mcp-repeated-call, and ref-mcp-error-observation. Added a deterministic upstream MCP fixture, a generator that records through proxy record mode, packs bundles, verifies them, removes live source stores, and replays with upstream disabled. Added per-bundle READMEs and regression tests that verify bundle integrity, MCP tool catalogs, repeated-call sequence indexes, exact error observation replay, and absence of local absolute paths in public artifacts. Added a packer option to override source.repo_path for public bundles.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-reference-replay-bundles-2026-05-20",
+    "session_id": "codex-cli-2026-05-20",
+    "turn_index": 2,
+    "created_at": "2026-05-20T02:16:29Z",
+    "user_prompt": "do Priority 2: make 2-3 reference replay bundles till pass",
+    "assistant_summary": "Built three reference replay bundles through the MCP VCR proxy: ref-mcp-success, ref-mcp-repeated-call, and ref-mcp-error-observation. Added a deterministic upstream MCP fixture, a generator that records through proxy record mode, packs bundles, verifies them, removes live source stores, and replays with upstream disabled. Added per-bundle READMEs and regression tests that verify bundle integrity, MCP tool catalogs, repeated-call sequence indexes, exact error observation replay, and absence of local absolute paths in public artifacts. Added a packer option to override source.repo_path for public bundles.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "node examples/reference-bundles/generate-reference-bundles.mjs",
+        "exit_code": 0,
+        "output_summary": "Generated three verified bundles: ref-mcp-success, ref-mcp-repeated-call, and ref-mcp-error-observation."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "for b in ref-mcp-success ref-mcp-repeated-call ref-mcp-error-observation; do node dist/src/cli/main.js bundle verify --repo . --bundle .datalox/replay-bundles/$b --json >/dev/null || exit 1; done",
+        "exit_code": 0,
+        "output_summary": "All three checked-in replay bundles verified through the built CLI."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npx vitest run tests/referenceBundles.test.ts tests/replayBundle.test.ts tests/mcpReplayProxy.test.ts tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts",
+        "exit_code": 0,
+        "output_summary": "Focused suite passed: 5 files, 33 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm run check",
+        "exit_code": 0,
+        "output_summary": "TypeScript no-emit check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm test",
+        "exit_code": 0,
+        "output_summary": "Full suite passed: 17 test files, 105 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Whitespace/error check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "rg -n '/Users/yifanjin|/private/|/tmp/' .datalox/replay-bundles examples/reference-bundles docs/reference-bundle-plan.md docs/pitch-deck.md tests/referenceBundles.test.ts || true",
+        "exit_code": 0,
+        "output_summary": "No local absolute paths found in generated replay bundles or reference docs."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": ".datalox/replay-bundles/ref-mcp-success/",
+        "action": "created",
+        "diff_summary": "Reference replay bundle with one successful policy_lookup MCP call, bundled MCP tool catalog, manifest, checksums, and one tool_io_record.v1."
+      },
+      {
+        "path": ".datalox/replay-bundles/ref-mcp-repeated-call/",
+        "action": "created",
+        "diff_summary": "Reference replay bundle with two identical policy_lookup calls sharing one request_hash and sequence_index values 0 and 1."
+      },
+      {
+        "path": ".datalox/replay-bundles/ref-mcp-error-observation/",
+        "action": "created",
+        "diff_summary": "Reference replay bundle with one validation_error MCP isError observation recorded and replayable exactly."
+      },
+      {
+        "path": "examples/reference-bundles/fixtures/reference-upstream.mjs",
+        "action": "created",
+        "diff_summary": "Deterministic MCP upstream fixture exposing policy_lookup and validation_error tools."
+      },
+      {
+        "path": "examples/reference-bundles/generate-reference-bundles.mjs",
+        "action": "created",
+        "diff_summary": "Generator that records through MCP proxy, packs public bundles with source.repo_path '.', verifies bundles, removes live source stores, and replays with upstream disabled."
+      },
+      {
+        "path": "examples/reference-bundles/README.md",
+        "action": "created",
+        "diff_summary": "Top-level reference bundle README with regeneration and verification commands."
+      },
+      {
+        "path": "examples/reference-bundles/ref-mcp-success/README.md",
+        "action": "created",
+        "diff_summary": "Per-bundle README for the success reference bundle."
+      },
+      {
+        "path": "examples/reference-bundles/ref-mcp-repeated-call/README.md",
+        "action": "created",
+        "diff_summary": "Per-bundle README for repeated-call sequence-index behavior."
+      },
+      {
+        "path": "examples/reference-bundles/ref-mcp-error-observation/README.md",
+        "action": "created",
+        "diff_summary": "Per-bundle README for exact replay of an MCP isError observation."
+      },
+      {
+        "path": "src/core/replayBundle.ts",
+        "action": "modified",
+        "diff_summary": "Added optional PackReplayBundleInput.sourceRepoPath so public bundles can replace or omit machine-local repo paths while existing callers keep the default."
+      },
+      {
+        "path": "tests/referenceBundles.test.ts",
+        "action": "created",
+        "diff_summary": "Regression coverage for the three reference bundles, catalogs, sequence indexes, error observation, and local-path hygiene."
+      },
+      {
+        "path": "tests/replayBundle.test.ts",
+        "action": "modified",
+        "diff_summary": "Added coverage for sourceRepoPath override in replay bundle manifests."
+      },
+      {
+        "path": "docs/reference-bundle-plan.md",
+        "action": "created",
+        "diff_summary": "Cleaned and updated as active reference set plan with current status and generation workflow."
+      },
+      {
+        "path": "docs/pitch-deck.md",
+        "action": "created",
+        "diff_summary": "Updated pitch outline to reference the three verified bundles as concrete proof."
+      },
+      {
+        "path": "README.md",
+        "action": "modified",
+        "diff_summary": "Linked the reference-bundle plan, pitch outline, and reference bundle examples."
+      },
+      {
+        "path": "docs/project-overview.md",
+        "action": "modified",
+        "diff_summary": "Linked the reference-bundle plan and pitch outline and fixed the read path numbering."
+      },
+      {
+        "path": "tests/replayCanonicalDocs.test.ts",
+        "action": "modified",
+        "diff_summary": "Added the plan and pitch docs to active replay-surface stale wording checks."
+      }
+    ],
+    "verification": {
+      "command": "npm test && npm run check && git diff --check",
+      "status": "passed",
+      "evidence": "Generated bundles verified individually through CLI. Focused suite passed 33 tests. Full test suite passed: 17 test files, 105 tests. TypeScript no-emit and git diff --check passed."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

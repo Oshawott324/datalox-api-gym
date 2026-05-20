@@ -6,6 +6,9 @@ The canonical tool I/O schema lives in [tool-io-store-schema.md](./tool-io-store
 The canonical replay bundle schema lives in [replay-bundle-schema.md](./replay-bundle-schema.md).
 The canonical per-turn review schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
 The canonical layer boundary lives in [agentic-rl-layer-map.md](./agentic-rl-layer-map.md).
+The reference-bundle milestone plan lives in [reference-bundle-plan.md](./reference-bundle-plan.md).
+The local-engine to server-ready implementation plan lives in [local-to-server-engine-plan.html](./local-to-server-engine-plan.html).
+The current pitch outline lives in [pitch-deck.md](./pitch-deck.md).
 The canonical derivative trajectory schema lives in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md).
 The filesystem-backed orchestration protocol lives in [task-orchestration.md](./task-orchestration.md).
 
@@ -57,9 +60,10 @@ Normal read path:
 3. read the tool I/O schema when replay capture fields are involved
 4. read the replay bundle schema when approval/export fields are involved
 5. read the turn schema when turn review fields are involved
-6. read the trajectory schema only for optional derivative rows
-7. record meaningful grounded events
-8. use local skill guidance only where current host behavior still requires it
+6. read the layer map, reference-bundle plan, or pitch outline only when the task touches positioning, reference artifacts, or fundraising
+7. read the trajectory schema only for optional derivative rows
+8. record meaningful grounded events
+9. use local skill guidance only where current host behavior still requires it
 
 Current durable local replay outputs:
 

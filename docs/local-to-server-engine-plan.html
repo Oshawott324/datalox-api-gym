@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datalox Agent Replay: Local Engine To Server-Ready Plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #16202a;
+      --muted: #617083;
+      --line: #d9e0e8;
+      --accent: #0f766e;
+      --accent-2: #1d4ed8;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --code: #101827;
+      --code-bg: #eef2f7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    header {
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 34px 0 12px;
+      font-size: 25px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    a {
+      color: var(--accent-2);
+    }
+
+    code {
+      background: var(--code-bg);
+      color: var(--code);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      overflow-x: auto;
+      background: #111827;
+      color: #f8fafc;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 12px 0 16px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    th,
+    td {
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+    }
+
+    th {
+      background: #eef4f8;
+      font-weight: 700;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 16px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    .lede {
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 940px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0 26px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #ecfdf5;
+      padding: 14px 16px;
+      margin: 16px 0;
+    }
+
+    .warning {
+      border-left-color: var(--warn);
+      background: #fff7ed;
+    }
+
+    .danger {
+      border-left-color: var(--bad);
+      background: #fef2f2;
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 2px 9px;
+      margin: 2px 4px 2px 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status-ok {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .status-next {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .status-blocker {
+      color: var(--bad);
+      font-weight: 700;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 18px 0;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 780px) {
+      .grid,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        width: min(100vw - 22px, 1180px);
+        padding-top: 18px;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Local Engine To Server-Ready Plan</h1>
+      <p class="lede">
+        This plan defines what to do in <code>datalox-agent-replay</code> after Option A:
+        keep this repo as the local MCP VCR engine, make it plug-and-play, shape it for a
+        future server registry, and keep curated fixture packs separate.
+      </p>
+      <p class="meta">
+        Status: implementation and cleanup plan. Updated: 2026-05-20. Canonical boundary:
+        <a href="./project-definition.md">project-definition.md</a>,
+        <a href="./agentic-rl-layer-map.md">agentic-rl-layer-map.md</a>,
+        <a href="./replay-bundle-schema.md">replay-bundle-schema.md</a>.
+      </p>
+    </header>
+
+    <section class="callout">
+      <p>
+        The product sentence should stay stable:
+        <strong>Datalox records real MCP/tool behavior once and serves it later as a verified,
+        deterministic replay surface with upstream off.</strong>
+      </p>
+    </section>
+
+    <section class="grid" aria-label="repository split">
+      <article class="card">
+        <h3>This repo</h3>
+        <p><code>datalox-agent-replay</code> is the engine.</p>
+        <p>
+          It owns proxy record mode, replay mode, bundle packing, bundle verification, local
+          storage, SDK entrypoints, CLI UX, and server-shaped interfaces.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Future repo</h3>
+        <p><code>datalox-replay-fixtures</code> is the curated fixture library.</p>
+        <p>
+          It should contain versioned public fixture packs such as GitHub issue workflows,
+          Slack support threads, search/RAG corpora, and SaaS API edge cases.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Future server</h3>
+        <p>The hosted service is a replay bundle registry first.</p>
+        <p>
+          It stores, verifies, indexes, approves, shares, and serves bundles. It does not need
+          to be the first recorder.
+        </p>
+      </article>
+    </section>
+
+    <section class="section">
+      <h2>Decision</h2>
+      <p>
+        Do not turn this repo into a large fixture/data repository. This repo should remain the
+        installable engine that can consume local private bundles, checked-in reference bundles,
+        and later remote fixture packs from a registry.
+      </p>
+      <p>
+        The correct split is:
+      </p>
+      <pre><code>datalox-agent-replay   = runtime, CLI, SDK, store, verifier, MCP VCR
+datalox-replay-fixtures = versioned public replay fixture packs
+Datalox server          = registry, auth, approvals, object storage, sharing, metrics</code></pre>
+      <p>
+        The engine must not depend on the future fixture repo or hosted server. The fixture repo
+        and server should depend on the engine contract.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Product Boundary</h2>
+      <div class="two-col">
+        <div>
+          <h3>What Datalox should do</h3>
+          <ul>
+            <li>Record real MCP/tool requests and observations.</li>
+            <li>Snapshot agent-visible MCP <code>tools/list</code> catalogs.</li>
+            <li>Pack verified <code>replay_bundle.v1</code> artifacts.</li>
+            <li>Serve replay from bundle with upstream completely off.</li>
+            <li>Return deterministic replay misses for unseen requests.</li>
+            <li>Expose local CLI and SDK surfaces.</li>
+            <li>Expose server-shaped storage interfaces and APIs.</li>
+            <li>Measure replay hit rate, miss rate, tool rounds, latency, and cost metadata.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>What Datalox should not do here</h3>
+          <ul>
+            <li>Do not build coding sandboxes or Docker environment rebuilders.</li>
+            <li>Do not build stateful behavioral simulators for unseen actions.</li>
+            <li>Do not write reward functions or judge agents.</li>
+            <li>Do not lead with schema as the main user-facing wedge.</li>
+            <li>Do not put a large curated fixture library in this repo.</li>
+            <li>Do not reintroduce the legacy wiki/note/promotion loop.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout warning">
+        <p>
+          The precise wording is important: Datalox can serve recorded observations as
+          record-based mocks. It does not construct open-ended behavioral mocks that respond
+          faithfully to arbitrary unseen actions.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>North Star Metric</h2>
+      <p>
+        The immediate product benchmark is <strong>Time To First Verified Replay</strong>.
+      </p>
+      <pre><code>existing MCP server
+  -> datalox proxy record
+  -> replay bundle
+  -> upstream off
+  -> deterministic replay
+  -> tamper check fails</code></pre>
+      <p>
+        The local demo target is under 2 minutes with the included fixture. The bring-your-own
+        MCP target is under 5 minutes for a developer who already has an MCP server command.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Current State</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Status</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Option A replay core</td>
+            <td class="status-ok">Implemented</td>
+            <td>MCP VCR proxy, tool I/O store, replay bundles, wrapper defaults, and derivative boundary are regression-gated.</td>
+          </tr>
+          <tr>
+            <td>Reference bundles</td>
+            <td class="status-ok">Initial set exists</td>
+            <td>Three small bundles demonstrate success, repeated-call sequence indexes, and error observation replay.</td>
+          </tr>
+          <tr>
+            <td>Plug-and-play demo</td>
+            <td class="status-next">Next</td>
+            <td>There is not yet a single polished command that shows record, pack, verify, replay with upstream off, replay miss, and tamper failure.</td>
+          </tr>
+          <tr>
+            <td>SDK surface</td>
+            <td class="status-next">Next</td>
+            <td>Teams should be able to embed replay MCP servers and recording proxies without shelling out to CLI.</td>
+          </tr>
+          <tr>
+            <td>Server-shaped storage</td>
+            <td class="status-next">Next</td>
+            <td>Current file-backed storage works, but replay logic should depend on interfaces that can later be backed by a daemon or server.</td>
+          </tr>
+          <tr>
+            <td>Legacy pack artifacts</td>
+            <td class="status-blocker">Cleanup required</td>
+            <td>Repo-local legacy pack files must stay removed. A global external hook may keep reintroducing them until disabled outside this repo.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Immediate Cleanup</h2>
+      <p>
+        Do this before adding more product surface. The goal is a clean engine repo with no
+        second knowledge loop and no stale packaging story.
+      </p>
+      <p>
+        Current execution status: <strong>done on 2026-05-20</strong>. Keep this section as the
+        repeatable checklist whenever generated legacy files reappear.
+      </p>
+      <h3>1. Remove regenerated legacy surfaces</h3>
+      <p>
+        Delete any repo-local legacy pack hook directory, legacy pack host-rule files,
+        legacy root wiki file, legacy wiki directory, old host promotion scripts, and old
+        pack maintenance skill directory if they appear again.
+      </p>
+      <p>
+        Also remove ignored stale build output and historical local task data before release.
+        A clean build can regenerate current <code>dist/</code> output, but stale ignored
+        files must not be treated as source truth.
+      </p>
+      <p>
+        Remove legacy pack marker blocks from:
+      </p>
+      <pre><code>AGENTS.md
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md</code></pre>
+
+      <h3>2. Keep only Agent Replay surfaces</h3>
+      <p>The active instruction/config surfaces should be:</p>
+      <pre><code>DATALOX.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md
+.cursor/rules/datalox-agent-replay.mdc
+.windsurf/rules/datalox-agent-replay.md
+.datalox/manifest.json
+.datalox/config.json</code></pre>
+
+      <h3>3. Resolve generated drafts deliberately</h3>
+      <p>
+        Treat unrelated generated drafts as cleanup candidates, not product artifacts. Generated
+        drafts such as <code>docs/pin-list.html</code> should be kept only when intentionally
+        user-authored. If they were generated by external automation, delete them in a dedicated
+        cleanup commit.
+      </p>
+
+      <h3>4. Guard cleanup through tests</h3>
+      <pre><code>npx vitest run tests/repoIdentity.test.ts tests/replayCanonicalDocs.test.ts
+npm run check
+git diff --check</code></pre>
+
+      <div class="callout danger">
+        <p>
+          Release blocker: if a global Claude Stop or SubagentStop hook keeps restoring
+          legacy pack files from the old global cache, disable that
+          external hook before release. The repo should not weaken identity tests to hide this.
+        </p>
+      </div>
+
+      <h3>Immediate cleanup pass criteria</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Required result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Legacy generated surfaces</td>
+            <td>No legacy hook directories, old host-rule files, old wiki surfaces, old promotion scripts, or old pack-maintenance skill directories exist in the repo.</td>
+          </tr>
+          <tr>
+            <td>Ignored generated leftovers</td>
+            <td>Stale ignored build output and historical task scratch data are removed before the clean verification run.</td>
+          </tr>
+          <tr>
+            <td>Active instruction surfaces</td>
+            <td>Only Agent Replay guidance remains in <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>GEMINI.md</code>, and host rule files.</td>
+          </tr>
+          <tr>
+            <td>Generated draft handling</td>
+            <td>Unrelated generated drafts are either intentionally kept with a clear reason or removed from the tree.</td>
+          </tr>
+          <tr>
+            <td>Identity and docs gates</td>
+            <td><code>tests/repoIdentity.test.ts</code> and <code>tests/replayCanonicalDocs.test.ts</code> pass.</td>
+          </tr>
+          <tr>
+            <td>Build quality gates</td>
+            <td><code>npm run check</code>, <code>git diff --check</code>, and full <code>npm test</code> pass.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Implementation Roadmap For This Repo</h2>
+
+      <h3>Phase 1: Verified Replay Quickstart</h3>
+      <p>
+        Build the product proof path as a repeatable local demo. This should become the first
+        public video and the first design-partner smoke test.
+      </p>
+      <p><span class="pill">Owner: this repo</span><span class="pill">Priority: highest</span></p>
+      <p>Add or update:</p>
+      <pre><code>package.json
+examples/verified-replay-quickstart/
+  README.md
+  fixture-upstream.mjs
+  run-demo.mjs
+  datalox.record.json
+docs/verified-replay-quickstart.md
+tests/verifiedReplayQuickstart.test.ts</code></pre>
+      <p>Target command:</p>
+      <pre><code>npm run demo:verified-replay</code></pre>
+      <p>The command must show, in order:</p>
+      <ol>
+        <li>Build the TypeScript project if needed.</li>
+        <li>Start a deterministic MCP upstream fixture.</li>
+        <li>Start Datalox proxy in record mode.</li>
+        <li>Call two or three tools through the proxy.</li>
+        <li>Pack a replay bundle.</li>
+        <li>Verify the replay bundle.</li>
+        <li>Stop upstream.</li>
+        <li>Start Datalox proxy in replay mode from the bundle.</li>
+        <li>Replay the same calls successfully.</li>
+        <li>Call an unrecorded request and show a structured replay miss.</li>
+        <li>Tamper with a copy of the bundle and show verification failure.</li>
+      </ol>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Demo succeeds on a clean checkout with no secrets and no network dependency.</li>
+        <li>Replay works while upstream is off.</li>
+        <li>Tamper failure is visible and deterministic.</li>
+        <li>Output includes bundle id, tool record count, catalog count, hit count, miss count, and elapsed time.</li>
+        <li>Demo does not mention trajectory rows as the primary value.</li>
+      </ul>
+
+      <h3>Phase 2: Bring-Your-Own MCP Config UX</h3>
+      <p>
+        Make adoption boring for teams that already have an MCP server. They should only need
+        to wrap their MCP command with Datalox.
+      </p>
+      <p>Add or update:</p>
+      <pre><code>src/cli/main.ts
+src/surface/sharedCommands.ts
+src/mcp/replayProxyServer.ts
+docs/replay-quickstart.md
+tests/mcpProxyConfig.test.ts</code></pre>
+      <p>Target commands:</p>
+      <pre><code>datalox proxy init --name support-api --upstream "node server.js"
+datalox proxy record --config datalox.replay.json
+datalox bundle pack --bundle-id support-api-smoke-001
+datalox proxy replay --bundle .datalox/replay-bundles/support-api-smoke-001</code></pre>
+      <p>Config shape:</p>
+      <pre><code>{
+  "schema_version": "datalox_mcp_proxy_config.v1",
+  "name": "support-api",
+  "upstream": {
+    "transport": "stdio",
+    "command": "node",
+    "args": ["server.js"]
+  },
+  "recording": {
+    "repo": ".",
+    "tool_io_root": ".datalox/tool-io/records",
+    "catalog_root": ".datalox/mcp-tool-catalogs"
+  }
+}</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li><code>proxy init</code> writes explicit config and refuses ambiguous upstream commands.</li>
+        <li>Record mode requires upstream config.</li>
+        <li>Replay mode requires a verified bundle and must not start upstream.</li>
+        <li>Replay miss includes request hash, sequence index, tool name, and an agent-readable message.</li>
+      </ul>
+
+      <h3>Phase 3: SDK Surface</h3>
+      <p>
+        Some eval harnesses will not want to shell out. Provide stable library entrypoints that
+        use the same core code as the CLI.
+      </p>
+      <p>Add:</p>
+      <pre><code>src/sdk/index.ts
+src/sdk/createReplayMcpServer.ts
+src/sdk/createRecordingMcpProxy.ts
+src/sdk/types.ts
+tests/sdkReplayServer.test.ts
+tests/sdkRecordingProxy.test.ts</code></pre>
+      <p>Target usage:</p>
+      <pre><code>import { createReplayMcpServer } from "@datalox/agent-replay";
+
+const server = await createReplayMcpServer({
+  bundlePath: ".datalox/replay-bundles/support-api-smoke-001"
+});
+
+await server.startStdio();</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>SDK replay server verifies bundle before serving.</li>
+        <li>SDK recording proxy records exact same records as CLI proxy.</li>
+        <li>SDK returns typed startup and replay errors.</li>
+        <li>Public SDK exports do not expose derivative trajectory APIs as first-class capture.</li>
+      </ul>
+
+      <h3>Phase 4: Server-Shaped Store Interfaces</h3>
+      <p>
+        Make local storage swappable before building a server. The local file store remains the
+        default; replay logic should not assume raw filesystem paths internally.
+      </p>
+      <p>Add:</p>
+      <pre><code>src/core/store/replayStore.ts
+src/core/store/fileReplayStore.ts
+src/core/store/objectStore.ts
+src/core/store/fileObjectStore.ts
+src/core/store/bundleRefs.ts
+tests/replayStore.test.ts
+tests/objectStore.test.ts</code></pre>
+      <p>Interfaces:</p>
+      <pre><code>export interface ReplayStore {
+  putToolIoRecord(record: ToolIoRecordV1): Promise&lt;void&gt;;
+  getToolIoRecord(recordId: string): Promise&lt;ToolIoRecordV1&gt;;
+  findReplayRecord(input: ReplayLookupInput): Promise&lt;ReplayLookupResult&gt;;
+  putMcpToolCatalog(catalog: McpToolCatalogV1): Promise&lt;void&gt;;
+  putReplayBundle(bundle: ReplayBundleV1): Promise&lt;void&gt;;
+  verifyReplayBundle(bundleId: string): Promise&lt;ReplayBundleVerifyResult&gt;;
+}
+
+export interface ObjectStore {
+  putObject(bytes: Uint8Array, mediaType: string): Promise&lt;ContentAddress&gt;;
+  getObject(address: ContentAddress): Promise&lt;Uint8Array&gt;;
+  hasObject(address: ContentAddress): Promise&lt;boolean&gt;;
+}</code></pre>
+      <p>Storage rule:</p>
+      <pre><code>Replay lookup key: request_hash + sequence_index
+Object dedupe key: sha256(content bytes)</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Current file-backed behavior remains unchanged.</li>
+        <li>Large observation bodies can later be moved to content-addressed objects without changing replay semantics.</li>
+        <li>Bundle verification can run through the store interface.</li>
+        <li>No hidden fallback to live upstream is introduced.</li>
+      </ul>
+
+      <h3>Phase 5: Bundle Refs, Metrics, And Garbage Collection</h3>
+      <p>
+        Add the minimal Git-like storage ideas without cloning Git. We need immutable objects,
+        human-readable refs, and garbage collection, not branches or merges.
+      </p>
+      <p>Add:</p>
+      <pre><code>.datalox/objects/
+.datalox/refs/
+src/core/store/gc.ts
+src/core/metrics/replayMetrics.ts
+tests/replayRefs.test.ts
+tests/replayGc.test.ts
+tests/replayMetrics.test.ts</code></pre>
+      <p>Local layout:</p>
+      <pre><code>.datalox/
+  objects/
+    sha256/
+      ab/
+        cdef...json
+  refs/
+    bundles/
+      latest
+      support-api-smoke
+  replay-bundles/
+    support-api-smoke-001/</code></pre>
+      <p>Metrics to record:</p>
+      <ul>
+        <li>Replay hits and misses.</li>
+        <li>Tool call count.</li>
+        <li>Tool round count when known.</li>
+        <li>Repeated-call sequence indexes.</li>
+        <li>Latency metadata when known.</li>
+        <li>Token or API cost metadata when known.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Refs point only to verified bundle ids or immutable bundle manifests.</li>
+        <li>GC never deletes objects reachable from retained bundles or refs.</li>
+        <li>Metrics are derived from replay records, not from prose summaries.</li>
+      </ul>
+
+      <h3>Phase 6: Fixture Pack Contract, Not Fixture Bulk</h3>
+      <p>
+        This repo should define the fixture-pack contract and include only tiny examples. The
+        real curated library should live in <code>datalox-replay-fixtures</code>.
+      </p>
+      <p>Add:</p>
+      <pre><code>docs/fixture-pack-contract.md
+src/core/fixtures/fixturePackSchema.ts
+src/core/fixtures/installFixturePack.ts
+tests/fixturePackSchema.test.ts</code></pre>
+      <p>Fixture pack shape:</p>
+      <pre><code>{
+  "schema_version": "datalox_fixture_pack.v1",
+  "id": "github-pr-review-basic",
+  "version": "2026.05.0",
+  "engine": {
+    "min_datalox_version": "0.1.0"
+  },
+  "bundles": [
+    {
+      "id": "github-pr-review-basic-case-001",
+      "path": "replay-bundles/github-pr-review-basic-case-001",
+      "sha256": "..."
+    }
+  ],
+  "eval_prompts": "eval-prompts.jsonl",
+  "license": "Apache-2.0",
+  "redaction": "none_needed"
+}</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Fixture packs install into local replay refs without modifying engine code.</li>
+        <li>Every bundled replay artifact verifies before being served.</li>
+        <li>Fixture install refuses unknown schema versions.</li>
+        <li>This repo does not grow a large public fixture collection.</li>
+      </ul>
+
+      <h3>Phase 7: Local Daemon API</h3>
+      <p>
+        A local daemon makes the future server easier. The daemon API should be close to the
+        hosted API, while still using the local file store by default.
+      </p>
+      <p>Add:</p>
+      <pre><code>src/daemon/server.ts
+src/daemon/routes.ts
+src/daemon/client.ts
+tests/daemon.test.ts</code></pre>
+      <p>Target commands:</p>
+      <pre><code>datalox daemon start --repo .
+datalox daemon status
+datalox proxy record --config datalox.replay.json --store http://127.0.0.1:4777</code></pre>
+      <p>API shape:</p>
+      <pre><code>POST /v1/tool-io/records
+GET  /v1/replay-bundles/:id
+POST /v1/replay-bundles/:id/verify
+POST /v1/replay/lookup
+GET  /v1/refs/:name
+PUT  /v1/refs/:name
+GET  /v1/metrics/replay/:bundleId</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>CLI direct-file mode and daemon mode produce equivalent bundles.</li>
+        <li>Daemon never calls live upstream during replay lookup.</li>
+        <li>Daemon verifies bundle checksums before serving replay.</li>
+      </ul>
+
+      <h3>Phase 8: Server Registry Client</h3>
+      <p>
+        Add the client contract before building the hosted service. The server should be a
+        registry for bundles and fixture packs, not the only way to record.
+      </p>
+      <p>Add:</p>
+      <pre><code>src/serverClient/client.ts
+src/serverClient/auth.ts
+src/serverClient/types.ts
+tests/serverClientContract.test.ts</code></pre>
+      <p>Target commands:</p>
+      <pre><code>datalox login
+datalox bundle push support-api-smoke-001
+datalox bundle pull org/project/support-api-smoke-001
+datalox bundle verify --remote org/project/support-api-smoke-001
+datalox fixtures install github-pr-review-basic@2026.05.0</code></pre>
+      <p>Server entities:</p>
+      <ul>
+        <li>Org</li>
+        <li>Project</li>
+        <li>Suite</li>
+        <li>Run</li>
+        <li>Replay bundle</li>
+        <li>Content-addressed object</li>
+        <li>Fixture pack</li>
+        <li>Approval and redaction state</li>
+        <li>Replay metrics</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Local bundles remain usable without login.</li>
+        <li>Remote push requires explicit approval or private project mode.</li>
+        <li>Remote pull verifies checksums locally before serving replay.</li>
+        <li>The server API cannot turn unapproved raw traces into public fixture packs.</li>
+      </ul>
+
+      <h3>Phase 9: Parallel Tool Interaction Support</h3>
+      <p>
+        Agentic RL papers increasingly optimize tool-use efficiency. Datalox should preserve
+        enough structure to replay and measure parallel or batched tool rounds.
+      </p>
+      <p>Add fields when schema migration is planned:</p>
+      <pre><code>round_index?: number
+parallel_group_id?: string
+parallel_slot?: number
+dispatch_started_at?: string
+observation_received_at?: string
+latency_ms?: number
+cost?: {
+  unit: "tokens" | "usd" | "api_call";
+  amount: number;
+}</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Sequential replay behavior remains unchanged.</li>
+        <li>Identical concurrent calls cannot be replayed by unstable arrival order.</li>
+        <li>If stable parallel slot metadata is missing, strict mode fails with an ambiguity error.</li>
+        <li>Replay metrics report tool rounds and invocations separately.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Two-Repo Boundary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Concern</th>
+            <th><code>datalox-agent-replay</code></th>
+            <th><code>datalox-replay-fixtures</code></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Runtime</td>
+            <td>Owns MCP proxy, replay server, CLI, SDK, verifier.</td>
+            <td>Does not own runtime code.</td>
+          </tr>
+          <tr>
+            <td>Schemas</td>
+            <td>Owns canonical schemas and validators.</td>
+            <td>Consumes schema versions and declares compatibility.</td>
+          </tr>
+          <tr>
+            <td>Reference data</td>
+            <td>Only tiny examples needed for tests and quickstart.</td>
+            <td>Owns curated public fixture packs.</td>
+          </tr>
+          <tr>
+            <td>Release cadence</td>
+            <td>Software semver.</td>
+            <td>Fixture versioning by pack and date.</td>
+          </tr>
+          <tr>
+            <td>Size</td>
+            <td>Small installable package.</td>
+            <td>Can grow larger and later move to hosted registry.</td>
+          </tr>
+          <tr>
+            <td>User value</td>
+            <td>Record and replay private tools.</td>
+            <td>Try/use known public tool worlds immediately.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Server-Ready Architecture</h2>
+      <p>
+        Build the server path without forcing hosted adoption on day one.
+      </p>
+      <pre><code>Local record:
+agent -> local Datalox recording proxy -> real upstream MCP/API -> local bundle
+
+Local replay:
+agent -> local Datalox replay server -> verified local bundle
+
+Fixture replay:
+agent -> local Datalox replay server -> installed fixture pack bundle
+
+Server registry:
+local Datalox CLI/daemon -> Datalox server -> verified bundles, fixture packs, refs, metrics</code></pre>
+      <p>
+        The server should not be required for private internal API recording. It should become
+        useful for team sharing, approvals, CI replay, fixture discovery, and cross-machine
+        bundle pull.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Release Gates</h2>
+      <h3>Local engine release gate</h3>
+      <pre><code>npm run demo:verified-replay
+npm test
+npm run check
+git diff --check</code></pre>
+      <ul>
+        <li>Legacy pack artifacts absent.</li>
+        <li>Quickstart demo succeeds with upstream off replay.</li>
+        <li>Replay miss is deterministic and agent-readable.</li>
+        <li>Bundle tamper verification fails deterministically.</li>
+      </ul>
+
+      <h3>SDK release gate</h3>
+      <pre><code>npx vitest run tests/sdkReplayServer.test.ts tests/sdkRecordingProxy.test.ts
+npm run check</code></pre>
+      <ul>
+        <li>CLI and SDK share core code.</li>
+        <li>SDK verifies bundles before serving.</li>
+        <li>SDK public API is documented and semver-safe.</li>
+      </ul>
+
+      <h3>Fixture contract release gate</h3>
+      <pre><code>npx vitest run tests/fixturePackSchema.test.ts tests/referenceBundles.test.ts
+npm run check</code></pre>
+      <ul>
+        <li>Fixture pack schema is strict.</li>
+        <li>Installed fixture packs are verified before replay.</li>
+        <li>Only tiny fixtures stay in this repo.</li>
+      </ul>
+
+      <h3>Server-readiness gate</h3>
+      <pre><code>npx vitest run tests/replayStore.test.ts tests/daemon.test.ts tests/serverClientContract.test.ts
+npm run check</code></pre>
+      <ul>
+        <li>Replay logic uses store interfaces.</li>
+        <li>Local file mode and daemon mode are equivalent.</li>
+        <li>Remote bundle pull verifies locally before replay.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Recommended Next Three Tasks</h2>
+      <ol>
+        <li>
+          <strong>Clean the repo and commit Option A plus reference bundles.</strong>
+          Remove regenerated legacy pack artifacts, confirm identity tests, and keep
+          <code>docs/pin-list.html</code> out unless it is intentionally user-owned.
+        </li>
+        <li>
+          <strong>Build <code>npm run demo:verified-replay</code>.</strong>
+          This is the demo that makes the wedge legible: record, pack, verify, upstream off,
+          replay, replay miss, tamper failure.
+        </li>
+        <li>
+          <strong>Add SDK entrypoints around existing proxy/replay code.</strong>
+          This prepares embedded eval harnesses and makes the future daemon/server path cleaner.
+        </li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>
