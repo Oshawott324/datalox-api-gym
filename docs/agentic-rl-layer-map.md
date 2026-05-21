@@ -6,7 +6,7 @@ larger agentic RL stack.
 The short version:
 
 ```text
-Datalox is the tool-I/O VCR layer.
+Datalox Agent Replay is the tool-I/O VCR layer.
 It records real agent-visible tool observations once, packages them into
 verifiable replay bundles, and replays them deterministically later.
 ```
@@ -17,19 +17,32 @@ Primary replay loop:
 agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
 ```
 
-This can function as record-based mocking during replay, but Datalox is not a
-mock-construction platform, sandbox runtime, environment builder, or reward
-engine.
+This can function as record-based mocking during replay, but this repo is not a
+mock-construction platform, sandbox runtime, generic environment builder, or
+reward engine.
 
-## The Four Layers
-
-Frontier agentic RL systems usually combine at least four layers.
+Portfolio nuance:
 
 ```text
-Layer 1   sandbox/runtime foundation
-Layer 1.5 tool-I/O record/replay
-Layer 2   task environment construction
-Layer 3   evaluation and reward rules
+Datalox Agent Replay repo = tool-I/O VCR, fixture worlds, replay bundles
+Datalox domain MCP repos  = constrained scientific environments when shipped separately
+```
+
+Domain MCP environments can own file-backed scientific workspaces, domain tool
+schemas, compact UIs, deterministic domain algorithms, and agent-first tool
+contracts. Agent Replay records and replays their tool I/O; it does not become
+their domain runtime.
+
+## Layer Map
+
+Frontier agentic RL systems usually combine several layers.
+
+```text
+Layer 1    sandbox/runtime foundation
+Layer 2a   constrained domain MCP environments
+Layer 2b   generic task environment construction
+Layer 1.5  tool-I/O record/replay
+Layer 3    evaluation and reward rules
 ```
 
 ### Layer 1: Sandbox And Runtime
@@ -55,7 +68,7 @@ internal platform.
 
 ### Layer 1.5: Tool-I/O Record/Replay
 
-This is Datalox's home layer.
+This is Datalox Agent Replay's home layer.
 
 Record mode:
 
@@ -101,7 +114,29 @@ Known limit:
 - if the agent takes a new path that was never recorded, replay must miss
   clearly instead of inventing behavior
 
-### Layer 2: Task Environment Construction
+### Layer 2a: Constrained Domain MCP Environments
+
+This layer gives an agent a domain-specific world to act inside without trying
+to be a generic Docker or benchmark runtime.
+
+Examples in the broader Datalox portfolio:
+
+- flow cytometry workspaces: FCS metadata and previews, gates, plots, revisions
+- molecular biology workspaces: FASTA, GenBank, sequence features, plasmid maps
+- protein visualization workflows: PyMOL actions, viewer state, snapshots
+
+These environments may be Datalox-owned when they live in sibling domain repos.
+The common shape is:
+
+```text
+domain files -> file-backed workspace -> MCP tools -> structured observations -> optional UI
+```
+
+Agent Replay should capture their agent-visible tool calls, observations,
+workspace revisions, validation outputs, and replay bundles. The domain repo
+should own the scientific runtime, UI, parsers, and algorithms.
+
+### Layer 2b: Generic Task Environment Construction
 
 This layer builds the world the agent acts inside.
 
@@ -114,12 +149,12 @@ Examples:
 - stateful behavioral mocks
 - synthetic task generation with Docker images and validators
 
-Datalox does not own this layer.
+Datalox Agent Replay does not own this layer.
 
 If a team needs a stateful phone simulator that responds to unseen camera,
 GPS, or movement actions, record/replay alone is not enough. They need a real
 environment or a behavioral mock. Datalox can still record the tool I/O around
-that environment, but it does not construct the environment.
+that environment, but Agent Replay does not construct the generic environment.
 
 ### Layer 3: Evaluation And Reward Rules
 
@@ -136,10 +171,10 @@ Examples:
 
 Datalox does not own this layer.
 
-Datalox should preserve verifier commands, outputs, source references, and
-reward provenance when available, but it should not become the reward engine.
-The replay bundle lets existing evaluators run or compare against stable
-observations.
+Datalox Agent Replay should preserve verifier commands, outputs, source
+references, and reward provenance when available, but it should not become the
+reward engine. The replay bundle lets existing evaluators run or compare
+against stable observations.
 
 ## Mocking Vocabulary
 
@@ -170,7 +205,7 @@ the full solution.
 
 ## Product Boundary
 
-Datalox owns:
+Datalox Agent Replay owns:
 
 - exact tool-I/O capture
 - deterministic request hashing
@@ -181,12 +216,20 @@ Datalox owns:
 - strict action/observation normalization over replay evidence
 - optional derivative rows after replay evidence exists
 
-Datalox does not own:
+Sibling Datalox domain MCP repos may own:
+
+- constrained scientific workspace state
+- domain-specific MCP tools
+- compact domain review UIs
+- deterministic domain parsers, validators, and algorithms
+- domain-level action contracts that produce replayable tool I/O
+
+Datalox Agent Replay does not own:
 
 - sandbox orchestration
 - container image construction
 - dependency setup agents
-- stateful environment simulation
+- generic stateful environment simulation
 - reward function design
 - judge-agent implementation
 - RL training algorithms

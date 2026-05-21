@@ -43,6 +43,12 @@ The project boundary is:
 
 Everything else is supporting infrastructure.
 
+This boundary describes the Agent Replay repo. Sibling Datalox domain MCP repos
+can provide constrained scientific environments, such as flow cytometry,
+molecular biology, or protein visualization workspaces. Agent Replay should
+record and replay the tool I/O those environments emit; it should not absorb
+their domain runtime, UI, or scientific algorithms.
+
 ## Why This Exists
 
 Agentic RL, eval, and regression teams hit the same failure mode: they cannot
@@ -63,13 +69,14 @@ layer.
 
 ## Agentic RL Layer Map
 
-Datalox lives in the tool-I/O record/replay layer:
+Datalox Agent Replay lives in the tool-I/O record/replay layer:
 
 ```text
-Layer 1   sandbox/runtime foundation
-Layer 1.5 tool-I/O record/replay        <- Datalox
-Layer 2   task environment construction
-Layer 3   evaluation and reward rules
+Layer 1    sandbox/runtime foundation
+Layer 2a   constrained domain MCP environments       <- sibling Datalox domain repos can own this
+Layer 2b   generic task environment construction      <- not this repo
+Layer 1.5  tool-I/O record/replay                     <- Datalox Agent Replay
+Layer 3    evaluation and reward rules
 ```
 
 During replay, recorded observations can function like record-based mocks for
@@ -77,9 +84,10 @@ agent-visible tools or external APIs. The important boundary is that Datalox
 does not invent behavior. It records a real observation first and later returns
 that exact observation by `request_hash + sequence_index`.
 
-Datalox is complementary to sandbox runtimes, environment builders, behavioral
-mocks, judge agents, and reward engines. It should preserve provenance for
-those systems when available, but not become those systems.
+Datalox Agent Replay is complementary to sandbox runtimes, generic environment
+builders, behavioral mocks, judge agents, reward engines, and Datalox's own
+domain MCP environments. It should preserve provenance for those systems when
+available, but not become those systems.
 
 ## Core Schemas
 
