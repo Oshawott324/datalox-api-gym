@@ -8,6 +8,7 @@ import { listInstalledFixtures } from "../src/core/fixtures/fixtureCache.js";
 import { installFixturePack } from "../src/core/fixtures/installFixturePack.js";
 import { resolveFixtureRuntime } from "../src/core/fixtures/resolveFixtureRuntime.js";
 import { sha256Hex } from "../src/core/hash.js";
+import { recordMcpToolCatalog } from "../src/core/mcpToolCatalogStore.js";
 import { packReplayBundle } from "../src/core/replayBundle.js";
 import { recordToolIo } from "../src/core/toolIoStore.js";
 
@@ -37,6 +38,9 @@ async function createFixtureRepo(): Promise<{
   const sourceRepo = path.join(root, "source");
   await mkdir(fixtureDir, { recursive: true });
   await mkdir(sourceRepo, { recursive: true });
+  await mkdir(path.join(fixtureDir, "tasks"), { recursive: true });
+  await mkdir(path.join(fixtureDir, "verifiers"), { recursive: true });
+  await mkdir(path.join(fixtureDir, "scaffolds"), { recursive: true });
 
   await recordToolIo({
     repoPath: sourceRepo,
@@ -62,6 +66,35 @@ async function createFixtureRepo(): Promise<{
     },
     now: new Date("2026-05-20T00:00:00.000Z"),
   });
+  await recordMcpToolCatalog({
+    repoPath: sourceRepo,
+    upstream: {
+      command: "github-mcp",
+      args: [],
+    },
+    listToolsResult: {
+      tools: [
+        {
+          name: "github_pull_request_get",
+          inputSchema: {
+            type: "object",
+            properties: {
+              owner: { type: "string" },
+              repo: { type: "string" },
+              pull_number: { type: "number" },
+            },
+            required: ["owner", "repo", "pull_number"],
+          },
+        },
+      ],
+    },
+    export: {
+      allowed: true,
+      redaction: "none_needed",
+      approval_id: "fixture-public",
+    },
+    now: new Date("2026-05-20T00:30:00.000Z"),
+  });
 
   const bundle = await packReplayBundle({
     repoPath: sourceRepo,
@@ -78,6 +111,49 @@ async function createFixtureRepo(): Promise<{
   await mkdir(path.dirname(fixtureBundleDir), { recursive: true });
   await cp(path.join(sourceRepo, bundle.bundlePath), fixtureBundleDir, { recursive: true });
   const bundleSha256 = sha256Hex(await readFile(path.join(fixtureBundleDir, "checksums.json")));
+
+  await writeFile(path.join(fixtureDir, "tasks", "github-pr-review-risk.json"), `${JSON.stringify({
+    schema_version: "datalox_task_spec.v1",
+    id: "github-pr-review-risk",
+    version,
+    name: "GitHub PR Review Risk",
+    description: "Find the actionable correctness risk in a replayed pull request.",
+    goal: "Inspect PR #42 and report the main risk.",
+    fixtureRefs: [fixtureRef],
+    allowedTools: ["github_pull_request_get"],
+    successCriteria: ["Names the risky file and explains the failure mode."],
+  }, null, 2)}\n`);
+  await writeFile(path.join(fixtureDir, "verifiers", "github-pr-review-risk.json"), `${JSON.stringify({
+    schema_version: "datalox_verifier_spec.v1",
+    id: "github-pr-review-risk-verifier",
+    version,
+    name: "GitHub PR Review Risk Verifier",
+    description: "Metadata for verifying the PR review answer.",
+    verifier: {
+      kind: "command",
+      command: "node",
+      args: ["verifiers/github-pr-review-risk.mjs"],
+    },
+    requiredEvidence: ["replay_bundle", "tool_io_records"],
+    reward: {
+      type: "binary",
+      version: "risk-v1",
+    },
+  }, null, 2)}\n`);
+  await writeFile(path.join(fixtureDir, "scaffolds", "codex-review.json"), `${JSON.stringify({
+    schema_version: "datalox_scaffold_spec.v1",
+    id: "codex-review-scaffold",
+    version,
+    name: "Codex Review Scaffold",
+    description: "A prompt/tool contract for replayed PR review tasks.",
+    harness: "codex",
+    promptContract: "Use only replayed GitHub tools.",
+    modelVisibleTools: ["github_pull_request_get"],
+    contextPolicy: {
+      maxTurns: 4,
+      allowedFixtureRefs: [fixtureRef],
+    },
+  }, null, 2)}\n`);
 
   const manifest = {
     $schema: "../../schemas/fixture-manifest.schema.json",
@@ -105,6 +181,11 @@ async function createFixtureRepo(): Promise<{
     evalPrompts: {
       path: "eval-prompts.jsonl",
       count: 1,
+    },
+    specs: {
+      taskSpecs: [{ path: "tasks/github-pr-review-risk.json" }],
+      verifierSpecs: [{ path: "verifiers/github-pr-review-risk.json" }],
+      scaffoldSpecs: [{ path: "scaffolds/codex-review.json" }],
     },
     provenance: {
       source: "curated-recording",
@@ -158,6 +239,29 @@ async function createFixtureRepo(): Promise<{
           path: `fixtures/${fixtureId}/eval-prompts.jsonl`,
           count: 1,
         },
+        specs: {
+          task_specs: [
+            {
+              path: `fixtures/${fixtureId}/tasks/github-pr-review-risk.json`,
+              id: "github-pr-review-risk",
+              version,
+            },
+          ],
+          verifier_specs: [
+            {
+              path: `fixtures/${fixtureId}/verifiers/github-pr-review-risk.json`,
+              id: "github-pr-review-risk-verifier",
+              version,
+            },
+          ],
+          scaffold_specs: [
+            {
+              path: `fixtures/${fixtureId}/scaffolds/codex-review.json`,
+              id: "codex-review-scaffold",
+              version,
+            },
+          ],
+        },
         release: {
           immutable: false,
           license: "UNRELEASED",
@@ -175,6 +279,15 @@ async function createFixtureRepo(): Promise<{
 }
 
 describe("fixture install/cache", () => {
+  it("fails clearly when resolving a fixture that has not been installed", async () => {
+    const cacheRoot = await makeTempDir("datalox-fixture-cache-missing-");
+
+    await expect(resolveFixtureRuntime({
+      ref: "github-pr-review-basic@2026-05.0",
+      cacheRoot,
+    })).rejects.toThrow(/Installed fixture github-pr-review-basic@2026-05\.0 was not found/);
+  });
+
   it("installs one fixture from a local catalog and resolves its runtime", async () => {
     const fixtureRepo = await createFixtureRepo();
     const cacheRoot = await makeTempDir("datalox-fixture-cache-");
@@ -190,8 +303,20 @@ describe("fixture install/cache", () => {
       alreadyInstalled: false,
       verified: true,
       bundleId: "github-pr-review-basic",
+      specs: {
+        taskSpecs: [
+          {
+            id: "github-pr-review-risk",
+            ref: "github-pr-review-risk@2026-05.0",
+            path: "tasks/github-pr-review-risk.json",
+          },
+        ],
+      },
     });
     expect(install.cachePath).toBe(path.join(cacheRoot, "github-pr-review-basic", "2026-05.0"));
+    expect(install.specs.taskSpecs[0].absolutePath).toBe(
+      path.join(install.cachePath, "tasks", "github-pr-review-risk.json"),
+    );
 
     const runtime = await resolveFixtureRuntime({
       ref: fixtureRepo.fixtureRef,
@@ -200,13 +325,41 @@ describe("fixture install/cache", () => {
     expect(runtime).toMatchObject({
       ref: fixtureRepo.fixtureRef,
       bundleId: "github-pr-review-basic",
-      toolCatalogCount: 0,
+      toolCatalogCount: 1,
+      toolCatalogPaths: [
+        expect.stringMatching(/^mcp-tool-catalogs\/mcp-tool-catalog-/),
+      ],
+      specs: {
+        taskSpecs: [
+          {
+            id: "github-pr-review-risk",
+            ref: "github-pr-review-risk@2026-05.0",
+            path: "tasks/github-pr-review-risk.json",
+          },
+        ],
+        verifierSpecs: [
+          {
+            id: "github-pr-review-risk-verifier",
+            ref: "github-pr-review-risk-verifier@2026-05.0",
+            path: "verifiers/github-pr-review-risk.json",
+          },
+        ],
+        scaffoldSpecs: [
+          {
+            id: "codex-review-scaffold",
+            ref: "codex-review-scaffold@2026-05.0",
+            path: "scaffolds/codex-review.json",
+          },
+        ],
+      },
       export: {
         allowed: true,
         redaction: "none_needed",
         approval_id: "fixture-public",
       },
     });
+    expect(runtime.toolCatalogAbsolutePaths).toHaveLength(1);
+    expect(runtime.toolCatalogAbsolutePaths[0]).toBe(path.join(runtime.bundlePath, runtime.toolCatalogPaths[0]));
   });
 
   it("is idempotent when the same verified fixture is already cached", async () => {
@@ -273,5 +426,27 @@ describe("fixture install/cache", () => {
       catalogPath: fixtureRepo.catalogPath,
       cacheRoot,
     })).rejects.toThrow(/Catalog bundle digest|Fixture bundle digest/);
+  });
+
+  it("refuses to install a fixture with an invalid referenced task spec", async () => {
+    const fixtureRepo = await createFixtureRepo();
+    const cacheRoot = await makeTempDir("datalox-fixture-cache-bad-spec-");
+    await writeFile(
+      path.join(fixtureRepo.root, "fixtures", "github-pr-review-basic", "tasks", "github-pr-review-risk.json"),
+      `${JSON.stringify({
+        schema_version: "datalox_task_spec.v1",
+        id: "github-pr-review-risk",
+        version: "2026-05.0",
+        name: "GitHub PR Review Risk",
+        description: "Missing success criteria.",
+        goal: "Inspect PR #42.",
+      }, null, 2)}\n`,
+    );
+
+    await expect(installFixturePack({
+      ref: fixtureRepo.fixtureRef,
+      catalogPath: fixtureRepo.catalogPath,
+      cacheRoot,
+    })).rejects.toThrow(/Invalid task spec/);
   });
 });

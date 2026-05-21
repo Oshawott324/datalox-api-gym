@@ -1,5 +1,6 @@
 import { fixtureSetCachePath } from "./fixtureCache.js";
 import { formatFixtureRef, parseFixtureRef } from "./fixtureRef.js";
+import type { ResolvedFixtureSpecs } from "./fixtureSpecSchema.js";
 import { readFixtureSetManifest } from "./readFixtureManifest.js";
 import { resolveFixtureRuntime, type FixtureRuntime } from "./resolveFixtureRuntime.js";
 import { validateNoToolNameCollisions } from "./validateToolCollisions.js";
@@ -13,6 +14,7 @@ export interface FixtureSetRuntime {
   ref: string;
   cachePath: string;
   manifestPath: string;
+  specs: ResolvedFixtureSpecs;
   fixtures: FixtureRuntime[];
   bundlePaths: string[];
   activeFixtureRefs: string[];
@@ -43,6 +45,7 @@ export async function resolveFixtureSetRuntime(input: ResolveFixtureSetRuntimeIn
     ref,
     cachePath,
     manifestPath: fixtureSet.manifestPath,
+    specs: fixtureSet.specs,
     fixtures,
     bundlePaths: fixtures.map((fixture) => fixture.bundlePath),
     activeFixtureRefs: fixtures.map((fixture) => fixture.ref),

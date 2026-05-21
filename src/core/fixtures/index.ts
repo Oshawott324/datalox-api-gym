@@ -3,6 +3,7 @@ export * from "./fixtureCache.js";
 export * from "./fixtureManifestSchema.js";
 export * from "./fixtureRef.js";
 export * from "./fixtureSetSchema.js";
+export * from "./fixtureSpecSchema.js";
 export * from "./installFixturePack.js";
 export * from "./installFixtureSet.js";
 export * from "./readFixtureCatalog.js";

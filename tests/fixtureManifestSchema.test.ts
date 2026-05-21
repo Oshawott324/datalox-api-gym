@@ -99,12 +99,27 @@ describe("fixture manifest schema", () => {
     expect(parseFixtureManifest(fixtureManifest()).id).toBe("github-pr-review-basic");
   });
 
+  it("accepts metadata-only spec references", () => {
+    expect(parseFixtureManifest(fixtureManifest({
+      specs: {
+        taskSpecs: [{ path: "tasks/github-pr-review-risk.json" }],
+        verifierSpecs: [{ path: "verifiers/github-pr-review-risk.json" }],
+        scaffoldSpecs: [{ path: "scaffolds/codex-review.json" }],
+      },
+    })).specs?.taskSpecs?.[0].path).toBe("tasks/github-pr-review-risk.json");
+  });
+
   it("rejects unsafe paths", () => {
     expect(() => parseFixtureManifest(fixtureManifest({
       bundle: {
         path: "../outside",
         schemaVersion: "replay_bundle.v1",
         sha256,
+      },
+    }))).toThrow(/Invalid fixture manifest/);
+    expect(() => parseFixtureManifest(fixtureManifest({
+      specs: {
+        taskSpecs: [{ path: "../tasks/bad.json" }],
       },
     }))).toThrow(/Invalid fixture manifest/);
   });
@@ -129,6 +144,38 @@ describe("fixture manifest schema", () => {
     const result = await readFixtureManifest(fixtureDir);
     expect(result.bundlePath).toBe(path.join(fixtureDir, "replay-bundle", "github-pr-review-basic"));
   });
+
+  it("reads and validates referenced spec files", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "datalox-fixture-specs-"));
+    const fixtureDir = path.join(root, "github-pr-review-basic");
+    await mkdir(path.join(fixtureDir, "tasks"), { recursive: true });
+    await writeFile(path.join(fixtureDir, "tasks", "github-pr-review-risk.json"), `${JSON.stringify({
+      schema_version: "datalox_task_spec.v1",
+      id: "github-pr-review-risk",
+      version: "2026-05.0",
+      name: "GitHub PR review risk",
+      description: "Find the actionable risk in a replayed pull request.",
+      goal: "Identify the correctness risk.",
+      fixtureRefs: ["github-pr-review-basic@2026-05.0"],
+      allowedTools: ["github_pull_request_get"],
+      successCriteria: ["Names the risky file."],
+    }, null, 2)}\n`);
+    await writeFile(path.join(fixtureDir, "manifest.json"), `${JSON.stringify(fixtureManifest({
+      specs: {
+        taskSpecs: [{ path: "tasks/github-pr-review-risk.json" }],
+      },
+    }), null, 2)}\n`);
+
+    const result = await readFixtureManifest(fixtureDir);
+    expect(result.specs.taskSpecs).toMatchObject([
+      {
+        id: "github-pr-review-risk",
+        version: "2026-05.0",
+        ref: "github-pr-review-risk@2026-05.0",
+        path: "tasks/github-pr-review-risk.json",
+      },
+    ]);
+  });
 });
 
 describe("fixture set manifest schema", () => {
@@ -137,6 +184,14 @@ describe("fixture set manifest schema", () => {
       "slack-support-thread-basic@2026-05.0",
       "search-policy-corpus-basic@2026-05.0",
     ]);
+  });
+
+  it("accepts fixture-set spec references", () => {
+    expect(parseFixtureSetManifest(fixtureSetManifest({
+      specs: {
+        taskSpecs: [{ path: "tasks/support-triage.json" }],
+      },
+    })).specs?.taskSpecs?.[0].path).toBe("tasks/support-triage.json");
   });
 
   it("requires pinned member fixture refs", () => {

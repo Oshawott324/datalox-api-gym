@@ -35,6 +35,22 @@ const evalPromptsCatalogSchema = z
   })
   .strict();
 
+const specCatalogEntrySchema = z
+  .object({
+    path: safeRelativePath,
+    id: z.string().regex(/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/),
+    version: fixtureVersion,
+  })
+  .strict();
+
+const specsCatalogSchema = z
+  .object({
+    task_specs: z.array(specCatalogEntrySchema).optional(),
+    verifier_specs: z.array(specCatalogEntrySchema).optional(),
+    scaffold_specs: z.array(specCatalogEntrySchema).optional(),
+  })
+  .strict();
+
 const fixtureCatalogEntrySchema = z
   .object({
     id: fixtureId,
@@ -55,6 +71,7 @@ const fixtureCatalogEntrySchema = z
       })
       .strict(),
     eval_prompts: evalPromptsCatalogSchema,
+    specs: specsCatalogSchema.optional(),
     release: releaseCatalogSchema,
   })
   .strict();
@@ -72,6 +89,7 @@ const fixtureSetCatalogEntrySchema = z
     fixtures: z.array(fixtureRef).min(1),
     tags: z.array(z.string()).min(1),
     eval_prompts: evalPromptsCatalogSchema.optional(),
+    specs: specsCatalogSchema.optional(),
     release: releaseCatalogSchema,
   })
   .strict();

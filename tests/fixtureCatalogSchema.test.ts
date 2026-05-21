@@ -54,6 +54,15 @@ function catalog() {
           path: "fixtures/github-pr-review-basic/eval-prompts.jsonl",
           count: 1,
         },
+        specs: {
+          task_specs: [
+            {
+              path: "fixtures/github-pr-review-basic/tasks/github-pr-review-risk.json",
+              id: "github-pr-review-risk",
+              version: "2026-05.0",
+            },
+          ],
+        },
         release: {
           immutable: false,
           license: "UNRELEASED",
@@ -77,6 +86,15 @@ function catalog() {
         eval_prompts: {
           path: "fixture-sets/support-triage-basic/eval-prompts.jsonl",
           count: 1,
+        },
+        specs: {
+          task_specs: [
+            {
+              path: "fixture-sets/support-triage-basic/tasks/support-triage.json",
+              id: "support-triage",
+              version: "2026-05.0",
+            },
+          ],
         },
         release: {
           immutable: false,

@@ -97,10 +97,32 @@ datalox replay --fixtures \
   search-policy-corpus-basic@2026-05.0
 ```
 
+## Spec Metadata
+
+Fixture packs and fixture sets may reference metadata-only specs:
+
+```json
+{
+  "specs": {
+    "taskSpecs": [{ "path": "tasks/github-pr-review-risk.json" }],
+    "verifierSpecs": [{ "path": "verifiers/github-pr-review-risk.json" }],
+    "scaffoldSpecs": [{ "path": "scaffolds/codex-review.json" }]
+  }
+}
+```
+
+The engine validates those files during install and preserves the resolved spec
+refs in replay startup output. These specs are declarations only. Installing or
+replaying a fixture must not execute verifier commands, start runtime adapters,
+or infer hidden reward logic from the spec.
+
 ## Pass Criteria
 
 - Fixture manifests validate against the existing `datalox-replay-fixtures`
   manifest shape.
+- Optional task, verifier, and scaffold specs validate when referenced by a
+  fixture or fixture set.
+- Spec refs are preserved through cache install and replay startup output.
 - Every installed fixture verifies its replay bundle before it can be served.
 - Install does not start replay.
 - Replay verifies bundles again before serving observations.

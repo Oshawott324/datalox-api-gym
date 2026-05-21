@@ -172,6 +172,45 @@ async function createFixtureSetRepo(options?: { collide?: boolean }): Promise<{
   const fixtureSetRef = `${fixtureSetId}@${version}`;
   const fixtureSetDir = path.join(root, "fixture-sets", fixtureSetId);
   await mkdir(fixtureSetDir, { recursive: true });
+  await mkdir(path.join(fixtureSetDir, "tasks"), { recursive: true });
+  await mkdir(path.join(fixtureSetDir, "verifiers"), { recursive: true });
+  await mkdir(path.join(fixtureSetDir, "scaffolds"), { recursive: true });
+  await writeFile(path.join(fixtureSetDir, "tasks", "support-triage.json"), `${JSON.stringify({
+    schema_version: "datalox_task_spec.v1",
+    id: "support-triage",
+    version,
+    name: "Support triage",
+    description: "Summarize support context with search grounding.",
+    goal: "Use Slack and search fixtures to draft a support response.",
+    fixtureRefs: [slack.ref, search.ref],
+    allowedTools: ["slack_conversation_replies", "search_query"],
+    successCriteria: ["Summarizes the customer issue.", "Cites the relevant policy."],
+  }, null, 2)}\n`);
+  await writeFile(path.join(fixtureSetDir, "verifiers", "support-triage.json"), `${JSON.stringify({
+    schema_version: "datalox_verifier_spec.v1",
+    id: "support-triage-verifier",
+    version,
+    name: "Support triage verifier",
+    description: "Metadata for support triage answer verification.",
+    verifier: {
+      kind: "manual",
+    },
+    requiredEvidence: ["replay_bundle", "tool_io_records"],
+    reward: {
+      type: "rubric",
+      version: "support-v1",
+    },
+  }, null, 2)}\n`);
+  await writeFile(path.join(fixtureSetDir, "scaffolds", "support-agent.json"), `${JSON.stringify({
+    schema_version: "datalox_scaffold_spec.v1",
+    id: "support-agent-scaffold",
+    version,
+    name: "Support agent scaffold",
+    description: "A support-agent prompt/tool contract.",
+    harness: "codex",
+    promptContract: "Use the replayed Slack and search tools only.",
+    modelVisibleTools: ["slack_conversation_replies", "search_query"],
+  }, null, 2)}\n`);
   const fixtureSetManifest = {
     $schema: "../../schemas/fixture-set-manifest.schema.json",
     id: fixtureSetId,
@@ -183,6 +222,11 @@ async function createFixtureSetRepo(options?: { collide?: boolean }): Promise<{
     evalPrompts: {
       path: "eval-prompts.jsonl",
       count: 1,
+    },
+    specs: {
+      taskSpecs: [{ path: "tasks/support-triage.json" }],
+      verifierSpecs: [{ path: "verifiers/support-triage.json" }],
+      scaffoldSpecs: [{ path: "scaffolds/support-agent.json" }],
     },
     release: {
       immutable: false,
@@ -222,6 +266,29 @@ async function createFixtureSetRepo(options?: { collide?: boolean }): Promise<{
         eval_prompts: {
           path: `fixture-sets/${fixtureSetId}/eval-prompts.jsonl`,
           count: 1,
+        },
+        specs: {
+          task_specs: [
+            {
+              path: `fixture-sets/${fixtureSetId}/tasks/support-triage.json`,
+              id: "support-triage",
+              version,
+            },
+          ],
+          verifier_specs: [
+            {
+              path: `fixture-sets/${fixtureSetId}/verifiers/support-triage.json`,
+              id: "support-triage-verifier",
+              version,
+            },
+          ],
+          scaffold_specs: [
+            {
+              path: `fixture-sets/${fixtureSetId}/scaffolds/support-agent.json`,
+              id: "support-agent-scaffold",
+              version,
+            },
+          ],
         },
         release: {
           immutable: false,
@@ -264,6 +331,29 @@ describe("fixture set runtime", () => {
       "search-policy-corpus-basic@2026-05.0",
     ]);
     expect(runtime.bundlePaths).toHaveLength(2);
+    expect(runtime.specs).toMatchObject({
+      taskSpecs: [
+        {
+          id: "support-triage",
+          ref: "support-triage@2026-05.0",
+          path: "tasks/support-triage.json",
+        },
+      ],
+      verifierSpecs: [
+        {
+          id: "support-triage-verifier",
+          ref: "support-triage-verifier@2026-05.0",
+          path: "verifiers/support-triage.json",
+        },
+      ],
+      scaffoldSpecs: [
+        {
+          id: "support-agent-scaffold",
+          ref: "support-agent-scaffold@2026-05.0",
+          path: "scaffolds/support-agent.json",
+        },
+      ],
+    });
   });
 
   it("fails before replay when member fixtures expose colliding tool names", async () => {

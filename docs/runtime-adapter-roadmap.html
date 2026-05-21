@@ -237,9 +237,11 @@
 
     <section class="callout">
       <p>
-        Stable boundary: <strong>Datalox does not build the world. Datalox records, verifies,
-        replays, and packages what the agent saw and did through tool interfaces inside that
-        world.</strong>
+        Stable boundary: <strong>Datalox Agent Replay does not build generic task worlds.
+        It records, verifies, replays, and packages what the agent saw and did through tool
+        interfaces inside that world.</strong> Sibling Datalox domain MCP repos may build
+        constrained scientific worlds; this roadmap defines how Replay integrates with them
+        and with external runtimes.
       </p>
     </section>
 
@@ -318,6 +320,74 @@ Datalox
         first product narrow: install fixture packs, replay tool I/O deterministically, and
         export grounded training/eval views.
       </p>
+    </section>
+
+    <section class="section">
+      <h2>Whole Environment Target</h2>
+      <p>
+        A whole Agent RL environment is not just a replay bundle, fixture pack, Docker image,
+        or benchmark dataset. It is a reset/step contract that owns the task world:
+      </p>
+      <pre><code>reset(task_id, seed) -&gt; initial_observation
+step(action) -&gt; {
+  observation,
+  reward,
+  done,
+  info
+}</code></pre>
+      <p>
+        To qualify as a whole environment, the system must own or explicitly delegate each part
+        of that loop:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>Required responsibility</th>
+            <th>Datalox path</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hidden state</td>
+            <td>Initialize and update real task state that the agent cannot directly inspect.</td>
+            <td>Declared in environment specs; stored only as metadata/evidence unless Datalox owns the simulator.</td>
+          </tr>
+          <tr>
+            <td>Observation</td>
+            <td>Render the model-visible view after reset and after each action.</td>
+            <td>Record exact agent-visible observations as <code>tool_io_record.v1</code> when they cross tool boundaries.</td>
+          </tr>
+          <tr>
+            <td>Action validation</td>
+            <td>Reject invalid tool names, invalid arguments, impossible operations, and forbidden actions.</td>
+            <td>Reuse tool schemas, fixture manifests, and future action specs; replay mode still misses instead of inventing behavior.</td>
+          </tr>
+          <tr>
+            <td>State transition</td>
+            <td>Apply valid actions to the underlying world and produce the next state.</td>
+            <td>Delegate first to runtime adapters such as Docker, WebHarbor-style browser worlds, CyberGym, E2B, Modal, OpenClaw, or custom simulators.</td>
+          </tr>
+          <tr>
+            <td>Terminal logic</td>
+            <td>Decide when a task is over and why; the model's "I am done" is only an action.</td>
+            <td>Store terminal reasons and verifier provenance; do not let replay bundles silently define success.</td>
+          </tr>
+          <tr>
+            <td>Reward/verifier</td>
+            <td>Score outcome, process, constraints, cost, and anti-hacking checks from environment evidence.</td>
+            <td>Store reward source, version, command, result, and evidence refs; do not make reward logic implicit.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <p>
+          Current fixture replay is a <strong>replay-backed slice</strong> of an environment. It can
+          reproduce observed tool/API behavior. A whole environment must also handle new actions
+          through a real runtime or simulator. If the agent takes an unseen action, replay should
+          miss clearly; a whole environment should step the world.
+        </p>
+      </div>
     </section>
 
     <section class="section">
@@ -516,7 +586,7 @@ datalox replay --fixture github-pr-review-basic@2026-05.0</code></pre>
       <h2>Phases</h2>
 
       <h3>Phase A: Runtime-Free Fixture Replay</h3>
-      <p><span class="pill">Now</span><span class="pill">Engine repo</span></p>
+      <p><span class="pill">Implemented locally</span><span class="pill">Engine repo</span></p>
       <ul>
         <li>Install existing fixture packs from <code>datalox-replay-fixtures/</code>.</li>
         <li>Verify bundled replay artifacts before serving.</li>
@@ -527,12 +597,16 @@ datalox replay --fixture github-pr-review-basic@2026-05.0</code></pre>
       <ul>
         <li>One existing fixture pack installs from a local directory.</li>
         <li><code>datalox replay --fixture</code> starts a pinned pure replay runtime.</li>
+        <li>Replay startup prints fixture ref, bundle id, checksum, export/redaction status, and tool catalog paths.</li>
+        <li>Missing installed fixtures fail with an agent-readable install-first error.</li>
+        <li>Tampered bundles fail before the replay server starts.</li>
         <li>No Docker or external sandbox is required.</li>
         <li>No <code>RuntimeAdapter</code> is instantiated by pure replay.</li>
+        <li>Unseen calls return structured <code>replay_miss</code> payloads with <code>liveFallback: false</code>.</li>
       </ul>
 
       <h3>Phase B: Fixture Sets</h3>
-      <p><span class="pill">Next</span><span class="pill">Engine repo first</span></p>
+      <p><span class="pill">Implemented locally</span><span class="pill">Engine repo first</span></p>
       <ul>
         <li>Compose multiple fixture packs into one declared tool world.</li>
         <li>Reject tool-name collisions unless explicitly namespaced.</li>
@@ -541,20 +615,27 @@ datalox replay --fixture github-pr-review-basic@2026-05.0</code></pre>
       <p>Pass criteria:</p>
       <ul>
         <li><code>datalox replay --fixtures</code> composes GitHub, Slack, and search fixtures.</li>
+        <li><code>datalox replay --fixture-set</code> resolves installed fixture-set manifests and member fixture refs.</li>
+        <li>Duplicate tool names across member fixtures fail before serving.</li>
+        <li>Trust output preserves per-fixture bundle ids, checksums, and tool catalog paths.</li>
         <li>Miss behavior remains deterministic and agent-readable.</li>
       </ul>
 
       <h3>Phase C: Spec Metadata Hooks</h3>
-      <p><span class="pill">After fixture sets</span><span class="pill">Engine and fixture repos</span></p>
+      <p><span class="pill">Implemented locally</span><span class="pill">Engine and fixture repos</span></p>
       <ul>
         <li>Add optional <code>task.spec.json</code>, <code>verifier.spec.json</code>, and <code>scaffold.spec.json</code>.</li>
         <li>Validate specs strictly, but allow fixtures without runtime specs.</li>
-        <li>Export task, trajectory, transition, completion-frame, reward, and split views from verified evidence.</li>
+        <li>Preserve spec refs through fixture install, fixture-set install, and replay startup trust output.</li>
       </ul>
       <p>Pass criteria:</p>
       <ul>
         <li>Specs are references and metadata, not hidden executable behavior.</li>
-        <li>Exports fail when required evidence or declared reward source is missing.</li>
+        <li>Fixture and fixture-set manifests can reference zero or more spec files by safe relative path.</li>
+        <li>Spec ids, versions, refs, task ids, verifier ids, and scaffold ids are deterministic and schema-validated.</li>
+        <li>Install and replay preserve spec metadata in the local fixture cache without executing verifier or runtime code.</li>
+        <li>A fixture-set can declare which task specs are valid for its composed world.</li>
+        <li>The fixture repo validates example specs and publishes them into <code>catalog.json</code>.</li>
       </ul>
 
       <h3>Phase D: Local Runtime Adapter SPI</h3>
@@ -601,6 +682,23 @@ datalox replay --fixture github-pr-review-basic@2026-05.0</code></pre>
         <li>Each rollout still emits <code>tool_io_record.v1</code> and <code>replay_bundle.v1</code> evidence.</li>
         <li>Failed admission blocks publication into a shared fixture/environment registry.</li>
       </ul>
+
+      <h3>Phase G: Whole Environment Contract</h3>
+      <p><span class="pill">After executable artifacts</span><span class="pill">Reset/step world</span></p>
+      <ul>
+        <li>Define <code>environment_world.v1</code> as a declared reset/step contract over one task family.</li>
+        <li>Support both replay-backed and runtime-backed worlds without mixing their command modes.</li>
+        <li>Require explicit hidden-state ownership, observation renderer, action schema, terminal rules, and reward/verifier refs.</li>
+        <li>Record every rollout from a world into replay evidence and optional trajectory/transition/completion views.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li><code>reset(task_id, seed)</code> is deterministic for the same world version.</li>
+        <li><code>step(action)</code> validates actions and returns structured observation, reward, done, and info.</li>
+        <li>Unseen actions in replay-backed worlds produce clear replay misses; unseen valid actions in runtime-backed worlds advance the runtime.</li>
+        <li>Terminal reasons and reward breakdowns are versioned and traceable to evidence.</li>
+        <li>Rollouts produce replay bundles that can be inspected independently of the live runtime.</li>
+      </ul>
     </section>
 
     <section class="section">
@@ -616,6 +714,39 @@ Datalox replay_bundle.v1 -> fixture world -> eval/export rows</code></pre>
       <p>
         That gives users reproducible evidence and replayable tool-side experience without
         forcing Datalox to distribute huge benchmark data or maintain a cybersecurity runtime.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>WebHarbor Positioning</h2>
+      <p>
+        WebHarbor-style systems are browser-world runtimes. They own local website mirrors,
+        Docker packaging, static assets, SQLite reset state, auth flows, visual fidelity, and
+        human review of site behavior. That is valuable runtime infrastructure, but it is not
+        the first Datalox wedge.
+      </p>
+      <p>Datalox should integrate at the boundary:</p>
+      <pre><code>WebHarbor mirror -&gt; browser/tool actions -&gt; Datalox tool_io_record.v1
+Datalox replay_bundle.v1 -&gt; fixture set -&gt; task/verifier/export rows</code></pre>
+      <p>
+        The product rule is strict: Datalox may reference or start a WebHarbor runtime through a
+        future runtime adapter, but plain <code>datalox replay --fixture</code> still serves only
+        verified recorded observations. If an agent takes an action outside the recorded world,
+        replay misses. A runtime-backed rollout may step the WebHarbor world, but that is a
+        different command mode.
+      </p>
+      <p>Concrete future shape:</p>
+      <pre><code>fixture-set/
+  manifest.json
+  runtime.webharbor.json
+  tasks/*.json
+  verifiers/*.json
+  replay-bundle/&lt;bundle-id&gt;/...</code></pre>
+      <p>
+        This keeps Datalox narrow without making it small. The core claim is not "we clone every
+        website." The core claim is "we make agent-visible worlds versioned, replayable,
+        auditable, and usable for eval and training, including worlds launched by systems like
+        WebHarbor."
       </p>
     </section>
 
@@ -654,12 +785,13 @@ registry -> deterministic replay -> grounded RL/eval exports</code></pre>
     <section class="section">
       <h2>Immediate Repo Work</h2>
       <ol>
-        <li>Finish current fixture install/replay from existing <code>datalox-replay-fixtures</code> packs.</li>
-        <li>Add fixture sets and collision rules.</li>
-        <li>Add task/verifier/scaffold spec validation as metadata hooks.</li>
-        <li>Only then define the runtime adapter SPI.</li>
+        <li>Commit and publish the current fixture replay trust-output, install-first errors, and spec metadata hooks.</li>
+        <li>Add export admission checks that refuse reward, split, or completion outputs when declared evidence is missing.</li>
+        <li>Build task, trajectory, transition, completion-frame, reward, and split exports from verified evidence and declared specs.</li>
+        <li>Only after grounded exports are stable, define the runtime adapter SPI.</li>
         <li>Keep heavy runtime integrations optional and outside the core install path.</li>
         <li>Add executable environment artifact support after runtime adapters and verifier metadata exist.</li>
+        <li>Add the whole environment reset/step contract only after executable artifact validation is solid.</li>
       </ol>
     </section>
   </main>

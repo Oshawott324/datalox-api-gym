@@ -466,6 +466,69 @@ Split record = train/dev/test/replay partitioning</code></pre>
     </section>
 
     <section class="section">
+      <h2>Whole Environment Definition</h2>
+      <p>
+        A whole Agent RL environment is a task world with a stable reset/step protocol. It is
+        larger than Datalox's current replay-backed fixture world because it must respond to
+        new valid actions, not only replay observed tool calls.
+      </p>
+      <pre><code>reset(task_id, seed) -&gt; initial_observation
+step(action) -&gt; observation, reward, done, info</code></pre>
+      <p>The minimum contract is:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Part</th>
+            <th>Meaning</th>
+            <th>Why it matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hidden state</td>
+            <td>Ground-truth task state, runtime state, database state, browser state, or simulator state.</td>
+            <td>The agent should not directly see answers or privileged fields.</td>
+          </tr>
+          <tr>
+            <td>Observation renderer</td>
+            <td>Turns hidden state and tool results into the model-visible view.</td>
+            <td>Train/inference consistency depends on what the policy actually saw.</td>
+          </tr>
+          <tr>
+            <td>Action schema</td>
+            <td>Defines allowed tool calls, final-answer actions, ask-user actions, and forbidden operations.</td>
+            <td>Invalid actions must produce learnable consequences instead of silent correction.</td>
+          </tr>
+          <tr>
+            <td>Transition engine</td>
+            <td>Applies valid actions to the world and returns the next observation.</td>
+            <td>This is what replay-backed fixtures lack for unseen paths.</td>
+          </tr>
+          <tr>
+            <td>Terminal logic</td>
+            <td>Decides when the task is done and records the terminal reason.</td>
+            <td>The model saying "done" is an action, not the environment's success judgment.</td>
+          </tr>
+          <tr>
+            <td>Reward/verifier hooks</td>
+            <td>Compute outcome, process, constraint, cost, and anti-hacking signals from evidence.</td>
+            <td>Reward must be traceable to environment evidence, not final prose alone.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Roadmap boundary:</p>
+      <pre><code>Today:
+  replay-backed fixture world
+  = verified recorded tool/API observations
+  = deterministic eval and debugging over observed scenarios
+
+Later:
+  runtime-backed whole environment
+  = reset/step world backed by Docker, WebHarbor, CyberGym, E2B, Modal, OpenClaw, or a custom simulator
+  = can handle new valid actions and still emit replay evidence</code></pre>
+    </section>
+
+    <section class="section">
       <h2>North Star Metric</h2>
       <p>
         The immediate product benchmark is <strong>Time To First Verified Replay</strong>.
@@ -512,8 +575,13 @@ Split record = train/dev/test/replay partitioning</code></pre>
           </tr>
           <tr>
             <td>Fixture worlds and sets</td>
-            <td class="status-next">Next</td>
-            <td>The next product layer is pinned fixture activation, so users run agents inside declared replay worlds instead of pointing at raw bundle paths.</td>
+            <td class="status-ok">Implemented</td>
+            <td>Pinned fixture activation is implemented so users can run agents inside declared replay worlds instead of pointing at raw bundle paths.</td>
+          </tr>
+          <tr>
+            <td>Spec metadata hooks</td>
+            <td class="status-ok">Implemented</td>
+            <td>Fixture and fixture-set manifests can reference strict task, verifier, and scaffold spec files without executing runtime or verifier code.</td>
           </tr>
           <tr>
             <td>Agentic RL exports</td>
@@ -529,6 +597,11 @@ Split record = train/dev/test/replay partitioning</code></pre>
             <td>Server-shaped storage</td>
             <td class="status-next">Next</td>
             <td>Current file-backed storage works, but replay logic should depend on interfaces that can later be backed by a daemon or server.</td>
+          </tr>
+          <tr>
+            <td>Whole environment contract</td>
+            <td class="status-next">Future</td>
+            <td>A reset/step world with hidden state, action validation, terminal logic, and reward/verifier hooks belongs after fixture replay, specs, and runtime adapters.</td>
           </tr>
           <tr>
             <td>Legacy pack artifacts</td>
@@ -1110,6 +1183,32 @@ Datalox owns tool-I/O evidence, replay bundles, fixture activation, and exports<
         <li>Replay mode cannot silently start live upstream services.</li>
       </ul>
 
+      <h3>Phase 8.6: Whole Environment Contract</h3>
+      <p>
+        Define the shape before implementing a full environment runtime. This prevents Datalox
+        from accidentally mixing pure replay fixtures with live simulator behavior.
+      </p>
+      <p>Proposed schema:</p>
+      <pre><code>environment_world.v1
+  id
+  version
+  kind: replay_backed | runtime_backed | hybrid
+  reset: task_id + seed -&gt; observation
+  action_schema_refs
+  observation_schema_refs
+  terminal_rules_ref
+  reward_or_verifier_refs
+  runtime_adapter_ref?
+  replay_fixture_refs?
+  export_policy</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Replay-backed worlds cannot claim to handle unseen actions.</li>
+        <li>Runtime-backed worlds declare the external adapter that owns state transitions.</li>
+        <li>Every rollout emits tool-I/O evidence and can be packed into a replay bundle.</li>
+        <li>Terminal reasons and reward breakdowns are stored as versioned evidence, not hidden judge state.</li>
+      </ul>
+
       <h3>Phase 9: Server Registry Client</h3>
       <p>
         Add the client contract before building the hosted service. The server should be a
@@ -1299,21 +1398,21 @@ npm run check</code></pre>
       <h2>Recommended Next Three Tasks</h2>
       <ol>
         <li>
-          <strong>Ship fixture worlds and fixture sets.</strong>
-          Add strict pack/set schemas, cache-only install commands, pinned replay activation,
-          and collision rules for composed tool worlds.
-        </li>
-        <li>
-          <strong>Add Agentic RL exports from verified evidence.</strong>
+          <strong>Add Agentic RL exports from verified evidence and declared specs.</strong>
           Export <code>tasks.jsonl</code>, <code>trajectories.jsonl</code>,
           <code>steps.jsonl</code>, <code>completion_frames.jsonl</code>,
-          <code>rewards.jsonl</code>, and <code>splits.jsonl</code> without copying raw
-          observations out of replay bundles.
+          <code>rewards.jsonl</code>, and <code>splits.jsonl</code> only when the relevant
+          task/verifier/scaffold refs and replay evidence are present.
         </li>
         <li>
           <strong>Turn BYO MCP config into private fixture recording.</strong>
           Record from a team's real upstream MCP server, pack a verified bundle, promote it
           into a private fixture pack, then replay it through the same fixture runtime.
+        </li>
+        <li>
+          <strong>Define the runtime adapter SPI.</strong>
+          Keep this as a later live-runtime command path, separate from pure fixture replay,
+          and require every runtime-backed rollout to emit replay evidence.
         </li>
       </ol>
     </section>

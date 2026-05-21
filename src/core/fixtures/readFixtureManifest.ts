@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { parseFixtureManifest, type FixtureManifest } from "./fixtureManifestSchema.js";
 import { parseFixtureSetManifest, type FixtureSetManifest } from "./fixtureSetSchema.js";
+import { readFixtureSpecs, type ResolvedFixtureSpecs } from "./fixtureSpecSchema.js";
 import { resolveInside } from "./pathSafety.js";
 
 export interface ReadFixtureManifestResult {
@@ -11,6 +12,7 @@ export interface ReadFixtureManifestResult {
   manifest: FixtureManifest;
   bundlePath: string;
   evalPromptsPath: string;
+  specs: ResolvedFixtureSpecs;
 }
 
 export interface ReadFixtureSetManifestResult {
@@ -18,6 +20,7 @@ export interface ReadFixtureSetManifestResult {
   manifestPath: string;
   manifest: FixtureSetManifest;
   evalPromptsPath?: string;
+  specs: ResolvedFixtureSpecs;
 }
 
 export async function readFixtureManifest(fixtureDir: string): Promise<ReadFixtureManifestResult> {
@@ -35,6 +38,7 @@ export async function readFixtureManifest(fixtureDir: string): Promise<ReadFixtu
     manifest,
     bundlePath: resolveInside(absoluteFixtureDir, manifest.bundle.path),
     evalPromptsPath: resolveInside(absoluteFixtureDir, manifest.evalPrompts.path),
+    specs: await readFixtureSpecs(absoluteFixtureDir, manifest.specs),
   };
 }
 
@@ -54,5 +58,6 @@ export async function readFixtureSetManifest(fixtureSetDir: string): Promise<Rea
     ...(manifest.evalPrompts
       ? { evalPromptsPath: resolveInside(absoluteFixtureSetDir, manifest.evalPrompts.path) }
       : {}),
+    specs: await readFixtureSpecs(absoluteFixtureSetDir, manifest.specs),
   };
 }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { fixtureSpecReferencesSchema } from "./fixtureSpecSchema.js";
 import { isSafeRelativePath } from "./pathSafety.js";
 
 const nonEmptyString = z.string().min(1);
@@ -70,6 +71,7 @@ export const fixtureManifestSchema = z
     tools: z.array(toolSurfaceSchema).min(1),
     bundle: bundleSchema,
     evalPrompts: evalPromptsSchema,
+    specs: fixtureSpecReferencesSchema.optional(),
     provenance: provenanceSchema,
     release: releaseSchema,
   })

@@ -390,7 +390,10 @@ async function main(): Promise<void> {
           bundleId: runtime.bundleId,
           bundleSha256: runtime.bundleSha256,
           export: runtime.export,
+          toolCatalogPaths: runtime.toolCatalogPaths,
+          toolCatalogAbsolutePaths: runtime.toolCatalogAbsolutePaths,
           toolCatalogCount: runtime.toolCatalogCount,
+          specs: runtime.specs,
           liveFallback: false,
         }, null, 2)}\n`);
         await runReplayProxyServer({
@@ -411,6 +414,10 @@ async function main(): Promise<void> {
           activeFixtureRefs: runtime.activeFixtureRefs,
           bundleIds: runtime.fixtures.map((fixture) => fixture.bundleId),
           bundleSha256s: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.bundleSha256])),
+          toolCatalogPaths: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.toolCatalogPaths])),
+          toolCatalogAbsolutePaths: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.toolCatalogAbsolutePaths])),
+          specs: runtime.specs,
+          fixtureSpecs: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.specs])),
           liveFallback: false,
         }, null, 2)}\n`);
         await runReplayProxyServer({
@@ -438,6 +445,9 @@ async function main(): Promise<void> {
           activeFixtureRefs: runtimes.map((runtime) => runtime.ref),
           bundleIds: runtimes.map((runtime) => runtime.bundleId),
           bundleSha256s: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.bundleSha256])),
+          toolCatalogPaths: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.toolCatalogPaths])),
+          toolCatalogAbsolutePaths: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.toolCatalogAbsolutePaths])),
+          fixtureSpecs: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.specs])),
           liveFallback: false,
         }, null, 2)}\n`);
         await runReplayProxyServer({

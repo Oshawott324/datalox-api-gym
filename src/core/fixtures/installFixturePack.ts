@@ -6,6 +6,7 @@ import { sha256Hex } from "../hash.js";
 import { verifyReplayBundle } from "../replayBundle.js";
 import { fixtureCachePath } from "./fixtureCache.js";
 import { formatFixtureRef, parseFixtureRef } from "./fixtureRef.js";
+import type { ResolvedFixtureSpecs } from "./fixtureSpecSchema.js";
 import {
   findFixtureCatalogEntry,
   readFixtureCatalog,
@@ -28,6 +29,7 @@ export interface InstallFixtureResult {
   bundlePath: string;
   bundleId: string;
   bundleSha256: string;
+  specs: ResolvedFixtureSpecs;
   alreadyInstalled: boolean;
   verified: true;
 }
@@ -59,6 +61,7 @@ export async function installFixturePack(input: InstallFixtureInput): Promise<In
         bundlePath: installed.bundlePath,
         bundleId: installed.manifest.id,
         bundleSha256: installed.manifest.bundle.sha256,
+        specs: installed.specs,
         alreadyInstalled: true,
         verified: true,
       };
@@ -78,14 +81,16 @@ export async function installFixturePack(input: InstallFixtureInput): Promise<In
     const staged = await readFixtureManifest(stagingDir);
     await verifyFixtureBundle(staged.bundlePath, staged.manifest.bundle.sha256);
     await rename(stagingDir, targetFixtureDir);
+    const installed = await readFixtureManifest(targetFixtureDir);
 
     return {
       ref,
       cachePath: targetFixtureDir,
-      manifestPath: path.join(targetFixtureDir, "manifest.json"),
-      bundlePath: path.join(targetFixtureDir, staged.manifest.bundle.path),
-      bundleId: staged.manifest.id,
-      bundleSha256: staged.manifest.bundle.sha256,
+      manifestPath: installed.manifestPath,
+      bundlePath: installed.bundlePath,
+      bundleId: installed.manifest.id,
+      bundleSha256: installed.manifest.bundle.sha256,
+      specs: installed.specs,
       alreadyInstalled: false,
       verified: true,
     };

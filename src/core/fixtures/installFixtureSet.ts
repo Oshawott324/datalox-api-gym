@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { fixtureSetCachePath } from "./fixtureCache.js";
 import { formatFixtureRef, parseFixtureRef } from "./fixtureRef.js";
+import type { ResolvedFixtureSpecs } from "./fixtureSpecSchema.js";
 import { installFixturePack, type InstallFixtureResult } from "./installFixturePack.js";
 import {
   findFixtureSetCatalogEntry,
@@ -23,6 +24,7 @@ export interface InstallFixtureSetResult {
   ref: string;
   cachePath: string;
   manifestPath: string;
+  specs: ResolvedFixtureSpecs;
   fixtures: InstallFixtureResult[];
   alreadyInstalled: boolean;
 }
@@ -60,6 +62,7 @@ export async function installFixtureSet(input: InstallFixtureSetInput): Promise<
         ref,
         cachePath: targetFixtureSetDir,
         manifestPath: installed.manifestPath,
+        specs: installed.specs,
         fixtures: installedFixtures,
         alreadyInstalled: true,
       };
@@ -79,6 +82,7 @@ export async function installFixtureSet(input: InstallFixtureSetInput): Promise<
     ref,
     cachePath: targetFixtureSetDir,
     manifestPath: installedSet.manifestPath,
+    specs: installedSet.specs,
     fixtures: installedFixtures,
     alreadyInstalled: false,
   };
