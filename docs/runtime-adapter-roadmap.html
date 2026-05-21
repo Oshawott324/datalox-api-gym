@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datalox Runtime Adapter Roadmap</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --ink: #171717;
+      --muted: #5b5b56;
+      --line: #d9d7ce;
+      --panel: #ffffff;
+      --accent: #16635b;
+      --warn: #8a4b12;
+      --danger: #8c2727;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 1120px);
+      margin: 0 auto;
+      padding: 40px 0 64px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.15;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 40px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 18px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px 16px;
+      margin: 12px 0;
+    }
+
+    pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      background: #faf9f5;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .lede {
+      color: var(--muted);
+      max-width: 820px;
+      font-size: 18px;
+      margin-top: 12px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .section {
+      margin-top: 28px;
+      padding: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #eef7f4;
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      border-left-color: var(--warn);
+      background: #fff5e8;
+    }
+
+    .danger {
+      border-left-color: var(--danger);
+      background: #fff0f0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 9px;
+      margin: 4px 6px 0 0;
+      color: var(--muted);
+      background: #fbfaf7;
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 22px, 1120px);
+        padding-top: 20px;
+      }
+
+      h1 {
+        font-size: 31px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Runtime Adapter Roadmap</h1>
+      <p class="lede">
+        Datalox can later integrate with Docker, CyberGym, E2B, Modal, OpenClaw, and internal
+        runners without becoming a sandbox runtime. The contract is: keep the runtime external,
+        capture the agent-visible tool world, verify the evidence, and replay/export it.
+      </p>
+      <p class="meta">
+        Updated: 2026-05-21. Related docs:
+        <a href="./local-to-server-engine-plan.html">local-to-server-engine-plan.html</a>,
+        <a href="./agentic-rl-layer-map.md">agentic-rl-layer-map.md</a>,
+        <a href="./replay-bundle-schema.md">replay-bundle-schema.md</a>.
+      </p>
+    </header>
+
+    <section class="callout">
+      <p>
+        Stable boundary: <strong>Datalox does not build the world. Datalox records, verifies,
+        replays, and packages what the agent saw and did through tool interfaces inside that
+        world.</strong>
+      </p>
+    </section>
+
+    <section class="callout warning">
+      <p>
+        Mode boundary: <strong><code>datalox replay --fixture</code> is pure replay.</strong>
+        It must not start Docker, CyberGym, E2B, Modal, OpenClaw, a browser runtime, or live
+        upstream services. Commands that start an executable environment are runtime-backed
+        record, rollout, or verification commands, not plain replay.
+      </p>
+    </section>
+
+    <section class="grid" aria-label="layer split">
+      <article class="card">
+        <h3>External Runtime</h3>
+        <p>
+          Owns containers, services, binaries, filesystem state, browsers, vulnerable targets,
+          network policy, queueing, and compute scheduling.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Datalox Adapter</h3>
+        <p>
+          Owns adapter lifecycle integration, tool-I/O interception, replay-bundle packing,
+          evidence verification, fixture activation, and grounded exports. It does not own
+          runtime isolation, scheduling, image construction, or security semantics.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Agent Harness</h3>
+        <p>
+          Owns model choice, scaffold, prompts, context management, rollout loop, verifier calls,
+          and final training/eval consumption.
+        </p>
+      </article>
+    </section>
+
+    <section class="section">
+      <h2>Why This Is Later</h2>
+      <p>
+        Heavy runtimes solve a different bottleneck from Datalox's first wedge. Docker,
+        CyberGym-style environments, and internal clusters answer:
+      </p>
+      <pre><code>Can I create and verify a full executable environment?</code></pre>
+      <p>Datalox first answers:</p>
+      <pre><code>Can I freeze and replay the agent-visible tool world?</code></pre>
+      <p>
+        Most teams already have some runtime, even if it is imperfect. Replacing it is risky
+        because it touches security, secrets, networking, CI, GPUs, queues, and billing. A
+        replay layer can be adopted earlier because it sits beside the runtime and makes evals
+        reproducible without forcing infrastructure migration.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Paper-Informed Delta</h2>
+      <p>
+        Agent-World and the environment-synthesis work both point in the same direction:
+        frontier Agentic RL is moving from static data collection toward generated,
+        verifiable, reusable environments. That changes the long-term shape, but not the
+        immediate build order.
+      </p>
+      <p>The practical distinction is:</p>
+      <pre><code>Replay fixture
+  = finite recorded tool world
+  = best for regression, deterministic eval, prompt/model comparison
+
+Executable environment artifact
+  = generator + renderer + scorer + verifier metadata
+  = best for scalable task generation and online RL
+
+Datalox
+  = evidence, replay, registry, fixture, and export layer for both</code></pre>
+      <p>
+        The roadmap should therefore leave room for executable environments, while keeping the
+        first product narrow: install fixture packs, replay tool I/O deterministically, and
+        export grounded training/eval views.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Runtime Adapter Contract</h2>
+      <p>
+        A runtime adapter is a thin lifecycle and evidence bridge. It should be boring, strict,
+        and unable to invent observations.
+      </p>
+      <pre><code>export interface RuntimeAdapter {
+  readonly id: string;
+  readonly kind: "docker" | "cybergym" | "e2b" | "modal" | "openclaw" | "custom";
+
+  prepare(spec: RuntimeSpec): Promise&lt;PreparedRuntime&gt;;
+  start(prepared: PreparedRuntime): Promise&lt;RunningRuntime&gt;;
+  exposeTools(runtime: RunningRuntime): Promise&lt;ToolSurface[]&gt;;
+  attachRecorder(runtime: RunningRuntime, recorder: ToolIoRecorder): Promise&lt;RecorderHandle&gt;;
+  stop(runtime: RunningRuntime): Promise&lt;RuntimeStopResult&gt;;
+  collectEvidence(runtime: RunningRuntime): Promise&lt;RuntimeEvidence&gt;;
+  invokeVerifier(runtime: RunningRuntime, verifier: VerifierSpec): Promise&lt;VerifierResult&gt;;
+}</code></pre>
+      <p>Important rules:</p>
+      <ul>
+        <li><code>prepare</code> and <code>start</code> may call the external runtime.</li>
+        <li><code>attachRecorder</code> must capture agent-visible requests and observations as <code>tool_io_record.v1</code>.</li>
+        <li><code>exposeTools</code> must record the tool catalog or command surface visible to the agent.</li>
+        <li><code>invokeVerifier</code> may call an external verifier, but Datalox stores only evidence, verifier version, and result metadata.</li>
+        <li>Pure replay mode must not call <code>prepare</code>, <code>start</code>, <code>invokeVerifier</code>, or any live upstream service.</li>
+        <li>Runtime-backed work must use record, rollout, or verify commands that make live execution explicit.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Spec Files</h2>
+      <p>
+        Runtime adapters should be driven by specs, not hand-coded one-off scripts. These specs
+        can live in fixture packs or private project directories.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Spec</th>
+            <th>Owns</th>
+            <th>Does Not Own</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>runtime.spec.json</code></td>
+            <td>Runtime kind, image/env id, startup command, tool endpoint refs, network policy refs.</td>
+            <td>Tool observations or rewards.</td>
+          </tr>
+          <tr>
+            <td><code>task.spec.json</code></td>
+            <td>Initial user goal, allowed tools, constraints, termination conditions, task family.</td>
+            <td>Runtime lifecycle mechanics.</td>
+          </tr>
+          <tr>
+            <td><code>verifier.spec.json</code></td>
+            <td>Verifier command/API, version, expected artifacts, rubric refs, anti-hacking checks.</td>
+            <td>Agent scaffold or replay lookup.</td>
+          </tr>
+          <tr>
+            <td><code>scaffold.spec.json</code></td>
+            <td>Agent harness, prompt version, context manager, tool schema adapter, model-visible rendering.</td>
+            <td>Runtime state or tool payload storage.</td>
+          </tr>
+          <tr>
+            <td><code>fixture-set.json</code></td>
+            <td>Composition of fixture packs and optional runtime specs into one declared world.</td>
+            <td>Open-ended behavior for unseen calls.</td>
+          </tr>
+          <tr>
+            <td><code>environment.spec.json</code></td>
+            <td>Environment kind, generator, renderer, scorer, admission checks, and replay evidence refs.</td>
+            <td>Datalox-owned sandbox implementation or hidden reward logic.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Future executable environment shape:</p>
+      <pre><code>{
+  "schema_version": "environment_artifact.v1",
+  "id": "policy-qa-generated-basic",
+  "version": "2026-05.0",
+  "environment_kind": "replay | executable | synthesized",
+  "generator": {
+    "command": "python generate.py",
+    "version": "1.0.0"
+  },
+  "renderer": {
+    "command": "python render.py",
+    "version": "1.0.0"
+  },
+  "scorer": {
+    "command": "python score.py",
+    "reward_version": "policy_reward_v1"
+  },
+  "admission": {
+    "validation": "passed",
+    "anti_hacking_checks": ["no-gold-answer-leakage", "deterministic-score"],
+    "difficulty_calibration": "medium",
+    "novelty_hash": "sha256:..."
+  },
+  "replay_evidence": {
+    "bundle_ids": ["..."]
+  }
+}</code></pre>
+    </section>
+
+    <section class="section">
+      <h2>Command Shape</h2>
+      <p>Near-term fixture replay stays runtime-free:</p>
+      <pre><code>datalox fixtures install ../datalox-replay-fixtures/fixtures/github-pr-review-basic
+datalox fixtures list
+datalox replay --fixture github-pr-review-basic@2026-05.0</code></pre>
+      <p>Later runtime-backed record mode:</p>
+      <pre><code>datalox runtime record \
+  --runtime docker \
+  --runtime-spec runtime.spec.json \
+  --task task.spec.json \
+  --bundle-id support-api-docker-001</code></pre>
+      <p>Later runtime-backed verification:</p>
+      <pre><code>datalox runtime verify \
+  --bundle .datalox/replay-bundles/support-api-docker-001 \
+  --verifier verifier.spec.json</code></pre>
+      <p>Later runtime-backed rollout for a fixture world that declares executable context:</p>
+      <pre><code>datalox runtime rollout \
+  --fixture cybergym-cve-task@2026-05.0 \
+  --runtime cybergym \
+  --runtime-spec runtime.spec.json</code></pre>
+      <div class="callout warning">
+        <p>
+          This command must mean "activate the declared external runtime adapter and capture
+          tool evidence from a live rollout." It must not mean "Datalox now owns CyberGym's
+          environment builder, vulnerability verifier, container images, or network firewall."
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Mode Boundary Table</h2>
+      <p>
+        These modes should stay mechanically distinct so users and agents can tell whether a
+        command is serving recorded observations or starting a live executable environment.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th>Starts runtime</th>
+            <th>Calls upstream</th>
+            <th>Produces new evidence</th>
+            <th>Serves replay</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>datalox replay --fixture</code></td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td><code>datalox runtime record</code></td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Yes, as <code>tool_io_record.v1</code> and <code>replay_bundle.v1</code></td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><code>datalox runtime rollout</code></td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Yes, from the rollout</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><code>datalox runtime verify</code></td>
+            <td>Maybe</td>
+            <td>Maybe</td>
+            <td>Verifier evidence only</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><code>datalox export</code></td>
+            <td>No</td>
+            <td>No</td>
+            <td>Derived views over verified evidence</td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Phases</h2>
+
+      <h3>Phase A: Runtime-Free Fixture Replay</h3>
+      <p><span class="pill">Now</span><span class="pill">Engine repo</span></p>
+      <ul>
+        <li>Install existing fixture packs from <code>datalox-replay-fixtures/</code>.</li>
+        <li>Verify bundled replay artifacts before serving.</li>
+        <li>Replay with upstream off.</li>
+        <li>Return explicit replay misses for unseen calls.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>One existing fixture pack installs from a local directory.</li>
+        <li><code>datalox replay --fixture</code> starts a pinned pure replay runtime.</li>
+        <li>No Docker or external sandbox is required.</li>
+        <li>No <code>RuntimeAdapter</code> is instantiated by pure replay.</li>
+      </ul>
+
+      <h3>Phase B: Fixture Sets</h3>
+      <p><span class="pill">Next</span><span class="pill">Engine repo first</span></p>
+      <ul>
+        <li>Compose multiple fixture packs into one declared tool world.</li>
+        <li>Reject tool-name collisions unless explicitly namespaced.</li>
+        <li>Preserve per-pack provenance and bundle verification.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li><code>datalox replay --fixtures</code> composes GitHub, Slack, and search fixtures.</li>
+        <li>Miss behavior remains deterministic and agent-readable.</li>
+      </ul>
+
+      <h3>Phase C: Spec Metadata Hooks</h3>
+      <p><span class="pill">After fixture sets</span><span class="pill">Engine and fixture repos</span></p>
+      <ul>
+        <li>Add optional <code>task.spec.json</code>, <code>verifier.spec.json</code>, and <code>scaffold.spec.json</code>.</li>
+        <li>Validate specs strictly, but allow fixtures without runtime specs.</li>
+        <li>Export task, trajectory, transition, completion-frame, reward, and split views from verified evidence.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Specs are references and metadata, not hidden executable behavior.</li>
+        <li>Exports fail when required evidence or declared reward source is missing.</li>
+      </ul>
+
+      <h3>Phase D: Local Runtime Adapter SPI</h3>
+      <p><span class="pill">Later</span><span class="pill">Engine repo</span></p>
+      <ul>
+        <li>Define the TypeScript runtime adapter interface.</li>
+        <li>Implement one minimal adapter around an already installed local command.</li>
+        <li>Keep runtime logs and tool-I/O replay evidence separate.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Adapter lifecycle events are recorded in bundle metadata.</li>
+        <li>Tool I/O remains the replay primitive.</li>
+        <li>Pure replay mode cannot invoke runtime adapters or call live upstream services.</li>
+        <li>Runtime-backed failures are returned as structured, agent-readable errors.</li>
+      </ul>
+
+      <h3>Phase E: Heavy Runtime Integrations</h3>
+      <p><span class="pill">Only after local adapter SPI</span><span class="pill">Separate packages allowed</span></p>
+      <ul>
+        <li>Add adapters for Docker, E2B, Modal, CyberGym, OpenClaw, or internal runners as separate optional modules.</li>
+        <li>Use external runtime verification instead of reimplementing it.</li>
+        <li>Store enough runtime metadata to reproduce or explain why replay cannot recreate the full world.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Adapter packages are optional and do not make the core install heavy.</li>
+        <li>Runtime-specific failures are surfaced as structured agent-readable errors.</li>
+        <li>Runtime adapter packages are separate from the core pure-replay path.</li>
+        <li>Datalox never claims to own image streaming, distributed filesystems, exploit verification, or container security.</li>
+      </ul>
+
+      <h3>Phase F: Executable Environment Artifacts</h3>
+      <p><span class="pill">After specs and runtime adapters</span><span class="pill">Registry path</span></p>
+      <ul>
+        <li>Accept environment artifacts with generator, renderer, scorer, and admission metadata.</li>
+        <li>Version the environment artifact separately from replay bundles produced by runs inside it.</li>
+        <li>Record scorer/verifier version and anti-hacking checks as evidence metadata.</li>
+        <li>Allow synthesized environments only after deterministic validation passes.</li>
+      </ul>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>A generated environment can produce multiple task instances with stable scoring metadata.</li>
+        <li>Each rollout still emits <code>tool_io_record.v1</code> and <code>replay_bundle.v1</code> evidence.</li>
+        <li>Failed admission blocks publication into a shared fixture/environment registry.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>CyberGym Positioning</h2>
+      <p>
+        CyberGym-like systems are full executable benchmark environments. They may own task
+        construction, sandbox execution, vulnerability-specific artifacts, submission servers,
+        verification scripts, and restricted network behavior.
+      </p>
+      <p>Datalox should integrate at the boundary:</p>
+      <pre><code>CyberGym runtime -> agent tool actions -> Datalox tool_io_record.v1
+Datalox replay_bundle.v1 -> fixture world -> eval/export rows</code></pre>
+      <p>
+        That gives users reproducible evidence and replayable tool-side experience without
+        forcing Datalox to distribute huge benchmark data or maintain a cybersecurity runtime.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Agent-World And Environment Synthesis Positioning</h2>
+      <p>
+        Agent-World-style systems point toward discovering tool ecosystems, synthesizing
+        verifiable tasks, and training across many environment themes. Environment-synthesis
+        systems point toward reusable executable artifacts that can generate, render, and score
+        many fresh instances.
+      </p>
+      <p>Datalox should sit under that loop:</p>
+      <pre><code>environment artifact -> agent rollout -> tool_io_record.v1
+tool_io_record.v1 -> replay_bundle.v1 -> fixture/environment registry
+registry -> deterministic replay -> grounded RL/eval exports</code></pre>
+      <p>
+        This keeps the claim realistic. Datalox does not have to synthesize every environment
+        itself. It has to make environment outputs versioned, replayable, auditable, and usable
+        by eval and training pipelines.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Non-Goals</h2>
+      <ul>
+        <li>Do not build distributed filesystems, image streaming, or overlay filesystem infrastructure.</li>
+        <li>Do not own Docker image construction for every task family.</li>
+        <li>Do not own CyberGym's verifier, exploit server, firewall, or benchmark data distribution.</li>
+        <li>Do not claim to synthesize environments before fixture replay and spec validation are solid.</li>
+        <li>Do not hide replay misses by falling back to live services.</li>
+        <li>Do not make runtime adapters required for simple MCP/API fixture replay.</li>
+        <li>Do not put <code>--runtime</code> on plain <code>datalox replay</code>; use runtime-backed command names instead.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Immediate Repo Work</h2>
+      <ol>
+        <li>Finish current fixture install/replay from existing <code>datalox-replay-fixtures</code> packs.</li>
+        <li>Add fixture sets and collision rules.</li>
+        <li>Add task/verifier/scaffold spec validation as metadata hooks.</li>
+        <li>Only then define the runtime adapter SPI.</li>
+        <li>Keep heavy runtime integrations optional and outside the core install path.</li>
+        <li>Add executable environment artifact support after runtime adapters and verifier metadata exist.</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

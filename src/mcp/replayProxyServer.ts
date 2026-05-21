@@ -42,6 +42,8 @@ interface ReplayProxyServerInput {
   repoPath?: string;
   config?: DataloxReplayProxyConfigV1;
   bundlePath?: string;
+  bundlePaths?: string[];
+  activeFixtureRefs?: string[];
 }
 
 export async function buildReplayProxyServer(input: ReplayProxyServerInput): Promise<McpServer> {
@@ -52,10 +54,10 @@ export async function buildReplayProxyServer(input: ReplayProxyServerInput): Pro
       }
       return buildRecordProxyServer({ ...input, config: input.config });
     case "replay":
-      if (!input.bundlePath) {
+      if (!input.bundlePath && (!input.bundlePaths || input.bundlePaths.length === 0)) {
         throw new Error("Replay mode requires a replay bundle path.");
       }
-      return buildReplayOnlyProxyServer({ ...input, bundlePath: input.bundlePath });
+      return buildReplayOnlyProxyServer(input);
   }
 }
 
@@ -159,13 +161,18 @@ async function buildRecordProxyServer(input: ReplayProxyServerInput & {
   return server;
 }
 
-async function buildReplayOnlyProxyServer(input: ReplayProxyServerInput & {
-  bundlePath: string;
-}): Promise<McpServer> {
-  const bundlePath = resolveReplayBundlePath(input.repoPath, input.bundlePath);
-  await verifyReplayBundle({ bundlePath });
-  const records = await readReplayBundleToolIoRecords({ bundlePath });
-  const catalogs = await readReplayBundleMcpToolCatalogs({ bundlePath });
+async function buildReplayOnlyProxyServer(input: ReplayProxyServerInput): Promise<McpServer> {
+  const requestedBundlePaths = input.bundlePaths ?? (input.bundlePath ? [input.bundlePath] : []);
+  const bundlePaths = requestedBundlePaths.map((bundlePath) => resolveReplayBundlePath(input.repoPath, bundlePath));
+  for (const bundlePath of bundlePaths) {
+    await verifyReplayBundle({ bundlePath });
+  }
+  const records = (await Promise.all(bundlePaths.map((bundlePath) => (
+    readReplayBundleToolIoRecords({ bundlePath })
+  )))).flat();
+  const catalogs = (await Promise.all(bundlePaths.map((bundlePath) => (
+    readReplayBundleMcpToolCatalogs({ bundlePath })
+  )))).flat();
   const recordsByReplayKey = indexBundleToolIoRecords(records);
   const listToolsResult = buildReplayListToolsResult(catalogs, records);
   const toolNames = new Set(listToolsResult.tools.map((tool) => tool.name));
@@ -198,7 +205,14 @@ async function buildReplayOnlyProxyServer(input: ReplayProxyServerInput & {
       return mcpErrorResult(
         "replay_miss",
         new ToolIoReplayMissError(requestHash, sequenceIndex).message,
-        { request_hash: requestHash, sequence_index: sequenceIndex },
+        {
+          request_hash: requestHash,
+          sequence_index: sequenceIndex,
+          tool_name: toolName,
+          active_fixture_refs: input.activeFixtureRefs ?? [],
+          available_tool_names: Array.from(toolNames).sort(),
+          liveFallback: false,
+        },
         { includeStructuredContent: !toolHasOutputSchema },
       );
     }
@@ -289,9 +303,20 @@ function buildReplayListToolsResult(
   catalogs: Awaited<ReturnType<typeof readReplayBundleMcpToolCatalogs>>,
   records: ToolIoRecordV1[],
 ): ListToolsResult {
-  const latestCatalog = catalogs.at(-1);
-  if (latestCatalog) {
-    return mcpToolCatalogToListToolsResult(latestCatalog);
+  if (catalogs.length > 0) {
+    const toolsByName = new Map<string, ListToolsResult["tools"][number]>();
+    for (const catalog of catalogs) {
+      const listToolsResult = mcpToolCatalogToListToolsResult(catalog);
+      for (const tool of listToolsResult.tools) {
+        if (toolsByName.has(tool.name)) {
+          throw new Error(`Duplicate replay tool name across bundled catalogs: ${tool.name}`);
+        }
+        toolsByName.set(tool.name, tool);
+      }
+    }
+    return {
+      tools: Array.from(toolsByName.values()),
+    };
   }
   return {
     tools: Array.from(new Set(records.map((record) => record.tool_name)))

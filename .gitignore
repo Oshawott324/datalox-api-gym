@@ -6,3 +6,4 @@ coverage/
 .datalox/install.json
 .datalox/tasks/
 .claude/settings.local.json
+examples/verified-replay-quickstart/output/

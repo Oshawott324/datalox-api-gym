@@ -240,21 +240,23 @@
       <p class="lede">
         This plan defines what to do in <code>datalox-agent-replay</code> after Option A:
         keep this repo as the local MCP VCR engine, make it plug-and-play, shape it for a
-        future server registry, and keep curated fixture packs separate.
+        future server registry, and consume curated fixture packs from the separate fixture
+        repository.
       </p>
       <p class="meta">
         Status: implementation and cleanup plan. Updated: 2026-05-20. Canonical boundary:
         <a href="./project-definition.md">project-definition.md</a>,
         <a href="./agentic-rl-layer-map.md">agentic-rl-layer-map.md</a>,
-        <a href="./replay-bundle-schema.md">replay-bundle-schema.md</a>.
+        <a href="./replay-bundle-schema.md">replay-bundle-schema.md</a>,
+        <a href="./runtime-adapter-roadmap.html">runtime-adapter-roadmap.html</a>.
       </p>
     </header>
 
     <section class="callout">
       <p>
         The product sentence should stay stable:
-        <strong>Datalox records real MCP/tool behavior once and serves it later as a verified,
-        deterministic replay surface with upstream off.</strong>
+        <strong>Datalox turns real agent tool interactions into verified fixture worlds and
+        grounded trajectory/eval exports.</strong>
       </p>
     </section>
 
@@ -264,23 +266,24 @@
         <p><code>datalox-agent-replay</code> is the engine.</p>
         <p>
           It owns proxy record mode, replay mode, bundle packing, bundle verification, local
-          storage, SDK entrypoints, CLI UX, and server-shaped interfaces.
+          storage, SDK entrypoints, CLI UX, server-shaped interfaces, and compact dataset
+          exports derived from replay evidence.
         </p>
       </article>
       <article class="card">
-        <h3>Future repo</h3>
+        <h3>Fixture repo</h3>
         <p><code>datalox-replay-fixtures</code> is the curated fixture library.</p>
         <p>
-          It should contain versioned public fixture packs such as GitHub issue workflows,
-          Slack support threads, search/RAG corpora, and SaaS API edge cases.
+          It already contains versioned public fixture packs for GitHub workflows, Slack
+          support threads, search/RAG corpora, and Stripe-style SaaS API edge cases.
         </p>
       </article>
       <article class="card">
         <h3>Future server</h3>
-        <p>The hosted service is a replay bundle registry first.</p>
+        <p>The hosted service is a verified replay and fixture registry first.</p>
         <p>
-          It stores, verifies, indexes, approves, shares, and serves bundles. It does not need
-          to be the first recorder.
+          It stores, verifies, indexes, approves, shares, and serves bundles, fixture packs,
+          fixture sets, and export manifests. It does not need to be the first recorder.
         </p>
       </article>
     </section>
@@ -295,13 +298,22 @@
       <p>
         The correct split is:
       </p>
-      <pre><code>datalox-agent-replay   = runtime, CLI, SDK, store, verifier, MCP VCR
+      <pre><code>datalox-agent-replay  = runtime, CLI, SDK, store, verifier, MCP VCR, export adapters
 datalox-replay-fixtures = versioned public replay fixture packs
-Datalox server          = registry, auth, approvals, object storage, sharing, metrics</code></pre>
+Datalox server         = registry, auth, approvals, object storage, sharing, metrics</code></pre>
       <p>
-        The engine must not depend on the future fixture repo or hosted server. The fixture repo
-        and server should depend on the engine contract.
+        The engine must not depend on the fixture repo or hosted server at runtime. The fixture
+        repo and server should depend on the engine contract.
       </p>
+      <div class="callout">
+        <p>
+          Updated framing for a real Agentic RL team: Datalox is not "a schema product." It is
+          the tool-I/O evidence layer that gives rollout, eval, and data teams a pinned tool
+          world plus grounded exports. The schema is necessary because it makes that workflow
+          machine-checkable, but the wedge is reproducible tool behavior and exportable training
+          views.
+        </p>
+      </div>
     </section>
 
     <section class="section">
@@ -318,6 +330,7 @@ Datalox server          = registry, auth, approvals, object storage, sharing, me
             <li>Expose local CLI and SDK surfaces.</li>
             <li>Expose server-shaped storage interfaces and APIs.</li>
             <li>Measure replay hit rate, miss rate, tool rounds, latency, and cost metadata.</li>
+            <li>Derive task, trajectory, transition, reward, completion-frame, and split exports from replay evidence.</li>
           </ul>
         </div>
         <div>
@@ -342,6 +355,117 @@ Datalox server          = registry, auth, approvals, object storage, sharing, me
     </section>
 
     <section class="section">
+      <h2>Fixture Repo Reality Check</h2>
+      <p>
+        The sibling <code>datalox-replay-fixtures/</code> directory already matches the split
+        better than the earlier roadmap assumed. It is not an engine repo. It stores fixture
+        data, manifests, eval prompts, expected behavior docs, replay-bundle payloads, and
+        validation/packing scripts.
+      </p>
+      <p>Observed fixture packs:</p>
+      <pre><code>github-ci-failure-basic@2026-05.0
+github-pr-review-basic@2026-05.0
+search-policy-corpus-basic@2026-05.0
+slack-support-thread-basic@2026-05.0
+stripe-billing-edge-cases@2026-05.0</code></pre>
+      <p>Observed checks:</p>
+      <pre><code>cd ../datalox-replay-fixtures
+npm test</code></pre>
+      <p>
+        Result on 2026-05-20: seven fixture-contract tests passed, five fixtures listed, five
+        fixtures validated, and the pack command help path passed.
+      </p>
+      <p>
+        Update on 2026-05-21: the fixture repo now uses the canonical plural directory
+        <code>datalox-replay-fixtures/</code>, has a generated <code>catalog.json</code>, and
+        includes two verified fixture sets:
+      </p>
+      <pre><code>coding-review-ci-basic@2026-05.0
+support-triage-basic@2026-05.0</code></pre>
+      <p>
+        The consequence for this repo: Phase 2 should not start by inventing a separate fixture
+        pack format from scratch. It should implement an engine-side adapter for the fixture
+        repo's current manifest contract, then add the missing fixture-set layer.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Real Agentic RL Data Jobs</h2>
+      <p>
+        A real Agentic RL team usually does not want "a bundle" as the final object. They want
+        tasks, trajectories, step-level data, rewards, eval splits, or completion rows that can
+        feed SFT, preference learning, reward modeling, regression tests, or online rollouts.
+        The bundle is still useful, but as proof and replay source.
+      </p>
+      <p>The ownership rule is:</p>
+      <pre><code>Replay bundle = source evidence and replay proof
+Fixture world = pinned replay environment for an agent run
+Trajectory = episode view over one task/run
+Transition = step-level state/action/observation/reward view
+Completion frame = exact model-visible prompt/response view
+Reward record = versioned scoring source and reward vector
+Split record = train/dev/test/replay partitioning</code></pre>
+      <p>
+        These objects may reference the same underlying tool content, but they must not all own
+        it. Raw tool observations belong to replay evidence. Dataset views should reference that
+        evidence and store only the extra semantics they own.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Object</th>
+            <th>Owns</th>
+            <th>Must reference</th>
+            <th>Primary consumer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>replay_bundle.v1</code></td>
+            <td>Exact tool I/O, MCP catalogs, checksums, redaction/export status.</td>
+            <td>Source repo/session metadata.</td>
+            <td>Replay, audit, fixture-world runtime.</td>
+          </tr>
+          <tr>
+            <td>Fixture world</td>
+            <td>Pinned activation of one or more verified replay bundles.</td>
+            <td>Bundle ids and fixture metadata.</td>
+            <td>Agent eval harnesses and CI.</td>
+          </tr>
+          <tr>
+            <td>Trajectory</td>
+            <td>Task episode ordering, status, final answer, final reward.</td>
+            <td>Task id, step ids, replay bundle id.</td>
+            <td>Reward models, preference data, trajectory-level evals.</td>
+          </tr>
+          <tr>
+            <td>Transition</td>
+            <td>One decision point: state ref, action, observation ref, step reward.</td>
+            <td>Trajectory id and replay evidence refs.</td>
+            <td>Credit assignment, process supervision, step evals.</td>
+          </tr>
+          <tr>
+            <td>Completion frame</td>
+            <td>Exact model-visible context and response after context management.</td>
+            <td>Transition id and raw observation refs.</td>
+            <td>SFT and train/inference consistency checks.</td>
+          </tr>
+          <tr>
+            <td>Reward record</td>
+            <td>Reward vector, scalar fold, source, version, normalization, clipping.</td>
+            <td>Task, trajectory, or transition id.</td>
+            <td>Reward models, RL, diagnostics.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Practical rule: <strong>replay bundle stores proof; all training datasets are views.</strong>
+        If a view cannot point back to replay evidence or a declared reward source, it is not
+        export-quality data.
+      </p>
+    </section>
+
+    <section class="section">
       <h2>North Star Metric</h2>
       <p>
         The immediate product benchmark is <strong>Time To First Verified Replay</strong>.
@@ -355,6 +479,8 @@ Datalox server          = registry, auth, approvals, object storage, sharing, me
       <p>
         The local demo target is under 2 minutes with the included fixture. The bring-your-own
         MCP target is under 5 minutes for a developer who already has an MCP server command.
+        For Agentic RL data users, the follow-up benchmark is time from verified replay to
+        grounded trajectory/transition export.
       </p>
     </section>
 
@@ -381,8 +507,18 @@ Datalox server          = registry, auth, approvals, object storage, sharing, me
           </tr>
           <tr>
             <td>Plug-and-play demo</td>
+            <td class="status-ok">Implemented</td>
+            <td><code>npm run demo:verified-replay</code> shows record, pack, verify, replay with upstream off, replay miss, and tamper failure.</td>
+          </tr>
+          <tr>
+            <td>Fixture worlds and sets</td>
             <td class="status-next">Next</td>
-            <td>There is not yet a single polished command that shows record, pack, verify, replay with upstream off, replay miss, and tamper failure.</td>
+            <td>The next product layer is pinned fixture activation, so users run agents inside declared replay worlds instead of pointing at raw bundle paths.</td>
+          </tr>
+          <tr>
+            <td>Agentic RL exports</td>
+            <td class="status-next">Next</td>
+            <td>Task, trajectory, transition, reward, split, and completion-frame exports are planned as grounded views over verified replay evidence.</td>
           </tr>
           <tr>
             <td>SDK surface</td>
@@ -396,8 +532,8 @@ Datalox server          = registry, auth, approvals, object storage, sharing, me
           </tr>
           <tr>
             <td>Legacy pack artifacts</td>
-            <td class="status-blocker">Cleanup required</td>
-            <td>Repo-local legacy pack files must stay removed. A global external hook may keep reintroducing them until disabled outside this repo.</td>
+            <td class="status-ok">Cleaned</td>
+            <td>Repo-local legacy pack files are removed and guarded by identity tests. If external hooks reintroduce them, treat that as a cleanup blocker outside the engine code.</td>
           </tr>
         </tbody>
       </table>
@@ -510,6 +646,10 @@ git diff --check</code></pre>
         Build the product proof path as a repeatable local demo. This should become the first
         public video and the first design-partner smoke test.
       </p>
+      <p>
+        Current execution status: <strong>done on 2026-05-20</strong>. The runnable command is
+        <code>npm run demo:verified-replay</code>.
+      </p>
       <p><span class="pill">Owner: this repo</span><span class="pill">Priority: highest</span></p>
       <p>Add or update:</p>
       <pre><code>package.json
@@ -540,15 +680,247 @@ tests/verifiedReplayQuickstart.test.ts</code></pre>
       <ul>
         <li>Demo succeeds on a clean checkout with no secrets and no network dependency.</li>
         <li>Replay works while upstream is off.</li>
+        <li>Replay miss is deterministic and agent-readable.</li>
         <li>Tamper failure is visible and deterministic.</li>
         <li>Output includes bundle id, tool record count, catalog count, hit count, miss count, and elapsed time.</li>
         <li>Demo does not mention trajectory rows as the primary value.</li>
       </ul>
+      <p>Verification:</p>
+      <pre><code>npm run demo:verified-replay
+npx vitest run tests/verifiedReplayQuickstart.test.ts tests/replayCanonicalDocs.test.ts
+npm run check
+git diff --check
+npm test</code></pre>
 
-      <h3>Phase 2: Bring-Your-Own MCP Config UX</h3>
+      <h3>Phase 2: Fixture Worlds And Fixture Sets</h3>
       <p>
-        Make adoption boring for teams that already have an MCP server. They should only need
-        to wrap their MCP command with Datalox.
+        Move the user-facing model from "bundle" to "tool sandbox." A replay bundle remains the
+        internal portable artifact, but users should start agents inside a pinned fixture world
+        or fixture set.
+      </p>
+      <p>
+        Product rule: <strong>install caches; replay activates.</strong> A fixture install should
+        never silently become the active runtime for an agent run.
+      </p>
+      <p><span class="pill">Owner: this repo</span><span class="pill">Priority: next</span></p>
+      <p>
+        Current execution status: <strong>implemented on 2026-05-21</strong>. The engine can
+        install a fixture directly from a local fixture directory, list installed fixtures from
+        cache, install fixture sets from the fixture repo catalog, and replay installed fixture
+        worlds.
+      </p>
+      <p>Add or update in this repo:</p>
+      <pre><code>docs/fixture-worlds-and-sets.md
+src/core/fixtures/fixtureCatalogSchema.ts
+src/core/fixtures/fixtureManifestSchema.ts
+src/core/fixtures/fixtureSetSchema.ts
+src/core/fixtures/readFixtureManifest.ts
+src/core/fixtures/readFixtureCatalog.ts
+src/core/fixtures/installFixturePack.ts
+src/core/fixtures/installFixtureSet.ts
+src/core/fixtures/resolveFixtureRuntime.ts
+src/core/fixtures/resolveFixtureSetRuntime.ts
+src/cli/main.ts
+tests/fixtureCatalogSchema.test.ts
+tests/fixtureManifestSchema.test.ts
+tests/installFixturePack.test.ts
+tests/fixtureSetRuntime.test.ts</code></pre>
+      <p>Target commands:</p>
+      <pre><code>datalox fixtures install ../datalox-replay-fixtures/fixtures/github-pr-review-basic
+datalox fixtures list
+
+datalox fixtures install github-pr-review-basic@2026-05.0 \
+  --catalog ../datalox-replay-fixtures/catalog.json
+datalox replay --fixture github-pr-review-basic@2026-05.0
+
+datalox fixture-sets install support-triage-basic@2026-05.0 \
+  --catalog ../datalox-replay-fixtures/catalog.json
+datalox replay --fixture-set support-triage-basic@2026-05.0
+
+datalox replay --fixtures \
+  github-pr-review-basic@2026-05.0 \
+  slack-support-thread-basic@2026-05.0 \
+  search-policy-corpus-basic@2026-05.0</code></pre>
+      <p>Fixture pack shape:</p>
+      <pre><code>{
+  "$schema": "../../schemas/fixture-manifest.schema.json",
+  "id": "github-pr-review-basic",
+  "version": "2026-05.0",
+  "name": "GitHub PR Review Basic",
+  "description": "A finite GitHub pull request review world for coding-agent evals.",
+  "status": "verified",
+  "engine": {
+    "package": "datalox-agent-replay",
+    "minimumVersion": "0.1.0"
+  },
+  "tools": [
+    {
+      "surface": "mcp",
+      "server": "github",
+      "operations": ["pull_request.get", "pull_request.files", "checks.list"]
+    }
+  ],
+  "bundle": {
+    "path": "replay-bundle/github-pr-review-basic",
+    "schemaVersion": "replay_bundle.v1",
+    "sha256": "..."
+  },
+  "evalPrompts": {
+    "path": "eval-prompts.jsonl",
+    "count": 3
+  },
+  "provenance": {
+    "source": "curated-recording",
+    "recordedAt": "2026-05-20",
+    "reviewedBy": "datalox",
+    "redaction": "none_needed"
+  },
+  "release": {
+    "immutable": false,
+    "license": "UNRELEASED",
+    "tags": ["github", "pr-review", "coding-agent"]
+  }
+}</code></pre>
+      <p>Fixture set shape:</p>
+      <pre><code>{
+  "schema_version": "datalox_fixture_set.v1",
+  "id": "support-triage-basic",
+  "version": "2026-05.0",
+  "fixtures": [
+    "github-pr-review-basic@2026-05.0",
+    "slack-support-thread-basic@2026-05.0",
+    "search-policy-corpus-basic@2026-05.0"
+  ],
+  "entrypoint": {
+    "transport": "mcp",
+    "mode": "replay"
+  }
+}</code></pre>
+      <p>Runtime behavior:</p>
+      <pre><code>agent -> Datalox replay runtime -> pinned fixture world -> deterministic tool observations</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Engine accepts the existing <code>datalox-replay-fixtures</code> manifest shape without lossy translation.</li>
+        <li>Fixture set schema is strict and versioned.</li>
+        <li>Fixture install only materializes/caches data; it does not activate replay for a run.</li>
+        <li><code>datalox replay --fixture</code> starts replay from a single pinned fixture world.</li>
+        <li><code>datalox replay --fixtures</code> composes multiple fixture worlds and rejects tool-name collisions unless explicitly namespaced.</li>
+        <li><code>datalox replay --fixture-set</code> starts a composed pinned tool sandbox from a manifest.</li>
+        <li>Every bundle referenced by a fixture verifies before it can be served.</li>
+        <li>Unseen calls still return deterministic replay misses; fixture worlds do not invent behavior.</li>
+        <li>This repo includes only tiny fixtures needed for tests and demos, not a large curated fixture catalog.</li>
+      </ul>
+      <p>What to do in this repo:</p>
+      <ul>
+        <li>Mirror or import the fixture repo manifest schema as an engine-side validator.</li>
+        <li>Implement local install/cache and replay activation commands for local directories, tarballs, and later registry refs.</li>
+        <li>Implement collision detection and namespace rules for composed fixture worlds.</li>
+        <li>Serve fixture worlds through the same verified replay runtime as bundles.</li>
+        <li>Keep only tiny fixture examples needed for tests and demos.</li>
+      </ul>
+      <p>What belongs in the fixture repo:</p>
+      <pre><code>datalox-replay-fixtures/
+  fixtures/
+    github-ci-failure-basic/
+    github-pr-review-basic/
+    slack-support-thread-basic/
+    search-policy-corpus-basic/
+    stripe-billing-edge-cases/
+  README.md
+  docs/fixture-authoring.md
+  schemas/fixture-manifest.schema.json
+  scripts/validate-fixtures.mjs
+  scripts/pack-fixture.mjs</code></pre>
+      <p>
+        The fixture repo owns curated public packs, fixture sets, scenario documentation,
+        licensing, eval prompts, expected behavior notes, catalog generation, and pack
+        validation. It must not contain engine runtime code.
+      </p>
+
+      <h3>Phase 3: Task, Trajectory, Transition, And Completion Exports</h3>
+      <p>
+        Add the data views that real Agentic RL teams expect, while keeping replay evidence as
+        the source of truth. This is not a second source store; it is a set of export adapters
+        grounded in verified bundles and fixture worlds.
+      </p>
+      <p>Add or update in this repo:</p>
+      <pre><code>docs/agentic-rl-export-schema.md
+src/core/exports/taskSchema.ts
+src/core/exports/trajectorySchema.ts
+src/core/exports/transitionSchema.ts
+src/core/exports/completionFrameSchema.ts
+src/core/exports/rewardRecordSchema.ts
+src/core/exports/splitSchema.ts
+src/core/exports/fromReplayBundle.ts
+tests/agenticRlExportSchema.test.ts
+tests/agenticRlExportFromReplayBundle.test.ts</code></pre>
+      <p>Target commands:</p>
+      <pre><code>datalox export agentic-rl \
+  --fixture verified-replay-demo@local \
+  --out .datalox/exports/agentic-rl/verified-replay-demo
+
+datalox export completions \
+  --bundle .datalox/replay-bundles/verified-replay-demo \
+  --out completions.jsonl</code></pre>
+      <p>Export layout:</p>
+      <pre><code>.datalox/exports/agentic-rl/&lt;export-id&gt;/
+  tasks.jsonl
+  trajectories.jsonl
+  steps.jsonl
+  completion_frames.jsonl
+  rewards.jsonl
+  splits.jsonl
+  manifest.json</code></pre>
+      <p>Ownership and anti-overlap rules:</p>
+      <ul>
+        <li><code>tasks.jsonl</code> owns task goal, initial input, allowed tools, gold constraints, and verifiability level.</li>
+        <li><code>trajectories.jsonl</code> owns episode status, ordered step ids, final answer, and final reward refs.</li>
+        <li><code>steps.jsonl</code> owns transition-level action, observation refs, and step reward refs.</li>
+        <li><code>completion_frames.jsonl</code> owns model-visible prompt/context and response only.</li>
+        <li><code>rewards.jsonl</code> owns reward source, version, reward vector, scalar fold, normalization, and clipping.</li>
+        <li><code>splits.jsonl</code> owns train/dev/test/replay split assignment and leakage group ids.</li>
+        <li>Raw tool observations remain in replay bundles; export rows reference them by id/path/hash.</li>
+      </ul>
+      <p>Completion frame rule:</p>
+      <pre><code>{
+  "schema_version": "completion_frame.v1",
+  "id": "frame_001",
+  "transition_id": "step_001",
+  "model_visible_context": {
+    "messages": [],
+    "tool_result_views": [
+      {
+        "source_observation_ref": "toolio_123.observation",
+        "view_kind": "raw | rendered | compressed",
+        "transform": {
+          "name": "context_manager",
+          "version": "1.0.0"
+        },
+        "content_hash": "sha256:..."
+      }
+    ]
+  },
+  "response": {
+    "kind": "tool_call | final_answer | assistant_message",
+    "content": {}
+  }
+}</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Exports can be generated only from a verified replay bundle or fixture world.</li>
+        <li>Every trajectory references a task and replay source.</li>
+        <li>Every transition references a trajectory and replay observation evidence when a tool observation exists.</li>
+        <li>Completion frames distinguish raw, rendered, and compressed tool-result views.</li>
+        <li>Reward records include source, version, vector/scalar shape, normalization, and clipping metadata.</li>
+        <li>Split records include leakage group ids for template/task-family control.</li>
+        <li>The export command refuses to invent step rewards or completion frames when evidence is missing.</li>
+      </ul>
+
+      <h3>Phase 4: Bring-Your-Own MCP Config UX</h3>
+      <p>
+        Make adoption boring for teams that already have an MCP server. This is still required,
+        but it follows the fixture-world model: record from a real upstream, then materialize a
+        private fixture world or fixture set.
       </p>
       <p>Add or update:</p>
       <pre><code>src/cli/main.ts
@@ -560,11 +932,11 @@ tests/mcpProxyConfig.test.ts</code></pre>
       <pre><code>datalox proxy init --name support-api --upstream "node server.js"
 datalox proxy record --config datalox.replay.json
 datalox bundle pack --bundle-id support-api-smoke-001
-datalox proxy replay --bundle .datalox/replay-bundles/support-api-smoke-001</code></pre>
+datalox fixtures create --from-bundle support-api-smoke-001 --id support-api-smoke --version 2026-05.0
+datalox replay --fixture support-api-smoke@2026-05.0</code></pre>
       <p>Config shape:</p>
       <pre><code>{
-  "schema_version": "datalox_mcp_proxy_config.v1",
-  "name": "support-api",
+  "schema_version": "datalox_replay_proxy_config.v1",
   "upstream": {
     "transport": "stdio",
     "command": "node",
@@ -581,10 +953,11 @@ datalox proxy replay --bundle .datalox/replay-bundles/support-api-smoke-001</cod
         <li><code>proxy init</code> writes explicit config and refuses ambiguous upstream commands.</li>
         <li>Record mode requires upstream config.</li>
         <li>Replay mode requires a verified bundle and must not start upstream.</li>
+        <li>A recorded bundle can be promoted into a private fixture pack with explicit id and version.</li>
         <li>Replay miss includes request hash, sequence index, tool name, and an agent-readable message.</li>
       </ul>
 
-      <h3>Phase 3: SDK Surface</h3>
+      <h3>Phase 5: SDK Surface</h3>
       <p>
         Some eval harnesses will not want to shell out. Provide stable library entrypoints that
         use the same core code as the CLI.
@@ -612,7 +985,7 @@ await server.startStdio();</code></pre>
         <li>Public SDK exports do not expose derivative trajectory APIs as first-class capture.</li>
       </ul>
 
-      <h3>Phase 4: Server-Shaped Store Interfaces</h3>
+      <h3>Phase 6: Server-Shaped Store Interfaces</h3>
       <p>
         Make local storage swappable before building a server. The local file store remains the
         default; replay logic should not assume raw filesystem paths internally.
@@ -651,7 +1024,7 @@ Object dedupe key: sha256(content bytes)</code></pre>
         <li>No hidden fallback to live upstream is introduced.</li>
       </ul>
 
-      <h3>Phase 5: Bundle Refs, Metrics, And Garbage Collection</h3>
+      <h3>Phase 7: Bundle Refs, Metrics, And Garbage Collection</h3>
       <p>
         Add the minimal Git-like storage ideas without cloning Git. We need immutable objects,
         human-readable refs, and garbage collection, not branches or merges.
@@ -692,44 +1065,7 @@ tests/replayMetrics.test.ts</code></pre>
         <li>Metrics are derived from replay records, not from prose summaries.</li>
       </ul>
 
-      <h3>Phase 6: Fixture Pack Contract, Not Fixture Bulk</h3>
-      <p>
-        This repo should define the fixture-pack contract and include only tiny examples. The
-        real curated library should live in <code>datalox-replay-fixtures</code>.
-      </p>
-      <p>Add:</p>
-      <pre><code>docs/fixture-pack-contract.md
-src/core/fixtures/fixturePackSchema.ts
-src/core/fixtures/installFixturePack.ts
-tests/fixturePackSchema.test.ts</code></pre>
-      <p>Fixture pack shape:</p>
-      <pre><code>{
-  "schema_version": "datalox_fixture_pack.v1",
-  "id": "github-pr-review-basic",
-  "version": "2026.05.0",
-  "engine": {
-    "min_datalox_version": "0.1.0"
-  },
-  "bundles": [
-    {
-      "id": "github-pr-review-basic-case-001",
-      "path": "replay-bundles/github-pr-review-basic-case-001",
-      "sha256": "..."
-    }
-  ],
-  "eval_prompts": "eval-prompts.jsonl",
-  "license": "Apache-2.0",
-  "redaction": "none_needed"
-}</code></pre>
-      <p>Pass criteria:</p>
-      <ul>
-        <li>Fixture packs install into local replay refs without modifying engine code.</li>
-        <li>Every bundled replay artifact verifies before being served.</li>
-        <li>Fixture install refuses unknown schema versions.</li>
-        <li>This repo does not grow a large public fixture collection.</li>
-      </ul>
-
-      <h3>Phase 7: Local Daemon API</h3>
+      <h3>Phase 8: Local Daemon API</h3>
       <p>
         A local daemon makes the future server easier. The daemon API should be close to the
         hosted API, while still using the local file store by default.
@@ -758,7 +1094,23 @@ GET  /v1/metrics/replay/:bundleId</code></pre>
         <li>Daemon verifies bundle checksums before serving replay.</li>
       </ul>
 
-      <h3>Phase 8: Server Registry Client</h3>
+      <h3>Phase 8.5: Runtime Adapter SPI</h3>
+      <p>
+        Keep heavy sandbox integration out of the core path until fixture replay and fixture
+        sets are solid. The later runtime adapter work is specified separately in
+        <a href="./runtime-adapter-roadmap.html">runtime-adapter-roadmap.html</a>.
+      </p>
+      <p>Boundary:</p>
+      <pre><code>external runtime owns containers, services, filesystems, browsers, and verifiers
+Datalox owns tool-I/O evidence, replay bundles, fixture activation, and exports</code></pre>
+      <p>Pass criteria:</p>
+      <ul>
+        <li>Runtime adapters are optional and do not make simple MCP/API fixture replay heavier.</li>
+        <li>Adapters capture <code>tool_io_record.v1</code> evidence instead of replacing replay primitives.</li>
+        <li>Replay mode cannot silently start live upstream services.</li>
+      </ul>
+
+      <h3>Phase 9: Server Registry Client</h3>
       <p>
         Add the client contract before building the hosted service. The server should be a
         registry for bundles and fixture packs, not the only way to record.
@@ -773,7 +1125,7 @@ tests/serverClientContract.test.ts</code></pre>
 datalox bundle push support-api-smoke-001
 datalox bundle pull org/project/support-api-smoke-001
 datalox bundle verify --remote org/project/support-api-smoke-001
-datalox fixtures install github-pr-review-basic@2026.05.0</code></pre>
+datalox fixtures install github-pr-review-basic@2026-05.0</code></pre>
       <p>Server entities:</p>
       <ul>
         <li>Org</li>
@@ -794,7 +1146,7 @@ datalox fixtures install github-pr-review-basic@2026.05.0</code></pre>
         <li>The server API cannot turn unapproved raw traces into public fixture packs.</li>
       </ul>
 
-      <h3>Phase 9: Parallel Tool Interaction Support</h3>
+      <h3>Phase 10: Parallel Tool Interaction Support</h3>
       <p>
         Agentic RL papers increasingly optimize tool-use efficiency. Datalox should preserve
         enough structure to replay and measure parallel or batched tool rounds.
@@ -872,14 +1224,14 @@ cost?: {
       <pre><code>Local record:
 agent -> local Datalox recording proxy -> real upstream MCP/API -> local bundle
 
-Local replay:
-agent -> local Datalox replay server -> verified local bundle
+Private fixture world:
+local bundle -> private fixture pack -> datalox replay --fixture private-pack@version
 
-Fixture replay:
-agent -> local Datalox replay server -> installed fixture pack bundle
+Fixture set replay:
+agent -> local Datalox replay runtime -> pinned fixture set -> deterministic tool observations
 
 Server registry:
-local Datalox CLI/daemon -> Datalox server -> verified bundles, fixture packs, refs, metrics</code></pre>
+local Datalox CLI/daemon -> Datalox server -> verified bundles, fixture packs, fixture sets, refs, metrics</code></pre>
       <p>
         The server should not be required for private internal API recording. It should become
         useful for team sharing, approvals, CI replay, fixture discovery, and cross-machine
@@ -911,12 +1263,26 @@ npm run check</code></pre>
       </ul>
 
       <h3>Fixture contract release gate</h3>
-      <pre><code>npx vitest run tests/fixturePackSchema.test.ts tests/referenceBundles.test.ts
+      <pre><code>npx vitest run tests/fixtureCatalogSchema.test.ts tests/fixtureManifestSchema.test.ts tests/installFixturePack.test.ts tests/fixtureSetRuntime.test.ts tests/referenceBundles.test.ts
 npm run check</code></pre>
       <ul>
-        <li>Fixture pack schema is strict.</li>
-        <li>Installed fixture packs are verified before replay.</li>
-        <li>Only tiny fixtures stay in this repo.</li>
+        <li>Engine accepts the existing fixture repo manifest shape and rejects invalid variants.</li>
+        <li>Fixture set schema is strict.</li>
+        <li>Install caches fixture data; replay activates a pinned fixture world or set.</li>
+        <li>Installed fixture packs verify before replay.</li>
+        <li>Only tiny fixtures stay in this repo; curated packs live in the fixture repo.</li>
+      </ul>
+
+      <h3>Agentic RL export gate</h3>
+      <pre><code>npx vitest run tests/agenticRlExportSchema.test.ts tests/agenticRlExportFromReplayBundle.test.ts tests/verifiedReplayQuickstart.test.ts
+npm run check
+git diff --check</code></pre>
+      <ul>
+        <li>Exports are generated only from verified replay bundles or fixture worlds.</li>
+        <li>Tasks, trajectories, transitions, rewards, splits, and completion frames have non-overlapping ownership.</li>
+        <li>Tool observations remain in replay evidence and are referenced by id/path/hash.</li>
+        <li>Completion frames distinguish raw, rendered, and compressed model-visible tool-result views.</li>
+        <li>Export commands fail when required reward, split, or completion evidence is not present.</li>
       </ul>
 
       <h3>Server-readiness gate</h3>
@@ -933,18 +1299,21 @@ npm run check</code></pre>
       <h2>Recommended Next Three Tasks</h2>
       <ol>
         <li>
-          <strong>Clean the repo and commit Option A plus reference bundles.</strong>
-          Remove regenerated legacy pack artifacts, confirm identity tests, and keep
-          <code>docs/pin-list.html</code> out unless it is intentionally user-owned.
+          <strong>Ship fixture worlds and fixture sets.</strong>
+          Add strict pack/set schemas, cache-only install commands, pinned replay activation,
+          and collision rules for composed tool worlds.
         </li>
         <li>
-          <strong>Build <code>npm run demo:verified-replay</code>.</strong>
-          This is the demo that makes the wedge legible: record, pack, verify, upstream off,
-          replay, replay miss, tamper failure.
+          <strong>Add Agentic RL exports from verified evidence.</strong>
+          Export <code>tasks.jsonl</code>, <code>trajectories.jsonl</code>,
+          <code>steps.jsonl</code>, <code>completion_frames.jsonl</code>,
+          <code>rewards.jsonl</code>, and <code>splits.jsonl</code> without copying raw
+          observations out of replay bundles.
         </li>
         <li>
-          <strong>Add SDK entrypoints around existing proxy/replay code.</strong>
-          This prepares embedded eval harnesses and makes the future daemon/server path cleaner.
+          <strong>Turn BYO MCP config into private fixture recording.</strong>
+          Record from a team's real upstream MCP server, pack a verified bundle, promote it
+          into a private fixture pack, then replay it through the same fixture runtime.
         </li>
       </ol>
     </section>

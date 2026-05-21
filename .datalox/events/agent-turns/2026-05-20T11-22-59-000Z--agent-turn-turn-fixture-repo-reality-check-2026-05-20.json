@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-20T11-22-59-000Z--agent-turn-turn-fixture-repo-reality-check-2026-05-20",
+  "timestamp": "2026-05-20T11:22:59.000Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-20",
+  "turnId": "turn-fixture-repo-reality-check-2026-05-20",
+  "summary": "Inspected the sibling datalox-replay-fixture directory and updated the engine plan so Phase 2 consumes the existing fixture manifest contract instead of inventing a parallel fixture pack format.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-fixture-repo-reality-check-2026-05-20",
+    "session_id": "codex-cli-2026-05-20",
+    "turn_index": 9,
+    "created_at": "2026-05-20T11:22:59Z",
+    "user_prompt": "for Fixture worlds / fixture sets next: users run agents inside declared replay worlds, not raw bundle paths., look at datalox-replay-fixture/",
+    "assistant_summary": "Inspected /Users/yifanjin/datalox-replay-fixture. It is not a git repo, but it already contains five verified fixture packs, fixture manifests, eval prompts, expected behavior docs, replay bundles, schemas, and validation/packing scripts. Updated docs/local-to-server-engine-plan.html to describe the existing sibling fixture repo, list the observed packs, record that npm test passes there, change Phase 2 to accept the current fixture repo manifest shape, and make fixture sets the missing layer to add after single-fixture install/replay works.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm test",
+        "workdir": "/Users/yifanjin/datalox-replay-fixture",
+        "exit_code": 0,
+        "output_summary": "Fixture repo tests passed: 7 node:test cases, 5 fixture packs listed, 5 fixture packs validated, pack command help passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts",
+        "workdir": "/Users/yifanjin/datalox-pack-trajectory-export",
+        "exit_code": 0,
+        "output_summary": "Engine repo focused docs and identity gates passed: 2 files, 12 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check",
+        "workdir": "/Users/yifanjin/datalox-pack-trajectory-export",
+        "exit_code": 0,
+        "output_summary": "Engine repo TypeScript no-emit check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "workdir": "/Users/yifanjin/datalox-pack-trajectory-export",
+        "exit_code": 0,
+        "output_summary": "Engine repo whitespace/error check passed."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "docs/local-to-server-engine-plan.html",
+        "action": "modified",
+        "diff_summary": "Changed the fixture repo from hypothetical to existing. Added Fixture Repo Reality Check with the five observed packs and validation result. Updated Phase 2 to use replayFixtureManifestSchema/readFixtureManifest, match the fixture repo manifest fields, use 2026-05.0 version syntax, and make fixture sets the next missing layer rather than duplicating fixture-pack schemas."
+      }
+    ],
+    "verification": {
+      "command": "cd ../datalox-replay-fixture && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm test && cd ../datalox-pack-trajectory-export && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check && git diff --check",
+      "status": "passed",
+      "evidence": "Fixture repo: 7 tests passed, 5 fixtures listed and validated. Engine repo: focused docs/identity gates passed, TypeScript no-emit check passed, git diff --check passed."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

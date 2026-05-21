@@ -6,8 +6,11 @@ The canonical tool I/O schema lives in [tool-io-store-schema.md](./tool-io-store
 The canonical replay bundle schema lives in [replay-bundle-schema.md](./replay-bundle-schema.md).
 The canonical per-turn review schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
 The canonical layer boundary lives in [agentic-rl-layer-map.md](./agentic-rl-layer-map.md).
+The verified replay quickstart lives in [verified-replay-quickstart.md](./verified-replay-quickstart.md).
+The fixture-world usage guide lives in [fixture-worlds-and-sets.md](./fixture-worlds-and-sets.md).
 The reference-bundle milestone plan lives in [reference-bundle-plan.md](./reference-bundle-plan.md).
 The local-engine to server-ready implementation plan lives in [local-to-server-engine-plan.html](./local-to-server-engine-plan.html).
+The runtime adapter roadmap lives in [runtime-adapter-roadmap.html](./runtime-adapter-roadmap.html).
 The current pitch outline lives in [pitch-deck.md](./pitch-deck.md).
 The canonical derivative trajectory schema lives in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md).
 The filesystem-backed orchestration protocol lives in [task-orchestration.md](./task-orchestration.md).

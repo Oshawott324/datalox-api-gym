@@ -1,0 +1,19 @@
+{
+  "schema_version": "datalox_replay_proxy_config.v1",
+  "upstream": {
+    "command": "node",
+    "args": [
+      "fixture-upstream.mjs"
+    ],
+    "cwd": "."
+  },
+  "record": {
+    "session_id": "verified-replay-quickstart-session",
+    "turn_id": "verified-replay-quickstart-turn",
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed",
+      "approval_id": "verified-replay-quickstart"
+    }
+  }
+}
