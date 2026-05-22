@@ -1,0 +1,40 @@
+{
+  "schema_version": "tool_io_record.v1",
+  "id": "toolio-4340719c3c89a432-0-proxy-call-0",
+  "session_id": "ref-mcp-error-observation-session",
+  "turn_id": "ref-mcp-error-observation-turn",
+  "call_id": "proxy-call-0",
+  "tool_name": "validation_error",
+  "arguments": {
+    "reason": "visible upstream validation"
+  },
+  "request_hash": "4340719c3c89a432d561bf5d54d717346e4d0467a75b761b9464e10723ea1c9c",
+  "sequence_index": 0,
+  "observation": {
+    "status": "ok",
+    "content": {
+      "content": [
+        {
+          "type": "text",
+          "text": "reference validation failed: visible upstream validation"
+        }
+      ],
+      "structuredContent": {
+        "reference_error": true,
+        "code": "reference_validation_failed",
+        "reason": "visible upstream validation"
+      },
+      "isError": true
+    }
+  },
+  "created_at": "2026-05-20T02:12:07.630Z",
+  "source": {
+    "mcp_server": "upstream",
+    "command": "node examples/reference-bundles/fixtures/reference-upstream.mjs"
+  },
+  "export": {
+    "allowed": true,
+    "redaction": "none_needed",
+    "approval_id": "reference-public"
+  }
+}

@@ -36,6 +36,7 @@ interface ParsedAgentTurn {
 
 export interface PackReplayBundleInput {
   repoPath?: string;
+  sourceRepoPath?: string | null;
   bundleId: string;
   title?: string;
   task?: {
@@ -108,7 +109,7 @@ export async function packReplayBundle(input: PackReplayBundleInput): Promise<Pa
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.task !== undefined ? { task: input.task } : {}),
     source: {
-      repo_path: repoRoot,
+      ...(input.sourceRepoPath !== null ? { repo_path: input.sourceRepoPath ?? repoRoot } : {}),
       session_ids: sessionIds,
       turn_event_paths: turnArtifacts.map((artifact) => artifact.targetPath),
       tool_io_record_paths: toolArtifacts.map((artifact) => artifact.targetPath),

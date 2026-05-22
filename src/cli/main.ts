@@ -16,6 +16,13 @@ import {
 } from "../core/installCore.js";
 import { packReplayBundle, verifyReplayBundle } from "../core/replayBundle.js";
 import { readDataloxReplayProxyConfigFile } from "../core/mcpProxyConfig.js";
+import { listInstalledFixtures } from "../core/fixtures/fixtureCache.js";
+import { installFixturePack } from "../core/fixtures/installFixturePack.js";
+import { installFixtureSet } from "../core/fixtures/installFixtureSet.js";
+import { readFixtureCatalog } from "../core/fixtures/readFixtureCatalog.js";
+import { resolveFixtureRuntime } from "../core/fixtures/resolveFixtureRuntime.js";
+import { resolveFixtureSetRuntime } from "../core/fixtures/resolveFixtureSetRuntime.js";
+import { validateNoToolNameCollisions } from "../core/fixtures/validateToolCollisions.js";
 import { runReplayProxyServer } from "../mcp/replayProxyServer.js";
 import { runClaudeWrapper } from "../adapters/claude/run.js";
 import { runCodexWrapper } from "../adapters/codex/run.js";
@@ -65,6 +72,13 @@ function usage(): string {
     "  datalox auto-bootstrap [--repo <path>] [--pack-source <path-or-git-url>] [--json]",
     "  datalox bundle pack [--repo <path>] --bundle-id <id> [--json]",
     "  datalox bundle verify [--repo <path>] --bundle <bundle-path> [--json]",
+    "  datalox fixtures list [--catalog <catalog.json>] [--cache-root <path>] [--json]",
+    "  datalox fixtures install <fixture-ref|fixture-dir> [--catalog <catalog.json>] [--cache-root <path>] [--force] [--json]",
+    "  datalox fixture-sets list --catalog <catalog.json> [--json]",
+    "  datalox fixture-sets install <fixture-set-ref> --catalog <catalog.json> [--cache-root <path>] [--force] [--json]",
+    "  datalox replay --fixture <fixture-ref> [--cache-root <path>]",
+    "  datalox replay --fixture-set <fixture-set-ref> [--cache-root <path>]",
+    "  datalox replay --fixtures <fixture-ref>... [--cache-root <path>]",
     "  datalox proxy --mode <record|replay> [--repo <path>] [--config <json-path>] [--bundle <bundle-path>] [--json]",
     "  datalox wrap prompt [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--json]",
     "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|replay>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
@@ -281,6 +295,169 @@ async function main(): Promise<void> {
         return;
       }
       throw new Error("bundle requires subcommand pack or verify");
+    }
+    case "fixtures": {
+      if (positional === "list") {
+        if (typeof args.catalog === "string") {
+          const catalog = await readFixtureCatalog(args.catalog);
+          writeResult({
+            source: "catalog",
+            catalogPath: catalog.catalogPath,
+            fixtures: catalog.catalog.fixtures.map((fixture) => ({
+              ref: fixture.ref,
+              status: fixture.status,
+              tools: fixture.tools.map((tool) => `${tool.surface}:${tool.server}`),
+            })),
+          }, true);
+        } else {
+          const fixtures = await listInstalledFixtures({
+            cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+          });
+          writeResult({
+            source: "cache",
+            cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+            fixtures: fixtures.map((fixture) => ({
+              ref: fixture.ref,
+              status: fixture.status,
+              tools: fixture.tools.map((tool) => `${tool.surface}:${tool.server}`),
+              bundleSha256: fixture.bundleSha256,
+            })),
+          }, true);
+        }
+        return;
+      }
+      if (positional === "install") {
+        const fixtureRefOrPath = rest[0];
+        if (!fixtureRefOrPath) {
+          throw new Error("fixtures install requires <fixture-ref|fixture-dir>");
+        }
+        const result = await installFixturePack({
+          ...(typeof args.catalog === "string"
+            ? { ref: fixtureRefOrPath, catalogPath: args.catalog }
+            : { sourcePath: fixtureRefOrPath }),
+          cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+          force: args.force === true,
+        });
+        writeResult(result, true);
+        return;
+      }
+      throw new Error("fixtures requires subcommand list or install");
+    }
+    case "fixture-sets": {
+      if (positional === "list") {
+        if (typeof args.catalog !== "string") {
+          throw new Error("fixture-sets list requires --catalog");
+        }
+        const catalog = await readFixtureCatalog(args.catalog);
+        writeResult({
+          catalogPath: catalog.catalogPath,
+          fixtureSets: catalog.catalog.fixture_sets.map((fixtureSet) => ({
+            ref: fixtureSet.ref,
+            status: fixtureSet.status,
+            fixtures: fixtureSet.fixtures,
+          })),
+        }, true);
+        return;
+      }
+      if (positional === "install") {
+        const fixtureSetRef = rest[0];
+        if (!fixtureSetRef) {
+          throw new Error("fixture-sets install requires <fixture-set-ref>");
+        }
+        if (typeof args.catalog !== "string") {
+          throw new Error("fixture-sets install requires --catalog");
+        }
+        const result = await installFixtureSet({
+          ref: fixtureSetRef,
+          catalogPath: args.catalog,
+          cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+          force: args.force === true,
+        });
+        writeResult(result, true);
+        return;
+      }
+      throw new Error("fixture-sets requires subcommand list or install");
+    }
+    case "replay": {
+      if (typeof args.fixture === "string") {
+        const runtime = await resolveFixtureRuntime({
+          ref: args.fixture,
+          cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+        });
+        process.stderr.write(`${JSON.stringify({
+          event: "datalox_replay_fixture_start",
+          fixtureRef: runtime.ref,
+          bundleId: runtime.bundleId,
+          bundleSha256: runtime.bundleSha256,
+          export: runtime.export,
+          toolCatalogPaths: runtime.toolCatalogPaths,
+          toolCatalogAbsolutePaths: runtime.toolCatalogAbsolutePaths,
+          toolCatalogCount: runtime.toolCatalogCount,
+          specs: runtime.specs,
+          liveFallback: false,
+        }, null, 2)}\n`);
+        await runReplayProxyServer({
+          mode: "replay",
+          bundlePath: runtime.bundlePath,
+          activeFixtureRefs: [runtime.ref],
+        });
+        return;
+      }
+      if (typeof args["fixture-set"] === "string") {
+        const runtime = await resolveFixtureSetRuntime({
+          ref: args["fixture-set"],
+          cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+        });
+        process.stderr.write(`${JSON.stringify({
+          event: "datalox_replay_fixture_set_start",
+          fixtureSetRef: runtime.ref,
+          activeFixtureRefs: runtime.activeFixtureRefs,
+          bundleIds: runtime.fixtures.map((fixture) => fixture.bundleId),
+          bundleSha256s: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.bundleSha256])),
+          toolCatalogPaths: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.toolCatalogPaths])),
+          toolCatalogAbsolutePaths: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.toolCatalogAbsolutePaths])),
+          specs: runtime.specs,
+          fixtureSpecs: Object.fromEntries(runtime.fixtures.map((fixture) => [fixture.ref, fixture.specs])),
+          liveFallback: false,
+        }, null, 2)}\n`);
+        await runReplayProxyServer({
+          mode: "replay",
+          bundlePaths: runtime.bundlePaths,
+          activeFixtureRefs: runtime.activeFixtureRefs,
+        });
+        return;
+      }
+      const fixtureRefs = [
+        ...toStringArray(args.fixtures),
+        ...(positional !== undefined ? [positional, ...rest] : []),
+      ];
+      if (fixtureRefs.length > 0) {
+        const runtimes = [];
+        for (const fixtureRef of fixtureRefs) {
+          runtimes.push(await resolveFixtureRuntime({
+            ref: fixtureRef,
+            cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+          }));
+        }
+        await validateNoToolNameCollisions(runtimes);
+        process.stderr.write(`${JSON.stringify({
+          event: "datalox_replay_fixtures_start",
+          activeFixtureRefs: runtimes.map((runtime) => runtime.ref),
+          bundleIds: runtimes.map((runtime) => runtime.bundleId),
+          bundleSha256s: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.bundleSha256])),
+          toolCatalogPaths: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.toolCatalogPaths])),
+          toolCatalogAbsolutePaths: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.toolCatalogAbsolutePaths])),
+          fixtureSpecs: Object.fromEntries(runtimes.map((runtime) => [runtime.ref, runtime.specs])),
+          liveFallback: false,
+        }, null, 2)}\n`);
+        await runReplayProxyServer({
+          mode: "replay",
+          bundlePaths: runtimes.map((runtime) => runtime.bundlePath),
+          activeFixtureRefs: runtimes.map((runtime) => runtime.ref),
+        });
+        return;
+      }
+      throw new Error("replay requires --fixture, --fixture-set, or --fixtures");
     }
     case "proxy": {
       const mode = typeof args.mode === "string" ? args.mode : undefined;

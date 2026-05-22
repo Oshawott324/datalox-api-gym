@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-21T05-34-10-000Z--agent-turn-turn-runtime-adapter-roadmap-2026-05-21",
+  "timestamp": "2026-05-21T05:34:10.000Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-21",
+  "turnId": "turn-runtime-adapter-roadmap-2026-05-21",
+  "summary": "Added a dedicated runtime adapter roadmap HTML explaining how Datalox can later integrate with Docker, CyberGym, E2B, Modal, OpenClaw, and internal runners without becoming a sandbox runtime.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-runtime-adapter-roadmap-2026-05-21",
+    "session_id": "codex-cli-2026-05-21",
+    "turn_index": 1,
+    "created_at": "2026-05-21T05:34:10Z",
+    "user_prompt": "write into a roadmap html",
+    "assistant_summary": "Created docs/runtime-adapter-roadmap.html. The roadmap keeps the boundary explicit: external runtimes own containers, services, filesystem state, browsers, verifiers, and compute scheduling; Datalox owns runtime lifecycle hooks, tool-I/O capture, replay bundles, fixture activation, and grounded exports. It defines a runtime adapter interface, spec files, command shapes, phases, CyberGym positioning, non-goals, and immediate repo work. Linked the roadmap from docs/project-overview.md and docs/local-to-server-engine-plan.html, and added it to the active replay-doc scan.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/replayCanonicalDocs.test.ts",
+        "exit_code": 0,
+        "output_summary": "Active replay docs gate passed: 1 file, 7 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts",
+        "exit_code": 1,
+        "output_summary": "Replay docs tests passed, but repo identity tests failed because legacy pack artifacts and marker blocks were already regenerated in AGENTS.md, CLAUDE.md, GEMINI.md, .github/copilot-instructions.md, .claude/hooks, old host rules, agent-wiki, old promotion scripts, and old pack skill paths."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check",
+        "exit_code": 0,
+        "output_summary": "TypeScript no-emit check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Whitespace/error check passed."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "docs/runtime-adapter-roadmap.html",
+        "action": "added",
+        "diff_summary": "New roadmap for future runtime adapter integration. Includes layer split, adapter contract, spec files, commands, phases, CyberGym positioning, non-goals, and immediate repo work."
+      },
+      {
+        "path": "docs/project-overview.md",
+        "action": "modified",
+        "diff_summary": "Linked runtime-adapter-roadmap.html from the project overview."
+      },
+      {
+        "path": "docs/local-to-server-engine-plan.html",
+        "action": "modified",
+        "diff_summary": "Linked runtime-adapter-roadmap.html and added Phase 8.5 for optional runtime adapter SPI work after fixture replay and fixture sets."
+      },
+      {
+        "path": "tests/replayCanonicalDocs.test.ts",
+        "action": "modified",
+        "diff_summary": "Added runtime-adapter-roadmap.html to the active replay surface scan."
+      }
+    ],
+    "verification": {
+      "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/replayCanonicalDocs.test.ts && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check && git diff --check",
+      "status": "passed_with_identity_blocker",
+      "evidence": "The roadmap doc passed active replay-doc tests. TypeScript no-emit and git diff --check passed. Combined repo identity verification remains blocked by regenerated legacy pack artifacts unrelated to the roadmap edit."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

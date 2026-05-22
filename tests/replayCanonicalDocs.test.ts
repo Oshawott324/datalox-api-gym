@@ -14,11 +14,12 @@ async function read(relativePath: string): Promise<string> {
 
 describe("replay canonical schema docs", () => {
   it("defines the replay source schemas and canonical paths", async () => {
-    const [actionObservationSchema, toolIoSchema, replayBundleSchema, replayQuickstart] = await Promise.all([
+    const [actionObservationSchema, toolIoSchema, replayBundleSchema, replayQuickstart, layerMap] = await Promise.all([
       read("docs/action-observation-schema.md"),
       read("docs/tool-io-store-schema.md"),
       read("docs/replay-bundle-schema.md"),
       read("docs/replay-quickstart.md"),
+      read("docs/agentic-rl-layer-map.md"),
     ]);
 
     expect(actionObservationSchema).toContain('schema_version: "action_observation.v1"');
@@ -42,6 +43,11 @@ describe("replay canonical schema docs", () => {
     expect(replayQuickstart).toContain(".datalox/mcp-tool-catalogs/");
     expect(replayQuickstart).toContain(".datalox/replay-bundles/demo-replay-bundle/");
     expect(replayQuickstart).toContain("Do not call live tools during replay as a hidden fallback.");
+
+    expect(layerMap).toContain("Layer 1.5: Tool-I/O Record/Replay");
+    expect(layerMap).toContain("Datalox does not own this layer.");
+    expect(layerMap).toContain("Datalox implements the first kind for agent-visible tool I/O.");
+    expect(layerMap).toContain(replayLoop);
   });
 
   it("keeps action/observation docs aligned with strict TypeScript validators", async () => {
@@ -102,6 +108,18 @@ describe("replay canonical schema docs", () => {
     ]) {
       expect(normalizeSource).toContain(normalizeToken);
     }
+  });
+
+  it("keeps the Option A implementation plan closed out against replay evidence", async () => {
+    const plan = await read("docs/agent-replay-option-a-implementation-plan.md");
+
+    expect(plan).toContain("Option A is implemented and regression-gated in this repo.");
+    expect(plan).toContain("| Step 9: Export derivatives from replay bundles | Done |");
+    expect(plan).toContain("| Step 10: Regression gates | Done |");
+    expect(plan).toContain("Status: complete as of 2026-05-20.");
+    expect(plan).toContain(".datalox/replay-bundles/ref-mcp-success");
+    expect(plan).toContain("sandbox/runtime orchestration");
+    expect(plan).toContain("reward functions or judge agents");
   });
 
   it("keeps first-read docs replay-first", async () => {
@@ -167,6 +185,13 @@ describe("replay canonical schema docs", () => {
       "docs/agent-turn-schema.md",
       "docs/agent-configuration.md",
       "docs/project-overview.md",
+      "docs/agentic-rl-layer-map.md",
+      "docs/verified-replay-quickstart.md",
+      "docs/fixture-worlds-and-sets.md",
+      "docs/reference-bundle-plan.md",
+      "docs/local-to-server-engine-plan.html",
+      "docs/runtime-adapter-roadmap.html",
+      "docs/pitch-deck.md",
       "docs/action-observation-schema.md",
       "docs/tool-io-store-schema.md",
       "docs/replay-bundle-schema.md",

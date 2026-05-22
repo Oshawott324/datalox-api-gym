@@ -8,6 +8,12 @@ tool request and observation, stores that pair by deterministic request hash,
 packs the records into sealed replay bundles, and can replay the same
 observations later without calling live upstream tools.
 
+In the broader agentic RL stack, Datalox owns the tool-I/O record/replay layer.
+It is complementary to sandbox runtimes, environment builders, behavioral mocks,
+and reward engines. During replay, recorded observations can act like
+record-based mocks, but Datalox does not construct fake stateful environments or
+invent unseen behavior.
+
 Primary replay loop:
 
 `agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`
@@ -121,6 +127,17 @@ node bin/datalox-mcp.js
 
 ## CLI
 
+Verified replay demo:
+
+```bash
+npm run demo:verified-replay
+```
+
+This records real MCP tool calls through the Datalox proxy, packs and verifies
+a replay bundle, replays with upstream off, shows a deterministic replay miss,
+and proves bundle tampering fails verification. See
+[docs/verified-replay-quickstart.md](docs/verified-replay-quickstart.md).
+
 Replay bundle commands:
 
 ```bash
@@ -140,6 +157,18 @@ Record-mode proxy snapshots upstream MCP `tools/list` into
 `.datalox/tool-io/records/`. Replay-mode proxy verifies a replay bundle and
 serves both `tools/list` and `tools/call` from bundled artifacts without
 starting upstream.
+
+Fixture world commands:
+
+```bash
+node bin/datalox.js fixtures install ../datalox-replay-fixtures/fixtures/github-pr-review-basic --json
+node bin/datalox.js fixtures list --json
+node bin/datalox.js fixture-sets install support-triage-basic@2026-05.0 --catalog ../datalox-replay-fixtures/catalog.json --json
+node bin/datalox.js replay --fixture github-pr-review-basic@2026-05.0
+```
+
+Fixture install only caches and verifies data. Replay activation is separate.
+See [docs/fixture-worlds-and-sets.md](docs/fixture-worlds-and-sets.md).
 
 Trajectory derivation code lives under `src/core/derivatives/trajectory/` and
 is not exposed by the install-facing CLI or MCP surface.
@@ -216,6 +245,10 @@ before/after snippets or patch hunks.
 
 - [DATALOX.md](DATALOX.md)
 - [docs/project-definition.md](docs/project-definition.md)
+- [docs/agentic-rl-layer-map.md](docs/agentic-rl-layer-map.md)
+- [docs/reference-bundle-plan.md](docs/reference-bundle-plan.md)
+- [docs/pitch-deck.md](docs/pitch-deck.md)
+- [examples/reference-bundles/README.md](examples/reference-bundles/README.md)
 - [docs/replay-quickstart.md](docs/replay-quickstart.md)
 - [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md)
 - [docs/action-observation-schema.md](docs/action-observation-schema.md)

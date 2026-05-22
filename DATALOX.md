@@ -21,6 +21,13 @@ Primary replay loop:
 
 `agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`
 
+Datalox Agent Replay owns the tool-I/O record/replay layer inside the agentic
+RL stack. This repo does not own sandbox runtimes, generic task environment
+construction, behavioral mock construction, reward functions, or judge agents.
+Sibling Datalox domain MCP repos may own constrained scientific environments;
+Agent Replay records and replays their tool I/O instead of becoming their
+domain runtime. See [docs/agentic-rl-layer-map.md](docs/agentic-rl-layer-map.md).
+
 Do not keep note/skill promotion as a second loop in this repo.
 
 ## Read Order
@@ -50,6 +57,7 @@ The repo-local replay data surfaces are:
 - `docs/action-observation-schema.md`
 - `docs/tool-io-store-schema.md`
 - `docs/replay-bundle-schema.md`
+- `docs/agentic-rl-layer-map.md`
 - `docs/agent-turn-schema.md`
 - `docs/derivatives/trajectory/trajectory-dataset-schema.md`
 - `docs/derivatives/trajectory/agent-task-trajectory-schema.md`

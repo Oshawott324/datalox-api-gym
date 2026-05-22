@@ -17,6 +17,8 @@ exact replay primitive is [docs/tool-io-store-schema.md](docs/tool-io-store-sche
 The source bundle contract is [docs/replay-bundle-schema.md](docs/replay-bundle-schema.md).
 The turn review contract is [docs/agent-turn-schema.md](docs/agent-turn-schema.md).
 The smallest record/replay loop is [docs/replay-quickstart.md](docs/replay-quickstart.md).
+The agentic RL layer boundary is
+[docs/agentic-rl-layer-map.md](docs/agentic-rl-layer-map.md).
 Compact trajectory rows use the trajectory schemas only as derivatives.
 The concrete replay migration plan is
 [docs/agent-replay-option-a-implementation-plan.md](docs/agent-replay-option-a-implementation-plan.md).
@@ -78,13 +80,14 @@ node bin/datalox.js status --repo . --json
 1. `.datalox/manifest.json`
 2. `.datalox/config.json`
 3. `docs/project-definition.md`
-4. `docs/action-observation-schema.md` when the work touches raw trace normalization or action schema
-5. `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
-6. `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
-7. `docs/agent-turn-schema.md` when the work touches turn review data
-8. trajectory schema docs only when deriving optional trajectory/eval rows
-9. `DATALOX.md`
-10. the selected `skills/<name>/SKILL.md` only when the task matches that skill
+4. `docs/agentic-rl-layer-map.md` when the work touches sandbox, environment, mock, reward, or agentic RL positioning
+5. `docs/action-observation-schema.md` when the work touches raw trace normalization or action schema
+6. `docs/tool-io-store-schema.md` when the work touches tool-call capture or replay
+7. `docs/replay-bundle-schema.md` when the work touches replay bundles, approval, or export
+8. `docs/agent-turn-schema.md` when the work touches turn review data
+9. trajectory schema docs only when deriving optional trajectory/eval rows
+10. `DATALOX.md`
+11. the selected `skills/<name>/SKILL.md` only when the task matches that skill
 
 ## One-Click Options
 

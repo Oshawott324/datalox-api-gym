@@ -7,7 +7,9 @@ If other docs drift, this document wins. For exact tool-call capture,
 action/observation views, [action-observation-schema.md](./action-observation-schema.md)
 wins. For replay bundles, [replay-bundle-schema.md](./replay-bundle-schema.md)
 wins. For optional turn review context, [agent-turn-schema.md](./agent-turn-schema.md)
-wins. Trajectory schemas define optional downstream adapters only.
+wins. [agentic-rl-layer-map.md](./agentic-rl-layer-map.md) defines the product
+boundary inside the broader sandbox/env/reward stack. Trajectory schemas define
+optional downstream adapters only.
 
 ## Definition
 
@@ -41,6 +43,12 @@ The project boundary is:
 
 Everything else is supporting infrastructure.
 
+This boundary describes the Agent Replay repo. Sibling Datalox domain MCP repos
+can provide constrained scientific environments, such as flow cytometry,
+molecular biology, or protein visualization workspaces. Agent Replay should
+record and replay the tool I/O those environments emit; it should not absorb
+their domain runtime, UI, or scientific algorithms.
+
 ## Why This Exists
 
 Agentic RL, eval, and regression teams hit the same failure mode: they cannot
@@ -58,6 +66,28 @@ Datalox solves the lower layer only:
 Teams can keep their existing agent runtime, sandbox, reward code, eval runner,
 or RL stack. Datalox sits underneath those systems as the reproducible tool I/O
 layer.
+
+## Agentic RL Layer Map
+
+Datalox Agent Replay lives in the tool-I/O record/replay layer:
+
+```text
+Layer 1    sandbox/runtime foundation
+Layer 2a   constrained domain MCP environments       <- sibling Datalox domain repos can own this
+Layer 2b   generic task environment construction      <- not this repo
+Layer 1.5  tool-I/O record/replay                     <- Datalox Agent Replay
+Layer 3    evaluation and reward rules
+```
+
+During replay, recorded observations can function like record-based mocks for
+agent-visible tools or external APIs. The important boundary is that Datalox
+does not invent behavior. It records a real observation first and later returns
+that exact observation by `request_hash + sequence_index`.
+
+Datalox Agent Replay is complementary to sandbox runtimes, generic environment
+builders, behavioral mocks, judge agents, reward engines, and Datalox's own
+domain MCP environments. It should preserve provenance for those systems when
+available, but not become those systems.
 
 ## Core Schemas
 
@@ -228,6 +258,8 @@ This repo is not:
 - a wiki or note promotion system
 - a trajectory-first capture tool
 - a hosted sandbox execution platform
+- a stateful environment/mock construction platform
+- a reward or judge-agent engine
 - a replacement for existing RL or eval harnesses
 
 ## Stable Project Sentence

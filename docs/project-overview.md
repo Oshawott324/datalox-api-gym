@@ -5,6 +5,13 @@ The canonical action/observation schema lives in [action-observation-schema.md](
 The canonical tool I/O schema lives in [tool-io-store-schema.md](./tool-io-store-schema.md).
 The canonical replay bundle schema lives in [replay-bundle-schema.md](./replay-bundle-schema.md).
 The canonical per-turn review schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
+The canonical layer boundary lives in [agentic-rl-layer-map.md](./agentic-rl-layer-map.md).
+The verified replay quickstart lives in [verified-replay-quickstart.md](./verified-replay-quickstart.md).
+The fixture-world usage guide lives in [fixture-worlds-and-sets.md](./fixture-worlds-and-sets.md).
+The reference-bundle milestone plan lives in [reference-bundle-plan.md](./reference-bundle-plan.md).
+The local-engine to server-ready implementation plan lives in [local-to-server-engine-plan.html](./local-to-server-engine-plan.html).
+The runtime adapter roadmap lives in [runtime-adapter-roadmap.html](./runtime-adapter-roadmap.html).
+The current pitch outline lives in [pitch-deck.md](./pitch-deck.md).
 The canonical derivative trajectory schema lives in [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md).
 The filesystem-backed orchestration protocol lives in [task-orchestration.md](./task-orchestration.md).
 
@@ -17,6 +24,7 @@ Short version:
 - `agent_turn.v1` events are optional turn review context.
 - `replay_bundle.v1` is the portable artifact that can be verified and replayed.
 - `debugging_trajectory.v1` rows are optional compact training/eval adapters.
+- Datalox owns tool-I/O record/replay, not sandbox runtime, environment construction, or reward rules.
 - Datalox MCP is the instrumentation, tool I/O capture, replay, verification, and export-control layer.
 - `datalox-agent-replay` is the repo-local implementation package.
 - Local skills are internal guidance surfaces, not a second replay loop.
@@ -55,9 +63,10 @@ Normal read path:
 3. read the tool I/O schema when replay capture fields are involved
 4. read the replay bundle schema when approval/export fields are involved
 5. read the turn schema when turn review fields are involved
-6. read the trajectory schema only for optional derivative rows
-7. record meaningful grounded events
-8. use local skill guidance only where current host behavior still requires it
+6. read the layer map, reference-bundle plan, or pitch outline only when the task touches positioning, reference artifacts, or fundraising
+7. read the trajectory schema only for optional derivative rows
+8. record meaningful grounded events
+9. use local skill guidance only where current host behavior still requires it
 
 Current durable local replay outputs:
 

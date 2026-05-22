@@ -4,6 +4,12 @@
   "private": false,
   "type": "module",
   "description": "Agent replay MCP for reproducible tool I/O, session bundles, and derived trajectory/eval export.",
+  "main": "./dist/src/sdk/index.js",
+  "types": "./dist/src/sdk/index.d.ts",
+  "exports": {
+    ".": "./dist/src/sdk/index.js",
+    "./sdk": "./dist/src/sdk/index.js"
+  },
   "bin": {
     "datalox": "./bin/datalox.js",
     "datalox-mcp": "./bin/datalox-mcp.js",
@@ -16,6 +22,7 @@
   "scripts": {
     "build": "tsc",
     "datalox": "node dist/src/cli/main.js",
+    "demo:verified-replay": "npm run build && node examples/verified-replay-quickstart/run-demo.mjs",
     "mcp:stdio": "node dist/src/mcp/replayServer.js",
     "mcp:full": "node dist/src/mcp/server.js",
     "prepare": "tsc",

@@ -161,6 +161,34 @@ describe("replay_bundle.v1 pack and verify", () => {
     });
   });
 
+  it("allows public bundles to replace the local source repo path", async () => {
+    const repoPath = await makeTempRepo();
+    await seedReplaySources(repoPath);
+    const result = await packReplayBundle({
+      repoPath,
+      sourceRepoPath: ".",
+      bundleId: "public-bundle",
+      now: new Date("2026-05-16T01:00:00.000Z"),
+      export: {
+        allowed: true,
+        redaction: "none_needed",
+      },
+    });
+
+    expect(result.manifest.source.repo_path).toBe(".");
+    await expect(verifyReplayBundle({
+      repoPath,
+      bundlePath: result.bundlePath,
+    })).resolves.toMatchObject({
+      verified: true,
+      manifest: {
+        source: {
+          repo_path: ".",
+        },
+      },
+    });
+  });
+
   it("fails verification when a bundled file is modified", async () => {
     const repoPath = await makeTempRepo();
     const result = await packSeededBundle(repoPath, "bundle-modified");

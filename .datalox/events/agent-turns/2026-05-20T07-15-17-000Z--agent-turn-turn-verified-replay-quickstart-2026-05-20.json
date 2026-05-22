@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-20T07-15-17-000Z--agent-turn-turn-verified-replay-quickstart-2026-05-20",
+  "timestamp": "2026-05-20T07:15:17.000Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-20",
+  "turnId": "turn-verified-replay-quickstart-2026-05-20",
+  "summary": "Implemented Phase 1: Verified Replay Quickstart. Added npm run demo:verified-replay, a deterministic MCP fixture, record-mode config, a demo runner that records, packs, verifies, replays with upstream off, shows replay_miss, and catches tampering, plus docs and regression coverage.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-verified-replay-quickstart-2026-05-20",
+    "session_id": "codex-cli-2026-05-20",
+    "turn_index": 6,
+    "created_at": "2026-05-20T07:15:17Z",
+    "user_prompt": "do Phase 1: Verified Replay Quickstart till pass",
+    "assistant_summary": "Implemented the verified replay quickstart as a runnable local product proof. The new npm run demo:verified-replay command builds the project, starts a deterministic MCP upstream through Datalox record mode, records three calls, packs and verifies a replay bundle, removes live source stores, replays the same calls from the bundle with upstream off, returns a structured replay_miss for an unseen request, and verifies that a tampered bundle fails checksum validation. Added docs, README link, roadmap status, ignored demo output, and a regression test.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run demo:verified-replay",
+        "exit_code": 0,
+        "output_summary": "Demo passed. Summary: bundle_id=verified-replay-demo, tool_record_count=3, mcp_tool_catalog_count=1, replay_hit_count=3, replay_miss_count=1, upstream_calls_during_replay=0, tamper_detected=true, elapsed_ms about 3000."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/verifiedReplayQuickstart.test.ts tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts",
+        "exit_code": 0,
+        "output_summary": "Focused Phase 1 gates passed: 3 files, 13 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check",
+        "exit_code": 0,
+        "output_summary": "TypeScript no-emit check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Whitespace/error check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm test",
+        "exit_code": 0,
+        "output_summary": "Full suite passed: 18 files, 107 tests."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "package.json",
+        "action": "modified",
+        "diff_summary": "Added demo:verified-replay npm script."
+      },
+      {
+        "path": ".gitignore",
+        "action": "modified",
+        "diff_summary": "Ignored examples/verified-replay-quickstart/output/ demo artifacts."
+      },
+      {
+        "path": "examples/verified-replay-quickstart/",
+        "action": "created",
+        "diff_summary": "Added deterministic MCP fixture, record config, runnable demo script, and example README."
+      },
+      {
+        "path": "docs/verified-replay-quickstart.md",
+        "action": "created",
+        "diff_summary": "Documented the quickstart flow, pass criteria, output path, and product boundary."
+      },
+      {
+        "path": "README.md",
+        "action": "modified",
+        "diff_summary": "Added verified replay demo command and docs link."
+      },
+      {
+        "path": "docs/local-to-server-engine-plan.html",
+        "action": "modified",
+        "diff_summary": "Marked Phase 1 done, added replay miss pass criterion, and listed verification commands."
+      },
+      {
+        "path": "docs/project-overview.md",
+        "action": "modified",
+        "diff_summary": "Linked the verified replay quickstart doc."
+      },
+      {
+        "path": "tests/verifiedReplayQuickstart.test.ts",
+        "action": "created",
+        "diff_summary": "Added regression coverage for record, pack, verify, upstream-off replay, replay miss, and tamper detection."
+      },
+      {
+        "path": "tests/replayCanonicalDocs.test.ts",
+        "action": "modified",
+        "diff_summary": "Added the quickstart doc to active replay-surface stale wording checks."
+      }
+    ],
+    "verification": {
+      "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run demo:verified-replay && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/verifiedReplayQuickstart.test.ts tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check && git diff --check && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm test",
+      "status": "passed",
+      "evidence": "Demo passed with 3 tool records, 1 MCP tool catalog, 3 replay hits, 1 replay miss, 0 upstream calls during replay, and tamper_detected=true. Focused gates passed: 3 files, 13 tests. Full suite passed: 18 files, 107 tests. TypeScript and git diff checks passed."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

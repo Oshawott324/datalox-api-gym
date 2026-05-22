@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-20T07-42-23-000Z--agent-turn-turn-fixture-worlds-roadmap-2026-05-20",
+  "timestamp": "2026-05-20T07:42:23.000Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-20",
+  "turnId": "turn-fixture-worlds-roadmap-2026-05-20",
+  "summary": "Updated the local-to-server roadmap so Phase 2 becomes fixture worlds and fixture sets. BYO MCP config moved to Phase 3 as the private fixture-world recording path. The plan now states what belongs in this repo versus the future datalox-replay-fixtures repo.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-fixture-worlds-roadmap-2026-05-20",
+    "session_id": "codex-cli-2026-05-20",
+    "turn_index": 7,
+    "created_at": "2026-05-20T07:42:23Z",
+    "user_prompt": "how to do Phase 2 should start defining fixture worlds / fixture sets, not just BYO MCP config, update the .html, by what to do in this repo, anything to do in datalox-replay-fixture?",
+    "assistant_summary": "Updated docs/local-to-server-engine-plan.html to make Phase 2 the fixture worlds and fixture sets milestone. The roadmap now defines fixture pack and fixture set schemas, install-vs-replay semantics, target commands, collision rules, runtime behavior, pass criteria, and the split between this repo and a future datalox-replay-fixtures repo. BYO MCP config is now Phase 3 and framed as the private-world recorder that can promote recorded bundles into private fixture packs.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts",
+        "exit_code": 0,
+        "output_summary": "Focused docs and identity gates passed: 2 files, 12 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check",
+        "exit_code": 0,
+        "output_summary": "TypeScript no-emit check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Whitespace/error check passed."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "docs/local-to-server-engine-plan.html",
+        "action": "modified",
+        "diff_summary": "Replaced Phase 2 BYO MCP config with fixture worlds and fixture sets. Added target commands for fixtures install, replay --fixture, replay --fixtures, fixture-sets install, and replay --fixture-set. Added fixture pack and fixture set manifest examples, pass criteria, repo-boundary guidance, and updated server-ready architecture, release gates, and recommended next tasks. Moved BYO MCP config to Phase 3."
+      }
+    ],
+    "verification": {
+      "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check && git diff --check",
+      "status": "passed",
+      "evidence": "Focused docs and identity gates passed: 2 files, 12 tests. TypeScript no-emit check passed. git diff --check passed."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

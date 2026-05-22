@@ -1,0 +1,41 @@
+{
+  "schema_version": "replay_bundle.v1",
+  "id": "ref-mcp-error-observation",
+  "created_at": "2026-05-20T02:12:09.640Z",
+  "title": "Reference MCP Error Observation Replay Bundle",
+  "task": {
+    "prompt": "Record and replay one deterministic agent-visible MCP error observation.",
+    "domains": [
+      "mcp",
+      "reference"
+    ],
+    "workflows": [
+      "tool_io_replay",
+      "error_observation"
+    ]
+  },
+  "source": {
+    "repo_path": ".",
+    "session_ids": [
+      "ref-mcp-error-observation-session"
+    ],
+    "turn_event_paths": [],
+    "tool_io_record_paths": [
+      "tool-io/toolio-4340719c3c89a432-0-proxy-call-0.json"
+    ],
+    "mcp_tool_catalog_paths": [
+      "mcp-tool-catalogs/mcp-tool-catalog-a9640a1fd80e88ddb50365ae.json"
+    ]
+  },
+  "replay": {
+    "tool_record_count": 1,
+    "turn_count": 0,
+    "deterministic": true
+  },
+  "checksums_path": "checksums.json",
+  "export": {
+    "allowed": true,
+    "redaction": "none_needed",
+    "approval_id": "reference-public"
+  }
+}

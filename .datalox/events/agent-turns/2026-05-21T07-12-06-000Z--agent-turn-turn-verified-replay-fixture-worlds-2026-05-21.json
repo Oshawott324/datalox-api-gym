@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-21T07-12-06-000Z--agent-turn-turn-verified-replay-fixture-worlds-2026-05-21",
+  "timestamp": "2026-05-21T07:12:06.000Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-21",
+  "turnId": "turn-verified-replay-fixture-worlds-2026-05-21",
+  "summary": "Completed the immediate replay-engine phases: removed regenerated legacy pack artifacts, kept verified replay quickstart passing, added fixture-world and fixture-set install/list/replay surfaces, documented the current local-to-server path, and verified both this repo and the sibling datalox-replay-fixtures repo.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-verified-replay-fixture-worlds-2026-05-21",
+    "session_id": "codex-cli-2026-05-21",
+    "turn_index": 1,
+    "created_at": "2026-05-21T07:12:06Z",
+    "user_prompt": "do it phase by phase till all pass, use superpower if need",
+    "assistant_summary": "Completed Phase 0 cleanup, Phase 1 verified replay quickstart, and Phase 2 fixture worlds / fixture sets. Added direct local fixture install, installed fixture listing, fixture-set install, multi-bundle replay wiring, SDK exports, docs, and regression tests. Verified the quickstart, focused fixture tests, full test suite, TypeScript check, whitespace check, and sibling fixture repository tests.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "npx vitest run tests/verifiedReplayQuickstart.test.ts tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts tests/fixtureCatalogSchema.test.ts tests/fixtureManifestSchema.test.ts tests/installFixturePack.test.ts tests/fixtureSetRuntime.test.ts tests/referenceBundles.test.ts",
+        "exit_code": 0,
+        "output_summary": "Passed: 8 test files, 36 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm run check",
+        "exit_code": 0,
+        "output_summary": "Passed TypeScript no-emit check."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm test",
+        "exit_code": 0,
+        "output_summary": "Passed full Vitest suite: 23 test files, 128 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm run demo:verified-replay",
+        "exit_code": 0,
+        "output_summary": "Passed verified replay quickstart: 3 recorded calls, 3 replay hits, 1 expected replay miss, zero upstream calls during replay, tamper detected."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "npm test",
+        "exit_code": 0,
+        "output_summary": "Passed sibling datalox-replay-fixtures repo tests: fixture catalog, fixture sets, manifests, README, and pack command help."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Passed whitespace/error check."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": ".gitignore",
+        "action": "modified",
+        "diff_summary": "Ignored generated verified replay quickstart output."
+      },
+      {
+        "path": "README.md",
+        "action": "modified",
+        "diff_summary": "Added verified replay quickstart and fixture-world usage commands."
+      },
+      {
+        "path": "docs/verified-replay-quickstart.md",
+        "action": "created",
+        "diff_summary": "Documented the 5-minute record, pack, replay, miss, and tamper-detection loop."
+      },
+      {
+        "path": "docs/fixture-worlds-and-sets.md",
+        "action": "created",
+        "diff_summary": "Documented fixture pack install, fixture set install, replay activation, sibling fixture repo shape, and pass criteria."
+      },
+      {
+        "path": "docs/local-to-server-engine-plan.html",
+        "action": "modified",
+        "diff_summary": "Updated the roadmap to reflect implemented verified replay and fixture-world phases, with exact repo commands and gates."
+      },
+      {
+        "path": "docs/runtime-adapter-roadmap.html",
+        "action": "created",
+        "diff_summary": "Added the later runtime adapter path and explicit boundary between pure replay worlds and runtime-backed rollout."
+      },
+      {
+        "path": "examples/verified-replay-quickstart/",
+        "action": "created",
+        "diff_summary": "Added a runnable MCP fixture upstream and demo script for record, bundle, replay, miss, and tamper checks."
+      },
+      {
+        "path": "src/core/fixtures/",
+        "action": "created",
+        "diff_summary": "Added fixture refs, manifest/catalog/set schemas, cache install/list helpers, fixture set install, runtime resolution, and tool-collision validation."
+      },
+      {
+        "path": "src/cli/main.ts",
+        "action": "modified",
+        "diff_summary": "Added fixtures install/list, fixture-sets install/list, and replay activation through fixture packs, fixture sets, or multiple fixture refs."
+      },
+      {
+        "path": "src/mcp/replayProxyServer.ts",
+        "action": "modified",
+        "diff_summary": "Added multi-bundle replay loading, bundle verification, duplicate tool-name rejection, and fixture-aware miss diagnostics."
+      },
+      {
+        "path": "src/sdk/index.ts",
+        "action": "created",
+        "diff_summary": "Exported fixture primitives for programmatic integration."
+      },
+      {
+        "path": "tests/",
+        "action": "modified",
+        "diff_summary": "Added quickstart, fixture schema, install, fixture set, SDK, and canonical-doc regression coverage."
+      }
+    ],
+    "verification": {
+      "command": "npx vitest run tests/verifiedReplayQuickstart.test.ts tests/replayCanonicalDocs.test.ts tests/repoIdentity.test.ts tests/fixtureCatalogSchema.test.ts tests/fixtureManifestSchema.test.ts tests/installFixturePack.test.ts tests/fixtureSetRuntime.test.ts tests/referenceBundles.test.ts && npm run check && npm test && npm run demo:verified-replay && git diff --check",
+      "status": "passed",
+      "evidence": "Focused replay/fixture gates passed. TypeScript no-emit passed. Full Vitest passed: 23 files, 128 tests. Verified replay demo passed with no upstream calls during replay and tamper detection. Sibling datalox-replay-fixtures tests passed separately."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

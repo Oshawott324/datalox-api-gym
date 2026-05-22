@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "id": ".datalox/events/agent-turns/2026-05-20T06-34-09-000Z--agent-turn-turn-local-to-server-engine-plan-2026-05-20",
+  "timestamp": "2026-05-20T06:34:09.000Z",
+  "eventKind": "agent_turn",
+  "eventClass": "trace",
+  "sourceKind": "trace",
+  "sessionId": "codex-cli-2026-05-20",
+  "turnId": "turn-local-to-server-engine-plan-2026-05-20",
+  "summary": "Added a standalone HTML implementation and cleanup plan for keeping this repo as the local MCP VCR engine, preparing server-shaped storage and SDK surfaces, and keeping curated fixture packs in a separate future repo.",
+  "agentTurn": {
+    "schema_version": "agent_turn.v1",
+    "id": "turn-local-to-server-engine-plan-2026-05-20",
+    "session_id": "codex-cli-2026-05-20",
+    "turn_index": 4,
+    "created_at": "2026-05-20T06:34:09Z",
+    "user_prompt": "ok, according to ur plan, what we should do to this repo, i want a very detailed implementation/cleanup plan, write into a .html",
+    "assistant_summary": "Added docs/local-to-server-engine-plan.html with the local-engine to server-ready roadmap. The plan keeps datalox-agent-replay as the engine repo, puts curated fixture packs in a separate future repo, defines immediate cleanup, and lays out phases for verified replay quickstart, BYO MCP config UX, SDK entrypoints, server-shaped stores, refs/metrics/GC, fixture pack contracts, local daemon, server registry client, and parallel tool interaction support. Linked the new HTML plan from docs/project-overview.md and cleaned regenerated legacy pack surfaces from the local repo before verification.",
+    "tool_calls": [
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/repoIdentity.test.ts tests/replayCanonicalDocs.test.ts",
+        "exit_code": 0,
+        "output_summary": "Focused docs and identity gates passed: 2 files, 12 tests."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check",
+        "exit_code": 0,
+        "output_summary": "TypeScript no-emit check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "git diff --check",
+        "exit_code": 0,
+        "output_summary": "Whitespace/error check passed."
+      },
+      {
+        "tool": "functions.exec_command",
+        "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm test",
+        "exit_code": 0,
+        "output_summary": "Full suite passed: 17 test files, 106 tests."
+      }
+    ],
+    "file_changes": [
+      {
+        "path": "docs/local-to-server-engine-plan.html",
+        "action": "created",
+        "diff_summary": "Standalone HTML roadmap covering repo split, product boundary, immediate cleanup, local verified replay demo, BYO MCP config, SDK, server-shaped stores, bundle refs and metrics, fixture pack contract, local daemon, server registry client, and parallel tool interaction support."
+      },
+      {
+        "path": "docs/project-overview.md",
+        "action": "modified",
+        "diff_summary": "Linked the new local-engine to server-ready implementation plan from the overview."
+      },
+      {
+        "path": "AGENTS.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy pack marker block while preserving current Agent Replay instructions."
+      },
+      {
+        "path": "CLAUDE.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy pack marker block while preserving current Claude replay guidance."
+      },
+      {
+        "path": "GEMINI.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy pack marker block while preserving current Gemini replay guidance."
+      },
+      {
+        "path": ".github/copilot-instructions.md",
+        "action": "modified",
+        "diff_summary": "Removed regenerated legacy pack marker block while preserving current replay guidance."
+      }
+    ],
+    "verification": {
+      "command": "PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npx vitest run tests/repoIdentity.test.ts tests/replayCanonicalDocs.test.ts && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm run check && git diff --check && PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" npm test",
+      "status": "passed",
+      "evidence": "Focused docs and identity gates passed: 2 files, 12 tests. TypeScript no-emit check passed. git diff --check passed. Full npm test passed: 17 files, 106 tests."
+    },
+    "export": {
+      "allowed": true,
+      "redaction": "none_needed"
+    }
+  }
+}

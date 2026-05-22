@@ -1,0 +1,52 @@
+{
+  "schema_version": "tool_io_record.v1",
+  "id": "toolio-a0da7d36aa0e8a9c-0-proxy-call-0",
+  "session_id": "ref-mcp-success-session",
+  "turn_id": "ref-mcp-success-turn",
+  "call_id": "proxy-call-0",
+  "tool_name": "policy_lookup",
+  "arguments": {
+    "query": "Beijing taxi reimbursement limit",
+    "top_k": 2
+  },
+  "request_hash": "a0da7d36aa0e8a9c97d7a4afa9efa28fab0f78cfec322e73c1fbc6b7ccc6cd4e",
+  "sequence_index": 0,
+  "observation": {
+    "status": "ok",
+    "content": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"query\":\"Beijing taxi reimbursement limit\",\"top_k\":2,\"call_index\":0,\"matches\":[{\"id\":\"policy-0-a\",\"title\":\"Reference taxi reimbursement policy\",\"excerpt\":\"Deterministic policy match A for Beijing taxi reimbursement limit.\"},{\"id\":\"policy-0-b\",\"title\":\"Reference travel expense policy\",\"excerpt\":\"Deterministic policy match B for Beijing taxi reimbursement limit.\"}]}"
+        }
+      ],
+      "structuredContent": {
+        "query": "Beijing taxi reimbursement limit",
+        "top_k": 2,
+        "call_index": 0,
+        "matches": [
+          {
+            "id": "policy-0-a",
+            "title": "Reference taxi reimbursement policy",
+            "excerpt": "Deterministic policy match A for Beijing taxi reimbursement limit."
+          },
+          {
+            "id": "policy-0-b",
+            "title": "Reference travel expense policy",
+            "excerpt": "Deterministic policy match B for Beijing taxi reimbursement limit."
+          }
+        ]
+      }
+    }
+  },
+  "created_at": "2026-05-20T02:12:02.593Z",
+  "source": {
+    "mcp_server": "upstream",
+    "command": "node examples/reference-bundles/fixtures/reference-upstream.mjs"
+  },
+  "export": {
+    "allowed": true,
+    "redaction": "none_needed",
+    "approval_id": "reference-public"
+  }
+}
