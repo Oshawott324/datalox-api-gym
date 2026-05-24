@@ -21,6 +21,23 @@ import {
   type ResolveFixtureSetRuntimeInput,
 } from "../core/fixtures/resolveFixtureSetRuntime.js";
 import { validateNoToolNameCollisions } from "../core/fixtures/validateToolCollisions.js";
+import {
+  exportSftFromRun,
+  type ExportSftFromRunInput,
+  type ExportSftFromRunResult,
+} from "../core/exports/exportSftFromRun.js";
+import {
+  createReplayToolRuntime,
+  type CreateReplayToolRuntimeInput,
+  type ReplayToolRuntime,
+} from "../core/run/replayToolRuntime.js";
+import {
+  runFixtureAgent,
+  type RunFixtureAgentInput,
+  type RunFixtureAgentResult,
+} from "../core/run/runFixtureAgent.js";
+import type { DataloxRunV1, RunMessage, RunStep } from "../core/run/runTranscriptSchema.js";
+import type { SftFrameV1 } from "../core/exports/sftFrameSchema.js";
 import { buildReplayProxyServer } from "../mcp/replayProxyServer.js";
 
 export type {
@@ -30,8 +47,18 @@ export type {
   InstallFixtureResult,
   InstallFixtureSetInput,
   InstallFixtureSetResult,
+  CreateReplayToolRuntimeInput,
+  DataloxRunV1,
+  ExportSftFromRunInput,
+  ExportSftFromRunResult,
+  ReplayToolRuntime,
   ResolveFixtureRuntimeInput,
   ResolveFixtureSetRuntimeInput,
+  RunFixtureAgentInput,
+  RunFixtureAgentResult,
+  RunMessage,
+  RunStep,
+  SftFrameV1,
 };
 
 export async function installFixture(input: InstallFixtureInput): Promise<InstallFixtureResult> {
@@ -48,6 +75,18 @@ export async function installFixtureSet(input: InstallFixtureSetInput): Promise<
 
 export async function resolveFixtureSet(input: ResolveFixtureSetRuntimeInput): Promise<FixtureSetRuntime> {
   return resolveFixtureSetRuntime(input);
+}
+
+export async function createReplayRuntime(input: CreateReplayToolRuntimeInput): Promise<ReplayToolRuntime> {
+  return createReplayToolRuntime(input);
+}
+
+export async function runFixture(input: RunFixtureAgentInput): Promise<RunFixtureAgentResult> {
+  return runFixtureAgent(input);
+}
+
+export async function exportSft(input: ExportSftFromRunInput): Promise<ExportSftFromRunResult> {
+  return exportSftFromRun(input);
 }
 
 export interface CreateReplayMcpServerInput {
