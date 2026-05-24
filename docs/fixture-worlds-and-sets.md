@@ -30,8 +30,13 @@ installs, verifies, and serves those fixtures.
 Current known fixture packs:
 
 ```text
+appworld-calendar-basic@2026-06.0
+flowcyto-gating-basic@2026-06.0
 github-ci-failure-basic@2026-05.0
 github-pr-review-basic@2026-05.0
+literature-protocol-search@2026-06.0
+molecule-sequence-annotation@2026-06.0
+protein-viewer-snapshot@2026-06.0
 search-policy-corpus-basic@2026-05.0
 slack-support-thread-basic@2026-05.0
 stripe-billing-edge-cases@2026-05.0
@@ -40,8 +45,10 @@ stripe-billing-edge-cases@2026-05.0
 Current known fixture sets:
 
 ```text
-coding-review-ci-basic@2026-05.0
-support-triage-basic@2026-05.0
+appworld-calendar-basic@2026-06.0
+bio-agent-basic@2026-06.0
+coding-review-ci-basic@2026-06.0
+support-triage-basic@2026-06.0
 ```
 
 ## Install One Fixture
@@ -70,7 +77,7 @@ datalox fixtures list
 Fixture sets are catalog-backed because they resolve multiple member fixtures.
 
 ```bash
-datalox fixture-sets install support-triage-basic@2026-05.0 \
+datalox fixture-sets install support-triage-basic@2026-06.0 \
   --catalog ../datalox-replay-fixtures/catalog.json
 ```
 
@@ -85,7 +92,7 @@ datalox replay --fixture github-pr-review-basic@2026-05.0
 Replay one installed fixture set:
 
 ```bash
-datalox replay --fixture-set support-triage-basic@2026-05.0
+datalox replay --fixture-set support-triage-basic@2026-06.0
 ```
 
 Replay multiple installed fixtures:
@@ -96,6 +103,33 @@ datalox replay --fixtures \
   slack-support-thread-basic@2026-05.0 \
   search-policy-corpus-basic@2026-05.0
 ```
+
+## Run With An OpenAI-Compatible Model
+
+`datalox run` is the immediate path for vLLM, verl data generation, Groq, or
+OpenAI-compatible hosted models. It auto-installs the fixture set, converts the
+replayed MCP tool catalog into OpenAI function tools, and writes one
+`datalox_fixture_run.v1` JSONL row per eval prompt.
+
+```bash
+export OPENAI_BASE_URL=http://localhost:8000/v1
+export OPENAI_API_KEY=EMPTY
+
+datalox run \
+  --fixture-set support-triage-basic@2026-06.0 \
+  --catalog ../datalox-replay-fixtures/catalog.json \
+  --model Qwen/Qwen2.5-7B-Instruct \
+  --split train \
+  --max-tasks 1 \
+  --out exports/fixture-runs/support-triage-basic.train.jsonl \
+  --json
+```
+
+For hosted OpenAI-compatible APIs, change only `OPENAI_BASE_URL`,
+`OPENAI_API_KEY`, and `--model`. The runner does not execute verifier specs or
+reference rewards. It records the model-visible episode and replay misses so
+verl or another trainer/eval harness can consume the JSONL and compute rewards
+outside this repo.
 
 ## Spec Metadata
 
@@ -130,6 +164,11 @@ or infer hidden reward logic from the spec.
   explicitly in a later version.
 - Replay misses include request hash, sequence index, tool name, active fixture
   refs, available tool names, and `liveFallback: false`.
+- `datalox run` returns replay misses to the model as tool results and never
+  calls live upstream tools for missing records.
+- `datalox run` writes `datalox_fixture_run.v1` JSONL with task metadata,
+  model-visible messages, replayed tool observations, SFT/preference flags, and
+  unlabeled quality.
 
 Primary replay loop:
 

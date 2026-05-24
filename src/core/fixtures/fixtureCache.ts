@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 
+import type { FixtureManifest } from "./fixtureManifestSchema.js";
 import { formatFixtureRef, parseFixtureRef } from "./fixtureRef.js";
 import { readFixtureManifest } from "./readFixtureManifest.js";
 
@@ -40,11 +41,7 @@ export interface InstalledFixtureSummary {
   cachePath: string;
   manifestPath: string;
   status: "draft" | "verified" | "released" | "deprecated";
-  tools: Array<{
-    surface: "mcp" | "api" | "cli";
-    server: string;
-    operations: string[];
-  }>;
+  tools: FixtureManifest["tools"];
   bundleSha256: string;
 }
 

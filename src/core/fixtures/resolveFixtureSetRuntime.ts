@@ -14,6 +14,8 @@ export interface FixtureSetRuntime {
   ref: string;
   cachePath: string;
   manifestPath: string;
+  evalPromptsPath?: string;
+  splitsPath?: string;
   specs: ResolvedFixtureSpecs;
   fixtures: FixtureRuntime[];
   bundlePaths: string[];
@@ -45,6 +47,8 @@ export async function resolveFixtureSetRuntime(input: ResolveFixtureSetRuntimeIn
     ref,
     cachePath,
     manifestPath: fixtureSet.manifestPath,
+    ...(fixtureSet.evalPromptsPath !== undefined ? { evalPromptsPath: fixtureSet.evalPromptsPath } : {}),
+    ...(fixtureSet.splitsPath !== undefined ? { splitsPath: fixtureSet.splitsPath } : {}),
     specs: fixtureSet.specs,
     fixtures,
     bundlePaths: fixtures.map((fixture) => fixture.bundlePath),

@@ -28,6 +28,10 @@ function fixtureManifest(overrides: Record<string, unknown> = {}) {
         surface: "mcp",
         server: "github",
         operations: ["pull_request.get"],
+        adapter: {
+          protocol: "mcp",
+          toolCatalogSource: "replay-bundle",
+        },
       },
     ],
     bundle: {
@@ -44,6 +48,16 @@ function fixtureManifest(overrides: Record<string, unknown> = {}) {
       recordedAt: "2026-05-20",
       reviewedBy: "datalox",
       redaction: "none_needed",
+    },
+    trust: {
+      schemaVersion: "datalox_fixture_trust_input.v1",
+      verifiedAt: "2026-05-22T00:00:00Z",
+      verifiedBy: "datalox",
+      reviewType: "synthetic-public-fixture",
+      export: {
+        allowed: true,
+        redaction: "none_needed",
+      },
     },
     release: {
       immutable: false,
@@ -66,9 +80,25 @@ function fixtureSetManifest(overrides: Record<string, unknown> = {}) {
       "slack-support-thread-basic@2026-05.0",
       "search-policy-corpus-basic@2026-05.0",
     ],
+    toolCollisionPolicy: {
+      mode: "fail",
+    },
     evalPrompts: {
       path: "eval-prompts.jsonl",
       count: 1,
+    },
+    splits: {
+      path: "splits.json",
+    },
+    trust: {
+      schemaVersion: "datalox_fixture_trust_input.v1",
+      verifiedAt: "2026-05-22T00:00:00Z",
+      verifiedBy: "datalox",
+      reviewType: "composed-public-fixture-set",
+      export: {
+        allowed: true,
+        redaction: "none_needed",
+      },
     },
     release: {
       immutable: false,
@@ -204,9 +234,19 @@ describe("fixture set manifest schema", () => {
     const root = await mkdtemp(path.join(tmpdir(), "datalox-fixture-set-"));
     const fixtureSetDir = path.join(root, "support-triage-basic");
     await mkdir(fixtureSetDir, { recursive: true });
+    await writeFile(path.join(fixtureSetDir, "splits.json"), `${JSON.stringify({
+      schema_version: "datalox_task_splits.v1",
+      fixtureSetRef: "support-triage-basic@2026-05.0",
+      splits: {
+        train: ["support-triage"],
+        dev: [],
+        test: [],
+      },
+    }, null, 2)}\n`);
     await writeFile(path.join(fixtureSetDir, "manifest.json"), `${JSON.stringify(fixtureSetManifest(), null, 2)}\n`);
 
     const result = await readFixtureSetManifest(fixtureSetDir);
     expect(result.manifest.id).toBe("support-triage-basic");
+    expect(result.splitsPath).toBe(path.join(fixtureSetDir, "splits.json"));
   });
 });

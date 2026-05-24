@@ -10,6 +10,13 @@ const fixtureRef = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*@[0-9]{4}-[0-9]{2}
 const safeRelativePath = z.string().min(1).refine(isSafeRelativePath, {
   message: "path must be a safe relative path inside the fixture-set directory",
 });
+const exportGateSchema = z
+  .object({
+    allowed: z.boolean(),
+    redaction: z.enum(["none_needed", "applied", "blocked"]),
+    approval_id: z.string().optional(),
+  })
+  .strict();
 
 const evalPromptsSchema = z
   .object({
@@ -26,6 +33,29 @@ const releaseSchema = z
   })
   .strict();
 
+const splitsSchema = z
+  .object({
+    path: safeRelativePath,
+  })
+  .strict();
+
+const toolCollisionPolicySchema = z
+  .object({
+    mode: z.literal("fail"),
+  })
+  .strict();
+
+const trustSchema = z
+  .object({
+    schemaVersion: z.literal("datalox_fixture_trust_input.v1"),
+    verifiedAt: nonEmptyString,
+    verifiedBy: nonEmptyString,
+    reviewType: nonEmptyString,
+    export: exportGateSchema,
+    notes: z.string().min(1).optional(),
+  })
+  .strict();
+
 export const fixtureSetManifestSchema = z
   .object({
     $schema: nonEmptyString,
@@ -35,8 +65,11 @@ export const fixtureSetManifestSchema = z
     description: nonEmptyString,
     status: z.enum(["draft", "verified", "released", "deprecated"]),
     fixtures: z.array(fixtureRef).min(1),
+    toolCollisionPolicy: toolCollisionPolicySchema.optional(),
     evalPrompts: evalPromptsSchema.optional(),
+    splits: splitsSchema.optional(),
     specs: fixtureSpecReferencesSchema.optional(),
+    trust: trustSchema.optional(),
     release: releaseSchema,
   })
   .strict()

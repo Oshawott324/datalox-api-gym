@@ -20,6 +20,7 @@ export interface ReadFixtureSetManifestResult {
   manifestPath: string;
   manifest: FixtureSetManifest;
   evalPromptsPath?: string;
+  splitsPath?: string;
   specs: ResolvedFixtureSpecs;
 }
 
@@ -57,6 +58,9 @@ export async function readFixtureSetManifest(fixtureSetDir: string): Promise<Rea
     manifest,
     ...(manifest.evalPrompts
       ? { evalPromptsPath: resolveInside(absoluteFixtureSetDir, manifest.evalPrompts.path) }
+      : {}),
+    ...(manifest.splits
+      ? { splitsPath: resolveInside(absoluteFixtureSetDir, manifest.splits.path) }
       : {}),
     specs: await readFixtureSpecs(absoluteFixtureSetDir, manifest.specs),
   };

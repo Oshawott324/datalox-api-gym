@@ -163,12 +163,34 @@ Fixture world commands:
 ```bash
 node bin/datalox.js fixtures install ../datalox-replay-fixtures/fixtures/github-pr-review-basic --json
 node bin/datalox.js fixtures list --json
-node bin/datalox.js fixture-sets install support-triage-basic@2026-05.0 --catalog ../datalox-replay-fixtures/catalog.json --json
+node bin/datalox.js fixture-sets install support-triage-basic@2026-06.0 --catalog ../datalox-replay-fixtures/catalog.json --json
 node bin/datalox.js replay --fixture github-pr-review-basic@2026-05.0
 ```
 
 Fixture install only caches and verifies data. Replay activation is separate.
 See [docs/fixture-worlds-and-sets.md](docs/fixture-worlds-and-sets.md).
+
+OpenAI-compatible fixture-set runs:
+
+```bash
+export OPENAI_BASE_URL=https://api.groq.com/openai/v1
+export OPENAI_API_KEY=<key>
+node bin/datalox.js run \
+  --fixture-set support-triage-basic@2026-06.0 \
+  --catalog ../datalox-replay-fixtures/catalog.json \
+  --model <cheap-model> \
+  --split train \
+  --max-tasks 1 \
+  --out exports/fixture-runs/support-triage-basic.jsonl \
+  --json
+```
+
+`datalox run` auto-installs the fixture set, exposes replayed MCP tool
+catalogs as OpenAI function tools, serves observations from
+`request_hash + sequence_index`, and writes `datalox_fixture_run.v1` JSONL.
+It works with OpenAI-compatible model servers, including vLLM and Groq. A
+replay miss is returned to the model as a tool result with `liveFallback=false`;
+the runner never calls live upstream tools to fill missing records.
 
 Trajectory derivation code lives under `src/core/derivatives/trajectory/` and
 is not exposed by the install-facing CLI or MCP surface.

@@ -10,12 +10,26 @@ const sha256Hex = z.string().regex(/^[a-f0-9]{64}$/);
 const safeRelativePath = z.string().min(1).refine(isSafeRelativePath, {
   message: "path must be a safe relative path inside the catalog root",
 });
+const exportGateSchema = z
+  .object({
+    allowed: z.boolean(),
+    redaction: z.enum(["none_needed", "applied", "blocked"]),
+    approval_id: z.string().optional(),
+  })
+  .strict();
 
 const toolSurfaceSchema = z
   .object({
-    surface: z.enum(["mcp", "api", "cli"]),
+    surface: z.enum(["mcp", "api", "http", "cli", "browser", "sandbox"]),
     server: z.string(),
     operations: z.array(z.string()).min(1),
+    adapter: z
+      .object({
+        protocol: z.string().optional(),
+        toolCatalogSource: z.string().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -24,7 +38,66 @@ const releaseCatalogSchema = z
     immutable: z.boolean(),
     license: nonEmptyString,
     archive_path: safeRelativePath,
+    archive_sha256: sha256Hex.optional(),
     checksum_path: safeRelativePath,
+    checksum_sha256: sha256Hex.optional(),
+  })
+  .strict();
+
+const catalogTrustSchema = z
+  .object({
+    schema_version: z.literal("datalox_fixture_trust.v1"),
+    artifact_ref: fixtureRef,
+    verified_at: nonEmptyString,
+    verified_by: nonEmptyString,
+    review_type: nonEmptyString,
+    export: exportGateSchema,
+    provenance: z
+      .object({
+        source: nonEmptyString,
+        recorded_at: nonEmptyString,
+        reviewed_by: nonEmptyString,
+        redaction: z.enum(["none_needed", "applied", "blocked"]),
+      })
+      .strict()
+      .optional(),
+    bundle: z
+      .object({
+        id: nonEmptyString,
+        path: safeRelativePath,
+        sha256: sha256Hex,
+        export: exportGateSchema,
+      })
+      .strict()
+      .optional(),
+    archive: z
+      .object({
+        path: safeRelativePath,
+        sha256: sha256Hex,
+      })
+      .strict()
+      .optional(),
+    tool_catalogs: z
+      .array(z
+        .object({
+          path: safeRelativePath,
+          id: nonEmptyString,
+          sha256: sha256Hex,
+          tool_names: z.array(nonEmptyString),
+          export: exportGateSchema,
+        })
+        .strict())
+      .optional(),
+    member_fixtures: z
+      .array(z
+        .object({
+          ref: fixtureRef,
+          bundle_sha256: sha256Hex,
+          archive_sha256: sha256Hex,
+          export: exportGateSchema,
+        })
+        .strict())
+      .optional(),
   })
   .strict();
 
@@ -73,6 +146,21 @@ const fixtureCatalogEntrySchema = z
     eval_prompts: evalPromptsCatalogSchema,
     specs: specsCatalogSchema.optional(),
     release: releaseCatalogSchema,
+    trust: catalogTrustSchema.optional(),
+  })
+  .strict();
+
+const fixtureSetSplitsCatalogSchema = z
+  .object({
+    path: safeRelativePath,
+    counts: z
+      .object({
+        train: z.number().int().nonnegative(),
+        dev: z.number().int().nonnegative(),
+        test: z.number().int().nonnegative(),
+      })
+      .strict(),
+    task_count: z.number().int().positive(),
   })
   .strict();
 
@@ -90,7 +178,19 @@ const fixtureSetCatalogEntrySchema = z
     tags: z.array(z.string()).min(1),
     eval_prompts: evalPromptsCatalogSchema.optional(),
     specs: specsCatalogSchema.optional(),
+    splits: fixtureSetSplitsCatalogSchema.optional(),
     release: releaseCatalogSchema,
+    trust: catalogTrustSchema.optional(),
+  })
+  .strict();
+
+const referenceRewardCatalogEntrySchema = z
+  .object({
+    id: nonEmptyString,
+    status: z.literal("reference_only"),
+    task_family: nonEmptyString,
+    path: safeRelativePath,
+    sha256: sha256Hex,
   })
   .strict();
 
@@ -112,6 +212,7 @@ export const fixtureCatalogSchema = z
       .strict(),
     fixtures: z.array(fixtureCatalogEntrySchema),
     fixture_sets: z.array(fixtureSetCatalogEntrySchema),
+    reference_rewards: z.array(referenceRewardCatalogEntrySchema).optional(),
   })
   .strict();
 

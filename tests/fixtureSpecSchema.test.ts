@@ -15,10 +15,22 @@ describe("fixture task/verifier/scaffold spec schemas", () => {
       name: "GitHub PR review risk",
       description: "Find the actionable risk in a replayed pull request.",
       goal: "Identify whether the PR has a correctness risk.",
+      taskFamily: "coding_agent",
+      difficulty: "easy",
+      expectedTools: ["github_pull_request_get"],
+      forbiddenBehavior: ["claim live GitHub access"],
+      sftEligible: true,
+      preferenceEligible: false,
       fixtureRefs: ["github-pr-review-basic@2026-05.0"],
       allowedTools: ["github_pull_request_get"],
       successCriteria: ["Names the risky file and why it matters."],
-    }).id).toBe("github-pr-review-risk");
+    })).toMatchObject({
+      id: "github-pr-review-risk",
+      taskFamily: "coding_agent",
+      difficulty: "easy",
+      sftEligible: true,
+      preferenceEligible: false,
+    });
   });
 
   it("accepts verifier specs without executing their commands", () => {
@@ -37,8 +49,9 @@ describe("fixture task/verifier/scaffold spec schemas", () => {
       reward: {
         type: "binary",
         version: "risk-v1",
+        referenceRewardId: "coding_agent_review_reference_v1",
       },
-    }).verifier.kind).toBe("command");
+    }).reward?.referenceRewardId).toBe("coding_agent_review_reference_v1");
   });
 
   it("accepts scaffold specs", () => {

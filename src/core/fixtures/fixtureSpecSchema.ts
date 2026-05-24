@@ -12,6 +12,7 @@ const toolName = z.string().regex(/^[A-Za-z0-9_.:/-]+$/);
 const safeRelativePath = z.string().min(1).refine(isSafeRelativePath, {
   message: "path must be a safe relative path inside the fixture or fixture-set directory",
 });
+const difficultySchema = z.enum(["easy", "medium", "hard"]);
 
 const specFileReferenceSchema = z
   .object({
@@ -56,6 +57,12 @@ export const taskSpecSchema = taskSpecBaseSchema
   .extend({
     schema_version: z.literal("datalox_task_spec.v1"),
     goal: nonEmptyString,
+    taskFamily: nonEmptyString.optional(),
+    difficulty: difficultySchema.optional(),
+    expectedTools: z.array(toolName).optional(),
+    forbiddenBehavior: z.array(nonEmptyString).optional(),
+    sftEligible: z.boolean().optional(),
+    preferenceEligible: z.boolean().optional(),
     fixtureRefs: z.array(fixtureRef).optional(),
     allowedTools: z.array(toolName).optional(),
     successCriteria: z.array(nonEmptyString).min(1),
@@ -88,6 +95,7 @@ export const verifierSpecSchema = taskSpecBaseSchema
         type: z.enum(["none", "binary", "score", "rubric"]),
         version: nonEmptyString,
         maxScore: z.number().positive().optional(),
+        referenceRewardId: nonEmptyString.optional(),
       })
       .strict()
       .optional(),

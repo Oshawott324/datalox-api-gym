@@ -23,6 +23,7 @@ import { readFixtureCatalog } from "../core/fixtures/readFixtureCatalog.js";
 import { resolveFixtureRuntime } from "../core/fixtures/resolveFixtureRuntime.js";
 import { resolveFixtureSetRuntime } from "../core/fixtures/resolveFixtureSetRuntime.js";
 import { validateNoToolNameCollisions } from "../core/fixtures/validateToolCollisions.js";
+import { runFixtureSetOpenAiCompatible } from "../core/run/openAiCompatibleFixtureRun.js";
 import { runReplayProxyServer } from "../mcp/replayProxyServer.js";
 import { runClaudeWrapper } from "../adapters/claude/run.js";
 import { runCodexWrapper } from "../adapters/codex/run.js";
@@ -79,6 +80,7 @@ function usage(): string {
     "  datalox replay --fixture <fixture-ref> [--cache-root <path>]",
     "  datalox replay --fixture-set <fixture-set-ref> [--cache-root <path>]",
     "  datalox replay --fixtures <fixture-ref>... [--cache-root <path>]",
+    "  datalox run --fixture-set <fixture-set-ref> --catalog <catalog.json> --model <model> [--base-url <url>] [--api-key <key>] [--cache-root <path>] [--split <train|dev|test>] [--max-tasks <n>] [--max-turns <n>] [--out <jsonl>] [--json]",
     "  datalox proxy --mode <record|replay> [--repo <path>] [--config <json-path>] [--bundle <bundle-path>] [--json]",
     "  datalox wrap prompt [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--json]",
     "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|replay>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
@@ -96,11 +98,17 @@ function writeResult(result: unknown, asJson: boolean): void {
 }
 
 function parsePositiveInt(value: string | string[] | boolean | undefined): number | undefined {
-  if (typeof value !== "string") {
+  if (value === undefined) {
     return undefined;
   }
+  if (typeof value !== "string") {
+    throw new Error(`Expected a positive integer, got ${JSON.stringify(value)}.`);
+  }
   const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : undefined;
+  if (!Number.isFinite(parsed) || parsed < 1 || String(parsed) !== value) {
+    throw new Error(`Expected a positive integer, got ${JSON.stringify(value)}.`);
+  }
+  return parsed;
 }
 
 function parsePostRunMode(
@@ -137,6 +145,28 @@ function parseOptionalString(
     }
   }
   return undefined;
+}
+
+function requireCliString(
+  value: string | string[] | boolean | undefined,
+  name: string,
+  envKey?: string,
+): string {
+  const parsed = parseOptionalString(value, envKey);
+  if (!parsed) {
+    throw new Error(`${name} is required${envKey ? `; set --${name} or ${envKey}` : ""}.`);
+  }
+  return parsed;
+}
+
+function parseRunSplit(value: string | string[] | boolean | undefined): "train" | "dev" | "test" | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === "train" || value === "dev" || value === "test") {
+    return value;
+  }
+  throw new Error(`Invalid --split ${JSON.stringify(value)}. Allowed values: train, dev, test.`);
 }
 
 function parseInstallHost(value: string | undefined): InstallHost {
@@ -458,6 +488,28 @@ async function main(): Promise<void> {
         return;
       }
       throw new Error("replay requires --fixture, --fixture-set, or --fixtures");
+    }
+    case "run": {
+      if (typeof args["fixture-set"] !== "string") {
+        throw new Error("run requires --fixture-set");
+      }
+      if (typeof args.catalog !== "string") {
+        throw new Error("run requires --catalog");
+      }
+      const result = await runFixtureSetOpenAiCompatible({
+        fixtureSetRef: args["fixture-set"],
+        catalogPath: args.catalog,
+        cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+        outputPath: typeof args.out === "string" ? args.out : undefined,
+        split: parseRunSplit(args.split),
+        maxTasks: parsePositiveInt(args["max-tasks"]),
+        maxTurns: parsePositiveInt(args["max-turns"]),
+        model: requireCliString(args.model, "model", "DATALOX_MODEL"),
+        baseUrl: requireCliString(args["base-url"], "base-url", "OPENAI_BASE_URL"),
+        apiKey: requireCliString(args["api-key"], "api-key", "OPENAI_API_KEY"),
+      });
+      writeResult(result, true);
+      return;
     }
     case "proxy": {
       const mode = typeof args.mode === "string" ? args.mode : undefined;

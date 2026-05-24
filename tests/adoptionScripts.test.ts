@@ -161,6 +161,7 @@ describe("replay adoption scripts", () => {
     });
 
     expect(result.status).toBe(0);
+    expect(result.stdout).toContain("datalox run --fixture-set <fixture-set-ref>");
     expect(result.stdout).not.toContain("record-trajectory");
     expect(result.stdout).not.toContain("export-trajectories");
     expect(result.stdout).not.toContain("grade-trajectories");

@@ -10,6 +10,13 @@ const sha256Hex = z.string().regex(/^[a-f0-9]{64}$/);
 const safeRelativePath = z.string().min(1).refine(isSafeRelativePath, {
   message: "path must be a safe relative path inside the fixture directory",
 });
+const exportGateSchema = z
+  .object({
+    allowed: z.boolean(),
+    redaction: z.enum(["none_needed", "applied", "blocked"]),
+    approval_id: z.string().optional(),
+  })
+  .strict();
 
 const engineSchema = z
   .object({
@@ -20,9 +27,16 @@ const engineSchema = z
 
 const toolSurfaceSchema = z
   .object({
-    surface: z.enum(["mcp", "api", "cli"]),
+    surface: z.enum(["mcp", "api", "http", "cli", "browser", "sandbox"]),
     server: z.string().regex(/^[A-Za-z0-9_.:/-]+$/),
     operations: z.array(z.string().regex(/^[A-Za-z0-9_.:/-]+$/)).min(1),
+    adapter: z
+      .object({
+        protocol: z.string().optional(),
+        toolCatalogSource: z.string().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -59,6 +73,17 @@ const releaseSchema = z
   })
   .strict();
 
+const trustSchema = z
+  .object({
+    schemaVersion: z.literal("datalox_fixture_trust_input.v1"),
+    verifiedAt: nonEmptyString,
+    verifiedBy: nonEmptyString,
+    reviewType: nonEmptyString,
+    export: exportGateSchema,
+    notes: z.string().min(1).optional(),
+  })
+  .strict();
+
 export const fixtureManifestSchema = z
   .object({
     $schema: nonEmptyString,
@@ -73,6 +98,7 @@ export const fixtureManifestSchema = z
     evalPrompts: evalPromptsSchema,
     specs: fixtureSpecReferencesSchema.optional(),
     provenance: provenanceSchema,
+    trust: trustSchema.optional(),
     release: releaseSchema,
   })
   .strict()

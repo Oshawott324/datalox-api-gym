@@ -21,6 +21,11 @@ import {
   type ResolveFixtureSetRuntimeInput,
 } from "../core/fixtures/resolveFixtureSetRuntime.js";
 import { validateNoToolNameCollisions } from "../core/fixtures/validateToolCollisions.js";
+import {
+  runFixtureSetOpenAiCompatible,
+  type RunFixtureSetOpenAiCompatibleInput,
+  type RunFixtureSetOpenAiCompatibleResult,
+} from "../core/run/openAiCompatibleFixtureRun.js";
 import { buildReplayProxyServer } from "../mcp/replayProxyServer.js";
 
 export type {
@@ -32,6 +37,8 @@ export type {
   InstallFixtureSetResult,
   ResolveFixtureRuntimeInput,
   ResolveFixtureSetRuntimeInput,
+  RunFixtureSetOpenAiCompatibleInput,
+  RunFixtureSetOpenAiCompatibleResult,
 };
 
 export async function installFixture(input: InstallFixtureInput): Promise<InstallFixtureResult> {
@@ -48,6 +55,12 @@ export async function installFixtureSet(input: InstallFixtureSetInput): Promise<
 
 export async function resolveFixtureSet(input: ResolveFixtureSetRuntimeInput): Promise<FixtureSetRuntime> {
   return resolveFixtureSetRuntime(input);
+}
+
+export async function runFixtureSet(
+  input: RunFixtureSetOpenAiCompatibleInput,
+): Promise<RunFixtureSetOpenAiCompatibleResult> {
+  return runFixtureSetOpenAiCompatible(input);
 }
 
 export interface CreateReplayMcpServerInput {
