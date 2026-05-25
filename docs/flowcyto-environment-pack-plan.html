@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlowCyto Environment Pack Plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --ink: #171717;
+      --muted: #606057;
+      --line: #d9d6ca;
+      --accent: #165f58;
+      --soft: #eef7f4;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 1040px);
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    h1 {
+      font-size: 42px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 18px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px 16px;
+      margin: 12px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #faf9f5;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .lede {
+      max-width: 840px;
+      color: var(--muted);
+      font-size: 18px;
+      margin-top: 12px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-top: 24px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 22px, 1040px);
+        padding-top: 22px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>FlowCyto Environment Pack Plan</h1>
+    <p class="lede">
+      Concrete plan for proving Datalox's environment wedge: ship one
+      versioned scientific agent environment pack where trajectories come from
+      executable domain tools, workspace state, validators, and replay evidence.
+    </p>
+    <p class="meta">Updated May 25, 2026 - Local planning doc</p>
+  </header>
+
+  <section class="section">
+    <h2>Target Artifact</h2>
+    <div class="callout">
+      Build <code>flowcyto-gating-qc-basic@2026-06.0</code>: a versioned flow
+      cytometry task world where an agent gates cell populations, computes QC
+      statistics, passes validators, and exports replay-backed SFT data.
+    </div>
+    <p>
+      This should prove that Datalox is not just recording trajectories. The
+      environment must produce trajectories that are executable, replayable, and
+      checkable.
+    </p>
+    <pre>real or realistic FCS sample
+  -> flowcyto.workspace.json
+  -> MCP tools
+  -> structured observations
+  -> workspace revisions
+  -> validators
+  -> datalox_run.v1
+  -> sft_frame.v1</pre>
+  </section>
+
+  <section class="section">
+    <h2>User-Facing Demo</h2>
+    <pre><code>vllm serve Qwen/Qwen2.5-7B-Instruct --api-key token
+
+datalox run \
+  --fixture-set flowcyto-gating-qc-basic@2026-06.0 \
+  --base-url http://127.0.0.1:8000/v1 \
+  --model Qwen/Qwen2.5-7B-Instruct \
+  --api-key token \
+  --prompt "Gate the lymphocyte population and produce QC stats." \
+  --out runs/flowcyto-qwen \
+  --json
+
+datalox export sft \
+  --run runs/flowcyto-qwen \
+  --out exports/flowcyto-qwen.sft.jsonl \
+  --json</code></pre>
+    <p class="muted">
+      The first demo should work with a local OpenAI-compatible model endpoint.
+      Datalox should not require users to run an RL trainer to see value.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Agent Tool Path</h2>
+    <pre>open_fcs
+  -> get_plot_context
+  -> upsert_gate
+  -> compute_gate_stats
+  -> validate_gate_qc
+  -> write_report</pre>
+    <p>
+      The tool sequence is not hard-coded. This is the expected successful path.
+      The environment should also expose structured errors for invalid gates,
+      stale workspace revisions, missing channels, and missing report fields.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Why This Is Hard To Replace With Synthetic Trajectories</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Stateful Workspace</h3>
+        <p>
+          Gate writes mutate <code>flowcyto.workspace.json</code> and increment
+          revisions. Later tool observations depend on earlier actions.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Domain Validation</h3>
+        <p>
+          Validators check geometry, channel selection, population percentage,
+          marker stats, and required QC outputs.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Replay Evidence</h3>
+        <p>
+          Every tool call and observation can be captured as replay evidence and
+          exported only after the run is grounded.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Repo Split</h2>
+    <table>
+      <thead>
+        <tr><th>Repo</th><th>Owns</th><th>Concrete Work</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>datalox-flow-cyto-mcp</code></td>
+          <td>Live domain environment</td>
+          <td>
+            Tasks, sample data, workspace state, MCP tools, validators,
+            deterministic domain logic, compact UI where needed.
+          </td>
+        </tr>
+        <tr>
+          <td><code>datalox-agent-replay</code></td>
+          <td>Replay and export layer</td>
+          <td>
+            <code>datalox run</code>, <code>datalox_run.v1</code>,
+            replay runtime, <code>sft_frame.v1</code>, later completion and
+            preference exports.
+          </td>
+        </tr>
+        <tr>
+          <td><code>datalox-replay-fixtures</code></td>
+          <td>Published fixture library</td>
+          <td>
+            Versioned fixture pack, fixture set manifest, replay bundles,
+            task/verifier refs, README, train/dev/test split.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Implementation Phases</h2>
+    <ol>
+      <li>
+        <strong>Phase 1 - Domain task spec.</strong>
+        Add 10 small gating/QC tasks with input sample refs, required outputs,
+        accepted channel pairs, and validator thresholds.
+      </li>
+      <li>
+        <strong>Phase 2 - Tool contract hardening.</strong>
+        Ensure each MCP tool returns agent-first structured observations,
+        revision ids, error codes, and next-action hints when recovery is clear.
+      </li>
+      <li>
+        <strong>Phase 3 - Validators.</strong>
+        Add deterministic checks for gate existence, polygon validity, channel
+        match, population percent range, stats availability, and report fields.
+      </li>
+      <li>
+        <strong>Phase 4 - Live rollout capture.</strong>
+        Run an agent through the live flowcyto MCP, capture tool I/O records,
+        and pack verified replay bundles.
+      </li>
+      <li>
+        <strong>Phase 5 - Fixture publication.</strong>
+        Publish <code>flowcyto-gating-qc-basic@2026-06.0</code> in
+        <code>datalox-replay-fixtures</code> with bundle checksums and
+        train/dev/test split.
+      </li>
+      <li>
+        <strong>Phase 6 - Training export.</strong>
+        Run <code>datalox run</code> against the fixture set and export
+        <code>sft_frame.v1</code>. Add completion and preference exports after
+        success/failure/recovery labels exist.
+      </li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>Pass Criteria</h2>
+    <ol>
+      <li>A fresh checkout can install or resolve the fixture set.</li>
+      <li><code>datalox run</code> works against a local OpenAI-compatible endpoint.</li>
+      <li>The agent must use at least three domain tools to solve a task.</li>
+      <li>Wrong or incomplete actions produce structured failures, not fake success.</li>
+      <li>The validator emits pass/fail plus evidence refs.</li>
+      <li><code>run.json</code> contains messages, tool calls, observations, final answer, fixture refs, and export gate.</li>
+      <li><code>datalox export sft</code> produces valid <code>sft_frame.v1</code> JSONL.</li>
+      <li>The fixture set includes at least 10 success runs, 5 recovery runs, and 5 failure runs before preference export is claimed.</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>What Not To Do</h2>
+    <ul>
+      <li>Do not make this a generic trajectory-format project.</li>
+      <li>Do not make Datalox own the final reward function.</li>
+      <li>Do not claim online RL before reset/step rollout support exists.</li>
+      <li>Do not rely on model-synthesized tool returns as proof of environment value.</li>
+      <li>Do not overbuild one perfect simulator before proving exportable task breadth.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>Product Sentence After This Passes</h2>
+    <div class="callout">
+      Datalox ships versioned scientific agent environments plus the replay/data
+      layer needed to turn real rollouts into SFT, preference, eval, and later RL data.
+    </div>
+  </section>
+</main>
+</body>
+</html>

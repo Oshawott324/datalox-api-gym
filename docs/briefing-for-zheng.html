@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datalox Briefing For Zheng</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --ink: #171717;
+      --muted: #5f5f57;
+      --line: #d9d6ca;
+      --accent: #165f58;
+      --soft: #eef7f4;
+      --warn: #fff5e8;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 1040px);
+      margin: 0 auto;
+      padding: 42px 0 68px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    h1 {
+      font-size: 42px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 18px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px 16px;
+      margin: 12px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #faf9f5;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .lede {
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 18px;
+      margin-top: 12px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-top: 24px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      background: var(--warn);
+      border-left-color: #8a4b12;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 22px, 1040px);
+        padding-top: 22px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Datalox Briefing For Zheng</h1>
+    <p class="lede">
+      Updated after your feedback: Datalox should provide versioned API/MCP
+      snapshot environments and live domain MCP environments. Recording is how
+      private snapshots are authored, not the thing training teams consume.
+      SFT and preference training are the practical first consumers; online RL
+      is later, when reset/step environments and rollout throughput are mature.
+    </p>
+    <p class="meta">From Yifan - Updated May 25, 2026 - Local draft, not yet public-facing copy</p>
+  </header>
+
+  <section class="section">
+    <h2>One-Sentence Positioning</h2>
+    <div class="callout">
+      Datalox provides versioned API/MCP snapshot environments and live domain
+      MCP environments, then exports replayable training/eval data for SFT,
+      preference training, eval, and eventually RL.
+    </div>
+    <p>
+      This is intentionally not "Agentic RL infra first." RL is valuable, but it is expensive:
+      rollouts are slow, verifiers are bottlenecks, and reward signals are often sparse.
+      The near-term product value is installable snapshot environments and
+      domain environments that produce clean trajectories for export.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Current Implemented Surface</h2>
+    <p>
+      The repo now has a concrete first path for model-server users instead of
+      only fixture metadata:
+    </p>
+    <pre>OpenAI-compatible model endpoint, including vLLM
+  -> datalox run
+  -> replay fixture world
+  -> datalox_run.v1
+  -> datalox export sft
+  -> sft_frame.v1 JSONL</pre>
+    <p>
+      This is the practical bridge to SFT-first training teams. Datalox does not
+      replace vLLM, SGLang, LiteLLM, verl, or a lab's internal trainer. It
+      provides the declared replay world, grounded transcript, and export row.
+    </p>
+    <pre><code>datalox run \
+  --fixture-set support-triage-basic@2026-05.0 \
+  --base-url http://127.0.0.1:8000/v1 \
+  --model Qwen/Qwen2.5-7B-Instruct \
+  --api-key token \
+  --prompt "Resolve this support triage task." \
+  --out runs/support-triage-qwen \
+  --json
+
+datalox export sft \
+  --run runs/support-triage-qwen \
+  --out exports/support-triage-qwen.sft.jsonl \
+  --json</code></pre>
+    <p class="muted">
+      Implemented now: OpenAI-compatible model adapter, replay tool runtime,
+      <code>datalox_run.v1</code>, <code>datalox run</code>,
+      <code>sft_frame.v1</code>, and <code>datalox export sft</code>.
+      Still next: published serious fixture sets, completion frame export,
+      preference pair export, direct verl adapter, and live domain environment
+      rollout proofs.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Who Uses What</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Rollout / Environment Owner</h3>
+        <p>
+      Runs agents against real tools, domain MCPs, APIs, or app worlds.
+      Uses Datalox to author private snapshots, package replay bundles, and
+      publish versioned fixture worlds.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Training / Eval Consumer</h3>
+        <p>
+          Wants installable fixture sets and clean versioned exports, not capture
+          infrastructure.
+          Starts with SFT and preference data; may later use reward/eval rows and online RL.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Fixture / Data Provider</h3>
+        <p>
+          Curates approved snapshot fixture packs and fixture sets so downstream
+          teams can train, evaluate, and compare agents without live tool credentials.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Authoring Path vs Consumption Path</h2>
+    <pre>Authoring path  (rollout owner - needs live tools)
+live domain MCP / API / app world
+  -> Datalox snapshot authoring path
+  -> tool_io_record.v1
+  -> replay_bundle.v1
+  -> fixture pack
+  -> fixture set
+
+Consumption path  (training/eval consumer - no live tools)
+versioned API/MCP snapshot fixture set install
+  -> replay runtime
+  -> datalox_run.v1
+  -> sft_frame.v1 now
+  -> completion_frame.v1 + preference_pair.v1 next
+  -> SFT / preference training / reward modeling / eval / regression
+  -> online RL later, only with runtime-backed reset/step</pre>
+    <p class="muted">
+      Important boundary: replay mode never invents observations and never falls back to live tools.
+      Unseen calls return structured replay misses.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Training Consumer Order</h2>
+    <table>
+      <thead>
+        <tr><th>Order</th><th>Consumer</th><th>Datalox Output</th><th>Boundary</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>SFT-first teams</td>
+          <td><code>sft_frame.v1</code> now, <code>completion_frame.v1</code> next</td>
+          <td>Use successful runs first. Recovery trajectories can be added when labeled. Do not blindly clone failures.</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Preference training</td>
+          <td><code>preference_pair.v1</code> next</td>
+          <td>Success &gt; recovery &gt; failure under the same task, all backed by replay evidence.</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Reward modeling / eval</td>
+          <td><code>reward_record.v1</code>, verifier provenance, reference scheme</td>
+          <td>Datalox records evidence and reference schemes. Training teams own reward design.</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Online RL</td>
+          <td><code>transition_frame.v1</code>, runtime-backed rollout evidence</td>
+          <td>Requires reset/step worlds, rollout throughput, and verifier capacity.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Reward Boundary</h2>
+    <p>
+      Datalox should not own canonical reward design. Reward is task-specific and belongs to
+      the team doing training. Datalox should preserve enough evidence so the reward can be
+      recomputed, audited, or replaced.
+    </p>
+    <pre>Datalox owns:
+  reward source
+  reward version
+  verifier command/result
+  evidence refs
+  optional reference reward scheme
+
+Training team owns:
+  final reward function
+  weights
+  normalization
+  clipping
+  training objective</pre>
+  </section>
+
+  <section class="section">
+    <h2>Why SFT First</h2>
+    <p>
+      Zheng's feedback changes the priority order but not the product boundary:
+      online Agent RL is expensive, slow to roll out, and often suffers from
+      sparse reward. Many teams will get value sooner from environments that
+      generate many clean trajectories for SFT and preference training.
+    </p>
+    <p>
+      Datalox should therefore optimize the first mile:
+    </p>
+    <pre>fixture/world breadth
+  -> stable tool observations
+  -> model-visible transcript
+  -> exportable SFT/completion/preference rows
+  -> trainer-owned optimization</pre>
+    <p class="muted">
+      This is not a retreat from RL. It is the path that produces useful data
+      before a team can afford large on-policy rollout loops.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Environment Strategy</h2>
+    <p>
+      A single deep environment proves seriousness, but breadth is likely better for improving
+      general agent capability. The recommended strategy is:
+    </p>
+    <pre>one credible deep-enough proof
+  -> many shallow/medium verified sub-environments
+  -> SFT/preference exports at scale
+  -> runtime-backed online RL later</pre>
+    <p>
+      For bio, this means an environment family rather than one perfect simulator.
+    </p>
+    <pre>bio-agent-world@2026-05
+  flowcyto-gating-basic
+  flowcyto-qc-report
+  molecule-sequence-annotation
+  plasmid-feature-check
+  protein-viewer-snapshot
+  protein-ligand-site-inspection
+  literature-protocol-search
+  lab-inventory-lookup
+  experiment-report-generation</pre>
+  </section>
+
+  <section class="section">
+    <h2>AppWorld Lesson</h2>
+    <p>
+      AppWorld is a strong reference for what a whole environment looks like:
+      simulated users, app databases, APIs, task generation, state-based evaluation,
+      checkpointing, logs, and an MCP/API surface.
+    </p>
+    <p>
+      The lesson is not "clone AppWorld." The practical Datalox proof is:
+    </p>
+    <pre>AppWorld MCP/API server
+  -> Datalox authors a versioned snapshot
+  -> replay_bundle.v1
+  -> fixture set
+  -> SFT/preference/eval exports</pre>
+  </section>
+
+  <section class="section">
+    <h2>Roadmap</h2>
+    <ol>
+      <li><strong>Done:</strong> keep fixture replay, fixture sets, and spec metadata stable.</li>
+      <li><strong>Done:</strong> add OpenAI-compatible/vLLM-style <code>datalox run</code> over replay worlds.</li>
+      <li><strong>Done:</strong> add <code>datalox_run.v1</code> and <code>sft_frame.v1</code> export.</li>
+      <li><strong>Now:</strong> build <code>flowcyto-gating-qc-basic@2026-06.0</code> from <a href="./flowcyto-environment-pack-plan.html">the FlowCyto environment-pack plan</a>.</li>
+      <li><strong>Now:</strong> publish one serious fixture set in <code>datalox-replay-fixtures</code> with enough tasks to be worth an SFT smoke test.</li>
+      <li><strong>Next:</strong> add <code>completion_frame.v1</code> and a trainer-friendly JSONL view.</li>
+      <li><strong>Next:</strong> add <code>preference_pair.v1</code> for success/recovery/failure comparisons.</li>
+      <li><strong>Next:</strong> add <code>reward_record.v1</code> and reference reward schemes, not canonical reward design.</li>
+      <li><strong>Next:</strong> build the bio environment family breadth track instead of one overbuilt simulator.</li>
+      <li><strong>Validation:</strong> add an AppWorld adapter proof to show Datalox can sit under mature whole environments.</li>
+      <li><strong>Later:</strong> only after grounded exports are stable, define runtime adapters and whole reset/step worlds for online RL.</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>Questions For Zheng</h2>
+    <ol>
+      <li>
+        For a training team, is <code>datalox_run.v1 -> sft_frame.v1</code> the right first bridge,
+        or should the export mimic a specific verl/HF dataset format immediately?
+      </li>
+      <li>
+        What is the minimal acceptable SFT row: full message trace with tool messages,
+        next-action frames, or final-answer-only frames with tool evidence refs?
+      </li>
+      <li>
+        Does the bio environment family direction make sense, or should the first serious
+        fixture set be broader app/API tasks before scientific domains?
+      </li>
+      <li>
+        For reward, is preserving source/version/evidence plus a reference scheme enough,
+        assuming the training team owns final reward design?
+      </li>
+      <li>
+        Would a direct vLLM/verifiable SFT demo be more persuasive than an AppWorld adapter proof,
+        or do we need both?
+      </li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

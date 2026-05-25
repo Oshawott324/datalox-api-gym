@@ -13,23 +13,57 @@ optional downstream adapters only.
 
 ## Definition
 
-Datalox Agent Replay is an MCP-compatible VCR for agent tools.
+Datalox Agent Replay is the engine for versioned API/MCP snapshot
+environments.
 
-It records the exact request an agent made to a tool and the exact observation
-the agent received back, stores that pair by deterministic request hash, packs
-the records into a sealed replay bundle, and replays the same observations later
-without calling live upstream tools.
+Users consume versioned fixture packs and fixture sets: frozen tool catalogs,
+tool observations, task specs, verifier metadata, deterministic replay, and
+training/eval exports. Recording is one authoring path for creating a private
+snapshot from a live MCP/API/domain environment.
 
-Primary replay loop:
+The broader product wedge is:
 
 ```text
-agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
+versioned domain environments + replay/data layer -> exportable training/eval data
+```
+
+For this repo, that means Agent Replay owns the replay/data layer. Sibling
+domain repos may own live scientific environments. The current concrete proof
+target is `flowcyto-gating-qc-basic@2026-06.0`: a versioned flow cytometry
+environment pack that combines real domain tools, workspace state, validators,
+replay bundles, and SFT export. See
+[flowcyto-environment-pack-plan.html](./flowcyto-environment-pack-plan.html).
+
+Primary consumption loop:
+
+```text
+versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports
+```
+
+Snapshot authoring loop:
+
+```text
+live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> fixture pack/version
+```
+
+The environment ladder is:
+
+```text
+versioned snapshot environment
+  versioned API/MCP snapshot + fixture set + replay bundles
+  deterministic over observed scenarios
+
+runtime-backed environment
+  live tools, APIs, MCPs, or external runtimes generate new rollouts
+
+generative environment
+  reset/step world that samples many task instances and verifies them
 ```
 
 ## Project Boundary
 
-This repo is not a trajectory-first dataset builder, a wiki, a note promotion
-system, or a general memory layer.
+This repo is not a data-recorder-only product, a trajectory-first dataset
+builder, a wiki, a note promotion system, or a general memory layer.
 
 The project boundary is:
 
@@ -39,6 +73,7 @@ The project boundary is:
 - pack tool I/O records and optional turn context into a replay bundle
 - verify bundle integrity through checksums
 - replay recorded observations without live tool fallback
+- activate versioned fixture worlds from verified bundles and fixture sets
 - derive compact training/eval rows only after replay evidence exists
 
 Everything else is supporting infrastructure.
@@ -46,36 +81,46 @@ Everything else is supporting infrastructure.
 This boundary describes the Agent Replay repo. Sibling Datalox domain MCP repos
 can provide constrained scientific environments, such as flow cytometry,
 molecular biology, or protein visualization workspaces. Agent Replay should
-record and replay the tool I/O those environments emit; it should not absorb
+snapshot and replay the tool I/O those environments emit; it should not absorb
 their domain runtime, UI, or scientific algorithms.
+
+Do not make training row format the core wedge. SFT, completion, preference,
+reward, and transition rows are adapters derived from grounded environment
+rollouts. Training teams may reshape those rows for verl, Hugging Face, or
+internal trainers.
 
 ## Why This Exists
 
-Agentic RL, eval, and regression teams hit the same failure mode: they cannot
-reproduce what an agent saw from tools months later. Live APIs change, search
-results move, databases mutate, model tool outputs vary, and reward debugging
-becomes guesswork.
+Agent training, eval, and regression teams hit the same failure mode: they
+cannot reproduce the environment an agent actually experienced. Live APIs
+change, search results move, databases mutate, model tool outputs vary, and
+reward/debugging becomes guesswork.
 
-Datalox solves the lower layer only:
+Datalox solves the versioned snapshot environment layer first:
 
-- capture what the agent-visible tool boundary received and returned
+- provide published fixture packs for common task worlds
+- provide domain environment packs when sibling Datalox domain repos own the
+  live environment
+- let teams author private fixture packs from their own live tools
 - make that evidence content-addressed and portable
-- replay the same observations later
-- let existing harnesses compute rewards, evals, or policy updates on top
+- package the evidence into pinned fixture worlds
+- replay the same observations later with upstream off
+- export SFT, preference, reward/eval, and later RL views from verified evidence
 
 Teams can keep their existing agent runtime, sandbox, reward code, eval runner,
-or RL stack. Datalox sits underneath those systems as the reproducible tool I/O
-layer.
+or training stack. Datalox sits underneath those systems as the versioned
+snapshot environment and evidence layer.
 
 ## Agentic RL Layer Map
 
-Datalox Agent Replay lives in the tool-I/O record/replay layer:
+Datalox Agent Replay lives in the versioned snapshot environment and tool-I/O
+record/replay layer:
 
 ```text
 Layer 1    sandbox/runtime foundation
 Layer 2a   constrained domain MCP environments       <- sibling Datalox domain repos can own this
 Layer 2b   generic task environment construction      <- not this repo
-Layer 1.5  tool-I/O record/replay                     <- Datalox Agent Replay
+Layer 1.5  versioned snapshot environment + tool-I/O replay <- Datalox Agent Replay
 Layer 3    evaluation and reward rules
 ```
 
@@ -86,8 +131,8 @@ that exact observation by `request_hash + sequence_index`.
 
 Datalox Agent Replay is complementary to sandbox runtimes, generic environment
 builders, behavioral mocks, judge agents, reward engines, and Datalox's own
-domain MCP environments. It should preserve provenance for those systems when
-available, but not become those systems.
+domain MCP environments. It should provide versioned snapshots for those
+systems when available, but not become those systems.
 
 ## Core Schemas
 
@@ -266,4 +311,4 @@ This repo is not:
 
 Use this sentence when describing the project:
 
-> Datalox Agent Replay records exact agent tool I/O into verifiable replay bundles so teams can reproduce tool observations later without live upstream tools.
+> Datalox Agent Replay provides versioned API/MCP snapshot environments that teams can run, replay, and export into training/eval data without live upstream tools.
