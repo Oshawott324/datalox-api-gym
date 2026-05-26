@@ -1,11 +1,14 @@
 # Datalox
 
-This repo is the portable implementation package for Datalox Agent Replay: an
-MCP-compatible VCR for agent tools.
+This repo is the portable implementation package for Datalox Agent Replay: the
+engine for versioned API/MCP snapshot environments.
 
-Datalox records exact agent-visible tool requests and observations, stores them
-by deterministic request hash, packs sealed replay bundles, and replays the
-same observations later without live upstream tools.
+Datalox provides versioned agent task environments. This repo powers snapshot
+environments: frozen tool catalogs, tool observations, tasks, verifier
+metadata, fixture packs, fixture sets, deterministic replay, and training/eval
+exports. Sibling Datalox domain MCP repos can provide live scientific domain
+environments. Recording is an authoring mechanism for creating private
+snapshots, not the object users consume.
 
 Core replay surfaces:
 
@@ -17,16 +20,30 @@ Core replay surfaces:
 - portable replay artifact: `replay_bundle.v1`
 - optional downstream adapters: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
-Primary replay loop:
+Primary consumption loop:
 
-`agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`
+`versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports`
 
-Datalox Agent Replay owns the tool-I/O record/replay layer inside the agentic
-RL stack. This repo does not own sandbox runtimes, generic task environment
-construction, behavioral mock construction, reward functions, or judge agents.
-Sibling Datalox domain MCP repos may own constrained scientific environments;
-Agent Replay records and replays their tool I/O instead of becoming their
-domain runtime. See [docs/agentic-rl-layer-map.md](docs/agentic-rl-layer-map.md).
+Snapshot authoring loop:
+
+`live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> fixture pack/version`
+
+Datalox Agent Replay owns versioned API/MCP snapshot environments and the
+tool-I/O record/replay layer underneath them. This repo does not own sandbox
+runtimes, generic task environment construction, behavioral mock construction,
+reward functions, or judge agents. Sibling Datalox domain MCP repos may own
+live constrained scientific environments; Agent Replay snapshots and replays
+their agent-visible tool I/O instead of becoming their domain runtime. See
+[docs/agentic-rl-layer-map.md](docs/agentic-rl-layer-map.md).
+
+Current concrete proof target:
+
+```text
+flowcyto-gating-qc-basic@2026-06.0
+  live flowcyto MCP -> replay bundle -> fixture set -> datalox run -> sft_frame.v1
+```
+
+See [docs/flowcyto-environment-pack-plan.html](docs/flowcyto-environment-pack-plan.html).
 
 Do not keep note/skill promotion as a second loop in this repo.
 

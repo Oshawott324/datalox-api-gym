@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Datalox Trajectory Data And Runtime Roadmap</title>
+  <title>Datalox Task Environment And Training Data Roadmap</title>
   <style>
     :root {
       color-scheme: light;
@@ -221,11 +221,12 @@
 <body>
   <main>
     <header>
-      <h1>Trajectory Data And Runtime Roadmap</h1>
+      <h1>Snapshot Environment And Training Data Roadmap</h1>
       <p class="lede">
-        Datalox helps teams turn real agent environment rollouts into replayable,
-        verifiable trajectory data for SFT, preference training, eval, and eventually RL.
-        Runtime integrations come later and stay separate from pure replay.
+        Datalox provides versioned API/MCP snapshot environments, live domain MCP
+        environments in sibling repos, and training/eval exports from those worlds.
+        Recording is an authoring path for private snapshots. Runtime integrations
+        come later and stay separate from pure replay.
       </p>
       <p class="meta">
         Updated: 2026-05-22. Related docs:
@@ -237,11 +238,10 @@
 
     <section class="callout">
       <p>
-        Stable boundary: <strong>Datalox Agent Replay does not build generic task worlds.
-        It records, verifies, replays, and packages what the agent saw and did through tool
-        interfaces inside that world.</strong> Sibling Datalox domain MCP repos may build
-        constrained scientific worlds; this roadmap defines how Replay integrates with them
-        and with external runtimes.
+        Stable boundary: <strong>Datalox Agent Replay provides versioned API/MCP
+        snapshot worlds; it does not build generic task worlds.</strong> Sibling Datalox
+        domain MCP repos may build constrained scientific worlds; this roadmap defines how
+        Replay snapshots, verifies, serves, and exports those worlds and external runtimes.
       </p>
     </section>
 
@@ -258,9 +258,10 @@
       <p>
         Public wording rule: describe adoption by workflow, not by customer resources.
         Use <strong>SFT-first teams</strong>, <strong>teams starting from SFT</strong>, or
-        <strong>limited rollout budget</strong>. The public product claim is trajectory data
-        first: SFT and preference training are immediate consumers; online RL is a later
-        consumer when reset/step runtimes and rollout throughput exist.
+        <strong>limited rollout budget</strong>. The public product claim is environment
+        first: versioned snapshot environments produce SFT and preference data as immediate
+        outputs; online RL is a later consumer when reset/step runtimes and rollout
+        throughput exist.
       </p>
     </section>
 
@@ -459,7 +460,7 @@ step(action) -&gt; {
       </table>
       <div class="callout warning">
         <p>
-          Current fixture replay is a <strong>replay-backed slice</strong> of an environment. It can
+        Current fixture replay is a <strong>versioned snapshot slice</strong> of an environment. It can
           reproduce observed tool/API behavior. A whole environment must also handle new actions
           through a real runtime or simulator. If the agent takes an unseen action, replay should
           miss clearly; a whole environment should step the world.
@@ -672,11 +673,11 @@ datalox replay --fixture github-pr-review-basic@2026-05.0</code></pre>
         <code>datalox-protein-mcp</code>) are <strong>tool servers</strong>. They own one domain's state and tool surface.
         The fixture set composes them into the actual environment:
       </p>
-      <pre><code>flowcyto-task-world@2026-05.0          // fixture set = the environment
+      <pre><code>flowcyto-gating-qc-basic@2026-06.0     // fixture set = the environment
   fixtures:
-    flowcyto-basic@2026-05.0            // recorded flowcyto MCP tool calls
-    search-policy-corpus-basic@2026-05.0 // recorded search tool calls
-    filesystem-ops-basic@2026-05.0      // recorded filesystem tool calls
+    flowcyto-gating-qc-basic@2026-06.0 // recorded flowcyto MCP tool calls
+    search-policy-corpus-basic@2026-06.0 // optional recorded search tool calls
+    filesystem-ops-basic@2026-06.0     // optional recorded filesystem/report calls
   specs:
     task.spec.json                      // what the agent is asked to do
     verifier.spec.json                  // how success is measured</code></pre>
@@ -836,25 +837,30 @@ fixture set install
         <li>The fixture repo validates example specs and publishes them into <code>catalog.json</code>.</li>
       </ul>
 
-      <h3>Step 2: First Scientific Fixture Packs</h3>
+      <h3>Step 2: FlowCyto Environment Pack Proof</h3>
       <p><span class="pill">Next</span><span class="pill">Engine + fixture repos</span></p>
       <p>
-        Makes the "scientific environments" claim operationally true.
-        The tool servers exist. The engine exists. What does not exist yet is recorded scientific tool I/O.
-        Covers training-ready checklist items 1, 3, 5.
+        Makes the "scientific environments plus replay/data layer" claim
+        operationally true. The target is
+        <code>flowcyto-gating-qc-basic@2026-06.0</code>, defined in
+        <a href="./flowcyto-environment-pack-plan.html">flowcyto-environment-pack-plan.html</a>.
       </p>
       <ul>
-        <li><strong>2a.</strong> Run first rollout against <code>flowcyto-mcp</code> through the Datalox proxy. Pack recorded tool I/O into <code>flowcyto-basic@2026-05.0</code> in <code>datalox-replay-fixtures</code>.</li>
-        <li><strong>2b.</strong> Create <code>flowcyto-task-world@2026-05.0</code> fixture set: compose <code>flowcyto-basic</code> + <code>search-policy-corpus-basic</code> + filesystem pack. Add <code>task.spec.json</code> and <code>verifier.spec.json</code>.</li>
-        <li><strong>2c.</strong> Formal reset declaration: add reset contract to fixture set manifest so agents and harnesses can call it explicitly. Replay-backed reset is deterministic — same fixture, same starting observations, sequence indexes reset. No Docker required.</li>
-        <li><strong>2d.</strong> Add <code>toolServerDeps</code> and action schemas to fixture set manifest. Pull tool schemas from captured MCP catalog. Record which tool servers were running at creation time.</li>
+        <li><strong>2a.</strong> In <code>datalox-flow-cyto-mcp</code>, define 10 gating/QC tasks with sample refs, accepted channel pairs, validator thresholds, and required report fields.</li>
+        <li><strong>2b.</strong> Harden the domain tool contract: <code>open_fcs</code>, <code>get_plot_context</code>, <code>upsert_gate</code>, <code>compute_gate_stats</code>, <code>validate_gate_qc</code>, and <code>write_report</code> return structured observations, revision ids, and agent-readable errors.</li>
+        <li><strong>2c.</strong> Run first live rollouts against <code>flowcyto-mcp</code>, capture tool I/O, and pack verified replay bundles.</li>
+        <li><strong>2d.</strong> Publish <code>flowcyto-gating-qc-basic@2026-06.0</code> in <code>datalox-replay-fixtures</code> with task/verifier refs, bundle checksums, and train/dev/test split.</li>
+        <li><strong>2e.</strong> Verify the consumer path: <code>datalox run --fixture-set flowcyto-gating-qc-basic@2026-06.0</code> and <code>datalox export sft</code>.</li>
       </ul>
       <p>Pass criteria:</p>
       <ul>
-        <li>A real flow cytometry rollout produces a valid <code>flowcyto-basic</code> fixture pack.</li>
-        <li><code>flowcyto-task-world</code> installs and replays without live tool servers.</li>
-        <li>Fixture set manifest declares reset contract, tool server deps, and action schemas.</li>
-        <li>Repeat for mol-bio and protein once tool servers are stable.</li>
+        <li>A fresh user can resolve or install the fixture set.</li>
+        <li>A task requires at least three domain tools to solve.</li>
+        <li>Wrong or incomplete actions produce structured failures, not fake success.</li>
+        <li>Validators emit pass/fail plus evidence refs.</li>
+        <li><code>run.json</code> includes messages, tool calls, observations, final answer, fixture refs, and export gate.</li>
+        <li><code>datalox export sft</code> produces valid <code>sft_frame.v1</code> JSONL.</li>
+        <li>The fixture set includes at least 10 success runs, 5 recovery runs, and 5 failure runs before preference export is claimed.</li>
       </ul>
 
       <h3>Step 2.5: Bio Environment Family Breadth</h3>
@@ -891,7 +897,7 @@ fixture set install
         SFT and preference training are the first practical consumers. Online RL comes later.
       </p>
       <ul>
-        <li><strong>3a.</strong> SFT and completion export first. Add <code>sft_frame.v1</code> and <code>completion_frame.v1</code> for successful and recovery trajectories. Failed trajectories must be labeled for preference/eval use, not blindly cloned.</li>
+        <li><strong>3a.</strong> SFT export exists now. Add <code>completion_frame.v1</code> next for successful and recovery trajectories. Failed trajectories must be labeled for preference/eval use, not blindly cloned.</li>
         <li><strong>3b.</strong> Preference pair export. Add <code>preference_pair.v1</code> for success &gt; recovery &gt; failure comparisons under the same task, with replay evidence refs on both chosen and rejected sides.</li>
         <li><strong>3c.</strong> Reward evidence and reference schemes. Extend <code>verifier.spec.json</code> to declare reward source, reward version, evidence refs, and optional reference components such as outcome, process, constraint, and cost. Datalox ships reference schemes; training teams own final reward functions and weights.</li>
         <li>
@@ -993,7 +999,7 @@ transition_frame.v1   (state_t, action_t, observation_t, reward_t, done_t)</code
       <ul>
         <li><code>reset(task_id, seed)</code> is deterministic for the same world version.</li>
         <li><code>step(action)</code> validates actions and returns structured observation, reward, done, and info.</li>
-        <li>Unseen actions in replay-backed worlds produce clear replay misses; unseen valid actions in runtime-backed worlds advance the runtime.</li>
+        <li>Unseen actions in snapshot worlds produce clear replay misses; unseen valid actions in runtime-backed worlds advance the runtime.</li>
         <li>Terminal reasons and reward evidence are versioned and traceable to recorded evidence.</li>
         <li>Rollouts produce replay bundles that can be inspected independently of the live runtime.</li>
       </ul>
@@ -1061,8 +1067,8 @@ Datalox replay_bundle.v1 -&gt; fixture set -&gt; transition/completion exports</
       <p>
         This is a stronger proof target than trying to clone AppWorld. If Datalox can record
         an AppWorld rollout, package it into a replay fixture world, preserve verifier
-        provenance, and export training rows, it proves the replay/data layer works under a
-        mature resettable environment.
+        provenance, and export training rows, it proves the versioned snapshot environment layer
+        works under a mature resettable environment.
       </p>
       <p>Concrete future shape:</p>
       <pre><code>fixture-set/
@@ -1103,7 +1109,7 @@ registry -> deterministic replay -> grounded training/eval exports</code></pre>
         <li>Do not build distributed filesystems, image streaming, or overlay filesystem infrastructure.</li>
         <li>Do not own Docker image construction for every task family.</li>
         <li>Do not own CyberGym's verifier, exploit server, firewall, or benchmark data distribution.</li>
-        <li>Do not clone AppWorld before the replay/data layer can record and export AppWorld rollouts.</li>
+        <li>Do not clone AppWorld before the versioned snapshot environment layer can package and export AppWorld rollouts.</li>
         <li>Do not own canonical reward design for training teams; provide reward evidence schemas and reference schemes.</li>
         <li>Do not claim to synthesize environments before fixture replay and spec validation are solid.</li>
         <li>Do not hide replay misses by falling back to live services.</li>
@@ -1116,13 +1122,13 @@ registry -> deterministic replay -> grounded training/eval exports</code></pre>
       <h2>Immediate Repo Work</h2>
       <ol>
         <li><strong>Keep Phases A–C stable on main.</strong> Fixture replay, fixture sets, and spec metadata hooks are the current foundation.</li>
-        <li><strong>Run first scientific rollout.</strong> Start <code>flowcyto-mcp</code>, record through the Datalox proxy, pack <code>flowcyto-basic@2026-05.0</code>, compose <code>flowcyto-task-world@2026-05.0</code> fixture set. This makes the "scientific environments" claim operationally true.</li>
-        <li><strong>Add reset declaration and action schemas to fixture set manifest.</strong> Formal reset for replay-backed worlds. Pull tool schemas from captured MCP catalog.</li>
-        <li><strong>Add SFT and completion exports first.</strong> Define <code>sft_frame.v1</code> and <code>completion_frame.v1</code> from verified successful/recovery trajectories. Add export admission gates and train/dev/test split.</li>
+        <li><strong>Build the FlowCyto environment pack proof.</strong> Follow <a href="./flowcyto-environment-pack-plan.html">flowcyto-environment-pack-plan.html</a> and publish <code>flowcyto-gating-qc-basic@2026-06.0</code>. This makes the "scientific environments plus replay/data layer" claim operationally true.</li>
+        <li><strong>Add reset declaration and action schemas to fixture set manifest.</strong> Formal reset for snapshot worlds. Pull tool schemas from captured MCP catalog.</li>
+        <li><strong>Add completion export next.</strong> <code>sft_frame.v1</code> exists. Define <code>completion_frame.v1</code> from verified successful/recovery trajectories. Add export admission gates and train/dev/test split.</li>
         <li><strong>Add preference pair export.</strong> Define <code>preference_pair.v1</code> for success &gt; recovery &gt; failure comparisons under the same task.</li>
         <li><strong>Add reward evidence and reference schemes.</strong> Extend <code>verifier.spec.json</code> and <code>reward_record.v1</code> to preserve source, version, evidence refs, and optional reference components. Keep final reward design owned by the training team.</li>
         <li><strong>Build the bio environment family breadth track.</strong> Turn the first flowcyto proof into 5-10 shallow-to-medium bio fixture worlds before attempting a deep simulator.</li>
-        <li><strong>Add an AppWorld proof target.</strong> Record one AppWorld MCP/API rollout, preserve verifier provenance, and export a replay-backed fixture set. This tests Datalox under a mature whole environment without cloning it.</li>
+        <li><strong>Add an AppWorld proof target.</strong> Package one AppWorld MCP/API rollout, preserve verifier provenance, and export a versioned snapshot fixture set. This tests Datalox under a mature whole environment without cloning it.</li>
         <li>Only after grounded exports are stable, define the runtime adapter SPI (Phase D).</li>
         <li>Keep heavy runtime integrations optional and outside the core install path (Phase E).</li>
         <li>Add executable environment artifact support — EvoEnv-style generative environments — after runtime adapters and verifier metadata exist (Phase F).</li>

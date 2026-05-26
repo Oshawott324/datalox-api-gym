@@ -16,6 +16,7 @@ import {
 } from "../core/installCore.js";
 import { packReplayBundle, verifyReplayBundle } from "../core/replayBundle.js";
 import { readDataloxReplayProxyConfigFile } from "../core/mcpProxyConfig.js";
+import { exportSftFromRun } from "../core/exports/exportSftFromRun.js";
 import { listInstalledFixtures } from "../core/fixtures/fixtureCache.js";
 import { installFixturePack } from "../core/fixtures/installFixturePack.js";
 import { installFixtureSet } from "../core/fixtures/installFixtureSet.js";
@@ -24,6 +25,7 @@ import { resolveFixtureRuntime } from "../core/fixtures/resolveFixtureRuntime.js
 import { resolveFixtureSetRuntime } from "../core/fixtures/resolveFixtureSetRuntime.js";
 import { validateNoToolNameCollisions } from "../core/fixtures/validateToolCollisions.js";
 import { runFixtureSetOpenAiCompatible } from "../core/run/openAiCompatibleFixtureRun.js";
+import { runFixtureAgent } from "../core/run/runFixtureAgent.js";
 import { runReplayProxyServer } from "../mcp/replayProxyServer.js";
 import { runClaudeWrapper } from "../adapters/claude/run.js";
 import { runCodexWrapper } from "../adapters/codex/run.js";
@@ -81,6 +83,8 @@ function usage(): string {
     "  datalox replay --fixture-set <fixture-set-ref> [--cache-root <path>]",
     "  datalox replay --fixtures <fixture-ref>... [--cache-root <path>]",
     "  datalox run --fixture-set <fixture-set-ref> --catalog <catalog.json> --model <model> [--base-url <url>] [--api-key <key>] [--cache-root <path>] [--split <train|dev|test>] [--max-tasks <n>] [--max-turns <n>] [--out <jsonl>] [--json]",
+    "  datalox run --fixture <fixture-ref>|--fixture-set <fixture-set-ref>|--fixtures <fixture-ref>...|--bundle <bundle-path> --base-url <url> --model <model> --prompt <text> --out <run-dir> [--api-key <key>|--api-key-env <env>] [--max-steps <n>] [--json]",
+    "  datalox export sft --run <run-dir>|--run-path <run.json> --out <frames.jsonl> [--json]",
     "  datalox proxy --mode <record|replay> [--repo <path>] [--config <json-path>] [--bundle <bundle-path>] [--json]",
     "  datalox wrap prompt [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--json]",
     "  datalox wrap command [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--summary <summary>] [--tag <tag>] [--event-kind <kind>] [--post-run-mode <off|replay>] [--json] -- <command> [args with __DATALOX_PROMPT__ placeholders]",
@@ -109,6 +113,22 @@ function parsePositiveInt(value: string | string[] | boolean | undefined): numbe
     throw new Error(`Expected a positive integer, got ${JSON.stringify(value)}.`);
   }
   return parsed;
+}
+
+function parseOptionalNumber(value: string | string[] | boolean | undefined): number | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function requireStringArg(args: ReturnType<typeof parseCliArgs>, key: string): string {
+  const value = args[key];
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`--${key} is required`);
+  }
+  return value;
 }
 
 function parsePostRunMode(
@@ -490,26 +510,91 @@ async function main(): Promise<void> {
       throw new Error("replay requires --fixture, --fixture-set, or --fixtures");
     }
     case "run": {
-      if (typeof args["fixture-set"] !== "string") {
-        throw new Error("run requires --fixture-set");
+      if (typeof args.catalog === "string" || args.split !== undefined || args["max-tasks"] !== undefined || args["max-turns"] !== undefined) {
+        if (typeof args["fixture-set"] !== "string") {
+          throw new Error("run with --catalog requires --fixture-set");
+        }
+        if (typeof args.catalog !== "string") {
+          throw new Error("run with split or batch limits requires --catalog");
+        }
+        const result = await runFixtureSetOpenAiCompatible({
+          fixtureSetRef: args["fixture-set"],
+          catalogPath: args.catalog,
+          cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+          outputPath: typeof args.out === "string" ? args.out : undefined,
+          split: parseRunSplit(args.split),
+          maxTasks: parsePositiveInt(args["max-tasks"]),
+          maxTurns: parsePositiveInt(args["max-turns"]),
+          model: requireCliString(args.model, "model", "DATALOX_MODEL"),
+          baseUrl: requireCliString(args["base-url"], "base-url", "OPENAI_BASE_URL"),
+          apiKey: requireCliString(args["api-key"], "api-key", "OPENAI_API_KEY"),
+        });
+        writeResult(result, true);
+        return;
       }
-      if (typeof args.catalog !== "string") {
-        throw new Error("run requires --catalog");
+
+      const fixtureRefs = toStringArray(args.fixtures);
+      const bundlePaths = toStringArray(args.bundle);
+      const hasFixture = typeof args.fixture === "string";
+      const hasFixtureSet = typeof args["fixture-set"] === "string";
+      const envModeCount = [
+        hasFixture,
+        hasFixtureSet,
+        fixtureRefs.length > 0,
+        bundlePaths.length > 0,
+      ].filter(Boolean).length;
+      if (envModeCount !== 1) {
+        throw new Error("run requires exactly one replay world: --fixture, --fixture-set, --fixtures, or --bundle");
       }
-      const result = await runFixtureSetOpenAiCompatible({
-        fixtureSetRef: args["fixture-set"],
-        catalogPath: args.catalog,
+
+      const result = await runFixtureAgent({
+        repoPath: typeof args.repo === "string" ? args.repo : undefined,
         cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
-        outputPath: typeof args.out === "string" ? args.out : undefined,
-        split: parseRunSplit(args.split),
-        maxTasks: parsePositiveInt(args["max-tasks"]),
-        maxTurns: parsePositiveInt(args["max-turns"]),
-        model: requireCliString(args.model, "model", "DATALOX_MODEL"),
-        baseUrl: requireCliString(args["base-url"], "base-url", "OPENAI_BASE_URL"),
-        apiKey: requireCliString(args["api-key"], "api-key", "OPENAI_API_KEY"),
+        fixtureRef: hasFixture ? args.fixture as string : undefined,
+        fixtureRefs: fixtureRefs.length > 0 ? fixtureRefs : undefined,
+        fixtureSetRef: hasFixtureSet ? args["fixture-set"] as string : undefined,
+        bundlePaths: bundlePaths.length > 0 ? bundlePaths : undefined,
+        activeFixtureRefs: toStringArray(args["active-fixture-ref"]),
+        prompt: requireStringArg(args, "prompt"),
+        systemPrompt: typeof args["system-prompt"] === "string" ? args["system-prompt"] : undefined,
+        taskRef: typeof args["task-ref"] === "string" ? args["task-ref"] : undefined,
+        model: {
+          baseUrl: requireStringArg(args, "base-url"),
+          model: requireStringArg(args, "model"),
+          apiKey: typeof args["api-key"] === "string" ? args["api-key"] : undefined,
+          apiKeyEnv: typeof args["api-key-env"] === "string" ? args["api-key-env"] : undefined,
+          timeoutMs: parsePositiveInt(args["timeout-ms"]),
+          temperature: parseOptionalNumber(args.temperature),
+          topP: parseOptionalNumber(args["top-p"]),
+          maxTokens: parsePositiveInt(args["max-tokens"]),
+        },
+        outDir: requireStringArg(args, "out"),
+        maxSteps: parsePositiveInt(args["max-steps"]),
       });
-      writeResult(result, true);
+      writeResult({
+        runDir: result.runDir,
+        runPath: result.runPath,
+        transcriptPath: result.transcriptPath,
+        stopReason: result.run.stop_reason,
+        finalAnswer: result.run.final_answer,
+        stepCount: result.run.steps.length,
+      }, true);
       return;
+    }
+    case "export": {
+      if (positional === "sft") {
+        const result = await exportSftFromRun({
+          runDir: typeof args.run === "string" ? args.run : undefined,
+          runPath: typeof args["run-path"] === "string" ? args["run-path"] : undefined,
+          outPath: requireStringArg(args, "out"),
+        });
+        writeResult({
+          outPath: result.outPath,
+          frameCount: result.frameCount,
+        }, true);
+        return;
+      }
+      throw new Error("export requires subcommand sft");
     }
     case "proxy": {
       const mode = typeof args.mode === "string" ? args.mode : undefined;

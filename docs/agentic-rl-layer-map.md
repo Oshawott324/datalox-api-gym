@@ -6,15 +6,21 @@ larger agentic RL stack.
 The short version:
 
 ```text
-Datalox Agent Replay is the tool-I/O VCR layer.
-It records real agent-visible tool observations once, packages them into
-verifiable replay bundles, and replays them deterministically later.
+Datalox Agent Replay provides versioned API/MCP snapshot environments.
+Teams consume fixture packs and fixture sets. Recording real agent-visible tool
+observations is one authoring path for creating private snapshots.
 ```
 
-Primary replay loop:
+Primary consumption loop:
 
 ```text
-agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
+versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports
+```
+
+Snapshot authoring loop:
+
+```text
+live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> fixture pack/version
 ```
 
 This can function as record-based mocking during replay, but this repo is not a
@@ -24,14 +30,50 @@ reward engine.
 Portfolio nuance:
 
 ```text
-Datalox Agent Replay repo = tool-I/O VCR, fixture worlds, replay bundles
-Datalox domain MCP repos  = constrained scientific environments when shipped separately
+Datalox Agent Replay repo = versioned API/MCP snapshots, fixture worlds, replay bundles
+Datalox domain MCP repos  = live constrained scientific environments when shipped separately
 ```
 
 Domain MCP environments can own file-backed scientific workspaces, domain tool
 schemas, compact UIs, deterministic domain algorithms, and agent-first tool
-contracts. Agent Replay records and replays their tool I/O; it does not become
-their domain runtime.
+contracts. Agent Replay snapshots and replays their tool I/O; it does not
+become their domain runtime.
+
+Current proof target:
+
+```text
+flowcyto-gating-qc-basic@2026-06.0
+  live flowcyto MCP environment
+  -> replay bundle / fixture set
+  -> datalox run
+  -> sft_frame.v1
+```
+
+This is the first test of the combined claim: Datalox ships or composes
+versioned scientific agent environments plus the replay/data layer needed to
+turn real rollouts into SFT, preference, eval, and later RL data.
+
+## Environment Levels
+
+Use these terms to avoid drifting between "environment" and "data recorder":
+
+```text
+Level 1: versioned snapshot environment
+  versioned API/MCP snapshot + fixture set + verified replay bundles
+  deterministic over observed scenarios
+  unseen actions return replay_miss
+  useful for SFT, preference data, eval, and regression
+
+Level 2: runtime-backed environment
+  live MCP/API/CLI/runtime starts from a declared state
+  valid new actions advance the runtime
+  every rollout emits replay evidence
+
+Level 3: generative reset/step environment
+  samples many task instances by seed/difficulty
+  owns hidden state, observation renderer, terminal logic, and verifier hooks
+  useful for scalable online RL after the data/export path is stable
+```
 
 ## Layer Map
 
@@ -41,7 +83,7 @@ Frontier agentic RL systems usually combine several layers.
 Layer 1    sandbox/runtime foundation
 Layer 2a   constrained domain MCP environments
 Layer 2b   generic task environment construction
-Layer 1.5  tool-I/O record/replay
+Layer 1.5  versioned snapshot environment + tool-I/O record/replay
 Layer 3    evaluation and reward rules
 ```
 
@@ -66,11 +108,15 @@ real sandbox commands through whatever runtime the team already uses: local
 Docker, e2b, Daytona, Modal, a custom sandbox cluster, or a frontier-lab
 internal platform.
 
-### Layer 1.5: Tool-I/O Record/Replay
+### Layer 1.5: Versioned Snapshot Environment And Tool-I/O Record/Replay
 
 This is Datalox Agent Replay's home layer.
 
-Record mode:
+Most users should consume this layer as an installed fixture pack or fixture
+set. They do not need to record anything unless they are authoring a new private
+snapshot.
+
+Snapshot authoring mode:
 
 ```text
 agent tool call -> real upstream tool/API/runtime -> exact observation
@@ -88,13 +134,19 @@ source/provenance metadata
 export/redaction gate
 ```
 
-Replay mode:
+Consumption/replay mode:
 
 ```text
-tool name + arguments -> request_hash + sequence_index -> recorded observation
+fixture set -> tool name + arguments -> request_hash + sequence_index -> recorded observation
 ```
 
 No live upstream call happens during replay.
+
+A fixture set is the snapshot environment boundary. It declares which
+fixture packs, task specs, verifier specs, scaffold specs, tool catalogs, and
+reset behavior make up the task world. It is finite: if the agent takes a valid
+but previously unrecorded path, replay must miss clearly instead of inventing a
+new state transition.
 
 This is record-based mocking in the narrow technical sense: the replayed result
 stands in for a live tool or API response. But the mock is not hand-written and
@@ -135,6 +187,11 @@ domain files -> file-backed workspace -> MCP tools -> structured observations ->
 Agent Replay should capture their agent-visible tool calls, observations,
 workspace revisions, validation outputs, and replay bundles. The domain repo
 should own the scientific runtime, UI, parsers, and algorithms.
+
+The first concrete Layer 2a pack should be
+`flowcyto-gating-qc-basic@2026-06.0`. It is not just a trajectory format:
+the live domain environment must expose stateful workspace mutations,
+structured tool errors, deterministic validators, and replayable observations.
 
 ### Layer 2b: Generic Task Environment Construction
 
@@ -212,6 +269,7 @@ Datalox Agent Replay owns:
 - sequence indexes for repeated identical calls
 - MCP proxy `tools/list` catalog capture
 - replay bundle packing and verification
+- versioned API/MCP snapshot environments and fixture-set activation
 - deterministic replay with no live fallback
 - strict action/observation normalization over replay evidence
 - optional derivative rows after replay evidence exists
@@ -237,7 +295,7 @@ Datalox Agent Replay does not own:
 
 ## Technical Plan
 
-### Phase 1: Harden Tool-I/O VCR
+### Phase 1: Harden Snapshot Replay Primitive
 
 Goal:
 
@@ -355,7 +413,6 @@ Rule:
 
 Use this when the product story drifts:
 
-> Datalox is the open-source tool-I/O VCR layer for agentic RL teams: record
-> real tool observations once, package them into verifiable replay bundles, and
-> replay them deterministically across eval, debugging, regression, and data
-> pipelines.
+> Datalox provides versioned API/MCP snapshot environments and live domain MCP
+> environments. This repo powers the snapshot/replay engine; recording is only
+> the authoring path for private snapshots.
