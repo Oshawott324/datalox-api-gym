@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { runFixtureSetOpenAiCompatible } from "../src/core/run/openAiCompatibleFixtureRun.js";
+import { evalFixtureSetOpenAiCompatible } from "../src/core/run/openAiCompatibleFixtureEval.js";
 import { sha256Hex } from "../src/core/hash.js";
 import { recordMcpToolCatalog } from "../src/core/mcpToolCatalogStore.js";
 import { packReplayBundle } from "../src/core/replayBundle.js";
@@ -293,7 +293,7 @@ async function createRunnableFixtureRepo(): Promise<{
       minimum_version: "0.1.0",
       commands: {
         install_fixture_set: "datalox fixture-sets install <fixture-set-ref>",
-        run_fixture_set: "datalox run --fixture-set <fixture-set-ref>",
+        eval_fixture_set: "datalox eval --fixture-set <fixture-set-ref>",
       },
     },
     fixtures: [
@@ -419,7 +419,7 @@ describe("OpenAI-compatible fixture set runs", () => {
     const outputPath = path.join(await makeTempDir("datalox-run-output-"), "runs.jsonl");
     const requests: Array<Record<string, unknown>> = [];
 
-    const result = await runFixtureSetOpenAiCompatible({
+    const result = await evalFixtureSetOpenAiCompatible({
       fixtureSetRef: repo.fixtureSetRef,
       catalogPath: repo.catalogPath,
       cacheRoot: repo.cacheRoot,
@@ -520,7 +520,7 @@ describe("OpenAI-compatible fixture set runs", () => {
     const repo = await createRunnableFixtureRepo();
     const outputPath = path.join(await makeTempDir("datalox-run-miss-output-"), "runs.jsonl");
 
-    const result = await runFixtureSetOpenAiCompatible({
+    const result = await evalFixtureSetOpenAiCompatible({
       fixtureSetRef: repo.fixtureSetRef,
       catalogPath: repo.catalogPath,
       cacheRoot: repo.cacheRoot,

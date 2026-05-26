@@ -161,7 +161,9 @@ describe("replay adoption scripts", () => {
     });
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("datalox run --fixture-set <fixture-set-ref>");
+    expect(result.stdout).toContain("datalox run --fixture <fixture-ref>|--fixture-set <fixture-set-ref>");
+    expect(result.stdout).toContain("datalox eval --fixture-set <fixture-set-ref>");
+    expect(result.stdout).not.toContain("datalox run --fixture-set <fixture-set-ref> --catalog");
     expect(result.stdout).not.toContain("record-trajectory");
     expect(result.stdout).not.toContain("export-trajectories");
     expect(result.stdout).not.toContain("grade-trajectories");
@@ -169,5 +171,28 @@ describe("replay adoption scripts", () => {
     expect(result.stdout).not.toContain(" datalox record ");
     expect(result.stdout).not.toContain(" datalox promote ");
     expect(result.stdout).not.toContain(" datalox maintain ");
+  }, 30000);
+
+  it("rejects old catalog-backed datalox run usage and points to eval", () => {
+    const result = spawnSync("node", [
+      path.join(repoRoot, "bin/datalox.js"),
+      "run",
+      "--fixture-set",
+      "support-triage-basic@2026-06.0",
+      "--catalog",
+      "catalog.json",
+      "--model",
+      "cheap-test-model",
+      "--base-url",
+      "http://127.0.0.1:1/v1",
+      "--api-key",
+      "test-key",
+    ], {
+      cwd: repoRoot,
+      encoding: "utf8",
+    });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("datalox run no longer accepts --catalog, --split, --max-tasks, or --max-turns; use datalox eval");
   }, 30000);
 });

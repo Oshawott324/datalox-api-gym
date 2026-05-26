@@ -104,12 +104,11 @@ datalox replay --fixtures \
   search-policy-corpus-basic@2026-05.0
 ```
 
-## Run With An OpenAI-Compatible Model
+## Run One Prompt With An OpenAI-Compatible Model
 
-`datalox run` is the immediate path for vLLM, verl data generation, Groq, or
-OpenAI-compatible hosted models. It auto-installs the fixture set, converts the
-replayed MCP tool catalog into OpenAI function tools, and writes one
-`datalox_fixture_run.v1` JSONL row per eval prompt.
+`datalox run` is the immediate path for putting one model/agent inside one
+declared replay world. It writes a `datalox_run.v1` transcript directory that can
+later be exported to SFT or other training/eval adapters.
 
 ```bash
 export OPENAI_BASE_URL=http://localhost:8000/v1
@@ -117,16 +116,38 @@ export OPENAI_API_KEY=EMPTY
 
 datalox run \
   --fixture-set support-triage-basic@2026-06.0 \
+  --base-url "$OPENAI_BASE_URL" \
+  --model Qwen/Qwen2.5-7B-Instruct \
+  --api-key "$OPENAI_API_KEY" \
+  --prompt "Find replayed policy evidence for delayed invoice webhooks." \
+  --out runs/support-triage-basic.train-001 \
+  --json
+```
+
+For hosted OpenAI-compatible APIs, change only `OPENAI_BASE_URL`,
+`OPENAI_API_KEY`, and `--model`.
+
+## Eval Fixture-Set Splits
+
+`datalox eval` is the batch path for fixture-set tasks and splits. It
+auto-installs the fixture set, converts the replayed MCP tool catalog into
+OpenAI function tools, and writes one `datalox_fixture_run.v1` JSONL row per
+eval prompt.
+
+```bash
+datalox eval \
+  --fixture-set support-triage-basic@2026-06.0 \
   --catalog ../datalox-replay-fixtures/catalog.json \
   --model Qwen/Qwen2.5-7B-Instruct \
+  --base-url "$OPENAI_BASE_URL" \
+  --api-key "$OPENAI_API_KEY" \
   --split train \
   --max-tasks 1 \
   --out exports/fixture-runs/support-triage-basic.train.jsonl \
   --json
 ```
 
-For hosted OpenAI-compatible APIs, change only `OPENAI_BASE_URL`,
-`OPENAI_API_KEY`, and `--model`. The runner does not execute verifier specs or
+The eval runner does not execute verifier specs or
 reference rewards. It records the model-visible episode and replay misses so
 verl or another trainer/eval harness can consume the JSONL and compute rewards
 outside this repo.
@@ -164,9 +185,9 @@ or infer hidden reward logic from the spec.
   explicitly in a later version.
 - Replay misses include request hash, sequence index, tool name, active fixture
   refs, available tool names, and `liveFallback: false`.
-- `datalox run` returns replay misses to the model as tool results and never
+- `datalox eval` returns replay misses to the model as tool results and never
   calls live upstream tools for missing records.
-- `datalox run` writes `datalox_fixture_run.v1` JSONL with task metadata,
+- `datalox eval` writes `datalox_fixture_run.v1` JSONL with task metadata,
   model-visible messages, replayed tool observations, SFT/preference flags, and
   unlabeled quality.
 

@@ -22,10 +22,10 @@ import {
 } from "../core/fixtures/resolveFixtureSetRuntime.js";
 import { validateNoToolNameCollisions } from "../core/fixtures/validateToolCollisions.js";
 import {
-  runFixtureSetOpenAiCompatible,
-  type RunFixtureSetOpenAiCompatibleInput,
-  type RunFixtureSetOpenAiCompatibleResult,
-} from "../core/run/openAiCompatibleFixtureRun.js";
+  evalFixtureSetOpenAiCompatible,
+  type EvalFixtureSetOpenAiCompatibleInput,
+  type EvalFixtureSetOpenAiCompatibleResult,
+} from "../core/run/openAiCompatibleFixtureEval.js";
 import {
   exportSftFromRun,
   type ExportSftFromRunInput,
@@ -59,8 +59,8 @@ export type {
   ReplayToolRuntime,
   ResolveFixtureRuntimeInput,
   ResolveFixtureSetRuntimeInput,
-  RunFixtureSetOpenAiCompatibleInput,
-  RunFixtureSetOpenAiCompatibleResult,
+  EvalFixtureSetOpenAiCompatibleInput,
+  EvalFixtureSetOpenAiCompatibleResult,
   RunFixtureAgentInput,
   RunFixtureAgentResult,
   RunMessage,
@@ -84,10 +84,10 @@ export async function resolveFixtureSet(input: ResolveFixtureSetRuntimeInput): P
   return resolveFixtureSetRuntime(input);
 }
 
-export async function runFixtureSet(
-  input: RunFixtureSetOpenAiCompatibleInput,
-): Promise<RunFixtureSetOpenAiCompatibleResult> {
-  return runFixtureSetOpenAiCompatible(input);
+export async function evalFixtureSet(
+  input: EvalFixtureSetOpenAiCompatibleInput,
+): Promise<EvalFixtureSetOpenAiCompatibleResult> {
+  return evalFixtureSetOpenAiCompatible(input);
 }
 
 export async function createReplayRuntime(input: CreateReplayToolRuntimeInput): Promise<ReplayToolRuntime> {

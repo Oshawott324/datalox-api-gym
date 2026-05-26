@@ -92,7 +92,7 @@ export type OpenAiChatCompletionClient = (
   request: OpenAiChatCompletionRequest,
 ) => Promise<OpenAiChatCompletionResponse>;
 
-export interface RunFixtureSetOpenAiCompatibleInput {
+export interface EvalFixtureSetOpenAiCompatibleInput {
   fixtureSetRef: string;
   catalogPath: string;
   cacheRoot?: string;
@@ -114,7 +114,7 @@ export interface FixtureRunReplayMiss {
   liveFallback: false;
 }
 
-export interface RunFixtureSetTaskResult {
+export interface FixtureSetEvalTaskResult {
   evalPromptId: string;
   taskSpecId?: string;
   status: FixtureRunTaskStatus;
@@ -123,7 +123,7 @@ export interface RunFixtureSetTaskResult {
   toolCallCount: number;
 }
 
-export interface RunFixtureSetOpenAiCompatibleResult {
+export interface EvalFixtureSetOpenAiCompatibleResult {
   fixtureSetRef: string;
   cacheRoot?: string;
   outputPath: string;
@@ -134,7 +134,7 @@ export interface RunFixtureSetOpenAiCompatibleResult {
     bundlePaths: string[];
     toolCount: number;
   };
-  tasks: RunFixtureSetTaskResult[];
+  tasks: FixtureSetEvalTaskResult[];
 }
 
 interface EvalPrompt {
@@ -175,9 +175,9 @@ interface ToolCallRunResult {
   observation?: ToolIoObservationV1;
 }
 
-export async function runFixtureSetOpenAiCompatible(
-  input: RunFixtureSetOpenAiCompatibleInput,
-): Promise<RunFixtureSetOpenAiCompatibleResult> {
+export async function evalFixtureSetOpenAiCompatible(
+  input: EvalFixtureSetOpenAiCompatibleInput,
+): Promise<EvalFixtureSetOpenAiCompatibleResult> {
   const installed = await installFixtureSet({
     ref: input.fixtureSetRef,
     catalogPath: input.catalogPath,
@@ -205,7 +205,7 @@ export async function runFixtureSetOpenAiCompatible(
   const client = input.chatCompletionClient ?? buildOpenAiCompatibleClient(input);
   const createdAt = (input.now ?? new Date()).toISOString();
   const rows: JsonObject[] = [];
-  const taskResults: RunFixtureSetTaskResult[] = [];
+  const taskResults: FixtureSetEvalTaskResult[] = [];
 
   for (const evalPrompt of selectedPrompts) {
     const taskSpec = evalPrompt.taskSpecId ? taskSpecs.get(evalPrompt.taskSpecId) : undefined;
@@ -246,14 +246,14 @@ export async function runFixtureSetOpenAiCompatible(
 }
 
 async function runOneTask(input: {
-  input: RunFixtureSetOpenAiCompatibleInput;
+  input: EvalFixtureSetOpenAiCompatibleInput;
   runtime: FixtureSetRuntime;
   evalPrompt: EvalPrompt;
   taskSpec?: TaskSpec;
   replayWorld: ReplayWorld;
   client: OpenAiChatCompletionClient;
   createdAt: string;
-}): Promise<{ row: JsonObject; result: RunFixtureSetTaskResult }> {
+}): Promise<{ row: JsonObject; result: FixtureSetEvalTaskResult }> {
   const maxTurns = input.input.maxTurns ?? 8;
   const messages: OpenAiChatMessage[] = [
     {
@@ -322,7 +322,7 @@ async function runOneTask(input: {
     }
   }
 
-  const result: RunFixtureSetTaskResult = {
+  const result: FixtureSetEvalTaskResult = {
     evalPromptId: input.evalPrompt.id,
     ...(input.evalPrompt.taskSpecId !== undefined ? { taskSpecId: input.evalPrompt.taskSpecId } : {}),
     status,
@@ -592,7 +592,7 @@ function buildUserPrompt(evalPrompt: EvalPrompt, taskSpec: TaskSpec | undefined)
 }
 
 function buildFixtureRunRow(input: {
-  input: RunFixtureSetOpenAiCompatibleInput;
+  input: EvalFixtureSetOpenAiCompatibleInput;
   runtime: FixtureSetRuntime;
   evalPrompt: EvalPrompt;
   taskSpec?: TaskSpec;
@@ -654,7 +654,7 @@ function buildFixtureRunRow(input: {
   };
 }
 
-function buildOpenAiCompatibleClient(input: RunFixtureSetOpenAiCompatibleInput): OpenAiChatCompletionClient {
+function buildOpenAiCompatibleClient(input: EvalFixtureSetOpenAiCompatibleInput): OpenAiChatCompletionClient {
   return async (request) => {
     const response = await fetch(`${input.baseUrl.replace(/\/+$/u, "")}/chat/completions`, {
       method: "POST",

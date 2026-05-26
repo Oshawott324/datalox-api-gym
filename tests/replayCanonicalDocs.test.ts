@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = process.cwd();
 const replayLoop = "agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives";
+const primaryConsumptionLoop = "versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports";
+const snapshotAuthoringLoop = "live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> fixture pack/version";
 const actionObservationLoop = "tool_io_record.v1 -> action_observation.v1 -> replay_bundle.v1";
 const legacyProductWord = "prod" + "uct";
 
@@ -44,10 +46,11 @@ describe("replay canonical schema docs", () => {
     expect(replayQuickstart).toContain(".datalox/replay-bundles/demo-replay-bundle/");
     expect(replayQuickstart).toContain("Do not call live tools during replay as a hidden fallback.");
 
-    expect(layerMap).toContain("Layer 1.5: Tool-I/O Record/Replay");
+    expect(layerMap).toContain("Layer 1.5: Versioned Snapshot Environment And Tool-I/O Record/Replay");
     expect(layerMap).toContain("Datalox does not own this layer.");
     expect(layerMap).toContain("Datalox implements the first kind for agent-visible tool I/O.");
-    expect(layerMap).toContain(replayLoop);
+    expect(layerMap).toContain(primaryConsumptionLoop);
+    expect(layerMap).toContain(snapshotAuthoringLoop);
   });
 
   it("keeps action/observation docs aligned with strict TypeScript validators", async () => {
@@ -164,7 +167,7 @@ describe("replay canonical schema docs", () => {
     const missing = [];
     for (const relativePath of firstReadDocs) {
       const content = await read(relativePath);
-      if (!content.includes(replayLoop)) {
+      if (!content.includes(replayLoop) && !content.includes(primaryConsumptionLoop)) {
         missing.push(relativePath);
       }
     }

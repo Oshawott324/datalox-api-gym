@@ -24,7 +24,7 @@ import { readFixtureCatalog } from "../core/fixtures/readFixtureCatalog.js";
 import { resolveFixtureRuntime } from "../core/fixtures/resolveFixtureRuntime.js";
 import { resolveFixtureSetRuntime } from "../core/fixtures/resolveFixtureSetRuntime.js";
 import { validateNoToolNameCollisions } from "../core/fixtures/validateToolCollisions.js";
-import { runFixtureSetOpenAiCompatible } from "../core/run/openAiCompatibleFixtureRun.js";
+import { evalFixtureSetOpenAiCompatible } from "../core/run/openAiCompatibleFixtureEval.js";
 import { runFixtureAgent } from "../core/run/runFixtureAgent.js";
 import { runReplayProxyServer } from "../mcp/replayProxyServer.js";
 import { runClaudeWrapper } from "../adapters/claude/run.js";
@@ -82,8 +82,8 @@ function usage(): string {
     "  datalox replay --fixture <fixture-ref> [--cache-root <path>]",
     "  datalox replay --fixture-set <fixture-set-ref> [--cache-root <path>]",
     "  datalox replay --fixtures <fixture-ref>... [--cache-root <path>]",
-    "  datalox run --fixture-set <fixture-set-ref> --catalog <catalog.json> --model <model> [--base-url <url>] [--api-key <key>] [--cache-root <path>] [--split <train|dev|test>] [--max-tasks <n>] [--max-turns <n>] [--out <jsonl>] [--json]",
     "  datalox run --fixture <fixture-ref>|--fixture-set <fixture-set-ref>|--fixtures <fixture-ref>...|--bundle <bundle-path> --base-url <url> --model <model> --prompt <text> --out <run-dir> [--api-key <key>|--api-key-env <env>] [--max-steps <n>] [--json]",
+    "  datalox eval --fixture-set <fixture-set-ref> --catalog <catalog.json> --model <model> [--base-url <url>] [--api-key <key>] [--cache-root <path>] [--split <train|dev|test>] [--max-tasks <n>] [--max-turns <n>] [--out <jsonl>] [--json]",
     "  datalox export sft --run <run-dir>|--run-path <run.json> --out <frames.jsonl> [--json]",
     "  datalox proxy --mode <record|replay> [--repo <path>] [--config <json-path>] [--bundle <bundle-path>] [--json]",
     "  datalox wrap prompt [--repo <path>] [--task <task>] [--workflow <workflow>] [--step <step>] [--skill <skill-id>] [--prompt <text>] [--json]",
@@ -511,26 +511,7 @@ async function main(): Promise<void> {
     }
     case "run": {
       if (typeof args.catalog === "string" || args.split !== undefined || args["max-tasks"] !== undefined || args["max-turns"] !== undefined) {
-        if (typeof args["fixture-set"] !== "string") {
-          throw new Error("run with --catalog requires --fixture-set");
-        }
-        if (typeof args.catalog !== "string") {
-          throw new Error("run with split or batch limits requires --catalog");
-        }
-        const result = await runFixtureSetOpenAiCompatible({
-          fixtureSetRef: args["fixture-set"],
-          catalogPath: args.catalog,
-          cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
-          outputPath: typeof args.out === "string" ? args.out : undefined,
-          split: parseRunSplit(args.split),
-          maxTasks: parsePositiveInt(args["max-tasks"]),
-          maxTurns: parsePositiveInt(args["max-turns"]),
-          model: requireCliString(args.model, "model", "DATALOX_MODEL"),
-          baseUrl: requireCliString(args["base-url"], "base-url", "OPENAI_BASE_URL"),
-          apiKey: requireCliString(args["api-key"], "api-key", "OPENAI_API_KEY"),
-        });
-        writeResult(result, true);
-        return;
+        throw new Error("datalox run no longer accepts --catalog, --split, --max-tasks, or --max-turns; use datalox eval for fixture-set batch evaluation.");
       }
 
       const fixtureRefs = toStringArray(args.fixtures);
@@ -579,6 +560,28 @@ async function main(): Promise<void> {
         finalAnswer: result.run.final_answer,
         stepCount: result.run.steps.length,
       }, true);
+      return;
+    }
+    case "eval": {
+      if (typeof args["fixture-set"] !== "string") {
+        throw new Error("eval requires --fixture-set");
+      }
+      if (typeof args.catalog !== "string") {
+        throw new Error("eval requires --catalog");
+      }
+      const result = await evalFixtureSetOpenAiCompatible({
+        fixtureSetRef: args["fixture-set"],
+        catalogPath: args.catalog,
+        cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+        outputPath: typeof args.out === "string" ? args.out : undefined,
+        split: parseRunSplit(args.split),
+        maxTasks: parsePositiveInt(args["max-tasks"]),
+        maxTurns: parsePositiveInt(args["max-turns"]),
+        model: requireCliString(args.model, "model", "DATALOX_MODEL"),
+        baseUrl: requireCliString(args["base-url"], "base-url", "OPENAI_BASE_URL"),
+        apiKey: requireCliString(args["api-key"], "api-key", "OPENAI_API_KEY"),
+      });
+      writeResult(result, true);
       return;
     }
     case "export": {
