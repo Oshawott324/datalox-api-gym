@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budget Agent RL Proof Demo Guide</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --ink: #171717;
+      --muted: #5f5f57;
+      --line: #d9d6ca;
+      --accent: #165f58;
+      --soft: #eef7f4;
+      --warn: #fff5e8;
+      --danger: #fff0f0;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 1080px);
+      margin: 0 auto;
+      padding: 42px 0 68px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    h1 {
+      font-size: 42px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 18px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px 16px;
+      margin: 12px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #faf9f5;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .lede {
+      max-width: 880px;
+      color: var(--muted);
+      font-size: 18px;
+      margin-top: 12px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-top: 24px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      background: var(--warn);
+      border-left-color: #8a4b12;
+    }
+
+    .danger {
+      background: var(--danger);
+      border-left-color: #8c2727;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 22px, 1080px);
+        padding-top: 22px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Budget Agent RL Proof Demo Guide</h1>
+    <p class="lede">
+      A concrete traction-oriented plan for showing that Datalox can turn
+      versioned agent environments into low-cost, measurable model improvement.
+      The goal is not only to prove the architecture. The goal is to make the
+      product feel useful: bring a small model, run a declared environment,
+      train cheaply, and show a better held-out result with replayable evidence.
+    </p>
+    <p class="meta">Updated May 27, 2026 - Local planning doc</p>
+  </header>
+
+  <section class="section">
+    <h2>Demo Claim</h2>
+    <div class="callout">
+      Datalox can produce a small but real agent-training loop under a constrained
+      budget: a small open model improves on held-out tool-use tasks after SFT,
+      preference training, and a tiny verifier-backed RL run, with every result
+      tied back to replay evidence.
+    </div>
+    <pre>versioned fixture set
+  -> baseline run
+  -> grounded SFT / preference / reward exports
+  -> low-cost LoRA training
+  -> held-out eval
+  -> replayable before/after evidence</pre>
+    <p>
+      Public wording should be disciplined: "budget agent training with
+      replayable evidence," not "we built frontier agent RL."
+    </p>
+  </section>
+
+  <!-- <section class="section">
+    <h2>Why This Can Get Traction</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Immediate Buyer Hook</h3>
+        <p>
+          Teams want to know whether their private tool traces can become useful
+          training data without a frontier-lab budget. A small visible lift is
+          more persuasive than another schema diagram.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Datalox-Specific Moat</h3>
+        <p>
+          The training result is not a loose benchmark number. It points back to
+          fixture refs, exact tool observations, verifier evidence, and export gates.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Reasonable Promise</h3>
+        <p>
+          The claim is narrow and believable: improve a small model inside one
+          versioned environment. That is enough for design-partner interest.
+        </p>
+      </div>
+    </div>
+  </section> -->
+
+  <section class="section">
+    <h2>Recommended Scope</h2>
+    <p>
+      Do not start the budget RL traction demo with FlowCyto. Flow cytometry is
+      the right serious second proof, but it adds domain expertise, plot
+      interpretation, and possibly vision-model cost before the training loop
+      itself is proven. The first public demo should be text-first, tool/API
+      based, deterministic, and cheap enough to rerun several times.
+    </p>
+    <p>
+      Also do not treat the existing <code>support-triage-basic</code> fixture
+      as the public traction dataset unless it is rebuilt from real observed
+      cases. The current support fixture is good for plumbing and schema smoke
+      tests. The public demo needs tasks sourced from real incidents, issues,
+      support threads, CI logs, or design-partner traces where baseline agents
+      actually fail.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Choice</th><th>Use</th><th>Reason</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>real-ci-triage-basic@2026-06.0</code></td>
+          <td>First public budget RL traction demo</td>
+          <td>Real open-source PR/issue/check-run artifacts are public, text-first, cheap to replay, and agents often fail by missing the key log, overclaiming, or proposing the wrong next action.</td>
+        </tr>
+        <tr>
+          <td><code>support-triage-real-basic@2026-06.0</code></td>
+          <td>Design-partner support demo</td>
+          <td>Best buyer story if sourced from anonymized real support traces, but avoid it for public launch unless provenance and redaction are clean.</td>
+        </tr>
+        <tr>
+          <td><code>support-triage-basic@2026-06.0</code></td>
+          <td>Pipeline smoke only</td>
+          <td>Useful for exercising fixture composition, exports, and reward schemas. Too synthetic and too broad for the public traction claim.</td>
+        </tr>
+        <tr>
+          <td><code>flowcyto-gating-qc-basic@2026-06.0</code></td>
+          <td>Second serious proof</td>
+          <td>Best product story for scientific environments, but too risky for the first budget training claim because success may depend on domain reasoning and visual/plot interpretation.</td>
+        </tr>
+        <tr>
+          <td><code>bio-agent-basic@2026-06.0</code></td>
+          <td>Third breadth proof</td>
+          <td>Shows environment-family breadth after the text-first budget RL loop and FlowCyto proof both work.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      First demo selection rule: no vision dependency, no specialist scientific
+      interpretation, no long-horizon UI loop, and no verifier that needs a judge
+      model. The first win should come from tool-use behavior that a small text
+      model can realistically improve.
+    </div>
+    <p>
+      The first task family should look like:
+    </p>
+    <pre>read real issue / PR / check-run / incident thread
+  -> retrieve logs, docs, policy, or prior discussion
+  -> identify the failing condition or missing evidence
+  -> choose next action: fix, ask, escalate, retry, or close as duplicate
+  -> cite exact evidence
+  -> emit structured triage package</pre>
+  </section>
+
+  <section class="section">
+    <h2>Paper-Backed Task Prior</h2>
+    <p>
+      Use recent agent benchmark papers to choose the task family. Do not spend
+      weeks discovering difficulty from scratch. The papers are a prior: they
+      identify failure modes that are already hard for strong agents. Datalox
+      should still admit only tasks with real source artifacts and at least one
+      observed baseline failure.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Source</th><th>Hardness Signal</th><th>Datalox Demo Use</th><th>First-Demo Decision</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Terminal-Bench 2.0</td>
+          <td>Hard terminal workflows with human solutions and test-based verification; frontier agents reported under 65%.</td>
+          <td>Use as the strongest prior for CI/log/package/debug tasks because verification can be deterministic and cheap.</td>
+          <td>Primary source family.</td>
+        </tr>
+        <tr>
+          <td>TerminalWorld</td>
+          <td>Tasks reverse-engineered from in-the-wild terminal recordings; verified subset still hard for current agents.</td>
+          <td>Use the collection method as a model: real workflows first, validated task after, not synthetic prompt first.</td>
+          <td>Primary sourcing pattern.</td>
+        </tr>
+        <tr>
+          <td>SWE-bench / SWE-bench Verified / SWE-bench Live</td>
+          <td>Real GitHub issues exposed underspecification, weak tests, contamination, and environment setup limits.</td>
+          <td>Use recent public issues, PRs, failing checks, and maintainer discussion as source artifacts. Avoid claiming leaderboard comparability.</td>
+          <td>Good source pool, but use fresh/recent artifacts where possible.</td>
+        </tr>
+        <tr>
+          <td>tau-bench</td>
+          <td>Policy-constrained tool agents fail on multi-turn support tasks even when final state is objectively checkable.</td>
+          <td>Use for the support task shape: policy + API state + customer request + forbidden actions + final database state.</td>
+          <td>Good private design-partner path; not first public path unless traces are real and shareable.</td>
+        </tr>
+        <tr>
+          <td>BrowseComp</td>
+          <td>Hard-to-find but easy-to-verify evidence retrieval is a clean benchmark design pattern.</td>
+          <td>Use the asymmetry: make tasks where finding the key evidence is hard, but the verifier checks a short answer plus cited source ids.</td>
+          <td>Useful subtask pattern, not a full environment by itself.</td>
+        </tr>
+        <tr>
+          <td>WebArena / AppWorld / OSWorld</td>
+          <td>Realistic web, app, and desktop agents struggle with long horizons and stateful environments.</td>
+          <td>Use for roadmap validation, not the first budget demo, because browser/desktop/vision loops raise cost and flakiness.</td>
+          <td>Defer.</td>
+        </tr>
+        <tr>
+          <td>MLE-bench / PaperBench</td>
+          <td>End-to-end ML engineering and paper replication are clearly hard, but expensive and long-running.</td>
+          <td>Use as evidence that agentic training matters; do not use for the first budget claim.</td>
+          <td>Exclude from first demo.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      Practical rule: papers choose the hunting ground; replay evidence chooses
+      the final dataset. We can skip broad exploration, but not the one cheap
+      baseline pass that proves the selected task is actually failing in our
+      harness.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>TerminalWorld Domain Fit</h2>
+    <p>
+      TerminalWorld is close to Datalox's domain because it starts from real
+      workflow recordings and converts them into reproducible, verified tasks.
+      It is not a FlowCyto paper, but it validates the same product thesis:
+      hard agent tasks should come from observed work, not invented prompts.
+    </p>
+    <table>
+      <thead>
+        <tr><th>TerminalWorld Piece</th><th>Datalox Interpretation</th><th>Domain Extension</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Public terminal recordings</td>
+          <td>Source traces for fixture authoring, analogous to live MCP/API/tool rollouts.</td>
+          <td>Mine real CLI, notebook, pipeline, or support workflows before writing task specs.</td>
+        </tr>
+        <tr>
+          <td>Intent inference and oracle extraction</td>
+          <td>Candidate task spec plus success trajectory, downstream from evidence.</td>
+          <td>Use agents to draft task/verifier specs, then require replay evidence and human review.</td>
+        </tr>
+        <tr>
+          <td>Docker execution environment</td>
+          <td>Layer 1/2 runtime owned by benchmark or domain environment, not by Agent Replay core.</td>
+          <td>Datalox records and replays the agent-visible tool I/O around that runtime.</td>
+        </tr>
+        <tr>
+          <td>State-based tests</td>
+          <td>Cheap deterministic verifier, suitable for budget RL reward records.</td>
+          <td>Prefer file/state/JSON/test assertions over judge-model scoring.</td>
+        </tr>
+        <tr>
+          <td>Verified subset</td>
+          <td>Admission gate: clarity, artifact completeness, oracle replayability, verifier validity.</td>
+          <td>Use the same gate for public fixture sets before claiming traction.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      The directly related scientific wedge is not generic terminal use. It is
+      scientific terminal work that can be verified cheaply:
+    </p>
+    <pre>real bioinformatics / analysis workflow
+  -> captured command, file, API, or notebook observations
+  -> deterministic artifact or state verifier
+  -> Datalox replay bundle
+  -> SFT / preference / reward export</pre>
+    <table>
+      <thead>
+        <tr><th>Domain Candidate</th><th>Why It Fits</th><th>Why It Is Cheaper Than FlowCyto Vision</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bioinformatics pipeline triage</td>
+          <td>Real Nextflow/Snakemake/FASTQ/QC failures produce logs, configs, and file outputs.</td>
+          <td>Text/log/file verification; no image interpretation required.</td>
+        </tr>
+        <tr>
+          <td>Scientific data cleaning</td>
+          <td>CSV, FASTA, metadata, and notebook regeneration tasks have concrete output artifacts.</td>
+          <td>Verifier can compare schema, rows, checksums, plots metadata, or test outputs.</td>
+        </tr>
+        <tr>
+          <td>Flow cytometry script/debug path</td>
+          <td>FCS metadata, marker/channel mismatch, compensation config, and gating script errors are real domain work.</td>
+          <td>Starts with logs/metadata/state diffs before adding plot or vision-heavy judgement.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      So the answer is yes: TerminalWorld is related to our domain if we define
+      the first Datalox scientific wedge as evidence-backed workflow replay and
+      deterministic verification. It is not enough to say "terminal benchmark";
+      the useful adaptation is "TerminalWorld for scientific workflows, with
+      Datalox replay bundles as the evidence layer."
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Real Task Bar</h2>
+    <p>
+      A task should enter the budget RL demo only if it passes all of these
+      gates:
+    </p>
+    <table>
+      <thead>
+        <tr><th>Gate</th><th>Requirement</th><th>Reason</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Real source artifact</td>
+          <td>Public GitHub issue/PR/check logs, public incident report, public docs, or approved anonymized support trace.</td>
+          <td>A buyer should believe the task represents real work, not a toy puzzle.</td>
+        </tr>
+        <tr>
+          <td>Observed agent failure</td>
+          <td>At least one baseline agent run fails through missing evidence, wrong tool path, hallucinated state, or unsupported action.</td>
+          <td>The demo should train on problems agents actually get stuck on.</td>
+        </tr>
+        <tr>
+          <td>Deterministic verifier</td>
+          <td>Verifier checks exact evidence ids, expected diagnosis, required missing fields, and forbidden claims.</td>
+          <td>Budget RL needs cheap rewards; judge-model scoring defeats the point.</td>
+        </tr>
+        <tr>
+          <td>Replayable observations</td>
+          <td>All issue, log, doc, search, and status observations are captured as tool I/O records.</td>
+          <td>Datalox's value is replayable evidence, not screenshots of a one-off demo.</td>
+        </tr>
+        <tr>
+          <td>Teachable difficulty</td>
+          <td>Baseline failure rate should be high enough to improve, but not so high that the task requires hidden expertise.</td>
+          <td>A small LoRA run needs dense, learnable signal.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Specific Real Task Sources</h2>
+    <p>
+      These are concrete source pools for <code>real-ci-triage-basic</code>.
+      Each task should start from a real artifact, then be captured into replay
+      bundles. The fixture should not contain invented tickets.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Task</th><th>Real Source Artifact</th><th>Agent Gets Stuck On</th><th>Verifier Checks</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CI failure root-cause triage</td>
+          <td>Public GitHub Actions check run, failing job log, related PR diff, and linked issue.</td>
+          <td>Long logs, irrelevant warnings, and failing tests far from the edited file.</td>
+          <td>Names failing job, failing test, key error line, likely cause, and exact evidence refs.</td>
+        </tr>
+        <tr>
+          <td>Dependency upgrade regression</td>
+          <td>Public dependency bump PR, changelog/release notes, failing lockfile or import error.</td>
+          <td>Changelog/API mismatch where the agent proposes a broad rollback instead of the minimal compatibility fix.</td>
+          <td>Cites upgraded package, breaking API or config change, impacted file, and minimal next action.</td>
+        </tr>
+        <tr>
+          <td>Flaky test vs real regression</td>
+          <td>Repeated public CI runs, rerun history, flaky-test label discussion, and final maintainer action.</td>
+          <td>Confusing rerun history, intermittent failures, and tempting false confidence.</td>
+          <td>Classifies as flaky, real regression, or insufficient evidence, with run-history evidence.</td>
+        </tr>
+        <tr>
+          <td>Duplicate issue triage</td>
+          <td>Two or more public issues with maintainer duplicate/not-duplicate resolution.</td>
+          <td>Multiple similar reports with slightly different symptoms.</td>
+          <td>Identifies duplicate or non-duplicate, cites matching and distinguishing facts, avoids false closure.</td>
+        </tr>
+        <tr>
+          <td>Security/dependency alert triage</td>
+          <td>Public advisory, dependency graph or lockfile, issue/PR discussion, and patched version.</td>
+          <td>Transitive dependencies, advisory severity, and whether the vulnerable path is reachable.</td>
+          <td>Cites advisory id, affected package/version, dependency path, and safe next action.</td>
+        </tr>
+        <tr>
+          <td>Support escalation packet</td>
+          <td>Approved anonymized support trace or public incident/support discussion with policy docs.</td>
+          <td>Missing customer ids, unsupported refund/payment mutations, and overconfident customer-facing language.</td>
+          <td>Lists present facts, absent fields, forbidden actions, and escalation-ready next question.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      The first public set should include actual links or provenance ids for
+      every source artifact. If the artifact cannot be shared, keep it for a
+      private design-partner pilot and use public GitHub/incident tasks for the
+      public demo.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Where Initial SFT Data Comes From</h2>
+    <p>
+      The papers and real source artifacts do not directly become SFT rows.
+      They only define the task world. Initial SFT data comes from successful or
+      repaired trajectories on the training split, after those trajectories pass
+      the deterministic verifier.
+    </p>
+    <pre>paper-backed task family
+  -> real source artifact: issue, PR, CI log, support trace, scientific workflow
+  -> task.spec.json + replay_bundle.v1 + verifier.spec.json
+  -> train/dev/test split by task id
+  -> solve only train tasks with human, teacher model, or repaired agent trace
+  -> keep trajectories that pass verifier
+  -> export prompt/response/tool-step rows as sft_frame.v1</pre>
+    <table>
+      <thead>
+        <tr><th>SFT Source</th><th>How It Is Made</th><th>Use</th><th>Risk Control</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Human reference trace</td>
+          <td>A human reads the replayed evidence and writes the correct structured answer, optionally with the intended tool path.</td>
+          <td>Highest-quality seed data for the first 20-50 train tasks.</td>
+          <td>Must pass the same verifier; never write references for test tasks.</td>
+        </tr>
+        <tr>
+          <td>Teacher-agent success trace</td>
+          <td>A stronger model runs against the replay fixture, uses the tools, and produces a passing answer.</td>
+          <td>Cheap way to scale from seed tasks to 80-200 train tasks.</td>
+          <td>Keep only verifier-passing traces with exact evidence refs; discard unsupported claims.</td>
+        </tr>
+        <tr>
+          <td>Repaired baseline trace</td>
+          <td>A weak model fails, then a human or teacher corrects the missing evidence, wrong next action, or final package.</td>
+          <td>Good recovery data because it teaches common failure corrections.</td>
+          <td>SFT target is the repaired success path, not the original failed answer.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      A single task can yield multiple SFT rows: one row for choosing the right
+      tool/query, one row for reading the returned evidence, and one row for the
+      final structured triage package. Failed baseline runs are useful for
+      preference pairs and reward records, but should not be blindly imitated by
+      SFT.
+    </p>
+    <div class="callout">
+      First practical batch: pick 30 train tasks, write or teacher-generate 1
+      verified success trace per task, export those traces to SFT, then use
+      failed baseline traces as negative examples for preference and RL.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Minimum Dataset</h2>
+    <table>
+      <thead>
+        <tr><th>Tier</th><th>Task Count</th><th>Purpose</th><th>Pass Criteria</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Internal MVP</td>
+          <td>30 train / 10 dev / 10 test</td>
+          <td>Find signal and debug export/training scripts.</td>
+          <td>One baseline, one SFT run, one held-out comparison.</td>
+        </tr>
+        <tr>
+          <td>Credible demo</td>
+          <td>80 train / 20 dev / 20 test</td>
+          <td>Make the outcome believable to external users.</td>
+          <td>Frozen test split, verifier evidence, repeated seed, cost log.</td>
+        </tr>
+        <tr>
+          <td>Design-partner pilot</td>
+          <td>200+ train / 50 dev / 50 test</td>
+          <td>Show that private tool worlds can create training value.</td>
+          <td>SFT + preference + tiny RL comparison, no test leakage.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      Every task should produce or reference:
+    </p>
+    <pre>task.spec.json
+verifier.spec.json
+scaffold.spec.json
+replay_bundle.v1
+datalox_run.v1 or datalox_fixture_run.v1
+export gate
+train/dev/test split
+reward evidence</pre>
+  </section>
+
+  <section class="section">
+    <h2>Reward Design</h2>
+    <p>
+      Keep reward simple, deterministic, and decomposed. Datalox should preserve
+      reward evidence and reference schemes, not claim to own every customer's
+      final reward function.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Reward Component</th><th>Shape</th><th>Evidence</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Outcome</td>
+          <td>0 or 1</td>
+          <td>Verifier pass/fail and terminal reason.</td>
+        </tr>
+        <tr>
+          <td>Tool contract</td>
+          <td>0 to 1</td>
+          <td>No replay misses, valid tool names, valid arguments, no impossible or irrelevant tool path.</td>
+        </tr>
+        <tr>
+          <td>Evidence completeness</td>
+          <td>0 to 1</td>
+          <td>Required policy citations, ticket facts, source refs, or domain evidence records.</td>
+        </tr>
+        <tr>
+          <td>Efficiency</td>
+          <td>0 to 1</td>
+          <td>Tool rounds, duplicate calls, latency, and cost metadata when available.</td>
+        </tr>
+        <tr>
+          <td>Report quality</td>
+          <td>0 to 1</td>
+          <td>Structured response validator, not free-form final prose alone.</td>
+        </tr>
+      </tbody>
+    </table>
+    <pre>reference_reward =
+  0.50 * outcome
+  + 0.20 * tool_contract
+  + 0.15 * evidence_completeness
+  + 0.10 * efficiency
+  + 0.05 * report_quality</pre>
+    <p class="muted">
+      The scalar fold is for the demo. The stored artifact should keep the
+      reward vector, source, version, verifier command, and evidence refs.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Training Ladder</h2>
+    <table>
+      <thead>
+        <tr><th>Stage</th><th>Method</th><th>Input</th><th>Output</th><th>Why It Is In The Demo</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>0</td>
+          <td>Baseline eval</td>
+          <td>Frozen fixture-set test split</td>
+          <td>Pass rate, reward vector, replay miss rate, tool errors</td>
+          <td>Creates the before number and protects against fake progress.</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>SFT LoRA</td>
+          <td><code>sft_frame.v1</code> from verifier-passing train-task success and recovery trajectories</td>
+          <td>Cheap first lift</td>
+          <td>Most teams understand SFT and can reproduce it.</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>DPO / preference LoRA</td>
+          <td><code>preference_pair.v1</code>: success &gt; recovery &gt; failure</td>
+          <td>Tool-use preference correction</td>
+          <td>Shows Datalox can turn replay evidence into preference data.</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Tiny GRPO / REINFORCE++</td>
+          <td>Prompt set + deterministic reward function</td>
+          <td>Verifier-backed RL result</td>
+          <td>Completes the "agent RL" story, but stays small.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Concrete Commands</h2>
+    <p>
+      These are target demo commands. Some export and trainer commands may need
+      thin scripts before the demo can be run end to end. The public target is
+      <code>real-ci-triage-basic</code>; the current synthetic
+      <code>support-triage-basic</code> fixture is only a pipeline smoke target.
+    </p>
+    <h3>1. Install The Fixture Set</h3>
+    <pre><code>datalox fixture-sets install real-ci-triage-basic@2026-06.0 \
+  --catalog ../datalox-replay-fixtures/catalog.json</code></pre>
+
+    <h3>2. Serve The Baseline Model</h3>
+    <pre><code>vllm serve Qwen/Qwen2.5-1.5B-Instruct \
+  --api-key token \
+  --host 127.0.0.1 \
+  --port 8000</code></pre>
+
+    <h3>3. Run The Baseline Eval</h3>
+    <pre><code>datalox eval \
+  --fixture-set real-ci-triage-basic@2026-06.0 \
+  --catalog ../datalox-replay-fixtures/catalog.json \
+  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --base-url http://127.0.0.1:8000/v1 \
+  --api-key token \
+  --split test \
+  --out runs/budget-rl/baseline.test.jsonl \
+  --json</code></pre>
+
+    <h3>4. Export Training Views</h3>
+    <pre><code>datalox export sft \
+  --runs runs/budget-rl/train \
+  --out exports/budget-rl/train.sft.jsonl \
+  --json
+
+datalox export preference \
+  --runs runs/budget-rl/train \
+  --out exports/budget-rl/train.preference.jsonl \
+  --json
+
+datalox export rewards \
+  --runs runs/budget-rl/train \
+  --out exports/budget-rl/train.rewards.jsonl \
+  --json</code></pre>
+
+    <h3>5. Train Small Adapters</h3>
+    <pre><code>python training/sft_lora.py \
+  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --train exports/budget-rl/train.sft.jsonl \
+  --dev exports/budget-rl/dev.sft.jsonl \
+  --out models/budget-rl-sft-lora
+
+python training/dpo_lora.py \
+  --model models/budget-rl-sft-lora \
+  --pairs exports/budget-rl/train.preference.jsonl \
+  --dev-pairs exports/budget-rl/dev.preference.jsonl \
+  --out models/budget-rl-dpo-lora</code></pre>
+
+    <h3>6. Run Tiny RL</h3>
+    <pre><code>python training/grpo_budget.py \
+  --model models/budget-rl-dpo-lora \
+  --tasks exports/budget-rl/train.prompts.jsonl \
+  --reward exports/budget-rl/reward_config.json \
+  --out models/budget-rl-grpo-lora \
+  --max-steps 200 \
+  --num-generations 4</code></pre>
+
+    <h3>7. Re-Evaluate</h3>
+    <pre><code>vllm serve models/budget-rl-grpo-lora \
+  --api-key token \
+  --host 127.0.0.1 \
+  --port 8001
+
+datalox eval \
+  --fixture-set real-ci-triage-basic@2026-06.0 \
+  --catalog ../datalox-replay-fixtures/catalog.json \
+  --model budget-rl-grpo-lora \
+  --base-url http://127.0.0.1:8001/v1 \
+  --api-key token \
+  --split test \
+  --out runs/budget-rl/grpo.test.jsonl \
+  --json</code></pre>
+  </section>
+
+  <section class="section">
+    <h2>Implementation Gaps</h2>
+    <p>
+      The demo should be honest about what exists and what must be added.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Gap</th><th>Needed For</th><th>Concrete Work</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Real task sourcing and baseline filter</td>
+          <td>Public credibility</td>
+          <td>Collect source artifacts from recent public CI, terminal, issue, and support tasks. Capture them as replay bundles and admit only cases with a baseline failure.</td>
+        </tr>
+        <tr>
+          <td><code>completion_frame.v1</code></td>
+          <td>Trainer-friendly prompt/response export</td>
+          <td>Export exact model-visible context plus target action/final message.</td>
+        </tr>
+        <tr>
+          <td><code>preference_pair.v1</code></td>
+          <td>DPO/preference stage</td>
+          <td>Pair success/recovery/failure trajectories under the same task id.</td>
+        </tr>
+        <tr>
+          <td><code>reward_record.v1</code></td>
+          <td>RL and eval credibility</td>
+          <td>Store reward vector, scalar fold, source, version, verifier command, and evidence refs.</td>
+        </tr>
+        <tr>
+          <td>Train/dev/test enforcement</td>
+          <td>Trustworthy outcome</td>
+          <td>Declare split in fixture-set manifest and reject export if split metadata is missing.</td>
+        </tr>
+        <tr>
+          <td>Training scripts</td>
+          <td>Runnable guide</td>
+          <td>Add minimal LoRA SFT, DPO, and GRPO scripts that consume Datalox exports.</td>
+        </tr>
+        <tr>
+          <td>Cost log</td>
+          <td>Traction claim</td>
+          <td>Record GPU type, runtime, provider price, total spend, model, and seed in demo report.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Cost Plan</h2>
+    <p>
+      Use current public GPU pricing as a planning anchor, then record actual
+      spend in the demo report. On May 27, 2026, RunPod lists RTX 4090 at
+      $0.69/hr, L40S at $0.86/hr, A100 PCIe 80GB at $1.39/hr, and H100 PCIe at
+      $2.89/hr. Lambda lists A6000 at $1.09/hr, A100 PCIe 40GB at $1.99/hr, and
+      H100 PCIe at $3.29/hr. See the source links in the final section.
+    </p>
+    <p>
+      The text-first real CI/terminal triage path is intentionally cheaper than
+      FlowCyto: it can use small text models, deterministic string/JSON/test
+      validators, and short rollouts. FlowCyto should get its own budget after
+      this loop already works.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Budget Tier</th><th>Scope</th><th>Compute</th><th>Expected Spend</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>$150 smoke</td>
+          <td>Pipeline only: baseline + SFT LoRA + held-out eval</td>
+          <td>1x RTX 4090/L40S for under 2 days with interruptions allowed</td>
+          <td>$50-$150</td>
+        </tr>
+        <tr>
+          <td>$500 internal proof</td>
+          <td>SFT + preference + tiny GRPO on 30/10/10 or 80/20/20 tasks</td>
+          <td>1x L40S/A100, retry budget included</td>
+          <td>$300-$500</td>
+        </tr>
+        <tr>
+          <td>$1,500 credible demo</td>
+          <td>Repeated seeds, dev tuning, test lock, cost report, video-ready text-first result</td>
+          <td>1x A100 or short H100 bursts for generation/training if needed</td>
+          <td>$600-$1,500</td>
+        </tr>
+        <tr>
+          <td>$5,000 design-partner pilot</td>
+          <td>200+ train tasks, multiple model sizes, more seeds, better ablations, or FlowCyto follow-up</td>
+          <td>Multi-day A100/H100 budget</td>
+          <td>$2,000-$5,000</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      Hard cap for the first public demo: $1,500. If the demo needs more than
+      that to show a narrow lift, the environment/reward design is not ready.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Model Choices</h2>
+    <table>
+      <thead>
+        <tr><th>Model Tier</th><th>Use</th><th>Why</th><th>Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>0.5B-0.6B</td>
+          <td>Fast GRPO mechanics smoke</td>
+          <td>Cheap enough to run many iterations and validate the training loop.</td>
+          <td>May be too weak to use tools reliably.</td>
+        </tr>
+        <tr>
+          <td>1.5B-3B</td>
+          <td>Recommended public demo target</td>
+          <td>Still cheap, but capable enough to show tool-use improvements.</td>
+          <td>May require stronger SFT before RL signal becomes useful.</td>
+        </tr>
+        <tr>
+          <td>7B</td>
+          <td>Design-partner proof</td>
+          <td>Better baseline and more credible outcome.</td>
+          <td>Cost and tuning time increase quickly.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Outcome Bar</h2>
+    <p>
+      A traction demo needs an outcome a user can understand in one screen.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Metric</th><th>Minimum</th><th>Good</th><th>Great</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Held-out full pass rate</td>
+          <td>+5 absolute points</td>
+          <td>+10 to +15 points</td>
+          <td>+20+ points</td>
+        </tr>
+        <tr>
+          <td>Verifier reward</td>
+          <td>+0.05 average reward</td>
+          <td>+0.10 average reward</td>
+          <td>+0.15+ average reward</td>
+        </tr>
+        <tr>
+          <td>Tool contract errors</td>
+          <td>10% reduction</td>
+          <td>30% reduction</td>
+          <td>50% reduction</td>
+        </tr>
+        <tr>
+          <td>Replay misses</td>
+          <td>No increase</td>
+          <td>Reduction</td>
+          <td>Near zero on known task paths</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">
+      If full pass rate does not move, a sub-reward lift can still be useful for
+      internal debugging, but it is not enough for the public traction demo.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Demo Script</h2>
+    <ol>
+      <li>Show the fixture set: task specs, verifier specs, replay bundles, train/dev/test split.</li>
+      <li>Run the small baseline model against the held-out split.</li>
+      <li>Show failures with replay evidence: missed log evidence, wrong next action, unsupported live mutation, missing fields, or weak report output.</li>
+      <li>Export SFT, preference, and reward rows from verified evidence.</li>
+      <li>Show the training command and live cost log.</li>
+      <li>Run the tuned model on the same held-out split.</li>
+      <li>Show before/after metrics and open one replay bundle from each side.</li>
+      <li>End with the product message: budget training that is reproducible, inspectable, and environment-grounded.</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>Risks And Controls</h2>
+    <table>
+      <thead>
+        <tr><th>Risk</th><th>Control</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Eval leakage</td>
+          <td>Freeze test split before training. Store split refs in fixture-set manifest.</td>
+        </tr>
+        <tr>
+          <td>Reward hacking</td>
+          <td>Use hidden verifier state and evidence refs. Do not reward final prose alone.</td>
+        </tr>
+        <tr>
+          <td>Training on failures as imitation</td>
+          <td>SFT only on success/recovery rows. Failures go to preference/eval, not blind imitation.</td>
+        </tr>
+        <tr>
+          <td>Overclaiming</td>
+          <td>Say "improved one small model in one versioned environment," not "solved agent RL."</td>
+        </tr>
+        <tr>
+          <td>Cost creep</td>
+          <td>Hard budget gates: $150 smoke, $500 internal proof, $1,500 public demo.</td>
+        </tr>
+        <tr>
+          <td>Pipeline fragility</td>
+          <td>Keep first demo LoRA-only. No reward model. No full-parameter training.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Timeline</h2>
+    <table>
+      <thead>
+        <tr><th>Window</th><th>Work</th><th>Exit Criteria</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Days 1-3</td>
+          <td>Choose the text-first fixture world, collect paper-backed real source artifacts, freeze task schema, define reward vector, create first train/dev/test split.</td>
+          <td>At least 10 real CI/terminal triage tasks can run through baseline eval with verifier evidence and at least one baseline failure mode.</td>
+        </tr>
+        <tr>
+          <td>Days 4-7</td>
+          <td>Solve train tasks with human references, teacher-agent runs, or repaired baseline traces. Keep only verifier-passing success/recovery trajectories, export SFT rows, train first LoRA.</td>
+          <td>Every SFT row traces back to a train-task replay bundle and verifier-passing trajectory; SFT model improves at least one sub-metric on dev.</td>
+        </tr>
+        <tr>
+          <td>Days 8-12</td>
+          <td>Add preference pairs and reward records. Run DPO or preference LoRA.</td>
+          <td>Preference model beats SFT on dev or reduces tool errors.</td>
+        </tr>
+        <tr>
+          <td>Days 13-18</td>
+          <td>Run tiny GRPO/REINFORCE++ smoke. Tune only reward weights and KL/learning-rate basics.</td>
+          <td>RL model beats SFT/preference on dev without reward collapse.</td>
+        </tr>
+        <tr>
+          <td>Days 19-21</td>
+          <td>Lock test run, write report, record demo, package replay evidence.</td>
+          <td>Held-out result, cost log, and replay bundles are inspectable.</td>
+        </tr>
+        <tr>
+          <td>After demo</td>
+          <td>Port the proven loop to FlowCyto with a separate vision/domain budget.</td>
+          <td>FlowCyto is framed as the serious scientific follow-up, not the first budget claim.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Source Anchors</h2>
+    <p>
+      Current tooling and price assumptions should be checked before every live
+      demo run.
+    </p>
+    <ul>
+      <li><a href="https://www.runpod.io/pricing">RunPod pricing</a> for RTX 4090, L40S, A100, and H100 hourly planning anchors.</li>
+      <li><a href="https://lambda.ai/pricing">Lambda pricing</a> for A6000, A100, and H100 hourly planning anchors.</li>
+      <li><a href="https://docs.vllm.ai/en/latest/serving/openai_compatible_server/">vLLM OpenAI-compatible server docs</a> for serving the baseline and tuned model.</li>
+      <li><a href="https://huggingface.co/docs/trl/grpo_trainer">Hugging Face TRL GRPOTrainer docs</a> for custom reward functions, tools, and environment factory support.</li>
+      <li><a href="https://openrlhf.readthedocs.io/en/latest/">OpenRLHF docs</a> for Ray + vLLM RLHF, PPO/GRPO/REINFORCE++ variants, custom rewards, and multi-turn environments.</li>
+      <li><a href="https://arxiv.org/abs/2601.11868">Terminal-Bench 2.0</a> for hard, realistic terminal tasks with test-based verification.</li>
+      <li><a href="https://arxiv.org/abs/2605.22535">TerminalWorld</a> for deriving verified terminal tasks from in-the-wild recordings.</li>
+      <li><a href="https://openai.com/index/introducing-swe-bench-verified/">SWE-bench Verified</a> for lessons on real GitHub issues, human filtering, and containerized evaluation.</li>
+      <li><a href="https://arxiv.org/abs/2406.12045">tau-bench</a> for policy-constrained user-agent-tool support workflows with final-state evaluation.</li>
+      <li><a href="https://openai.com/index/browsecomp/">BrowseComp</a> for the hard-to-find, easy-to-verify benchmark design pattern.</li>
+      <li><a href="https://arxiv.org/abs/2307.13854">WebArena</a>, <a href="https://arxiv.org/abs/2407.18901">AppWorld</a>, and <a href="https://arxiv.org/abs/2404.07972">OSWorld</a> for realistic web/app/desktop agent difficulty, kept out of the first budget demo because of environment cost.</li>
+      <li><a href="https://openai.com/index/paperbench/">PaperBench</a> and <a href="https://github.com/openai/mle-bench">MLE-bench</a> for expensive long-horizon ML/research-agent tasks that validate the broader opportunity but not the first budget scope.</li>
+      <li><a href="./fixture-worlds-and-sets.md">Datalox fixture worlds and sets</a> for replay fixture installation, eval, and no-live-fallback behavior.</li>
+      <li><a href="./vllm-verl-run-export-quickstart.md">Datalox vLLM and verl quickstart</a> for the existing model-server to replay-world to SFT-export path.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
