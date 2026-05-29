@@ -1,0 +1,30 @@
+{
+  "schema_version": "fixture_artifact_manifest.v0",
+  "world_id": "single-cell-pbmc3k-qc-summary-001",
+  "artifacts": [
+    {
+      "artifact_id": "file:single_cell_qc_excerpt",
+      "path": "artifacts/derived/single_cell_qc_excerpt.tsv",
+      "kind": "derived_excerpt",
+      "source_id": "source:multiqc-checkatlas-pbmc3k-scanpy-qc",
+      "sha256": "6066f5283116699a1b2c1dab2250c7e6ee57c30707343c96ec7cb1575bbeb146",
+      "publish": true
+    },
+    {
+      "artifact_id": "file:single_cell_qc_metrics",
+      "path": "artifacts/derived/single_cell_qc_metrics.json",
+      "kind": "parser_output",
+      "source_id": "source:multiqc-checkatlas-pbmc3k-scanpy-qc",
+      "sha256": "d8f5a0fe38a88434e7df90ec5efd26e8170e3f55c8c1411f0e8c52b3dea01936",
+      "publish": true
+    },
+    {
+      "artifact_id": "file:single_cell_policy_result",
+      "path": "artifacts/derived/single_cell_policy_result.json",
+      "kind": "policy_output",
+      "source_id": "source:multiqc-checkatlas-pbmc3k-scanpy-qc",
+      "sha256": "99310e50fcd9d915eb8e50a4546b9055923ed3609e4d8c2023de15ca70025bb5",
+      "publish": true
+    }
+  ]
+}

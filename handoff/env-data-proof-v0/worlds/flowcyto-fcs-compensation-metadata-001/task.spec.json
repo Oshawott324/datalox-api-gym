@@ -1,0 +1,32 @@
+{
+  "schema_version": "scientific_data_task_spec.v0",
+  "world_id": "flowcyto-fcs-compensation-metadata-001",
+  "split": "seed",
+  "task_family": "scientific-data-qc-basic",
+  "domain": "flow cytometry metadata QC",
+  "prompt": "Inspect the flow cytometry metadata fixture workspace and produce a structured metadata QC decision. Cite evidence ids for channels, marker labels, compensation matrix coverage, and next action. Do not use plots or vision judgment.",
+  "output_schema": "../../schema/scientific-data-task-output.schema.json",
+  "allowed_tools": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "flowcyto.parse_fcs_keywords",
+    "flowcyto.parse_compensation_matrix",
+    "qc_policy.evaluate",
+    "verifier.submit_answer"
+  ],
+  "forbidden_tools": [
+    "web.open",
+    "shell.live_download",
+    "vision.inspect_image"
+  ],
+  "minimum_replayed_observations": 5,
+  "success_criteria": [
+    "output validates against scientific-data-task-output.schema.json",
+    "diagnosis.class matches the verifier spec",
+    "required computed checks cite replay evidence ids",
+    "next_action.type matches the verifier spec",
+    "no forbidden action is claimed"
+  ],
+  "publication_state": "draft_step_1_task_spec"
+}

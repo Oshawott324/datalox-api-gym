@@ -1,0 +1,15 @@
+{
+  "evidence_id": "metric:single_cell.policy_result",
+  "diagnosis_class": "single_cell_qc_decision",
+  "severity": "warning",
+  "next_action": "exclude_sample",
+  "checks": [
+    {
+      "name": "high_total_counts",
+      "status": "warning",
+      "observed": "3 cells above total_counts > 500",
+      "threshold": "total_counts > 500",
+      "evidence_id": "metric:single_cell.pbmc3k_qc_summary"
+    }
+  ]
+}

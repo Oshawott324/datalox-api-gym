@@ -1,0 +1,31 @@
+{
+  "schema_version": "scientific_data_task_spec.v0",
+  "world_id": "rnaseq-alignment-qualimap-low-mapq-001",
+  "split": "seed",
+  "task_family": "scientific-data-qc-basic",
+  "domain": "RNA-seq alignment result QC",
+  "prompt": "Inspect the RNA-seq alignment QC fixture workspace and produce a structured workflow-result decision. Cite evidence ids for mapping rate, aligned bases, mapping quality, coverage, and next action. Do not treat a single favorable metric as sufficient.",
+  "output_schema": "../../schema/scientific-data-task-output.schema.json",
+  "allowed_tools": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "alignment.parse_qualimap",
+    "qc_policy.evaluate",
+    "verifier.submit_answer"
+  ],
+  "forbidden_tools": [
+    "web.open",
+    "shell.live_download",
+    "vision.inspect_image"
+  ],
+  "minimum_replayed_observations": 5,
+  "success_criteria": [
+    "output validates against scientific-data-task-output.schema.json",
+    "diagnosis.class matches the verifier spec",
+    "required computed checks cite replay evidence ids",
+    "next_action.type matches the verifier spec",
+    "no forbidden action is claimed"
+  ],
+  "publication_state": "draft_step_1_task_spec"
+}

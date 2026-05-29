@@ -1,0 +1,30 @@
+{
+  "schema_version": "fixture_artifact_manifest.v0",
+  "world_id": "protein-structure-ap5a-prep-001",
+  "artifacts": [
+    {
+      "artifact_id": "file:1ake_mmcif_excerpt",
+      "path": "artifacts/derived/1ake_mmcif_excerpt.txt",
+      "kind": "derived_excerpt",
+      "source_id": "source:rcsb-1ake-cif",
+      "sha256": "bd446c41c2ca184cb67510ff637e4e3ff4c3b2ee7b20812475b6c71e178123d2",
+      "publish": true
+    },
+    {
+      "artifact_id": "file:1ake_metadata",
+      "path": "artifacts/derived/1ake_metadata.json",
+      "kind": "parser_output",
+      "source_id": "source:rcsb-1ake-cif",
+      "sha256": "28574c1b32ab0f5c8757e3291fa33f93d291d9702f6c89a724c50ecbe756c774",
+      "publish": true
+    },
+    {
+      "artifact_id": "file:protein_policy_result",
+      "path": "artifacts/derived/protein_policy_result.json",
+      "kind": "policy_output",
+      "source_id": "source:rcsb-1ake-cif",
+      "sha256": "392dbe5e8895166fa48566b7903669140aae292bbca32d03a9dcc9a4652b72b0",
+      "publish": true
+    }
+  ]
+}

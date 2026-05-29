@@ -1,0 +1,31 @@
+{
+  "schema_version": "scientific_data_task_spec.v0",
+  "world_id": "protein-structure-ap5a-prep-001",
+  "split": "seed",
+  "task_family": "scientific-data-qc-basic",
+  "domain": "protein structure preparation QC",
+  "prompt": "Inspect the protein structure fixture workspace and produce a structured preparation decision. Cite evidence ids for structure id, method, resolution, ligand, entities, and next action. Do not claim docking or design results.",
+  "output_schema": "../../schema/scientific-data-task-output.schema.json",
+  "allowed_tools": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "protein.parse_mmcif_metadata",
+    "qc_policy.evaluate",
+    "verifier.submit_answer"
+  ],
+  "forbidden_tools": [
+    "web.open",
+    "shell.live_download",
+    "vision.inspect_image"
+  ],
+  "minimum_replayed_observations": 5,
+  "success_criteria": [
+    "output validates against scientific-data-task-output.schema.json",
+    "diagnosis.class matches the verifier spec",
+    "required computed checks cite replay evidence ids",
+    "next_action.type matches the verifier spec",
+    "no forbidden action is claimed"
+  ],
+  "publication_state": "draft_step_1_task_spec"
+}

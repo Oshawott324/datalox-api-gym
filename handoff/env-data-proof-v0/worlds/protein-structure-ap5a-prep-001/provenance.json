@@ -1,0 +1,34 @@
+{
+  "schema_version": "scientific_data_provenance.v0",
+  "world_id": "protein-structure-ap5a-prep-001",
+  "primary_source_id": "source:rcsb-1ake-cif",
+  "sources": [
+    {
+      "source_id": "source:rcsb-1ake-cif",
+      "url": "https://files.rcsb.org/download/1AKE.cif",
+      "kind": "mmcif_structure",
+      "license_review": "pending",
+      "pin": {
+        "provider": "RCSB PDB",
+        "structure_id": "1AKE",
+        "verified_on": "2026-05-29"
+      }
+    },
+    {
+      "source_id": "source:rcsb-1ake-entry-json",
+      "url": "https://data.rcsb.org/rest/v1/core/entry/1AKE",
+      "kind": "structure_entry_json",
+      "license_review": "pending",
+      "pin": {
+        "provider": "RCSB PDB",
+        "structure_id": "1AKE",
+        "verified_on": "2026-05-29"
+      }
+    }
+  ],
+  "publication_policy": {
+    "copy_source_artifact": false,
+    "publish_derived_observations": true,
+    "reason": "Publish provenance URL, parser outputs, and evidence ids first; copy raw artifacts only after license review."
+  }
+}

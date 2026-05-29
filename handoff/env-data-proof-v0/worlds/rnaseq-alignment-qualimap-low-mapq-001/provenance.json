@@ -1,0 +1,23 @@
+{
+  "schema_version": "scientific_data_provenance.v0",
+  "world_id": "rnaseq-alignment-qualimap-low-mapq-001",
+  "primary_source_id": "source:multiqc-qualimap-zero-aligned",
+  "sources": [
+    {
+      "source_id": "source:multiqc-qualimap-zero-aligned",
+      "url": "https://raw.githubusercontent.com/MultiQC/test-data/main/data/modules/qualimap/bam_qc/issue_2199_zero_aligned/genome_results.txt",
+      "kind": "qualimap_bamqc_report",
+      "license_review": "pending",
+      "pin": {
+        "repo": "MultiQC/test-data",
+        "commit": "84dc905e6edb97668b87660896dfd78f175008ca",
+        "etag": "de299db987e8c038368088c7584ef2fac900839e7353ebeb1a8c1a13b3bc647b"
+      }
+    }
+  ],
+  "publication_policy": {
+    "copy_source_artifact": false,
+    "publish_derived_observations": true,
+    "reason": "Publish provenance URL, parser outputs, and evidence ids first; copy raw artifacts only after license review."
+  }
+}

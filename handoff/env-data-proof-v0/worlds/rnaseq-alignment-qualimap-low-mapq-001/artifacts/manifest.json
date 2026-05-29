@@ -1,0 +1,30 @@
+{
+  "schema_version": "fixture_artifact_manifest.v0",
+  "world_id": "rnaseq-alignment-qualimap-low-mapq-001",
+  "artifacts": [
+    {
+      "artifact_id": "file:qualimap_excerpt",
+      "path": "artifacts/derived/qualimap_excerpt.txt",
+      "kind": "derived_excerpt",
+      "source_id": "source:multiqc-qualimap-zero-aligned",
+      "sha256": "462d5a3bd3a673e247bac9f12261ea524baaaaaf8669ef9936287850fba13dea",
+      "publish": true
+    },
+    {
+      "artifact_id": "file:qualimap_metrics",
+      "path": "artifacts/derived/qualimap_metrics.json",
+      "kind": "parser_output",
+      "source_id": "source:multiqc-qualimap-zero-aligned",
+      "sha256": "cb111ebc53e84dccf9642565f0f9748898e41f609490e9cbdf412aaeffeda023",
+      "publish": true
+    },
+    {
+      "artifact_id": "file:alignment_policy_result",
+      "path": "artifacts/derived/alignment_policy_result.json",
+      "kind": "policy_output",
+      "source_id": "source:multiqc-qualimap-zero-aligned",
+      "sha256": "30875baf62cdfa0edd70b773fe1180cf031b53ededc0730ae73b7efe25a7773e",
+      "publish": true
+    }
+  ]
+}

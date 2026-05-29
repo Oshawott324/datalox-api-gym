@@ -1,0 +1,30 @@
+{
+  "schema_version": "scientific_data_tool_catalog.v0",
+  "world_id": "protein-structure-ap5a-prep-001",
+  "tools": [
+    {
+      "name": "workspace.list_files",
+      "description": "List fixture files available to the agent."
+    },
+    {
+      "name": "provenance.inspect",
+      "description": "Inspect public source provenance, pin, license review state, and publication policy."
+    },
+    {
+      "name": "artifact.read_text",
+      "description": "Read an approved fixture text artifact or excerpt."
+    },
+    {
+      "name": "protein.parse_mmcif_metadata",
+      "description": "Parse structure id, method, resolution, polymer entities, nonpolymer ligands, and title."
+    },
+    {
+      "name": "qc_policy.evaluate",
+      "description": "Apply a declared deterministic QC policy to parsed metrics."
+    },
+    {
+      "name": "verifier.submit_answer",
+      "description": "Submit a structured scientific-data answer to the deterministic verifier."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "scientific_data_provenance.v0",
+  "world_id": "fastq-qc-nanopore-fail-001",
+  "primary_source_id": "source:multiqc-fastqc-nan-reads",
+  "sources": [
+    {
+      "source_id": "source:multiqc-fastqc-nan-reads",
+      "url": "https://raw.githubusercontent.com/MultiQC/test-data/main/data/modules/fastqc/nan_reads/fastqc_data.txt",
+      "kind": "fastqc_report",
+      "license_review": "pending",
+      "pin": {
+        "repo": "MultiQC/test-data",
+        "commit": "84dc905e6edb97668b87660896dfd78f175008ca",
+        "etag": "ab8d2041df37698afb21c147042360174aadbbe97e976c6cfbd677141bbb561f"
+      }
+    }
+  ],
+  "publication_policy": {
+    "copy_source_artifact": false,
+    "publish_derived_observations": true,
+    "reason": "Publish provenance URL, parser outputs, and evidence ids first; copy raw artifacts only after license review."
+  }
+}

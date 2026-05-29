@@ -1,0 +1,90 @@
+{
+  "evidence_id": "metric:single_cell.pbmc3k_qc_summary",
+  "dataset_id": "pbmc_3k_scanpy",
+  "summary": {
+    "cells": 2638,
+    "genes": 1838,
+    "anndata_raw": true,
+    "anndata_x": true
+  },
+  "policy_thresholds": {
+    "high_total_counts_gt": 500
+  },
+  "high_total_count_cells": [
+    1,
+    2,
+    3
+  ],
+  "top_total_count_cells": [
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 639.5011,
+      "cellrank_n_genes_by_counts": 515,
+      "cellrank_total_counts": 1,
+      "cell_index": 1
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 578.8919,
+      "cellrank_n_genes_by_counts": 1818,
+      "cellrank_total_counts": 2,
+      "cell_index": 2
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 511.4415,
+      "cellrank_n_genes_by_counts": 1958,
+      "cellrank_total_counts": 3,
+      "cell_index": 3
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 461.3901,
+      "cellrank_n_genes_by_counts": 1558,
+      "cellrank_total_counts": 4,
+      "cell_index": 4
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 388.23987,
+      "cellrank_n_genes_by_counts": 1118,
+      "cellrank_total_counts": 5,
+      "cell_index": 5
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 361.081,
+      "cellrank_n_genes_by_counts": 1964,
+      "cellrank_total_counts": 6,
+      "cell_index": 6
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 341.0904,
+      "cellrank_n_genes_by_counts": 837,
+      "cellrank_total_counts": 7,
+      "cell_index": 7
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 310.5556,
+      "cellrank_n_genes_by_counts": 1269,
+      "cellrank_total_counts": 8,
+      "cell_index": 8
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 308.1949,
+      "cellrank_n_genes_by_counts": 2295,
+      "cellrank_total_counts": 9,
+      "cell_index": 9
+    },
+    {
+      "n_genes_by_counts": 1838,
+      "total_counts": 300.4162,
+      "cellrank_n_genes_by_counts": 597,
+      "cellrank_total_counts": 10,
+      "cell_index": 10
+    }
+  ]
+}

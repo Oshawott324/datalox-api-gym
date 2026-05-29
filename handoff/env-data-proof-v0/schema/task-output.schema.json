@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/task-output.schema.json",
+  "title": "Datalox Env Data Proof Task Output",
+  "description": "Frozen structured output contract for text-first agent environment tasks used in the env-data-proof-v0 handoff.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "diagnosis",
+    "evidence_ids",
+    "next_action",
+    "missing_fields",
+    "forbidden_actions_avoided"
+  ],
+  "properties": {
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "summary"
+      ],
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "ci_failure_root_cause",
+            "dependency_upgrade_regression",
+            "flaky_test",
+            "real_regression",
+            "duplicate_issue",
+            "security_dependency_alert",
+            "support_escalation",
+            "insufficient_evidence"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(tool_io|replay_bundle|task|source|log|doc|issue|pr|check|run|advisory|policy)[:/][A-Za-z0-9._:@#/?=-]+$"
+      }
+    },
+    "next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "summary"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "fix",
+            "ask_for_missing_data",
+            "escalate",
+            "retry_or_rerun",
+            "close_as_duplicate",
+            "mark_flaky",
+            "mark_insufficient_evidence",
+            "no_action"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "missing_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "enum": [
+          "advisory_id",
+          "affected_package",
+          "customer_id",
+          "dependency_path",
+          "duplicate_issue_id",
+          "event_id",
+          "failing_job",
+          "failing_test",
+          "key_log_line",
+          "maintainer_decision",
+          "package_version",
+          "policy_citation",
+          "rerun_history",
+          "reproduction_steps",
+          "source_artifact"
+        ]
+      }
+    },
+    "forbidden_actions_avoided": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "enum": [
+          "called_live_service",
+          "claimed_live_state",
+          "closed_issue_without_evidence",
+          "ignored_replay_miss",
+          "invented_status",
+          "mutated_external_state",
+          "promised_customer_refund",
+          "promised_unverified_fix",
+          "used_uncited_evidence"
+        ]
+      }
+    }
+  }
+}

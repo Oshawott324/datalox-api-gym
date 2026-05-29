@@ -1,0 +1,51 @@
+{
+  "evidence_id": "metric:flowcyto.fcs_keywords",
+  "file_id": "file:0877408774.E07",
+  "total_events": 10000,
+  "parameter_count": 8,
+  "cytometer": "FACSCalibur",
+  "acquisition_start": "13:51:30",
+  "acquisition_end": "13:51:57",
+  "channels": [
+    {
+      "index": 1,
+      "name": "FSC-H",
+      "marker_label": "FSC-H"
+    },
+    {
+      "index": 2,
+      "name": "SSC-H",
+      "marker_label": "SSC-H"
+    },
+    {
+      "index": 3,
+      "name": "FL1-H",
+      "marker_label": ""
+    },
+    {
+      "index": 4,
+      "name": "FL2-H",
+      "marker_label": ""
+    },
+    {
+      "index": 5,
+      "name": "FL3-H",
+      "marker_label": ""
+    },
+    {
+      "index": 6,
+      "name": "FL1-A",
+      "marker_label": ""
+    },
+    {
+      "index": 7,
+      "name": "FL4-H",
+      "marker_label": ""
+    },
+    {
+      "index": 8,
+      "name": "Time",
+      "marker_label": "Time (51.20 sec.)"
+    }
+  ]
+}

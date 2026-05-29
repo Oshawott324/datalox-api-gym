@@ -1,0 +1,34 @@
+{
+  "schema_version": "scientific_data_tool_catalog.v0",
+  "world_id": "flowcyto-fcs-compensation-metadata-001",
+  "tools": [
+    {
+      "name": "workspace.list_files",
+      "description": "List fixture files available to the agent."
+    },
+    {
+      "name": "provenance.inspect",
+      "description": "Inspect public source provenance, pin, license review state, and publication policy."
+    },
+    {
+      "name": "artifact.read_text",
+      "description": "Read an approved fixture text artifact or excerpt."
+    },
+    {
+      "name": "flowcyto.parse_fcs_keywords",
+      "description": "Parse FCS keyword metadata, channels, event count, and marker labels."
+    },
+    {
+      "name": "flowcyto.parse_compensation_matrix",
+      "description": "Parse flow cytometry compensation matrix channels and values."
+    },
+    {
+      "name": "qc_policy.evaluate",
+      "description": "Apply a declared deterministic QC policy to parsed metrics."
+    },
+    {
+      "name": "verifier.submit_answer",
+      "description": "Submit a structured scientific-data answer to the deterministic verifier."
+    }
+  ]
+}

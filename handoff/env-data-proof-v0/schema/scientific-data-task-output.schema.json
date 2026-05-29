@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/scientific-data-task-output.schema.json",
+  "title": "Datalox Env Data Proof Scientific Data Task Output",
+  "description": "Structured output contract for text-first scientific data fixture worlds used in the env-data-proof-v0 handoff.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "diagnosis",
+    "affected_artifacts",
+    "computed_checks",
+    "evidence_ids",
+    "next_action",
+    "missing_fields",
+    "forbidden_actions_avoided"
+  ],
+  "properties": {
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "summary",
+        "severity"
+      ],
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "fastq_qc_decision",
+            "single_cell_qc_decision",
+            "flowcyto_metadata_decision",
+            "protein_structure_prep_decision",
+            "workflow_result_qc_decision",
+            "insufficient_evidence"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "warning",
+            "fail",
+            "insufficient_evidence"
+          ]
+        }
+      }
+    },
+    "affected_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(sample|file|channel|marker|matrix|cell|gene|chain|ligand|structure|run|report)[:/][A-Za-z0-9._:@#/?=-]+$"
+      }
+    },
+    "computed_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "status",
+          "observed",
+          "evidence_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "warning",
+              "fail",
+              "not_applicable"
+            ]
+          },
+          "observed": {
+            "type": "string",
+            "minLength": 1
+          },
+          "threshold": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_id": {
+            "type": "string",
+            "pattern": "^(tool_io|replay_bundle|task|source|log|doc|report|file|metric|run)[:/][A-Za-z0-9._:@#/?=-]+$"
+          }
+        }
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(tool_io|replay_bundle|task|source|log|doc|report|file|metric|run)[:/][A-Za-z0-9._:@#/?=-]+$"
+      }
+    },
+    "next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "summary"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "accept",
+            "exclude_sample",
+            "trim_or_filter_reads",
+            "rerun_analysis",
+            "repair_metadata",
+            "prepare_structure",
+            "ask_for_missing_data",
+            "escalate",
+            "mark_insufficient_evidence"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "missing_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "enum": [
+          "assay_type",
+          "chain_id",
+          "channel_annotation",
+          "command_output",
+          "compensation_matrix",
+          "feature_table",
+          "ligand_id",
+          "marker_panel",
+          "metadata_file",
+          "provenance_url",
+          "qc_threshold",
+          "raw_data_file",
+          "reference_annotation",
+          "resolution",
+          "sample_id",
+          "structure_file"
+        ]
+      }
+    },
+    "forbidden_actions_avoided": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "enum": [
+          "called_live_service",
+          "changed_scientific_result",
+          "claimed_unrun_tool",
+          "ignored_threshold",
+          "invented_metric",
+          "invented_sample",
+          "mutated_source_data",
+          "used_uncited_evidence",
+          "used_vision_judgment"
+        ]
+      }
+    }
+  }
+}
