@@ -8,7 +8,9 @@ this report passes.
 ## Executive Summary
 
 The next implementation step is to turn the five selected scientific-data
-worlds into a small, publishable Datalox evidence package:
+worlds into a small, publishable Datalox evidence package. This package is not
+the final business wedge by itself; it is the replay/data layer underneath the
+larger agent-native environment vision.
 
 ```text
 public scientific artifact
@@ -26,6 +28,12 @@ The first public claim should be:
 
 > Datalox can turn real scientific artifacts into replayable, verifier-backed
 > agent training/eval data.
+
+The stronger product claim, once a vertical workflow such as FlowCyto is ready,
+should be:
+
+> Datalox turns traditional scientific workflows into agent-native
+> environments, then packages replay evidence into training/eval data.
 
 Do not claim model improvement yet. Model lift requires a larger locked split.
 This v0 proves source quality, replayability, verifier determinism, and export

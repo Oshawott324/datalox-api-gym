@@ -293,12 +293,13 @@
     <section class="section">
       <h2>Why This Is Later</h2>
       <p>
-        Heavy runtimes solve a different bottleneck from Datalox's first wedge. Docker,
+        Heavy runtimes solve a different bottleneck from Datalox's first wedge:
+        agent-native workflow surfaces plus replay evidence. Docker,
         CyberGym-style environments, and internal clusters answer:
       </p>
       <pre><code>Can I create and verify a full executable environment?</code></pre>
       <p>Datalox first answers:</p>
-      <pre><code>Can I freeze and replay the agent-visible tool world?</code></pre>
+      <pre><code>Can I expose the workflow as agent-native tools and replay the agent-visible evidence?</code></pre>
       <p>
         Most teams already have some runtime, even if it is imperfect. Replacing it is risky
         because it touches security, secrets, networking, CI, GPUs, queues, and billing. A
@@ -838,7 +839,7 @@ fixture set install
       </ul>
 
       <h3>Step 2: FlowCyto Environment Pack Proof</h3>
-      <p><span class="pill">Next</span><span class="pill">Engine + fixture repos</span></p>
+      <p><span class="pill">Implemented locally</span><span class="pill">Engine + fixture repos</span></p>
       <p>
         Makes the "scientific environments plus replay/data layer" claim
         operationally true. The target is
@@ -846,8 +847,8 @@ fixture set install
         <a href="./flowcyto-environment-pack-plan.html">flowcyto-environment-pack-plan.html</a>.
       </p>
       <ul>
-        <li><strong>2a.</strong> In <code>datalox-flow-cyto-mcp</code>, define 10 gating/QC tasks with sample refs, accepted channel pairs, validator thresholds, and required report fields.</li>
-        <li><strong>2b.</strong> Harden the domain tool contract: <code>open_fcs</code>, <code>get_plot_context</code>, <code>upsert_gate</code>, <code>compute_gate_stats</code>, <code>validate_gate_qc</code>, and <code>write_report</code> return structured observations, revision ids, and agent-readable errors.</li>
+        <li><strong>2a.</strong> In <code>datalox-flow-cyto-mcp</code>, define the first three gating/QC tasks with sample refs, accepted channel pairs, validator thresholds, required report fields, and expected failure codes. Expand to 10+ tasks after the thin proof is stable.</li>
+        <li><strong>2b.</strong> Harden the domain tool contract: <code>open_fcs</code>, <code>get_plot_context</code>, <code>upsert_gate</code>, <code>compute_gate_stats</code>, <code>validate_gate_qc</code>, and <code>submit_report</code> return structured observations, revision ids, evidence refs, and agent-readable errors.</li>
         <li><strong>2c.</strong> Run first live rollouts against <code>flowcyto-mcp</code>, capture tool I/O, and pack verified replay bundles.</li>
         <li><strong>2d.</strong> Publish <code>flowcyto-gating-qc-basic@2026-06.0</code> in <code>datalox-replay-fixtures</code> with task/verifier refs, bundle checksums, and train/dev/test split.</li>
         <li><strong>2e.</strong> Verify the consumer path: <code>datalox run --fixture-set flowcyto-gating-qc-basic@2026-06.0</code> and <code>datalox export sft</code>.</li>
@@ -860,7 +861,7 @@ fixture set install
         <li>Validators emit pass/fail plus evidence refs.</li>
         <li><code>run.json</code> includes messages, tool calls, observations, final answer, fixture refs, and export gate.</li>
         <li><code>datalox export sft</code> produces valid <code>sft_frame.v1</code> JSONL.</li>
-        <li>The fixture set includes at least 10 success runs, 5 recovery runs, and 5 failure runs before preference export is claimed.</li>
+        <li>The first fixture set includes one success task, one stale-revision failure task, and one report-validation failure task. Preference export is deferred until there is enough success/recovery/failure breadth.</li>
       </ul>
 
       <h3>Step 2.5: Bio Environment Family Breadth</h3>

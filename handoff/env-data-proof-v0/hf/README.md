@@ -21,9 +21,10 @@ size_categories:
 
 This is a draft dataset card for the Datalox Env Data Proof v0 package.
 
-The package demonstrates how real scientific artifacts can be converted into
-replayable, verifier-backed agent training/eval data. It is a seed evidence
-package, not a benchmark leaderboard and not a model-lift claim.
+The package demonstrates the replay/data layer underneath Datalox's broader
+agent-native environment vision: real scientific artifacts can be converted
+into replayable, verifier-backed agent training/eval data. It is a seed
+evidence package, not a benchmark leaderboard and not a model-lift claim.
 
 ## What This Contains
 
@@ -51,7 +52,7 @@ Use this package to inspect and test the Datalox workflow:
 
 ```text
 public scientific artifact
-  -> fixture workspace
+  -> agent-native fixture workspace
   -> parser/checker tool observations
   -> replay bundle
   -> deterministic verifier

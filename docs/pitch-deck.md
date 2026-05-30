@@ -8,28 +8,29 @@ is shipped, what is planned, and which layer Datalox owns.
 
 Canonical product sentence:
 
-> Datalox is the open-source tool-I/O VCR layer for agentic RL teams: record
-> real tool observations once, package them into verifiable replay bundles, and
-> replay them deterministically across eval, debugging, regression, and data
-> pipelines.
+> Datalox turns traditional workflows into agent-native environments, then
+> packages exact tool-I/O evidence into verifiable replay bundles and
+> training/eval exports.
 
 ## Slide 1: Title
 
 Headline:
 
-Datalox: the tool-I/O VCR layer for agentic RL.
+Datalox: agent-native workflow environments with replay evidence.
 
 Body:
 
-- MCP-compatible record/replay infrastructure for agent tools
+- MCP-compatible domain tools and structured workflow state
 - Exact tool I/O captured once as `tool_io_record.v1`
 - Portable replay artifacts packaged as `replay_bundle.v1`
+- Training/eval exports derived from verified evidence
 - Open source: `github.com/Oshawott324/datalox-agent-replay`
 
 Speaker note:
 
-Say this plainly: "Datalox records what an agent saw at the tool boundary and
-lets teams replay it later without calling the live upstream tool."
+Say this plainly: "Datalox makes messy workflows usable by agents, records what
+the agent saw at the tool boundary, and lets teams replay that evidence later
+without calling the live upstream tool."
 
 ## Slide 2: Problem
 
@@ -216,18 +217,20 @@ Body:
 | Environment construction | RepoLaunch-style systems, benchmark harnesses | Complementary |
 | Observability/evals | LangSmith, Braintrust, Helicone, Arize | Adjacent; not sealed replay bundles |
 | RL frameworks | verl, OpenRLHF, SkyRL | Downstream consumers |
-| Tool-I/O replay | no dominant open standard | Datalox wedge |
+| Agent-native workflow environments | traditional scientific/enterprise apps reconstructed as tools and state | Datalox product wedge |
+| Tool-I/O replay | no dominant open standard | Datalox evidence layer |
 
 Speaker note:
 
-The wedge is runtime-agnostic replay evidence. The product should not become a
-sandbox company or reward company.
+The wedge is agent-native reconstruction of high-value workflows. Replay
+evidence is the trust/data layer underneath it. The product should not become a
+generic sandbox company or reward company.
 
 ## Slide 10: Business Model
 
 Headline:
 
-Open format first. Managed replay infrastructure later.
+Open format first. Managed agent-native workflow infrastructure later.
 
 Body:
 
@@ -238,6 +241,7 @@ Body:
   - CLI
   - reference bundles
 - Hosted later:
+  - managed domain workflow environments
   - managed bundle registry
   - verification and replay service
   - redaction/export workflows
@@ -248,7 +252,7 @@ Body:
 Speaker note:
 
 Do not promise hosted sandboxes as the default business. The paid wedge is
-managed replay evidence and governance.
+managed agent-native workflow environments plus replay evidence and governance.
 
 ## Slide 11: Roadmap
 

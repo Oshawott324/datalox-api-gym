@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zheng Feedback Synthesis For Datalox</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --ink: #171717;
+      --muted: #5f6462;
+      --line: #d9d7ce;
+      --panel: #ffffff;
+      --accent: #16635b;
+      --soft: #eef7f4;
+      --warn: #8a4b12;
+      --warn-soft: #fff4dd;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 1120px);
+      margin: 0 auto;
+      padding: 40px 0 64px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.15;
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 38px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 17px;
+      margin: 18px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    a {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      background: #faf9f5;
+      letter-spacing: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    blockquote {
+      margin: 12px 0;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      color: #27312f;
+    }
+
+    .lede {
+      color: var(--muted);
+      max-width: 820px;
+      font-size: 18px;
+      margin-top: 12px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .section {
+      margin-top: 26px;
+      padding: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+
+    .warning {
+      border-left-color: var(--warn);
+      background: var(--warn-soft);
+    }
+
+    .tag {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      color: var(--muted);
+      background: #fbfbf8;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Zheng Feedback Synthesis</h1>
+      <p class="lede">A consolidated read of Zheng's feedback on Datalox positioning, roadmap, and what would make the environment work valuable to training teams.</p>
+      <p class="meta">Drafted for internal product alignment. If this is pushed to a public repository, consider renaming it to <code>external-research-feedback-synthesis.html</code> or removing personal attribution.</p>
+    </header>
+
+    <section class="section">
+      <h2>One-Line Read</h2>
+      <p>Zheng is pushing Datalox away from an RL-only framing and toward a practical environment/data product: build useful task environments that can generate many grounded trajectories, export SFT/eval data cleanly, and leave reward design plus final training formats adjustable by training teams.</p>
+      <div class="callout">
+        <strong>Product correction:</strong> the moat is not "we record trajectories." If tools and returns are shallow, LLMs can synthesize trajectories quickly. The moat has to be real environment quality: state, tools, validators, sample data, failure modes, scaffold diversity, and enough sub-environments to train broader capability.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Extracted Feedback</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Feedback</th>
+            <th>Meaning</th>
+            <th>Datalox Implication</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <blockquote>不要完全 focus 在 RL 上。现在业界已经意识到 RL 很贵，尤其是 agent 场景，自己 rollout 很慢，效率很低。</blockquote>
+            </td>
+            <td>Agentic RL is expensive and slow. A buyer may not want to start with on-policy rollout training.</td>
+            <td>Lead with environment-powered SFT/eval data generation first. Keep RL support as a later consumption path, not the main adoption story.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>如果你们的环境，能够比较方便地基于该环境生成大量轨迹数据，做 SFT，我觉得可能实际价值更大。</blockquote>
+            </td>
+            <td>For many teams, the valuable artifact is a large set of grounded trajectories for SFT, not an RL loop.</td>
+            <td>Prioritize <code>datalox run</code>, batch task execution, transcript capture, and <code>datalox export sft</code>. Make "environment to SFT frames" the immediate proof.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>奖励信号也稀疏。</blockquote>
+            </td>
+            <td>Sparse reward makes RL brittle and less attractive as the first product path.</td>
+            <td>Do not over-index on reward engines. Provide verifier metadata and reference reward examples, but design the product to be useful even when only final labels or SFT targets exist.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>Reward 设置应该是做 RL 的 team 根据环境来设计，不需要你们设计。或者你们提供一个参考的 reward 方案。</blockquote>
+            </td>
+            <td>Training teams own reward shaping and final scoring because each training stack and objective differs.</td>
+            <td>Datalox should expose observations, state metadata, verifier hooks, and reference rewards. It should not claim to own the user's reward function.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>后面几个问题应该以打磨环境为主，具体的 SFT 数据格式还有 reward 设计之类，一般还是需要训练小组自己调整。</blockquote>
+            </td>
+            <td>Environment quality matters more than locking a universal training row schema.</td>
+            <td>Keep exports adapter-based: SFT, preference, eval, and RL rows are downstream views. The stable core is fixture worlds, tool I/O, tasks, and verifiers.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>AppWorld 文章里面比较了好几种模式，ReAct 模式、Plan-and-Exec 模式等等，每一种模式对应一种不同格式的 agent 轨迹。</blockquote>
+              <p><a href="https://github.com/StonyBrookNLP/appworld">AppWorld reference</a></p>
+            </td>
+            <td>Agent scaffolds change the trajectory format. A single trajectory schema cannot serve all training styles equally.</td>
+            <td>Represent scaffold specs explicitly. Let the same task environment be run under different scaffolds, then export scaffold-specific frames.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>这些其实应该主要是训练方来考虑的事情。</blockquote>
+            </td>
+            <td>Training teams should decide exact trajectory shape, loss, reward, and model-visible formatting.</td>
+            <td>Datalox should provide raw grounded evidence plus clean adapters, not force a single opinionated trainer format.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>如果只是造轨迹，定义好一些 tool 还有返回值，用大模型造轨迹也是比较快的。</blockquote>
+            </td>
+            <td>Simple tool schemas and synthetic returns are commoditizable. They are not enough for a durable product wedge.</td>
+            <td>The environment must include hard-to-fake value: domain sample data, deterministic algorithms, validators, structured state transitions, failure cases, and replayable evidence.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>你们的环境有没有什么不可替代性？</blockquote>
+            </td>
+            <td>This is the central product challenge. Why use Datalox instead of asking an LLM to generate fake trajectories?</td>
+            <td>Prove non-substitutability through real domain environments such as FlowCyto, molecule biology, and protein visualization where tool outputs depend on actual files, state, and validators.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>如果目标是提升 agent 的通用能力，将一个环境做得非常深，非常完善，可能不如制造大量弱一点的环境。</blockquote>
+            </td>
+            <td>General capability may benefit more from breadth across many task worlds than from one perfect vertical environment.</td>
+            <td>Roadmap should include many small, deterministic sub-environments and fixture sets, not only one deep FlowCyto proof.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>环境数量提升到一定程度后，通用 agent 能力可能会有一个涌现。</blockquote>
+            </td>
+            <td>Environment diversity may be a scaling law for agent behavior.</td>
+            <td>Track environment count, task family diversity, scaffold diversity, failure coverage, and export volume as product metrics.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>可以把你们的环境改造一下，比如生成多个子环境，提升生物应用领域通用 agent 能力。</blockquote>
+            </td>
+            <td>Bio-domain generality can come from many related sub-environments rather than one monolithic tool.</td>
+            <td>Split domain MCPs into environment packs: flow cytometry gating, QC recovery, compensation checks, sequence import, plasmid annotation, protein visualization, mutation inspection, etc.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>很多客户应该没有那么多算力资源，低资源还是得 SFT。</blockquote>
+            </td>
+            <td>Many users will not have enough compute for heavy RL. SFT is the realistic first training path.</td>
+            <td>Open-source copy should say "SFT-first" or "compute-constrained teams" rather than implying every customer will run RL.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Updated Product Frame</h2>
+      <p>The strongest frame after this feedback is:</p>
+      <div class="callout">
+        <p><strong>Datalox provides versioned agent task environments and the replay/data layer that turns environment runs into SFT, eval, preference, and RL-ready artifacts.</strong></p>
+      </div>
+      <p>This avoids three traps:</p>
+      <ul>
+        <li>It does not claim Datalox owns the trainer.</li>
+        <li>It does not claim Datalox owns every reward function.</li>
+        <li>It does not reduce the product to a trajectory recorder, which is too easy to substitute.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Roadmap Changes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Change</th>
+            <th>Concrete Work</th>
+            <th>Pass Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SFT-first path</td>
+            <td>Make <code>datalox run</code> and <code>datalox export sft</code> the first visible path for fixture sets.</td>
+            <td>One command produces <code>run.json</code>, <code>transcript.jsonl</code>, and one or more valid <code>sft_frame.v1</code> rows.</td>
+          </tr>
+          <tr>
+            <td>Reference reward only</td>
+            <td>Each fixture set may include verifier metadata and a reference reward recipe, but no fixed universal reward engine.</td>
+            <td>A training team can ignore or replace reward settings without breaking fixture install/run/export.</td>
+          </tr>
+          <tr>
+            <td>Scaffold-aware exports</td>
+            <td>Add scaffold specs for ReAct, plan-and-execute, and direct tool-use variants where useful.</td>
+            <td>The same task can produce different model-visible completion frames based on scaffold choice.</td>
+          </tr>
+          <tr>
+            <td>Many small environments</td>
+            <td>Create multiple small bio sub-environments instead of only one deep FlowCyto vertical.</td>
+            <td>Catalog shows multiple task families, each with sample data, tool contracts, failure cases, and at least one export path.</td>
+          </tr>
+          <tr>
+            <td>Non-substitutability proof</td>
+            <td>For each environment pack, document what cannot be cheaply faked by synthetic tool logs.</td>
+            <td>Each pack has at least one validator or state transition tied to real domain artifacts or deterministic domain computation.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Repo Ownership Implications</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Repo</th>
+            <th>Owns</th>
+            <th>Should Not Own</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>datalox-agent-replay</code></td>
+            <td>Fixture install/run/replay/export engine, model endpoint adapter, replay miss behavior, SFT/eval/preference adapters.</td>
+            <td>Scientific algorithms, live domain UI, universal reward design, RL training orchestration.</td>
+          </tr>
+          <tr>
+            <td><code>datalox-replay-fixtures</code></td>
+            <td>Published fixture catalogs, fixture sets, task specs, scaffold specs, verifier metadata, archived replay bundles.</td>
+            <td>Live MCP runtime implementation or trainer-specific data transformations beyond declared adapters.</td>
+          </tr>
+          <tr>
+            <td>Domain MCP repos</td>
+            <td>Live domain environments, sample data, deterministic domain tools, validators, workspace state, agent-native tool contracts.</td>
+            <td>Central replay engine or trainer-specific export policy.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Immediate Next Steps</h2>
+      <ol>
+        <li>Finish the visible FlowCyto proof as an agent-native reconstruction of a traditional workflow: structured workspace, typed tools, deterministic validation, replay evidence, and SFT export.</li>
+        <li>Turn FlowCyto into multiple small sub-environments, not one oversized demo.</li>
+        <li>Add scaffold metadata so the same environment can generate ReAct-style and plan-and-execute-style trajectories.</li>
+        <li>Write one "non-substitutability" section for each environment pack.</li>
+        <li>Update public copy to lead with agent-native workflow environments and SFT/eval data generation, with RL as a downstream consumer path.</li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2>Copy Guidance</h2>
+      <p>Prefer this wording:</p>
+      <blockquote>Datalox turns traditional workflows into agent-native environments, then packages replay evidence into grounded SFT and eval data.</blockquote>
+      <p>Avoid this wording:</p>
+      <blockquote>Datalox is an Agentic RL reward engine.</blockquote>
+      <blockquote>Datalox defines the universal trajectory format.</blockquote>
+      <blockquote>Datalox records trajectories, therefore it is the product.</blockquote>
+      <blockquote>Datalox guarantees identical full agent trajectories in complex live environments.</blockquote>
+      <div class="callout warning">
+        <strong>Open-source note:</strong> if this document is public, use "external researcher feedback" and "compute-constrained teams" rather than private/person-specific phrasing.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Environment Moat And Agent-Native Biotech Wrappers</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --ink: #171717;
+      --muted: #5b5b56;
+      --line: #d9d7ce;
+      --panel: #ffffff;
+      --accent: #16635b;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 980px);
+      margin: 0 auto;
+      padding: 40px 0 64px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.15;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 40px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin: 28px 0 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 20px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+
+    pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+    }
+
+    .lede {
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 760px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 18px 0;
+      padding: 18px 20px;
+    }
+
+    .kicker {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="kicker">Datalox Product Boundary</div>
+      <h1>Environment Moat And Agent-Native Biotech Wrappers</h1>
+      <p class="lede">
+        Datalox should be positioned around versioned environments and
+        deterministic tool replay, not around one canonical trajectory format.
+      </p>
+    </header>
+
+    <section>
+      <h2>Environment Moat Versus Synthetic Trajectories</h2>
+      <p>
+        Synthetic trajectories are cheap. A model can generate plausible ReAct,
+        plan-and-execute, or tool-call traces quickly once a team defines tool
+        schemas and return shapes. That does not make the traces reliable
+        training or eval evidence.
+      </p>
+      <p>
+        The hard part is building reliable, versioned interaction worlds with
+        realistic tool boundaries and domain observations.
+      </p>
+
+      <div class="panel">
+        <h3>Tool Boundaries Are More Than Schemas</h3>
+        <p>
+          Real tools also include permissions, missing fields, pagination, error
+          codes, state changes, unavailable operations, latency, file formats,
+          units, and version differences. Synthetic data usually covers the
+          happy path first and misses these boundaries.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Failure And Recovery Matter</h3>
+        <p>
+          In agent training, failure and recovery examples can be more valuable
+          than clean success examples. Real failures are often messy: half
+          missing data, inconsistent tool responses, ambiguous user requests, or
+          a mutation that is not allowed. Synthetic failures tend to become too
+          regular.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Replay Misses Are Part Of The Contract</h3>
+        <p>
+          What the environment did not record and what the agent cannot do are
+          also important. A fixture may allow billing inspection but not refunds,
+          support thread reading but not ticket closure, or protein state
+          inspection but not arbitrary viewer mutation.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Task Distribution Is Not A Random Prompt Set</h3>
+        <p>
+          A useful environment has a distribution over difficulty,
+          success/recovery/failure cases, tool combinations,
+          missing-information patterns, and task families. Ad hoc synthetic
+          tasks often collapse into one style.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Domain Observations Can Look Plausible And Still Be Wrong</h3>
+        <p>
+          In biotech, units, thresholds, sample identifiers, protocol steps, QC
+          metrics, sequence annotations, or protein-structure coordinates can
+          look convincing in text while being scientifically invalid. Bad
+          observations produce bad training signals.
+        </p>
+      </div>
+
+      <p>The product boundary follows from this:</p>
+      <pre><code>versioned environment -> agent rollout -> deterministic replay evidence -> user-defined training/eval export</code></pre>
+
+      <p>
+        Datalox should not sell one canonical trajectory format. SFT fields,
+        reward schemas, ReAct traces, plan-and-execute traces, and preference
+        rows should be adapted by the training team. Datalox should provide the
+        stable environment, replay evidence, task metadata, scaffold metadata,
+        verifier metadata, and reference exports that let those teams build
+        their own formats.
+      </p>
+    </section>
+
+    <section>
+      <h2>Agent-Native Biotech Wrappers</h2>
+      <p>
+        Turning a traditional biotech app into MCP or CLI surfaces is useful
+        when the goal is repeatable rollout, replay, and evaluation. It is not
+        useful as a blanket rewrite strategy.
+      </p>
+      <p>
+        Agents can operate existing tools through GUIs, browsers, notebooks,
+        APIs, CLIs, and files. The issue is that traditional apps are often weak
+        surfaces for large-scale agent training and evaluation.
+      </p>
+
+      <div class="panel">
+        <h3>Why Traditional App Surfaces Are Weak For Training</h3>
+        <ul>
+          <li>state is hard to reset</li>
+          <li>actions are hard to record structurally</li>
+          <li>replay is unstable</li>
+          <li>verifiers are hard to automate</li>
+          <li>error boundaries are unclear</li>
+          <li>batch rollout is expensive</li>
+          <li>vLLM, verl, and similar training stacks cannot consume the interaction easily</li>
+        </ul>
+      </div>
+
+      <p>
+        MCP and CLI wrappers are valuable because they turn domain applications
+        into typed, replayable, batchable, auditable action surfaces. The goal
+        is not to make every biotech app "agent-native." The goal is to expose
+        the smallest reliable action/observation boundary agents need for
+        repeatable rollout, replay, and evaluation.
+      </p>
+      <p>
+        This is the stronger Datalox wedge: reconstruct the critical workflow
+        boundary of a traditional app as agent-native tools and state, then let
+        replay evidence and verifier exports fall out of that environment. Toy
+        deterministic environments are easy to replay but low value; complex
+        live apps are valuable but hard to fully re-execute. Datalox should sit
+        between those extremes by freezing the agent-visible evidence boundary,
+        not by claiming perfect full-environment replay for every app.
+      </p>
+
+      <h3>Use This Split</h3>
+      <ul>
+        <li>If a good API or CLI already exists, connect to it directly.</li>
+        <li>If a GUI is the primary human experience but tasks need training or eval, wrap only the key actions as MCP or CLI.</li>
+        <li>If visual judgment matters, keep the viewer or browser path, but expose key state, exports, and checks through structured tools.</li>
+        <li>If the software is proprietary and complex, build a thin wrapper and do not copy the scientific algorithms.</li>
+      </ul>
+
+      <h3>Examples</h3>
+      <ul>
+        <li>Flow cytometry tools do not need their full gating UI rewritten. A domain wrapper can expose <code>load_sample</code>, <code>compute_qc</code>, <code>apply_gate</code>, and <code>export_population_stats</code>.</li>
+        <li>Protein viewers can keep their interactive viewer. Structured tools can expose <code>measure_distance</code>, <code>list_binding_site_residues</code>, and <code>snapshot_state</code>.</li>
+        <li>Literature and protocol search can wrap existing APIs or indexes, with snapshots and provenance as the important replay boundary.</li>
+        <li>Molecule and sequence annotation often fit CLI or MCP surfaces naturally because inputs and outputs are already structured.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

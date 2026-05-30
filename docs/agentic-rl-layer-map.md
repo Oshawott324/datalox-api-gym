@@ -413,6 +413,7 @@ Rule:
 
 Use this when the product story drifts:
 
-> Datalox provides versioned API/MCP snapshot environments and live domain MCP
-> environments. This repo powers the snapshot/replay engine; recording is only
-> the authoring path for private snapshots.
+> Datalox turns traditional workflows into agent-native environments, then
+> packages replay evidence into training/eval data. This repo powers the
+> snapshot/replay evidence engine; recording is only the authoring path for
+> private snapshots.

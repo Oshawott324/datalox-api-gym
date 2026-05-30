@@ -211,10 +211,11 @@
   <header>
     <h1>Datalox Environment-To-Training-Data Demo Guide</h1>
     <p class="lede">
-      A concrete traction-oriented plan for showing that Datalox turns real
-      agent environments into reusable, replayable, verifiable training and eval
-      data. The small SFT lift is proof that the environment data is useful; it
-      is not the product positioning.
+      A concrete traction-oriented plan for showing that Datalox turns
+      traditional workflows into agent-native environments, then packages the
+      replay evidence into reusable, verifiable training and eval data. The
+      small SFT lift is proof that the environment data is useful; it is not the
+      product positioning.
     </p>
     <p class="meta">Updated May 27, 2026 - Local planning doc</p>
   </header>
@@ -222,15 +223,16 @@
   <section class="section">
     <h2>Demo Claim</h2>
     <div class="callout">
-      Datalox provides the missing environment/data layer for agent training:
-      versioned fixture worlds, exact replay evidence, deterministic verifiers,
-      and exportable SFT/eval rows. A small SFT lift on the closest held-out or
-      public benchmark is one downstream proof that the packaged environment
-      data is useful. The core proof is cheaper verified agent-experience
-      production: real tasks, replayable evidence, deterministic verification,
-      and exports a training team can consume without trusting a one-off demo.
+      Datalox's stronger wedge is not "replay company" by itself. The stronger
+      wedge is reconstructing high-value traditional workflows as agent-native
+      environments, then using exact replay evidence, deterministic verifiers,
+      and exportable SFT/eval rows as the trust/data layer. A small SFT lift on
+      the closest held-out or public benchmark is one downstream proof that the
+      packaged environment data is useful.
     </div>
-    <pre>versioned fixture set
+    <pre>traditional app/workflow
+  -> agent-native tools and structured state
+  -> versioned fixture set
   -> baseline run
   -> verifier-passing train trajectories
   -> SFT export
@@ -238,9 +240,10 @@
   -> held-out or closest-public-benchmark eval
   -> replayable before/after evidence</pre>
     <p>
-      Public wording should be disciplined: "Datalox turns agent environments
-      into verified training data," not "Datalox is a training platform" and
-      not "Datalox is a generic RL environment hub."
+      Public wording should be disciplined: "Datalox turns traditional
+      workflows into agent-native environments and verified training data," not
+      "Datalox is a training platform" and not "Datalox is a generic RL
+      environment hub."
     </p>
   </section>
 
@@ -253,18 +256,19 @@
     <div class="callout">
       Datalox is not trying to win by inventing a better SFT, DPO, or RL
       trainer. Training teams already have those tools. Datalox wins if it
-      becomes the standard way to turn real agent work into reusable,
-      replayable, verifier-backed data capacity: fixture worlds, exact
-      tool-I/O evidence, deterministic verifiers, and clean exports. The
-      training lift is a traction proof that the packaged environment data is
-      useful, not the product itself.
+      becomes the standard way to turn messy real workflows into agent-native
+      environments whose outputs are reusable, replayable, verifier-backed data
+      capacity: fixture worlds, exact tool-I/O evidence, deterministic
+      verifiers, and clean exports. The training lift is a traction proof that
+      the packaged environment data is useful, not the product itself.
     </div>
     <div class="callout">
-      Plain words: Datalox is the packaging and proof layer for agent
-      experience. It captures what an agent actually saw and did, freezes it
-      into a replayable task world, checks outcomes with deterministic
-      verifiers, and exports grounded rows for eval or training. It is not the
-      live sandbox, not the RL trainer, not the reward research lab, and not a
+      Plain words: Datalox makes traditional workflows usable by agents. Domain
+      repos expose the key workflow actions as tools and structured state;
+      Agent Replay captures what an agent actually saw and did, freezes it into
+      a replayable task world, checks outcomes with deterministic verifiers,
+      and exports grounded rows for eval or training. It is not the live
+      sandbox, not the RL trainer, not the reward research lab, and not a
       generic marketplace for every environment.
     </div>
     <table>
@@ -274,11 +278,11 @@
       <tbody>
         <tr>
           <td>What is Datalox?</td>
-          <td>An agent environment and replay-data layer: fixture worlds, tool-I/O records, replay bundles, verifiers, and training/eval exports.</td>
+          <td>An agent-native environment and replay-data stack: domain tools/state, fixture worlds, tool-I/O records, replay bundles, verifiers, and training/eval exports.</td>
         </tr>
         <tr>
           <td>What is Datalox not?</td>
-          <td>Not a post-training platform, not a generic trainer, not a claim that Datalox owns RL algorithms, not a general sandbox/runtime company.</td>
+          <td>Not a post-training platform, not a generic trainer, not a claim that Datalox owns RL algorithms, and not full re-execution of every complex live environment.</td>
         </tr>
         <tr>
           <td>Why run SFT at all?</td>
@@ -916,37 +920,49 @@
           <td>Each row has task id, source URL, task type, expected answer class, expected failure mode, public/private flag, include/reject decision, and HF publication note.</td>
         </tr>
         <tr>
-          <td>3. Write task specs and replay evidence</td>
-          <td>For included tasks, create task specs and capture the exact agent-visible observations as replay bundles. Keep observations finite; unseen calls should miss.</td>
-          <td><code>task_specs/*.json</code> and <code>replay_bundles/*/</code></td>
-          <td>A fresh replay run can return the same issue/log/doc observations with upstream services off.</td>
+          <td>3. Create one task spec per task</td>
+          <td>For each included world, create a self-contained task spec with prompt, allowed tools, forbidden tools, output schema, minimum observations, and success criteria.</td>
+          <td><code>worlds/&lt;world_id&gt;/task.spec.json</code></td>
+          <td>A new agent can understand the task contract without reading the source-selection prose.</td>
         </tr>
         <tr>
-          <td>4. Implement deterministic verifier</td>
+          <td>4. Build derived artifacts and tool observations</td>
+          <td>Generate small published artifacts, parser outputs, policy outputs, tool catalogs, and deterministic tool observations from real public sources. Do not publish full raw source files before license review.</td>
+          <td><code>artifacts/manifest.json</code>, <code>tools/tool-catalog.json</code>, and <code>tools/tool-observations.jsonl</code></td>
+          <td>Every world has at least five deterministic agent-visible observations and matching artifact checksums.</td>
+        </tr>
+        <tr>
+          <td>5. Capture replay evidence</td>
+          <td>Convert deterministic tool observations into <code>tool_io_record.v1</code> records and one <code>replay_bundle.v1</code> per world. Replay means exact tool-observation lookup by request hash and sequence index, not guaranteed identical model trajectory generation.</td>
+          <td><code>worlds/&lt;world_id&gt;/replay_bundle/</code></td>
+          <td>Recorded requests replay exact observations, unseen requests return replay misses, checksums match, and no live source fallback is possible.</td>
+        </tr>
+        <tr>
+          <td>6. Implement deterministic verifier</td>
           <td>Check structured output, required evidence ids, diagnosis class, missing fields, and forbidden claims. Avoid judge-model scoring for the first proof.</td>
           <td><code>verifier_specs/*.json</code> plus a verifier command or script</td>
           <td>Known-good answer passes, known-bad answer fails, and the failure reason names the broken criterion.</td>
         </tr>
         <tr>
-          <td>5. Run cheap baseline and keep real failures</td>
+          <td>7. Run cheap baseline and keep real failures</td>
           <td>Run a small baseline model on the locked task set. Keep tasks where the model actually fails by missing evidence, choosing the wrong action, hallucinating state, or violating the tool/replay boundary.</td>
           <td><code>baseline.test.jsonl</code> and <code>baseline.failure-report.md</code></td>
           <td>At least 5 scientific-data worlds have verifier output and concrete baseline failure examples.</td>
         </tr>
         <tr>
-          <td>6. Create verifier-passing train trajectories</td>
+          <td>8. Create verifier-passing train trajectories</td>
           <td>For train tasks only, produce human references, teacher-agent successes, or repaired baseline traces. Do not write references for dev/test tasks.</td>
           <td><code>train.success-runs.jsonl</code> or replay-backed run records</td>
           <td>Every included trajectory passes the verifier and cites replay evidence ids.</td>
         </tr>
         <tr>
-          <td>7. Export <code>sft_frame.v1</code></td>
+          <td>9. Export <code>sft_frame.v1</code></td>
           <td>Convert verifier-passing train trajectories into prompt/response or tool-step SFT rows. Failed baseline answers are not SFT targets.</td>
           <td><code>train.sft.jsonl</code></td>
           <td>Rows include task id, split, model-visible context, target response/tool step, source run id, replay bundle id, and verifier result id.</td>
         </tr>
         <tr>
-          <td>8. Lock eval command and split</td>
+          <td>10. Lock eval command and split</td>
           <td>Write the exact eval command for baseline and tuned model. Pin split ids and reject export/eval if split metadata is absent.</td>
           <td><code>splits.json</code> and <code>eval_command.md</code></td>
           <td>Another person can run baseline vs SFT on the same held-out split without asking how the environment works.</td>
@@ -955,6 +971,7 @@
     </table>
     <pre>minimum handoff acceptance:
   - 5 included scientific-data worlds with provenance
+  - 5 replay bundles with replay-miss validation
   - 5 baseline failures with verifier reasons
   - 5+ verifier-passing SFT rows from train worlds only
   - 1 locked dev/test split
@@ -1355,7 +1372,7 @@ datalox eval \
       <li>Show the training command and live cost log.</li>
       <li>Run the tuned model on the same held-out split.</li>
       <li>Show before/after metrics and open one replay bundle from each side.</li>
-      <li>End with the product message: Datalox turns agent environments into reproducible, inspectable, training-ready data.</li>
+      <li>End with the product message: Datalox turns traditional workflows into agent-native environments with reproducible, inspectable, training-ready evidence.</li>
     </ol>
   </section>
 

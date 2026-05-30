@@ -21,6 +21,11 @@ Primary v0 claim:
 > Datalox turns real scientific artifacts into replayable, verifier-backed
 > agent training/eval data.
 
+Broader product claim:
+
+> Datalox turns traditional scientific workflows into agent-native
+> environments, then packages replay evidence into training/eval data.
+
 Do not claim model lift from this seed. The first claim is that the fixture
 worlds are source-backed, tool-rich, deterministic, and exportable.
 

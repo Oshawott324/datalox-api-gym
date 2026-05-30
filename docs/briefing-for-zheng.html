@@ -200,11 +200,12 @@
   <header>
     <h1>Datalox Briefing For Zheng</h1>
     <p class="lede">
-      Updated after your feedback: Datalox should provide versioned API/MCP
-      snapshot environments and live domain MCP environments. Recording is how
-      private snapshots are authored, not the thing training teams consume.
-      SFT and preference training are the practical first consumers; online RL
-      is later, when reset/step environments and rollout throughput are mature.
+      Updated after your feedback: Datalox should turn traditional workflows
+      into agent-native environments, then package replay evidence into
+      training/eval data. Recording is how private snapshots are authored, not
+      the thing training teams consume. SFT and preference training are the
+      practical first consumers; online RL is later, when reset/step
+      environments and rollout throughput are mature.
     </p>
     <p class="meta">From Yifan - Updated May 25, 2026 - Local draft, not yet public-facing copy</p>
   </header>
@@ -212,15 +213,16 @@
   <section class="section">
     <h2>One-Sentence Positioning</h2>
     <div class="callout">
-      Datalox provides versioned API/MCP snapshot environments and live domain
-      MCP environments, then exports replayable training/eval data for SFT,
+      Datalox reconstructs traditional human-facing workflows as agent-native
+      domain environments, then exports replayable training/eval data for SFT,
       preference training, eval, and eventually RL.
     </div>
     <p>
       This is intentionally not "Agentic RL infra first." RL is valuable, but it is expensive:
       rollouts are slow, verifiers are bottlenecks, and reward signals are often sparse.
-      The near-term product value is installable snapshot environments and
-      domain environments that produce clean trajectories for export.
+      The near-term product value is agent-native workflow environments plus
+      installable snapshot environments that produce clean trajectories for
+      export.
     </p>
   </section>
 

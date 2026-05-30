@@ -3,12 +3,17 @@
 This repo is the portable implementation package for Datalox Agent Replay: the
 engine for versioned API/MCP snapshot environments.
 
-Datalox provides versioned agent task environments. This repo powers snapshot
-environments: frozen tool catalogs, tool observations, tasks, verifier
-metadata, fixture packs, fixture sets, deterministic replay, and training/eval
-exports. Sibling Datalox domain MCP repos can provide live scientific domain
-environments. Recording is an authoring mechanism for creating private
-snapshots, not the object users consume.
+Datalox's broader product direction is to reconstruct high-value traditional
+human-facing workflows as agent-native environments, then use replay evidence
+to make those environments auditable, reusable, and useful for training/eval
+teams.
+
+This repo powers the replay evidence layer for those environments: frozen tool
+catalogs, tool observations, tasks, verifier metadata, fixture packs, fixture
+sets, deterministic replay, and training/eval exports. Sibling Datalox domain
+MCP repos can provide live scientific domain environments with structured
+tools, state, validators, and UI/app surfaces. Recording is an authoring
+mechanism for creating private snapshots, not the object users consume.
 
 Core replay surfaces:
 

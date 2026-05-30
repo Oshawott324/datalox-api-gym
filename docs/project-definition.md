@@ -21,17 +21,24 @@ tool observations, task specs, verifier metadata, deterministic replay, and
 training/eval exports. Recording is one authoring path for creating a private
 snapshot from a live MCP/API/domain environment.
 
-The broader product wedge is:
+The broader Datalox product wedge is:
 
 ```text
-versioned domain environments + replay/data layer -> exportable training/eval data
+traditional human-facing workflow
+  -> agent-native domain environment
+  -> replay evidence/data layer
+  -> exportable training/eval data
 ```
 
-For this repo, that means Agent Replay owns the replay/data layer. Sibling
-domain repos may own live scientific environments. The current concrete proof
-target is `flowcyto-gating-qc-basic@2026-06.0`: a versioned flow cytometry
-environment pack that combines real domain tools, workspace state, validators,
-replay bundles, and SFT export. See
+For this repo, that means Agent Replay owns the replay evidence/data layer:
+exact tool I/O records, replay bundles, fixture activation, deterministic
+replay, verifier evidence, and training/eval exports. Sibling domain repos may
+own live scientific environments that reconstruct traditional applications or
+workflows as agent-native tools, structured state, validators, and constrained
+UI/app surfaces. The current concrete proof target is
+`flowcyto-gating-qc-basic@2026-06.0`: a versioned flow cytometry environment
+pack that combines real domain tools, workspace state, validators, replay
+bundles, and SFT export. See
 [flowcyto-environment-pack-plan.html](./flowcyto-environment-pack-plan.html).
 
 Primary consumption loop:
@@ -83,6 +90,12 @@ can provide constrained scientific environments, such as flow cytometry,
 molecular biology, or protein visualization workspaces. Agent Replay should
 snapshot and replay the tool I/O those environments emit; it should not absorb
 their domain runtime, UI, or scientific algorithms.
+
+The business front door should therefore not be "replay company" by itself.
+Replay is the trust and data layer. The stronger product story is that Datalox
+turns high-value traditional workflows into agent-native environments, and then
+uses replay evidence to make those environments auditable, reusable, and useful
+for training/eval teams.
 
 Do not make training row format the core wedge. SFT, completion, preference,
 reward, and transition rows are adapters derived from grounded environment
