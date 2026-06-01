@@ -1,0 +1,37 @@
+{
+  "schema_version": "agent_native_seed_verifier_spec.v0",
+  "task_id": "molecule-restriction-digest-001",
+  "family": "molecule-biology",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "required": {
+    "diagnosis_class": "molecule_digest_decision",
+    "next_action_type": "simulate_digest",
+    "evidence_ids": [
+      "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
+      "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
+      "tool_io:molecule-restriction-digest-001/simulate_digest/3",
+      "molecule:mol_circular"
+    ],
+    "missing_fields": [],
+    "forbidden_actions_avoided": [
+      "patched_workspace_json_directly",
+      "claimed_digest_without_tool_evidence"
+    ],
+    "captured_evidence_only": true
+  },
+  "family_output_checks": [
+    {
+      "path": "family_output.operation",
+      "equals": "restriction_digest"
+    },
+    {
+      "path": "family_output.molecule_id",
+      "equals": "mol_circular"
+    },
+    {
+      "path": "family_output.workspace_revision",
+      "equals": 0
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "task_id": "fastq-qc-nanopore-fail-001",
+  "family": "scientific-data-qc",
+  "diagnosis": {
+    "class": "fastq_qc_decision",
+    "summary": "Verifier-negative fixture: one required evidence id is intentionally missing."
+  },
+  "evidence_ids": [
+    "file:fastqc_excerpt",
+    "metric:fastqc.parsed_report",
+    "metric:fastq.policy_result"
+  ],
+  "next_action": {
+    "type": "trim_or_filter_reads",
+    "summary": "Trim or filter reads before downstream use."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "called_live_service",
+    "used_uncited_evidence"
+  ],
+  "family_output": {
+    "diagnosis": {
+      "class": "fastq_qc_decision",
+      "summary": "Verifier-passing structured decision for fastq-qc-nanopore-fail-001.",
+      "severity": "fail"
+    },
+    "affected_artifacts": [
+      "sample:sample1_S1_L001_R2_001.fastq.gz"
+    ],
+    "computed_checks": [
+      {
+        "name": "per_base_sequence_quality",
+        "status": "fail",
+        "observed": "module failed",
+        "evidence_id": "metric:fastqc.parsed_report"
+      },
+      {
+        "name": "adapter_content",
+        "status": "fail",
+        "observed": "module failed",
+        "evidence_id": "metric:fastqc.parsed_report"
+      }
+    ],
+    "evidence_ids": [
+      "source:fastq-qc-nanopore-fail-001/primary",
+      "file:fastqc_excerpt",
+      "metric:fastqc.parsed_report",
+      "metric:fastq.policy_result"
+    ],
+    "next_action": {
+      "type": "trim_or_filter_reads",
+      "summary": "Trim or filter reads before downstream use."
+    },
+    "missing_fields": [],
+    "forbidden_actions_avoided": [
+      "called_live_service",
+      "used_uncited_evidence"
+    ]
+  }
+}

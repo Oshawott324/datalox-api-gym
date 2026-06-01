@@ -1,11 +1,13 @@
 # Env Data Proof v0 Scientific Data Fixture Worlds
 
-Updated: 2026-05-29
+Updated: 2026-05-30
 
 ## Decision
 
-The primary v0 seed should be five scientific-data fixture worlds, not the
-previous GitHub-issue workflow-debug set.
+These five scientific-data fixture worlds are now the cheap public scaling lane
+inside the multi-family v0 seed. They are no longer the whole primary seed by
+themselves. The full seed also includes FlowCyto gating/QC/report tasks and
+Molecule Biology sequence-workflow tasks from sibling domain MCP repos.
 
 The selected worlds are:
 
@@ -18,13 +20,13 @@ The selected worlds are:
 The machine-readable selection is in `selected-scientific-data-worlds.csv`.
 The output contract is `schema/scientific-data-task-output.schema.json`.
 
-## Why This Replaces Issue Triage As Primary
+## Why This Replaces Issue Triage As The Cheap Scaling Lane
 
 The previous 10 GitHub issue tasks are useful as a workflow-debug reserve, but
 they are still coding-adjacent. They mostly start from issue text and become
 Datalox-relevant only if we add repo state, command output, and replayed logs.
 
-The scientific-data seed starts from real scientific artifacts:
+The scientific-data lane starts from real scientific artifacts:
 
 - FastQC report
 - 10x PBMC3k matrix and derived single-cell QC table
@@ -268,12 +270,13 @@ The previous selected GitHub issues are now the reserve workflow-debug track:
 - only promote an issue task if it becomes replay-rich with repo files, command
   output, logs, and deterministic verifier observations
 
-The main v0 product claim should come from the five scientific-data worlds
-above.
+The main v0 product claim should come from the multi-family seed: FlowCyto,
+Molecule Biology, and the five scientific-data worlds above. These worlds
+remain important because they are public, cheap, and text/table-first.
 
 ## Next Implementation Steps
 
-For each world:
+For each scientific-data world:
 
 1. Create `task.spec.json`.
 2. Vendor or cache source artifacts with checksums.

@@ -253,11 +253,13 @@ datalox export sft \
   -> upsert_gate
   -> compute_gate_stats
   -> validate_gate_qc
-  -> write_report</pre>
+  -> submit_report</pre>
     <p>
       The tool sequence is not hard-coded. This is the expected successful path.
-      The environment should also expose structured errors for invalid gates,
-      stale workspace revisions, missing channels, and missing report fields.
+      <code>submit_report</code> validates and persists the report content written
+      by the agent; it does not generate prose. The environment should also expose
+      structured errors for invalid gates, stale workspace revisions, missing
+      channels, missing evidence records, and missing report fields.
     </p>
   </section>
 
@@ -329,8 +331,9 @@ datalox export sft \
     <ol>
       <li>
         <strong>Phase 1 - Domain task spec.</strong>
-        Add 10 small gating/QC tasks with input sample refs, required outputs,
-        accepted channel pairs, and validator thresholds.
+        Start with three deterministic tasks: one success path, one stale-revision
+        failure path, and one report-validation failure path. Expand to 10+ tasks
+        only after the thin proof is stable.
       </li>
       <li>
         <strong>Phase 2 - Tool contract hardening.</strong>
@@ -340,7 +343,8 @@ datalox export sft \
       <li>
         <strong>Phase 3 - Validators.</strong>
         Add deterministic checks for gate existence, polygon validity, channel
-        match, population percent range, stats availability, and report fields.
+        match, population percent range, stats evidence records, QC evidence
+        records, and report fields.
       </li>
       <li>
         <strong>Phase 4 - Live rollout capture.</strong>
@@ -372,7 +376,7 @@ datalox export sft \
       <li>The validator emits pass/fail plus evidence refs.</li>
       <li><code>run.json</code> contains messages, tool calls, observations, final answer, fixture refs, and export gate.</li>
       <li><code>datalox export sft</code> produces valid <code>sft_frame.v1</code> JSONL.</li>
-      <li>The fixture set includes at least 10 success runs, 5 recovery runs, and 5 failure runs before preference export is claimed.</li>
+      <li>The first proof contains three deterministic tasks; preference export is not claimed until the fixture set has enough success/recovery/failure breadth.</li>
     </ol>
   </section>
 

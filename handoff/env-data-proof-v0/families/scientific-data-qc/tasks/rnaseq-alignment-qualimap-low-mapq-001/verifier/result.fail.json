@@ -1,0 +1,257 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "rnaseq-alignment-qualimap-low-mapq-001",
+  "family": "scientific-data-qc",
+  "answer_path": "handoff/env-data-proof-v0/families/scientific-data-qc/tasks/rnaseq-alignment-qualimap-low-mapq-001/verifier/expected.fail.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "rnaseq-alignment-qualimap-low-mapq-001",
+      "actual": "rnaseq-alignment-qualimap-low-mapq-001"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "scientific-data-qc",
+      "actual": "scientific-data-qc"
+    },
+    {
+      "name": "diagnosis.class",
+      "passed": true,
+      "message": "diagnosis.class matched",
+      "expected": "workflow_result_qc_decision",
+      "actual": "workflow_result_qc_decision"
+    },
+    {
+      "name": "next_action.type",
+      "passed": true,
+      "message": "next_action.type matched",
+      "expected": "rerun_analysis",
+      "actual": "rerun_analysis"
+    },
+    {
+      "name": "required evidence id",
+      "passed": false,
+      "message": "required evidence id missing source:rnaseq-alignment-qualimap-low-mapq-001/primary",
+      "expected": "source:rnaseq-alignment-qualimap-low-mapq-001/primary",
+      "actual": [
+        "file:qualimap_excerpt",
+        "metric:qualimap.alignment_summary",
+        "metric:alignment.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains source:rnaseq-alignment-qualimap-low-mapq-001/primary",
+      "expected": "source:rnaseq-alignment-qualimap-low-mapq-001/primary"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains file:qualimap_excerpt",
+      "expected": "file:qualimap_excerpt",
+      "actual": [
+        "file:qualimap_excerpt",
+        "metric:qualimap.alignment_summary",
+        "metric:alignment.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains file:qualimap_excerpt",
+      "expected": "file:qualimap_excerpt"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:qualimap.alignment_summary",
+      "expected": "metric:qualimap.alignment_summary",
+      "actual": [
+        "file:qualimap_excerpt",
+        "metric:qualimap.alignment_summary",
+        "metric:alignment.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:qualimap.alignment_summary",
+      "expected": "metric:qualimap.alignment_summary"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:alignment.policy_result",
+      "expected": "metric:alignment.policy_result",
+      "actual": [
+        "file:qualimap_excerpt",
+        "metric:qualimap.alignment_summary",
+        "metric:alignment.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:alignment.policy_result",
+      "expected": "metric:alignment.policy_result"
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains called_live_service",
+      "expected": "called_live_service",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains used_uncited_evidence",
+      "expected": "used_uncited_evidence",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "family_output.diagnosis.class",
+      "passed": true,
+      "message": "family_output.diagnosis.class matched",
+      "expected": "workflow_result_qc_decision",
+      "actual": "workflow_result_qc_decision"
+    },
+    {
+      "name": "family_output.next_action.type",
+      "passed": true,
+      "message": "family_output.next_action.type matched",
+      "expected": "rerun_analysis",
+      "actual": "rerun_analysis"
+    },
+    {
+      "name": "family_output.affected_artifacts",
+      "passed": true,
+      "message": "family_output.affected_artifacts contains report:qualimap_bamqc",
+      "expected": "report:qualimap_bamqc",
+      "actual": [
+        "report:qualimap_bamqc"
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check aligned_bases/fail",
+      "expected": {
+        "name": "aligned_bases",
+        "status": "fail",
+        "evidence_id": "metric:qualimap.alignment_summary"
+      },
+      "actual": [
+        {
+          "name": "aligned_bases",
+          "status": "fail",
+          "observed": "0 bp",
+          "threshold": "> 0 bp",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        },
+        {
+          "name": "mean_mapping_quality",
+          "status": "fail",
+          "observed": "0.1184",
+          "threshold": ">= 10",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        },
+        {
+          "name": "mean_coverage",
+          "status": "fail",
+          "observed": "0.0024X",
+          "threshold": ">= 1X",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        }
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check mean_mapping_quality/fail",
+      "expected": {
+        "name": "mean_mapping_quality",
+        "status": "fail",
+        "evidence_id": "metric:qualimap.alignment_summary"
+      },
+      "actual": [
+        {
+          "name": "aligned_bases",
+          "status": "fail",
+          "observed": "0 bp",
+          "threshold": "> 0 bp",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        },
+        {
+          "name": "mean_mapping_quality",
+          "status": "fail",
+          "observed": "0.1184",
+          "threshold": ">= 10",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        },
+        {
+          "name": "mean_coverage",
+          "status": "fail",
+          "observed": "0.0024X",
+          "threshold": ">= 1X",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        }
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check mean_coverage/fail",
+      "expected": {
+        "name": "mean_coverage",
+        "status": "fail",
+        "evidence_id": "metric:qualimap.alignment_summary"
+      },
+      "actual": [
+        {
+          "name": "aligned_bases",
+          "status": "fail",
+          "observed": "0 bp",
+          "threshold": "> 0 bp",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        },
+        {
+          "name": "mean_mapping_quality",
+          "status": "fail",
+          "observed": "0.1184",
+          "threshold": ">= 10",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        },
+        {
+          "name": "mean_coverage",
+          "status": "fail",
+          "observed": "0.0024X",
+          "threshold": ">= 1X",
+          "evidence_id": "metric:qualimap.alignment_summary"
+        }
+      ]
+    }
+  ]
+}

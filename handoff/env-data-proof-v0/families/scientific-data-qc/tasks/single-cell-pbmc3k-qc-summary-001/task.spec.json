@@ -1,0 +1,49 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "single-cell-pbmc3k-qc-summary-001",
+  "family": "scientific-data-qc",
+  "split": "seed",
+  "task_family": "scientific-data-qc-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "source_url": "https://cf.10xgenomics.com/samples/cell-exp/1.1.0/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz",
+    "world_path": "handoff/env-data-proof-v0/worlds/single-cell-pbmc3k-qc-summary-001",
+    "publication_status": "public_url_needs_locked_derivation"
+  },
+  "task_type": "single_cell_qc",
+  "expected_answer_class": "single_cell_qc_decision",
+  "expected_failure_mode": "uses_generic_cell_count_language_without_metric_evidence",
+  "prompt": "Inspect the single-cell QC fixture workspace and produce a structured QC decision. Cite evidence ids for the sample, QC thresholds, affected cells, computed metrics, and next action. Do not call live 10x or Scanpy services.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/scientific-data-task-output.schema.json",
+  "allowed_tools": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "single_cell.inspect_qc_table",
+    "qc_policy.evaluate",
+    "verifier.submit_answer"
+  ],
+  "forbidden_tools": [
+    "web.open",
+    "shell.live_download",
+    "vision.inspect_image"
+  ],
+  "minimum_replayed_observations": 5,
+  "expected_tool_path": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "single_cell.inspect_qc_table",
+    "qc_policy.evaluate"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against scientific-data-task-output.schema.json",
+    "diagnosis.class is single_cell_qc_decision",
+    "next_action.type is exclude_sample",
+    "computed checks cite replay evidence ids for cell/gene counts and thresholds",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

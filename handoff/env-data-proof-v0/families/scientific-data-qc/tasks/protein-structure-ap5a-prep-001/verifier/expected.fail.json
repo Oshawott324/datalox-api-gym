@@ -1,0 +1,63 @@
+{
+  "task_id": "protein-structure-ap5a-prep-001",
+  "family": "scientific-data-qc",
+  "diagnosis": {
+    "class": "protein_structure_prep_decision",
+    "summary": "Verifier-negative fixture: one required evidence id is intentionally missing."
+  },
+  "evidence_ids": [
+    "file:1ake_mmcif_excerpt",
+    "metric:protein.1ake_mmcif_metadata",
+    "metric:protein.policy_result"
+  ],
+  "next_action": {
+    "type": "prepare_structure",
+    "summary": "Prepare the structure using the cited metadata."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "called_live_service",
+    "used_uncited_evidence"
+  ],
+  "family_output": {
+    "diagnosis": {
+      "class": "protein_structure_prep_decision",
+      "summary": "Verifier-passing structured decision for protein-structure-ap5a-prep-001.",
+      "severity": "pass"
+    },
+    "affected_artifacts": [
+      "structure:1AKE",
+      "ligand:AP5"
+    ],
+    "computed_checks": [
+      {
+        "name": "resolution",
+        "status": "pass",
+        "observed": "2 A",
+        "threshold": "<= 2.5 A for v0 structure-prep seed",
+        "evidence_id": "metric:protein.1ake_mmcif_metadata"
+      },
+      {
+        "name": "ligand_present",
+        "status": "pass",
+        "observed": "AP5, HOH",
+        "evidence_id": "metric:protein.1ake_mmcif_metadata"
+      }
+    ],
+    "evidence_ids": [
+      "source:protein-structure-ap5a-prep-001/primary",
+      "file:1ake_mmcif_excerpt",
+      "metric:protein.1ake_mmcif_metadata",
+      "metric:protein.policy_result"
+    ],
+    "next_action": {
+      "type": "prepare_structure",
+      "summary": "Prepare the structure using the cited metadata."
+    },
+    "missing_fields": [],
+    "forbidden_actions_avoided": [
+      "called_live_service",
+      "used_uncited_evidence"
+    ]
+  }
+}

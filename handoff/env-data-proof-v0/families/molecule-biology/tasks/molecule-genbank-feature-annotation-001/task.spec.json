@@ -1,0 +1,49 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "molecule-genbank-feature-annotation-001",
+  "family": "molecule-biology",
+  "split": "seed",
+  "task_family": "molecule-biology-basic@2026-06.0",
+  "source_ref": {
+    "kind": "repo_fixture",
+    "repo": "datalox-molecule-biology",
+    "fixture_path": "fixtures/genbank/linear.gb",
+    "publication_status": "repo_fixture_needs_public_pin"
+  },
+  "task_type": "feature_annotation",
+  "expected_answer_class": "molecule_feature_annotation",
+  "expected_failure_mode": "patches_workspace_directly_or_uses_wrong_expected_revision",
+  "prompt": "Import the linear GenBank fixture, inspect sequence context, add or update one verifier-specified feature through upsert_feature using the current expectedRevision, then validate the workspace. Report the molecule id, new feature id, final revision, and evidence refs.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "allowed_tools": [
+    "open_sequence",
+    "get_sequence_context",
+    "upsert_feature",
+    "validate_workspace"
+  ],
+  "forbidden_tools": [
+    "shell.parse_sequence_file",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 4,
+  "expected_tool_path": [
+    "open_sequence",
+    "get_sequence_context",
+    "upsert_feature",
+    "validate_workspace"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against molecule-biology-task-output.schema.json",
+    "diagnosis.class is molecule_feature_annotation",
+    "next_action.type is annotate_feature",
+    "family_output.operation is feature_annotation",
+    "family_output.feature_ids includes the upserted feature id",
+    "workspace revision advances through tool output, not direct JSON edits",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

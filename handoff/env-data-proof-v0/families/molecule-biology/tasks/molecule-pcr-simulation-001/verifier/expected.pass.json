@@ -1,0 +1,47 @@
+{
+  "task_id": "molecule-pcr-simulation-001",
+  "family": "molecule-biology",
+  "diagnosis": {
+    "class": "molecule_pcr_decision",
+    "summary": "Verifier-passing structured decision for molecule-pcr-simulation-001."
+  },
+  "evidence_ids": [
+    "tool_io:molecule-pcr-simulation-001/get_sequence_context/1",
+    "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+    "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+    "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+    "tool_io:molecule-pcr-simulation-001/validate_workspace/5",
+    "molecule:mol_linear",
+    "primer:primer_seed_forward",
+    "primer:primer_seed_reverse"
+  ],
+  "next_action": {
+    "type": "simulate_pcr",
+    "summary": "Use the PCR simulation output as the decision source."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "patched_workspace_json_directly",
+    "claimed_pcr_without_tool_evidence"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-pcr-simulation-001/capture-workspace/molecule.workspace.json",
+    "workspace_revision": 2,
+    "molecule_id": "mol_linear",
+    "operation": "pcr_simulation",
+    "tool_result_refs": [
+      "tool_io:molecule-pcr-simulation-001/get_sequence_context/1",
+      "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+      "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+      "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+      "tool_io:molecule-pcr-simulation-001/validate_workspace/5",
+      "molecule:mol_linear",
+      "primer:primer_seed_forward",
+      "primer:primer_seed_reverse"
+    ],
+    "primer_ids": [
+      "primer_seed_forward",
+      "primer_seed_reverse"
+    ]
+  }
+}

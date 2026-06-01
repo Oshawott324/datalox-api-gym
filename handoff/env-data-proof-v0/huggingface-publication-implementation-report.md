@@ -1,19 +1,21 @@
 # Env Data Proof v0 Hugging Face Publication Implementation Report
 
-Updated: 2026-05-29
+Updated: 2026-06-01
 
-Status: implementation blueprint. Do not publish until every acceptance gate in
-this report passes.
+Status: implementation in progress. Seed task specs, pre-bundle agent-visible
+tool observations, and deterministic verifier fixtures now pass local
+validation. Do not publish until canonical replay bundles, baseline failures,
+teacher trajectories, and exports pass their acceptance gates.
 
 ## Executive Summary
 
-The next implementation step is to turn the five selected scientific-data
-worlds into a small, publishable Datalox evidence package. This package is not
-the final business wedge by itself; it is the replay/data layer underneath the
-larger agent-native environment vision.
+The next implementation step is to turn the multi-family seed task set into a
+small, publishable Datalox evidence package. This package is not a FlowCyto-only
+benchmark and not a model-lift claim by itself; it is the replay/data layer
+underneath the larger agent-native environment vision.
 
 ```text
-public scientific artifact
+public scientific artifact or domain MCP fixture
   -> local fixture workspace
   -> parser/checker tool observations
   -> replay_bundle.v1
@@ -26,11 +28,10 @@ public scientific artifact
 
 The first public claim should be:
 
-> Datalox can turn real scientific artifacts into replayable, verifier-backed
-> agent training/eval data.
+> Datalox can turn real scientific workflow tasks across multiple environment
+> families into replayable, verifier-backed agent training/eval data.
 
-The stronger product claim, once a vertical workflow such as FlowCyto is ready,
-should be:
+The stronger product claim should be:
 
 > Datalox turns traditional scientific workflows into agent-native
 > environments, then packages replay evidence into training/eval data.
@@ -39,7 +40,53 @@ Do not claim model improvement yet. Model lift requires a larger locked split.
 This v0 proves source quality, replayability, verifier determinism, and export
 shape.
 
-## Selected Worlds
+## Current Passed Artifacts
+
+As of 2026-06-01, the seed handoff has moved past task-spec design and into
+captured tool observations:
+
+- 13 `task.spec.json` files validate against
+  `schema/agent-native-seed-task-spec.schema.json`.
+- 13 `tools/tool-observations.jsonl` files validate against
+  `schema/agent-visible-tool-observation.schema.json`.
+- 67 total agent-visible observations are captured.
+- 41 observations come from live sibling domain tools:
+  `datalox-flow-cyto-mcp` and `datalox-molecule-biology`.
+- 26 observations come from existing deterministic scientific-data fixture
+  worlds.
+- Published observation rows use `${DATALOX_AGENT_REPLAY}`,
+  `${DATALOX_FLOWCYTO_REPO}`, and `${DATALOX_MOLECULE_REPO}` path tokens, not
+  local absolute machine paths.
+- 13 `verifier/verifier.spec.json` files validate against
+  `schema/verifier-spec.schema.json`.
+- 13 known-good answers pass and 13 known-bad answers fail under
+  `tools/verify-seed-answers.mjs`.
+- `exports/eval.seed.jsonl` contains 13 post-training workflow-facing eval rows.
+- `exports/eval_command.md` records the OpenAI-compatible baseline command.
+- `exports/eval.baseline.smoke.jsonl` passes the local verifier-smoke baseline:
+  13/13 rows parse and 13/13 fail the verifier as expected.
+
+This verifier currently runs against the captured observation layer. The next
+replay gate is to convert these observations into canonical `tool_io_record.v1`
+records and package them into verified `replay_bundle.v1` artifacts.
+
+## Selected Seed Tasks
+
+Machine-readable source file:
+`handoff/env-data-proof-v0/selected-agent-native-seed-tasks.csv`.
+
+The seed contains 13 candidate tasks:
+
+| Family | Count | Source |
+|---|---:|---|
+| FlowCyto gating/QC/report | 3 | `datalox-flow-cyto-mcp` task specs and FCS fixture |
+| Molecule Biology sequence workflows | 5 | `datalox-molecule-biology` FASTA/GenBank fixtures |
+| Scientific-data QC artifacts | 5 | Public FastQC, PBMC3k, FCS metadata, mmCIF, and Qualimap sources |
+
+No family should exceed 40% of the seed. If one task is rejected during replay
+capture or baseline filtering, replace it within the same family first.
+
+### Existing Scientific-Data Worlds
 
 | World | Domain | Public Source | Required Tool Observations |
 |---|---|---|---:|
@@ -52,8 +99,15 @@ shape.
 Machine-readable source file:
 `handoff/env-data-proof-v0/selected-scientific-data-worlds.csv`.
 
-Output schema:
+Output schemas:
+`handoff/env-data-proof-v0/schema/task-output.schema.json`;
+`handoff/env-data-proof-v0/schema/flowcyto-task-output.schema.json`;
+`handoff/env-data-proof-v0/schema/molecule-biology-task-output.schema.json`;
 `handoff/env-data-proof-v0/schema/scientific-data-task-output.schema.json`.
+
+FlowCyto and Molecule Biology should use their native task schemas as
+family-specific payloads inside the shared seed output envelope. Do not force
+all families into the scientific-data QC schema.
 
 ## Implementation Worktree Layout
 
@@ -61,12 +115,18 @@ Create all v0 implementation artifacts under:
 
 ```text
 handoff/env-data-proof-v0/
+  selected-agent-native-seed-tasks.csv
   worlds/
     fastq-qc-nanopore-fail-001/
     single-cell-pbmc3k-qc-summary-001/
     flowcyto-fcs-compensation-metadata-001/
     protein-structure-ap5a-prep-001/
     rnaseq-alignment-qualimap-low-mapq-001/
+  families/
+    flowcyto/
+      tasks/
+    molecule-biology/
+      tasks/
   exports/
     train.sft.jsonl
     eval.baseline.jsonl
@@ -78,10 +138,12 @@ handoff/env-data-proof-v0/
     data/
 ```
 
-Each world directory must use the same structure:
+Each task directory must use the same structure. Existing scientific-data
+worlds may keep the current `worlds/<world_id>/` layout during migration, but
+new FlowCyto and Molecule Biology tasks should use the family layout.
 
 ```text
-worlds/<world_id>/
+families/<family>/tasks/<task_id>/
   task.spec.json
   provenance.json
   artifacts/
@@ -107,11 +169,13 @@ worlds/<world_id>/
 Do not use live upstream calls during replay. Live URLs are provenance and
 source-authoring inputs only.
 
-## Per-World Build Steps
+## Per-Task Build Steps
 
 ### Step 1: Create `task.spec.json`
 
-Each task spec must be self-contained:
+Each task spec must be self-contained. The example below is the scientific-data
+lane. FlowCyto and Molecule Biology should use equivalent native fields plus
+the shared Datalox envelope fields.
 
 ```json
 {
@@ -296,7 +360,9 @@ Each parser tool must return evidence ids:
 
 ### Step 5: Capture Replay Evidence
 
-For each world, capture at least these observations:
+For each task, capture at least these observations. Scientific-data tasks use
+the metric-style examples below; FlowCyto and Molecule Biology should capture
+their native domain-tool observations with the same replay primitive.
 
 | Observation | Example Evidence Id |
 |---|---|
@@ -309,6 +375,20 @@ For each world, capture at least these observations:
 The captured observations should become `tool_io_record.v1` records, then a
 `replay_bundle.v1`. Replay lookup must use `request_hash + sequence_index` and
 must not fall back to live source URLs.
+
+Implementation status, 2026-06-01:
+
+- `tools/capture-live-observations.mjs` captures all 13 seed tasks.
+- FlowCyto observations are produced by `openFcsArtifact`, `getPlotContext`,
+  `upsertGate`, `computeGateStats`, `validateGateQc`, and `submitReport`.
+- Molecule Biology observations are produced by the repo's tool handler for
+  `open_sequence`, `get_sequence_context`, `upsert_feature`, `upsert_primer`,
+  `find_restriction_sites`, `simulate_digest`, `simulate_pcr`, and
+  `validate_workspace`.
+- Scientific-data QC observations are imported from the existing deterministic
+  fixture worlds.
+- Temporary capture workspaces are not published; the JSONL observation rows
+  are the handoff artifact for the replay-bundle conversion step.
 
 ### Step 6: Write `verifier.spec.json`
 
@@ -358,41 +438,68 @@ Verifier implementation rule:
 - Check required computed checks by `name` and `status`.
 - Treat summary text as human-readable only; do not semantic-grade it in v0.
 
+Implementation status, 2026-06-01:
+
+- `schema/verifier-spec.schema.json` defines the deterministic verifier contract.
+- `schema/verifier-result.schema.json` defines verifier output.
+- `tools/verify-seed-answers.mjs` validates shared output schema, family payload
+  schema, required evidence ids, required missing fields, forbidden-action
+  acknowledgements, family-specific fields, and scientific computed checks.
+- Each of the 13 seed tasks has `verifier/verifier.spec.json`,
+  `expected.pass.json`, `expected.fail.json`, `result.pass.json`, and
+  `result.fail.json`.
+- The current verifier command is:
+
+```bash
+node handoff/env-data-proof-v0/tools/verify-seed-answers.mjs
+```
+
 ### Step 7: Run Baseline
 
-Run one cheap baseline after replay is frozen.
+Run one cheap baseline after the post-training workflow-facing eval rows exist.
+The model team should consume ordinary JSONL and a normal OpenAI-compatible
+command; `tool_io_record.v1` and `replay_bundle.v1` remain Datalox-internal
+provenance unless someone wants to audit the evidence.
 
 Baseline command target:
 
 ```bash
-datalox eval \
-  --fixture-set scientific-data-qc-basic@2026-06.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json \
+node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \
+  --input handoff/env-data-proof-v0/exports/eval.seed.jsonl \
+  --out handoff/env-data-proof-v0/exports/eval.baseline.jsonl \
+  --mode openai-compatible \
   --model Qwen/Qwen2.5-1.5B-Instruct \
   --base-url http://127.0.0.1:8000/v1 \
   --api-key token \
-  --split seed \
-  --out handoff/env-data-proof-v0/exports/eval.baseline.jsonl \
-  --json
+  --min-failures 10
 ```
 
-If the CLI does not support this exact command yet, write a thin local runner
-that does the same thing and records the command in `eval_command.md`.
+The command is recorded in `exports/eval_command.md`. The local verifier-smoke
+command is also recorded there, but it is not a substitute for a real cheap
+model baseline.
+
+Current endpoint status, 2026-06-01:
+
+- The local verifier-smoke baseline passes and writes
+  `exports/eval.baseline.smoke.jsonl`.
+- The real cheap-model command is ready, but `http://127.0.0.1:8000/v1` is not
+  reachable in this workspace (`ECONNREFUSED`). Do not publish
+  `eval.baseline.jsonl` until an actual cheap model endpoint runs.
 
 Baseline acceptance:
 
 - all outputs are schema-valid or have explicit parse failures
-- each world has a verifier result
-- at least 3 of 5 worlds fail for a real reason
+- each seed task has a verifier result
+- at least 10 seed tasks across at least three families fail for a real reason
 - failure reasons are concrete: missing evidence, wrong next action, invented
   metric, ignored threshold, or live-service claim
 
-If the baseline passes most worlds, the tasks are too easy. Tighten prompts,
-hide answer-bearing titles, or add reserve scientific-data worlds.
+If the baseline passes most seed tasks, the tasks are too easy. Tighten prompts,
+hide answer-bearing titles, or add harder tasks within the weakest family.
 
 ### Step 8: Create Teacher Trajectories
 
-For each world, create one verifier-passing teacher trajectory.
+For each train task, create one verifier-passing teacher trajectory.
 
 Teacher trajectory must include:
 
@@ -406,8 +513,8 @@ Teacher trajectory must include:
 - export gate
 
 Do not include dev/test reference answers when the dataset scales beyond seed.
-For v0 seed, it is acceptable to publish all five as examples, but label them
-as `seed` rather than claiming a train/dev/test benchmark.
+For v0 seed, it is acceptable to publish representative examples, but label
+them as `seed` rather than claiming a train/dev/test benchmark.
 
 ### Step 9: Export SFT/Eval Rows
 
@@ -527,34 +634,35 @@ size_categories:
 
 # Datalox Env Data Proof v0
 
-This dataset is a seed evidence package for replayable scientific-data agent
-tasks. It contains public provenance links, fixture specs, parser/tool
-observations, deterministic verifier specs, baseline outputs, and
-verifier-passing teacher trajectories.
+This dataset is a seed evidence package for replayable scientific workflow
+agent tasks across FlowCyto, Molecule Biology, and scientific-data QC. It
+contains provenance links, fixture specs, parser/domain-tool observations,
+deterministic verifier specs, baseline outputs, and verifier-passing teacher
+trajectories.
 
 ## What This Is
 
-The package demonstrates that real scientific artifacts can be converted into
-replayable, verifier-backed agent training/eval data.
+The package demonstrates that real scientific artifacts and domain MCP fixtures
+can be converted into replayable, verifier-backed agent training/eval data.
 
 ## What This Is Not
 
 This is not a benchmark leaderboard and not evidence of model lift. The seed has
-five worlds and is intended for schema, replay, verifier, and export validation.
+13 candidate tasks and is intended for schema, replay, verifier, family-variety,
+and export validation.
 
-## Worlds
+## Families
 
-- FASTQ sequencing QC
-- single-cell RNA-seq QC
-- flow cytometry metadata QC
-- protein structure prep QC
-- RNA-seq alignment result QC
+- FlowCyto gating/QC/report
+- Molecule Biology sequence workflows
+- scientific-data QC artifacts
 
 ## Data Construction
 
-Each world starts from a public scientific source artifact. Datalox captures
-agent-visible parser/checker observations, packages them into replay evidence,
-and verifies structured outputs with deterministic rules.
+Each task starts from a public scientific source artifact or a domain MCP repo
+fixture. Datalox captures agent-visible parser/checker/domain-tool
+observations, packages them into replay evidence, and verifies structured
+outputs with deterministic rules.
 
 ## Limitations
 
@@ -571,8 +679,8 @@ test whether the exported rows are usable by training/eval teams.
 
 ## Provenance And Licensing
 
-See each world's `provenance.json`. Raw source artifacts are not copied unless
-license review permits redistribution.
+See each task's `provenance.json` or fixture reference. Raw source artifacts
+are not copied unless license review permits redistribution.
 
 ## Cost
 
@@ -589,28 +697,29 @@ Publish only when all are true:
 
 | Gate | Required Evidence |
 |---|---|
-| Source provenance | every world has `provenance.json` with URL, pin/ETag, and license review state |
+| Source provenance | every task has `provenance.json` or repo fixture reference with pin/ETag and license review state |
 | Replay determinism | replay bundle verifies and no live source URL is called during eval |
 | Verifier determinism | known-good output passes and known-bad output fails |
-| Baseline report | baseline output and verifier result exist for every world |
-| Teacher trajectory | one verifier-passing teacher trajectory exists per world |
+| Baseline report | baseline output and verifier result exist for every task |
+| Teacher trajectory | one verifier-passing teacher trajectory exists per train task |
 | Export shape | `sft.seed.jsonl`, `eval.baseline.jsonl`, and `verifier.results.jsonl` validate |
 | Privacy/security | no tokens, private data, credentials, or personal data |
 | Dataset card | `README.md` includes intended use, limitations, provenance, cost, and non-claims |
 
 ## Concrete Work Order
 
-1. Create `worlds/<world_id>/task.spec.json` for all five worlds.
-2. Create `worlds/<world_id>/provenance.json` with pins and license review state.
+1. Create or adapt `task.spec.json` for all 13 seed tasks.
+2. Create `provenance.json` or fixture references with pins and license review state.
 3. Generate small derived artifacts and `artifacts/manifest.json`.
-4. Implement deterministic parser/checker tools for FastQC, Qualimap, FCS
-   keywords, compensation matrix, mmCIF metadata, and single-cell QC table.
+4. Implement or wrap deterministic tools for FlowCyto, Molecule Biology,
+   FastQC, Qualimap, FCS keywords, compensation matrix, mmCIF metadata, and
+   single-cell QC table.
 5. Record tool observations as `tool_io_record.v1`.
-6. Pack one `replay_bundle.v1` per world.
-7. Write `verifier/verifier.spec.json` per world.
+6. Pack one `replay_bundle.v1` per task or compact task group.
+7. Write `verifier/verifier.spec.json` per task family and per task as needed.
 8. Run known-good and known-bad verifier checks.
 9. Run cheap baseline and save `eval.baseline.jsonl`.
-10. Create one teacher trajectory per world.
+10. Create one teacher trajectory per train task.
 11. Export `sft.seed.jsonl`.
 12. Generate `hf/README.md`, `reports/cost-report.md`, and `data/worlds.jsonl`.
 13. Validate all JSON/JSONL, schemas, replay bundles, and checksums.

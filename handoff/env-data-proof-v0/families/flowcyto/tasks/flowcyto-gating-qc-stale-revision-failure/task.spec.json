@@ -1,0 +1,61 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "flowcyto-gating-qc-stale-revision-failure",
+  "family": "flowcyto",
+  "split": "seed",
+  "task_family": "flowcyto-gating-qc-basic@2026-06.0",
+  "source_ref": {
+    "kind": "repo_task_spec",
+    "repo": "datalox-flow-cyto-mcp",
+    "task_path": "tasks/flowcyto-gating-qc-basic/flowcyto-gating-qc-stale-revision-failure.json",
+    "fixture_path": "testdata/fixtures/CFP_Well_A4.fcs",
+    "publication_status": "repo_fixture_needs_public_pin"
+  },
+  "task_type": "revision_recovery",
+  "expected_answer_class": "flowcyto_revision_recovery",
+  "expected_failure_mode": "submits_report_with_stale_expected_revision",
+  "prompt": "Open the FlowCyto FCS fixture, create a main-population gate, compute and validate QC evidence, then demonstrate that submitting a report with an old expected_revision is rejected. Recover by using the current workspace revision and submit the report with the same evidence refs.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/flowcyto-task-output.schema.json",
+  "allowed_tools": [
+    "open_fcs",
+    "get_plot_context",
+    "upsert_gate",
+    "compute_gate_stats",
+    "validate_gate_qc",
+    "get_workspace_revision",
+    "submit_report"
+  ],
+  "forbidden_tools": [
+    "shell.read_fcs_directly",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 7,
+  "expected_tool_path": [
+    "open_fcs",
+    "get_plot_context",
+    "upsert_gate",
+    "compute_gate_stats",
+    "validate_gate_qc",
+    "submit_report",
+    "get_workspace_revision",
+    "submit_report"
+  ],
+  "expected_error_or_recovery": {
+    "error_code": "stale_revision",
+    "recovery": "resubmit with the current workspace revision from validate_gate_qc.nextAction or get_workspace_revision"
+  },
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against flowcyto-task-output.schema.json",
+    "diagnosis.class is flowcyto_revision_recovery",
+    "evidence_ids include the stale_revision error and the recovered report evidence",
+    "next_action.type is repair_revision",
+    "family_output.validation_error_code is stale_revision",
+    "family_output.report_status is recovered_after_validation_error",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

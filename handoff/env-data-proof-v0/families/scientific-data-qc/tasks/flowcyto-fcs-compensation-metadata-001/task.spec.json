@@ -1,0 +1,51 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "flowcyto-fcs-compensation-metadata-001",
+  "family": "scientific-data-qc",
+  "split": "seed",
+  "task_family": "scientific-data-qc-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "source_url": "https://raw.githubusercontent.com/RGLab/flowCore/master/inst/extdata/0877408774.E07",
+    "world_path": "handoff/env-data-proof-v0/worlds/flowcyto-fcs-compensation-metadata-001",
+    "publication_status": "public_url_pinned"
+  },
+  "task_type": "fcs_metadata_qc",
+  "expected_answer_class": "flowcyto_metadata_decision",
+  "expected_failure_mode": "jumps_to_gating_or_plot_claims_without_channel_and_compensation_evidence",
+  "prompt": "Inspect the flow cytometry metadata fixture workspace and produce a structured metadata QC decision. Cite evidence ids for channels, marker labels, compensation matrix coverage, and next action. Do not use plots or vision judgment.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/scientific-data-task-output.schema.json",
+  "allowed_tools": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "flowcyto.parse_fcs_keywords",
+    "flowcyto.parse_compensation_matrix",
+    "qc_policy.evaluate",
+    "verifier.submit_answer"
+  ],
+  "forbidden_tools": [
+    "web.open",
+    "shell.live_download",
+    "vision.inspect_image"
+  ],
+  "minimum_replayed_observations": 5,
+  "expected_tool_path": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "flowcyto.parse_fcs_keywords",
+    "flowcyto.parse_compensation_matrix",
+    "qc_policy.evaluate"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against scientific-data-task-output.schema.json",
+    "diagnosis.class is flowcyto_metadata_decision",
+    "next_action.type is repair_metadata",
+    "computed checks cite replay evidence ids for FCS channels and compensation coverage",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

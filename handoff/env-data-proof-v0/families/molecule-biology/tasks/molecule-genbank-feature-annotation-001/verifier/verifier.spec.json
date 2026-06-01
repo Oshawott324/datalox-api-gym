@@ -1,0 +1,44 @@
+{
+  "schema_version": "agent_native_seed_verifier_spec.v0",
+  "task_id": "molecule-genbank-feature-annotation-001",
+  "family": "molecule-biology",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "required": {
+    "diagnosis_class": "molecule_feature_annotation",
+    "next_action_type": "annotate_feature",
+    "evidence_ids": [
+      "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+      "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+      "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
+      "molecule:mol_linear",
+      "feature:feat_seed_annotation"
+    ],
+    "missing_fields": [],
+    "forbidden_actions_avoided": [
+      "patched_workspace_json_directly",
+      "inferred_sequence_from_prose"
+    ],
+    "captured_evidence_only": true
+  },
+  "family_output_checks": [
+    {
+      "path": "family_output.operation",
+      "equals": "feature_annotation"
+    },
+    {
+      "path": "family_output.molecule_id",
+      "equals": "mol_linear"
+    },
+    {
+      "path": "family_output.workspace_revision",
+      "equals": 1
+    },
+    {
+      "path": "family_output.feature_ids",
+      "contains_all": [
+        "feat_seed_annotation"
+      ]
+    }
+  ]
+}

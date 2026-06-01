@@ -240,7 +240,7 @@
   -> sft_frame.v1 JSONL</pre>
     <p>
       This is the practical bridge to SFT-first training teams. Datalox does not
-      replace vLLM, SGLang, LiteLLM, verl, or a lab's internal trainer. It
+      replace vLLM, SGLang, LiteLLM, verl, or a lab's internal training stack. It
       provides the declared replay world, grounded transcript, and export row.
     </p>
     <pre><code>datalox run \
@@ -391,7 +391,7 @@ Training team owns:
   -> stable tool observations
   -> model-visible transcript
   -> exportable SFT/completion/preference rows
-  -> trainer-owned optimization</pre>
+  -> model-team-owned optimization</pre>
     <p class="muted">
       This is not a retreat from RL. It is the path that produces useful data
       before a team can afford large on-policy rollout loops.
@@ -446,9 +446,9 @@ Training team owns:
       <li><strong>Done:</strong> keep fixture replay, fixture sets, and spec metadata stable.</li>
       <li><strong>Done:</strong> add OpenAI-compatible/vLLM-style <code>datalox run</code> over replay worlds.</li>
       <li><strong>Done:</strong> add <code>datalox_run.v1</code> and <code>sft_frame.v1</code> export.</li>
-      <li><strong>Now:</strong> build <code>flowcyto-gating-qc-basic@2026-06.0</code> from <a href="./flowcyto-environment-pack-plan.html">the FlowCyto environment-pack plan</a>.</li>
-      <li><strong>Now:</strong> publish one serious fixture set in <code>datalox-replay-fixtures</code> with enough tasks to be worth an SFT smoke test.</li>
-      <li><strong>Next:</strong> add <code>completion_frame.v1</code> and a trainer-friendly JSONL view.</li>
+      <li><strong>Now:</strong> build <code>agent-native-science-seed@2026-06.0</code>: FlowCyto as the anchor family, Molecule Biology as the deterministic sequence-workflow family, and scientific-data QC as the cheap public scaling family.</li>
+      <li><strong>Now:</strong> publish one serious multi-family fixture set in <code>datalox-replay-fixtures</code> with enough variety to be worth an SFT smoke test.</li>
+      <li><strong>Next:</strong> add <code>completion_frame.v1</code> and a model-team-friendly JSONL view.</li>
       <li><strong>Next:</strong> add <code>preference_pair.v1</code> for success/recovery/failure comparisons.</li>
       <li><strong>Next:</strong> add <code>reward_record.v1</code> and reference reward schemes, not canonical reward design.</li>
       <li><strong>Next:</strong> build the bio environment family breadth track instead of one overbuilt simulator.</li>

@@ -42,9 +42,9 @@ become their domain runtime.
 Current proof target:
 
 ```text
-flowcyto-gating-qc-basic@2026-06.0
-  live flowcyto MCP environment
-  -> replay bundle / fixture set
+agent-native-science-seed@2026-06.0
+  FlowCyto + Molecule Biology + scientific-data QC
+  -> replay bundles / fixture set
   -> datalox run
   -> sft_frame.v1
 ```
@@ -188,10 +188,11 @@ Agent Replay should capture their agent-visible tool calls, observations,
 workspace revisions, validation outputs, and replay bundles. The domain repo
 should own the scientific runtime, UI, parsers, and algorithms.
 
-The first concrete Layer 2a pack should be
-`flowcyto-gating-qc-basic@2026-06.0`. It is not just a trajectory format:
-the live domain environment must expose stateful workspace mutations,
-structured tool errors, deterministic validators, and replayable observations.
+The first concrete Layer 2a pack should be the FlowCyto family inside
+`agent-native-science-seed@2026-06.0`, not the whole seed by itself. It is not
+just a trajectory format: the live domain environment must expose stateful
+workspace mutations, structured tool errors, deterministic validators, and
+replayable observations.
 
 ### Layer 2b: Generic Task Environment Construction
 

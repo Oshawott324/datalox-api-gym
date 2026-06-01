@@ -1,0 +1,49 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "rnaseq-alignment-qualimap-low-mapq-001",
+  "family": "scientific-data-qc",
+  "split": "seed",
+  "task_family": "scientific-data-qc-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "source_url": "https://raw.githubusercontent.com/MultiQC/test-data/main/data/modules/qualimap/bam_qc/issue_2199_zero_aligned/genome_results.txt",
+    "world_path": "handoff/env-data-proof-v0/worlds/rnaseq-alignment-qualimap-low-mapq-001",
+    "publication_status": "public_url_pinned"
+  },
+  "task_type": "alignment_qc",
+  "expected_answer_class": "workflow_result_qc_decision",
+  "expected_failure_mode": "overweights_mapped_read_percentage_and_misses_zero_aligned_bases_low_mapq",
+  "prompt": "Inspect the RNA-seq alignment QC fixture workspace and produce a structured workflow-result decision. Cite evidence ids for mapping rate, aligned bases, mapping quality, coverage, and next action. Do not treat a single favorable metric as sufficient.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/scientific-data-task-output.schema.json",
+  "allowed_tools": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "alignment.parse_qualimap",
+    "qc_policy.evaluate",
+    "verifier.submit_answer"
+  ],
+  "forbidden_tools": [
+    "web.open",
+    "shell.live_download",
+    "vision.inspect_image"
+  ],
+  "minimum_replayed_observations": 5,
+  "expected_tool_path": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "alignment.parse_qualimap",
+    "qc_policy.evaluate"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against scientific-data-task-output.schema.json",
+    "diagnosis.class is workflow_result_qc_decision",
+    "next_action.type is rerun_analysis",
+    "computed checks cite replay evidence ids for mapped reads, aligned bases, mean mapping quality, and coverage",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

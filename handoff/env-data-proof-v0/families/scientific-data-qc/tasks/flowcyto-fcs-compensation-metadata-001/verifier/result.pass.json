@@ -1,0 +1,244 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "flowcyto-fcs-compensation-metadata-001",
+  "family": "scientific-data-qc",
+  "answer_path": "handoff/env-data-proof-v0/families/scientific-data-qc/tasks/flowcyto-fcs-compensation-metadata-001/verifier/expected.pass.json",
+  "passed": true,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "flowcyto-fcs-compensation-metadata-001",
+      "actual": "flowcyto-fcs-compensation-metadata-001"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "scientific-data-qc",
+      "actual": "scientific-data-qc"
+    },
+    {
+      "name": "diagnosis.class",
+      "passed": true,
+      "message": "diagnosis.class matched",
+      "expected": "flowcyto_metadata_decision",
+      "actual": "flowcyto_metadata_decision"
+    },
+    {
+      "name": "next_action.type",
+      "passed": true,
+      "message": "next_action.type matched",
+      "expected": "repair_metadata",
+      "actual": "repair_metadata"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains source:flowcyto-fcs-compensation-metadata-001/primary",
+      "expected": "source:flowcyto-fcs-compensation-metadata-001/primary",
+      "actual": [
+        "source:flowcyto-fcs-compensation-metadata-001/primary",
+        "file:compmatrix_excerpt",
+        "metric:flowcyto.fcs_keywords",
+        "metric:flowcyto.compensation_matrix",
+        "metric:flowcyto.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains source:flowcyto-fcs-compensation-metadata-001/primary",
+      "expected": "source:flowcyto-fcs-compensation-metadata-001/primary"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains file:compmatrix_excerpt",
+      "expected": "file:compmatrix_excerpt",
+      "actual": [
+        "source:flowcyto-fcs-compensation-metadata-001/primary",
+        "file:compmatrix_excerpt",
+        "metric:flowcyto.fcs_keywords",
+        "metric:flowcyto.compensation_matrix",
+        "metric:flowcyto.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains file:compmatrix_excerpt",
+      "expected": "file:compmatrix_excerpt"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:flowcyto.fcs_keywords",
+      "expected": "metric:flowcyto.fcs_keywords",
+      "actual": [
+        "source:flowcyto-fcs-compensation-metadata-001/primary",
+        "file:compmatrix_excerpt",
+        "metric:flowcyto.fcs_keywords",
+        "metric:flowcyto.compensation_matrix",
+        "metric:flowcyto.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:flowcyto.fcs_keywords",
+      "expected": "metric:flowcyto.fcs_keywords"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:flowcyto.compensation_matrix",
+      "expected": "metric:flowcyto.compensation_matrix",
+      "actual": [
+        "source:flowcyto-fcs-compensation-metadata-001/primary",
+        "file:compmatrix_excerpt",
+        "metric:flowcyto.fcs_keywords",
+        "metric:flowcyto.compensation_matrix",
+        "metric:flowcyto.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:flowcyto.compensation_matrix",
+      "expected": "metric:flowcyto.compensation_matrix"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:flowcyto.policy_result",
+      "expected": "metric:flowcyto.policy_result",
+      "actual": [
+        "source:flowcyto-fcs-compensation-metadata-001/primary",
+        "file:compmatrix_excerpt",
+        "metric:flowcyto.fcs_keywords",
+        "metric:flowcyto.compensation_matrix",
+        "metric:flowcyto.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:flowcyto.policy_result",
+      "expected": "metric:flowcyto.policy_result"
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains called_live_service",
+      "expected": "called_live_service",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains used_uncited_evidence",
+      "expected": "used_uncited_evidence",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "family_output.diagnosis.class",
+      "passed": true,
+      "message": "family_output.diagnosis.class matched",
+      "expected": "flowcyto_metadata_decision",
+      "actual": "flowcyto_metadata_decision"
+    },
+    {
+      "name": "family_output.next_action.type",
+      "passed": true,
+      "message": "family_output.next_action.type matched",
+      "expected": "repair_metadata",
+      "actual": "repair_metadata"
+    },
+    {
+      "name": "family_output.affected_artifacts",
+      "passed": true,
+      "message": "family_output.affected_artifacts contains sample:sample_001",
+      "expected": "sample:sample_001",
+      "actual": [
+        "sample:sample_001",
+        "matrix:flowcyto_compensation"
+      ]
+    },
+    {
+      "name": "family_output.affected_artifacts",
+      "passed": true,
+      "message": "family_output.affected_artifacts contains matrix:flowcyto_compensation",
+      "expected": "matrix:flowcyto_compensation",
+      "actual": [
+        "sample:sample_001",
+        "matrix:flowcyto_compensation"
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check marker_label_coverage/warning",
+      "expected": {
+        "name": "marker_label_coverage",
+        "status": "warning",
+        "evidence_id": "metric:flowcyto.fcs_keywords"
+      },
+      "actual": [
+        {
+          "name": "marker_label_coverage",
+          "status": "warning",
+          "observed": "missing labels for FL1-H, FL2-H, FL3-H, FL4-H",
+          "evidence_id": "metric:flowcyto.fcs_keywords"
+        },
+        {
+          "name": "compensation_channel_coverage",
+          "status": "pass",
+          "observed": "height fluorescence channels covered by matrix",
+          "evidence_id": "metric:flowcyto.compensation_matrix"
+        }
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check compensation_channel_coverage/pass",
+      "expected": {
+        "name": "compensation_channel_coverage",
+        "status": "pass",
+        "evidence_id": "metric:flowcyto.compensation_matrix"
+      },
+      "actual": [
+        {
+          "name": "marker_label_coverage",
+          "status": "warning",
+          "observed": "missing labels for FL1-H, FL2-H, FL3-H, FL4-H",
+          "evidence_id": "metric:flowcyto.fcs_keywords"
+        },
+        {
+          "name": "compensation_channel_coverage",
+          "status": "pass",
+          "observed": "height fluorescence channels covered by matrix",
+          "evidence_id": "metric:flowcyto.compensation_matrix"
+        }
+      ]
+    }
+  ]
+}

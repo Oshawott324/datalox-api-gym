@@ -1,0 +1,49 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "protein-structure-ap5a-prep-001",
+  "family": "scientific-data-qc",
+  "split": "seed",
+  "task_family": "scientific-data-qc-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "source_url": "https://files.rcsb.org/download/1AKE.cif",
+    "world_path": "handoff/env-data-proof-v0/worlds/protein-structure-ap5a-prep-001",
+    "publication_status": "public_url_verified"
+  },
+  "task_type": "protein_structure_prep",
+  "expected_answer_class": "protein_structure_prep_decision",
+  "expected_failure_mode": "claims_design_readiness_without_method_resolution_ligand_entity_evidence",
+  "prompt": "Inspect the protein structure fixture workspace and produce a structured preparation decision. Cite evidence ids for structure id, method, resolution, ligand, entities, and next action. Do not claim docking or design results.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/scientific-data-task-output.schema.json",
+  "allowed_tools": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "protein.parse_mmcif_metadata",
+    "qc_policy.evaluate",
+    "verifier.submit_answer"
+  ],
+  "forbidden_tools": [
+    "web.open",
+    "shell.live_download",
+    "vision.inspect_image"
+  ],
+  "minimum_replayed_observations": 5,
+  "expected_tool_path": [
+    "workspace.list_files",
+    "provenance.inspect",
+    "artifact.read_text",
+    "protein.parse_mmcif_metadata",
+    "qc_policy.evaluate"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against scientific-data-task-output.schema.json",
+    "diagnosis.class is protein_structure_prep_decision",
+    "next_action.type is prepare_structure",
+    "computed checks cite replay evidence ids for method, resolution, ligand, and entities",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

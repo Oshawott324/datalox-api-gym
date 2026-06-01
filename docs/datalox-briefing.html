@@ -308,8 +308,8 @@
         </tr>
         <tr>
           <td>Exclusive lab relationships can look like services revenue instead of scalable infrastructure.</td>
-          <td>Keep fixture worlds portable: local replay, Hugging Face-compatible exports, and trainer-agnostic rows.</td>
-          <td>Do not design the system around one lab, one trainer, or one private stack.</td>
+          <td>Keep fixture worlds portable: local replay, Hugging Face-compatible exports, and training-stack-agnostic rows.</td>
+          <td>Do not design the system around one lab, one training stack, or one private stack.</td>
         </tr>
         <tr>
           <td>RLaaS may become the enterprise training layer as more companies post-train agents.</td>
@@ -327,7 +327,7 @@
       Positioning guardrail: Datalox should sound like "agent-native workflow
       environments with verified replay evidence," not "another RL environment
       platform" and not "managed RL training." If a prospect already has a
-      sandbox, trainer, and reward code, Datalox should still be useful because
+      sandbox, training stack, and reward code, Datalox should still be useful because
       it provides the domain workflow surface and versioned evidence layer those
       systems can consume. If Hugging Face or another open platform owns the
       distribution standard, Datalox should be the best system for producing,
@@ -349,7 +349,7 @@
   -> sft_frame.v1 JSONL</pre>
     <p>
       This is the practical bridge to SFT-first training teams. Datalox does not
-      replace vLLM, SGLang, LiteLLM, verl, or a lab's internal trainer. It
+      replace vLLM, SGLang, LiteLLM, verl, or a lab's internal training stack. It
       provides the declared replay world, grounded transcript, and export row.
     </p>
     <pre><code>datalox run \
@@ -500,7 +500,7 @@ Training team owns:
   -> stable tool observations
   -> model-visible transcript
   -> exportable SFT/completion/preference rows
-  -> trainer-owned optimization</pre>
+  -> model-team-owned optimization</pre>
     <p class="muted">
       This is not a retreat from RL. It is the path that produces useful data
       before a team can afford large on-policy rollout loops.
@@ -731,9 +731,9 @@ External whole-environment runtimes
       <li><strong>Done:</strong> keep fixture replay, fixture sets, and spec metadata stable.</li>
       <li><strong>Done:</strong> add OpenAI-compatible/vLLM-style <code>datalox run</code> over replay worlds.</li>
       <li><strong>Done:</strong> add <code>datalox_run.v1</code> and <code>sft_frame.v1</code> export.</li>
-      <li><strong>Now:</strong> build <code>flowcyto-gating-qc-basic@2026-06.0</code> from <a href="./flowcyto-environment-pack-plan.html">the FlowCyto environment-pack plan</a>.</li>
-      <li><strong>Now:</strong> publish one serious fixture set in <code>datalox-replay-fixtures</code> with enough tasks to be worth an SFT smoke test.</li>
-      <li><strong>Next:</strong> add <code>completion_frame.v1</code> and a trainer-friendly JSONL view.</li>
+      <li><strong>Now:</strong> build <code>agent-native-science-seed@2026-06.0</code>: FlowCyto as the anchor family, Molecule Biology as the deterministic sequence-workflow family, and scientific-data QC as the cheap public scaling family.</li>
+      <li><strong>Now:</strong> publish one serious multi-family fixture set in <code>datalox-replay-fixtures</code> with enough variety to be worth an SFT smoke test.</li>
+      <li><strong>Next:</strong> add <code>completion_frame.v1</code> and a model-team-friendly JSONL view.</li>
       <li><strong>Next:</strong> add <code>preference_pair.v1</code> for success/recovery/failure comparisons.</li>
       <li><strong>Next:</strong> add <code>reward_record.v1</code> and reference reward schemes, not canonical reward design.</li>
       <li><strong>Next:</strong> build the bio environment family breadth track instead of one overbuilt simulator.</li>

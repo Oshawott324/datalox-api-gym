@@ -1,11 +1,12 @@
 # Env Data Proof v0 Seed Task Selection
 
-Updated: 2026-05-29
+Updated: 2026-05-30
 
 Status: reserve workflow-debug track. This is no longer the primary v0 seed.
-Use `scientific-data-fixture-worlds.md` and
-`selected-scientific-data-worlds.csv` for the primary scientific-data fixture
-world plan.
+Use `selected-agent-native-seed-tasks.csv` for the primary multi-family seed
+and `scientific-data-fixture-worlds.md` /
+`selected-scientific-data-worlds.csv` for the scientific-data lane inside that
+seed.
 
 ## Decision
 

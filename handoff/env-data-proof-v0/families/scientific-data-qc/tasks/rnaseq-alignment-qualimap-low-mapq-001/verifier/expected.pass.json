@@ -1,0 +1,71 @@
+{
+  "task_id": "rnaseq-alignment-qualimap-low-mapq-001",
+  "family": "scientific-data-qc",
+  "diagnosis": {
+    "class": "workflow_result_qc_decision",
+    "summary": "Verifier-passing structured decision for rnaseq-alignment-qualimap-low-mapq-001."
+  },
+  "evidence_ids": [
+    "source:rnaseq-alignment-qualimap-low-mapq-001/primary",
+    "file:qualimap_excerpt",
+    "metric:qualimap.alignment_summary",
+    "metric:alignment.policy_result"
+  ],
+  "next_action": {
+    "type": "rerun_analysis",
+    "summary": "Rerun analysis because deterministic QC failed."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "called_live_service",
+    "used_uncited_evidence"
+  ],
+  "family_output": {
+    "diagnosis": {
+      "class": "workflow_result_qc_decision",
+      "summary": "Verifier-passing structured decision for rnaseq-alignment-qualimap-low-mapq-001.",
+      "severity": "fail"
+    },
+    "affected_artifacts": [
+      "report:qualimap_bamqc"
+    ],
+    "computed_checks": [
+      {
+        "name": "aligned_bases",
+        "status": "fail",
+        "observed": "0 bp",
+        "threshold": "> 0 bp",
+        "evidence_id": "metric:qualimap.alignment_summary"
+      },
+      {
+        "name": "mean_mapping_quality",
+        "status": "fail",
+        "observed": "0.1184",
+        "threshold": ">= 10",
+        "evidence_id": "metric:qualimap.alignment_summary"
+      },
+      {
+        "name": "mean_coverage",
+        "status": "fail",
+        "observed": "0.0024X",
+        "threshold": ">= 1X",
+        "evidence_id": "metric:qualimap.alignment_summary"
+      }
+    ],
+    "evidence_ids": [
+      "source:rnaseq-alignment-qualimap-low-mapq-001/primary",
+      "file:qualimap_excerpt",
+      "metric:qualimap.alignment_summary",
+      "metric:alignment.policy_result"
+    ],
+    "next_action": {
+      "type": "rerun_analysis",
+      "summary": "Rerun analysis because deterministic QC failed."
+    },
+    "missing_fields": [],
+    "forbidden_actions_avoided": [
+      "called_live_service",
+      "used_uncited_evidence"
+    ]
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "protein-structure-ap5a-prep-001",
+  "family": "scientific-data-qc",
+  "answer_path": "handoff/env-data-proof-v0/families/scientific-data-qc/tasks/protein-structure-ap5a-prep-001/verifier/expected.pass.json",
+  "passed": true,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "protein-structure-ap5a-prep-001",
+      "actual": "protein-structure-ap5a-prep-001"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "scientific-data-qc",
+      "actual": "scientific-data-qc"
+    },
+    {
+      "name": "diagnosis.class",
+      "passed": true,
+      "message": "diagnosis.class matched",
+      "expected": "protein_structure_prep_decision",
+      "actual": "protein_structure_prep_decision"
+    },
+    {
+      "name": "next_action.type",
+      "passed": true,
+      "message": "next_action.type matched",
+      "expected": "prepare_structure",
+      "actual": "prepare_structure"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains source:protein-structure-ap5a-prep-001/primary",
+      "expected": "source:protein-structure-ap5a-prep-001/primary",
+      "actual": [
+        "source:protein-structure-ap5a-prep-001/primary",
+        "file:1ake_mmcif_excerpt",
+        "metric:protein.1ake_mmcif_metadata",
+        "metric:protein.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains source:protein-structure-ap5a-prep-001/primary",
+      "expected": "source:protein-structure-ap5a-prep-001/primary"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains file:1ake_mmcif_excerpt",
+      "expected": "file:1ake_mmcif_excerpt",
+      "actual": [
+        "source:protein-structure-ap5a-prep-001/primary",
+        "file:1ake_mmcif_excerpt",
+        "metric:protein.1ake_mmcif_metadata",
+        "metric:protein.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains file:1ake_mmcif_excerpt",
+      "expected": "file:1ake_mmcif_excerpt"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:protein.1ake_mmcif_metadata",
+      "expected": "metric:protein.1ake_mmcif_metadata",
+      "actual": [
+        "source:protein-structure-ap5a-prep-001/primary",
+        "file:1ake_mmcif_excerpt",
+        "metric:protein.1ake_mmcif_metadata",
+        "metric:protein.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:protein.1ake_mmcif_metadata",
+      "expected": "metric:protein.1ake_mmcif_metadata"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:protein.policy_result",
+      "expected": "metric:protein.policy_result",
+      "actual": [
+        "source:protein-structure-ap5a-prep-001/primary",
+        "file:1ake_mmcif_excerpt",
+        "metric:protein.1ake_mmcif_metadata",
+        "metric:protein.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:protein.policy_result",
+      "expected": "metric:protein.policy_result"
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains called_live_service",
+      "expected": "called_live_service",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains used_uncited_evidence",
+      "expected": "used_uncited_evidence",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "family_output.diagnosis.class",
+      "passed": true,
+      "message": "family_output.diagnosis.class matched",
+      "expected": "protein_structure_prep_decision",
+      "actual": "protein_structure_prep_decision"
+    },
+    {
+      "name": "family_output.next_action.type",
+      "passed": true,
+      "message": "family_output.next_action.type matched",
+      "expected": "prepare_structure",
+      "actual": "prepare_structure"
+    },
+    {
+      "name": "family_output.affected_artifacts",
+      "passed": true,
+      "message": "family_output.affected_artifacts contains structure:1AKE",
+      "expected": "structure:1AKE",
+      "actual": [
+        "structure:1AKE",
+        "ligand:AP5"
+      ]
+    },
+    {
+      "name": "family_output.affected_artifacts",
+      "passed": true,
+      "message": "family_output.affected_artifacts contains ligand:AP5",
+      "expected": "ligand:AP5",
+      "actual": [
+        "structure:1AKE",
+        "ligand:AP5"
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check resolution/pass",
+      "expected": {
+        "name": "resolution",
+        "status": "pass",
+        "evidence_id": "metric:protein.1ake_mmcif_metadata"
+      },
+      "actual": [
+        {
+          "name": "resolution",
+          "status": "pass",
+          "observed": "2 A",
+          "threshold": "<= 2.5 A for v0 structure-prep seed",
+          "evidence_id": "metric:protein.1ake_mmcif_metadata"
+        },
+        {
+          "name": "ligand_present",
+          "status": "pass",
+          "observed": "AP5, HOH",
+          "evidence_id": "metric:protein.1ake_mmcif_metadata"
+        }
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check ligand_present/pass",
+      "expected": {
+        "name": "ligand_present",
+        "status": "pass",
+        "evidence_id": "metric:protein.1ake_mmcif_metadata"
+      },
+      "actual": [
+        {
+          "name": "resolution",
+          "status": "pass",
+          "observed": "2 A",
+          "threshold": "<= 2.5 A for v0 structure-prep seed",
+          "evidence_id": "metric:protein.1ake_mmcif_metadata"
+        },
+        {
+          "name": "ligand_present",
+          "status": "pass",
+          "observed": "AP5, HOH",
+          "evidence_id": "metric:protein.1ake_mmcif_metadata"
+        }
+      ]
+    }
+  ]
+}

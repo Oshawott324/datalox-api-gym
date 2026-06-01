@@ -44,11 +44,13 @@ their agent-visible tool I/O instead of becoming their domain runtime. See
 Current concrete proof target:
 
 ```text
-flowcyto-gating-qc-basic@2026-06.0
-  live flowcyto MCP -> replay bundle -> fixture set -> datalox run -> sft_frame.v1
+agent-native-science-seed@2026-06.0
+  FlowCyto + Molecule Biology + scientific-data QC
+  -> replay bundles -> fixture set -> datalox run -> sft_frame.v1
 ```
 
-See [docs/flowcyto-environment-pack-plan.html](docs/flowcyto-environment-pack-plan.html).
+See [docs/budget-agent-rl-proof-demo-guide.html](docs/budget-agent-rl-proof-demo-guide.html)
+and [docs/flowcyto-environment-pack-plan.html](docs/flowcyto-environment-pack-plan.html).
 
 Do not keep note/skill promotion as a second loop in this repo.
 

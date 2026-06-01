@@ -20,9 +20,9 @@ The filesystem-backed orchestration protocol lives in [task-orchestration.md](./
 Short version:
 
 - Datalox Agent Replay is the engine for versioned API/MCP snapshot environments.
-- The concrete near-term proof is `flowcyto-gating-qc-basic@2026-06.0`: a
-  versioned scientific environment pack backed by live domain tools, validators,
-  replay bundles, and SFT export.
+- The concrete near-term proof is `agent-native-science-seed@2026-06.0`: a
+  multi-family scientific workflow fixture set with FlowCyto, Molecule Biology,
+  scientific-data QC, validators, replay bundles, and SFT export.
 - `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` records are the exact replay primitive.
 - `mcp_tool_catalog.v1` artifacts preserve MCP proxy `tools/list` metadata.

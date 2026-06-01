@@ -1,0 +1,46 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "molecule-fasta-import-context-001",
+  "family": "molecule-biology",
+  "split": "seed",
+  "task_family": "molecule-biology-basic@2026-06.0",
+  "source_ref": {
+    "kind": "repo_fixture",
+    "repo": "datalox-molecule-biology",
+    "fixture_path": "fixtures/fasta/single.fa",
+    "publication_status": "repo_fixture_needs_public_pin"
+  },
+  "task_type": "sequence_context",
+  "expected_answer_class": "molecule_context_decision",
+  "expected_failure_mode": "infers_sequence_facts_without_get_sequence_context",
+  "prompt": "Import the FASTA fixture into a molecule workspace, call get_sequence_context, and report the molecule id, length, alphabet/source format, revision, and sequence evidence refs. Do not infer sequence facts from prose or fixture filenames.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "allowed_tools": [
+    "open_sequence",
+    "get_sequence_context",
+    "validate_workspace"
+  ],
+  "forbidden_tools": [
+    "shell.parse_sequence_file",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 3,
+  "expected_tool_path": [
+    "open_sequence",
+    "get_sequence_context",
+    "validate_workspace"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against molecule-biology-task-output.schema.json",
+    "diagnosis.class is molecule_context_decision",
+    "next_action.type is validate_workspace",
+    "family_output.operation is sequence_context",
+    "tool_result_refs include get_sequence_context evidence",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

@@ -255,7 +255,7 @@
     </p>
     <div class="callout">
       Datalox is not trying to win by inventing a better SFT, DPO, or RL
-      trainer. Training teams already have those tools. Datalox wins if it
+      training stack. Model teams already have those tools. Datalox wins if it
       becomes the standard way to turn messy real workflows into agent-native
       environments whose outputs are reusable, replayable, verifier-backed data
       capacity: fixture worlds, exact tool-I/O evidence, deterministic
@@ -268,7 +268,7 @@
       Agent Replay captures what an agent actually saw and did, freezes it into
       a replayable task world, checks outcomes with deterministic verifiers,
       and exports grounded rows for eval or training. It is not the live
-      sandbox, not the RL trainer, not the reward research lab, and not a
+      sandbox, not the RL optimization stack, not the reward research lab, and not a
       generic marketplace for every environment.
     </div>
     <table>
@@ -282,7 +282,7 @@
         </tr>
         <tr>
           <td>What is Datalox not?</td>
-          <td>Not a post-training platform, not a generic trainer, not a claim that Datalox owns RL algorithms, and not full re-execution of every complex live environment.</td>
+          <td>Not a post-training platform, not a generic training stack, not a claim that Datalox owns RL algorithms, and not full re-execution of every complex live environment.</td>
         </tr>
         <tr>
           <td>Why run SFT at all?</td>
@@ -441,12 +441,13 @@
   <section class="section">
     <h2>Recommended Scope</h2>
     <p>
-      Do not start the traction demo with full FlowCyto gating or protein design.
-      Those are the right serious follow-ups, but they add domain expertise,
-      stateful scientific tools, possible plot/vision judgement, and higher
-      verifier cost before the environment-data path itself is proven. The first
-      public demo should be scientific-data first, text/table based,
-      deterministic, and cheap enough to rerun several times.
+      Do not make the traction demo a FlowCyto-only benchmark. FlowCyto is the
+      strongest anchor vertical because it looks like a traditional scientific
+      workflow reconstructed for agents, but a single-domain task set will look
+      narrow. The first public package should be a multi-family scientific
+      workflow fixture set: FlowCyto for the visual/stateful anchor, Molecule
+      Biology for deterministic sequence-tool generalization, and scientific
+      data QC for cheap public scaling.
     </p>
     <p>
       Also do not treat GitHub issue triage as the main public proof. It is a
@@ -461,49 +462,47 @@
       </thead>
       <tbody>
         <tr>
-          <td><code>scientific-data-qc-basic@2026-06.0</code></td>
+          <td><code>agent-native-science-seed@2026-06.0</code></td>
           <td>First public environment-to-training-data demo</td>
+          <td>Multi-family seed: 4-6 FlowCyto tasks, 4-6 Molecule Biology tasks, and 4-8 scientific-data QC tasks. This avoids the "all FlowCyto" narrowness while staying scientific and verifier-backed.</td>
+        </tr>
+        <tr>
+          <td><code>flowcyto-gating-qc-basic@2026-06.0</code></td>
+          <td>Anchor family inside the first package</td>
+          <td>Use state/tool/evidence tasks first: gate stats, QC evidence, report validation, stale-revision recovery, and metadata/compensation audit. Avoid judge-model vision scoring in v0.</td>
+        </tr>
+        <tr>
+          <td><code>molecule-biology-basic@2026-06.0</code></td>
+          <td>Second family inside the first package</td>
+          <td>Shows the same pattern on sequence workspaces: FASTA/GenBank import, feature/primer edits, restriction-site checks, digest/PCR simulation, and export validation.</td>
+        </tr>
+        <tr>
+          <td><code>scientific-data-qc-basic@2026-06.0</code></td>
+          <td>Cheap scaling family inside the first package</td>
           <td>Real FASTQ QC, single-cell QC, FCS metadata, protein structure, and alignment QC artifacts are public, text/table-first, cheap to replay, and clearly scientific rather than generic coding tasks.</td>
         </tr>
         <tr>
           <td><code>workflow-debug-basic@2026-06.0</code></td>
           <td>Reserve / infrastructure smoke</td>
-          <td>Snakemake, Nextflow, Bioconda, and nf-core issue-derived work can test replay/verifier plumbing, but should not be the main Datalox product proof.</td>
-        </tr>
-        <tr>
-          <td><code>support-triage-basic@2026-06.0</code></td>
-          <td>Pipeline smoke only</td>
-          <td>Useful for exercising fixture composition, exports, and reward schemas. Too synthetic and too broad for the public traction claim.</td>
-        </tr>
-        <tr>
-          <td><code>flowcyto-gating-qc-basic@2026-06.0</code></td>
-          <td>Second serious proof</td>
-          <td>Best product story for scientific environments, but too risky for the first proof because success may depend on domain reasoning and visual/plot interpretation.</td>
-        </tr>
-        <tr>
-          <td><code>bio-agent-basic@2026-06.0</code></td>
-          <td>Third breadth proof</td>
-          <td>Shows environment-family breadth after the text-first export proof and FlowCyto proof both work.</td>
+          <td>Snakemake, Nextflow, Bioconda, and nf-core issue-derived work can test replay/verifier plumbing, but issue-only tasks should not dominate the public Datalox proof.</td>
         </tr>
       </tbody>
     </table>
     <div class="callout warning">
-      First demo selection rule: no vision dependency, no specialist scientific
-      interpretation beyond structured reports/metadata, no long-horizon UI
-      loop, and no verifier that needs a judge model. The first win should prove
-      that Datalox can package scientific data artifacts into replayable,
-      verifier-backed training/eval rows.
+      First demo selection rule: multiple scientific workflow families, no
+      judge-model verifier, no unbounded live source calls, and no family above
+      40% of the seed. FlowCyto can appear in v0, but only through structured
+      tool/state/evidence tasks, not open-ended image interpretation.
     </div>
     <p>
-      The first task family should look like:
+      The first package should look like:
     </p>
-    <pre>open scientific fixture workspace
-  -> inspect public artifact provenance
-  -> parse report, metadata, matrix, mmCIF, or QC table
-  -> compute or replay deterministic checks
-  -> choose next action: accept, filter, rerun, repair metadata, or prepare structure
-  -> cite exact evidence
-  -> emit structured scientific-data decision</pre>
+    <pre>agent-native-science-seed
+  -> FlowCyto: open FCS workspace, gate or inspect metadata, compute evidence, submit/repair report
+  -> Molecule Biology: open sequence workspace, inspect context, edit/validate features or primers, simulate deterministic tools
+  -> Scientific-data QC: parse public reports, matrices, mmCIF, or QC tables, choose next action
+  -> all families cite replay evidence ids
+  -> all families emit a shared output envelope plus family-specific payload</pre>
   </section>
 
   <section class="section">
@@ -524,7 +523,7 @@
           <td>Terminal-Bench 2.0</td>
           <td>Hard terminal workflows with human solutions and test-based verification; frontier agents reported under 65%.</td>
           <td>Use as the strongest prior for CI/log/package/debug tasks because verification can be deterministic and cheap.</td>
-          <td>Primary source family.</td>
+          <td>Collection prior, not the primary task family.</td>
         </tr>
         <tr>
           <td>TerminalWorld</td>
@@ -693,55 +692,57 @@
   </section>
 
   <section class="section">
-    <h2>Specific Real Task Sources</h2>
+    <h2>Specific Seed Tasks</h2>
     <p>
       These are concrete source pools for
-      <code>scientific-data-qc-basic</code>. Each task should start from a real
-      scientific artifact, then be captured into replay bundles. The fixture
-      should not contain invented measurements.
+      <code>agent-native-science-seed</code>. Each task should start from a real
+      scientific artifact or an existing domain MCP fixture, then be captured
+      into replay bundles. The fixture should not contain invented
+      measurements. FlowCyto is the anchor family, not the whole dataset.
     </p>
     <table>
       <thead>
-        <tr><th>Task</th><th>Real Source Artifact</th><th>Agent Gets Stuck On</th><th>Verifier Checks</th></tr>
+        <tr><th>Family</th><th>Seed Tasks</th><th>Agent Gets Stuck On</th><th>Verifier Checks</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td>FASTQ QC decision</td>
-          <td>Public FastQC report from MultiQC test data.</td>
-          <td>Anchoring on a single pass/warn module and missing multiple failed QC modules.</td>
-          <td>Cites failed modules, basic statistics, affected sample id, and next action.</td>
+          <td>FlowCyto gating/QC/report</td>
+          <td><code>flowcyto-gating-qc-success</code>, <code>flowcyto-gating-qc-stale-revision-failure</code>, <code>flowcyto-gating-qc-report-validation-failure</code>, metadata/compensation audit.</td>
+          <td>Stopping after opening the FCS, skipping plot context, submitting reports without evidence refs, using stale revisions, or making plot claims without stats/QC evidence.</td>
+          <td>Expected tool path, workspace revision, gate id, stats evidence ref, QC evidence ref, report fields, and explicit recovery from known validation errors.</td>
         </tr>
         <tr>
-          <td>Single-cell QC decision</td>
+          <td>Molecule Biology sequence workflow</td>
+          <td>FASTA import/context, GenBank feature annotation, primer insertion validation, restriction-site/digest check, PCR simulation, GenBank export validation.</td>
+          <td>Inferring sequence facts from prose, patching <code>molecule.workspace.json</code> directly, missing <code>expectedRevision</code>, or claiming digest/PCR results without deterministic tool evidence.</td>
+          <td>Workspace revision, molecule id, feature/primer ids, deterministic biology-tool result, exported file validation, and no direct workspace patching.</td>
+        </tr>
+        <tr>
+          <td>FASTQ / RNA-seq QC</td>
+          <td>FastQC report decision and Qualimap BamQC low-MAPQ decision from MultiQC public test data.</td>
+          <td>Anchoring on one attractive metric, missing failed modules, or calling a bad alignment clean because mapped-read percentage looks high.</td>
+          <td>Failed modules, basic statistics, mapped reads, aligned bases, mapping quality, coverage, and next action.</td>
+        </tr>
+        <tr>
+          <td>Single-cell QC</td>
           <td>10x PBMC3k matrix plus locked Scanpy-derived QC table.</td>
           <td>Using generic cell-count language without citing actual total-count or gene-count evidence.</td>
-          <td>Cites sample/cell ids, thresholds, computed metrics, and filter/keep decision.</td>
-        </tr>
-        <tr>
-          <td>Flow cytometry metadata QC</td>
-          <td>Public flowCore FCS file and compensation matrix.</td>
-          <td>Jumping to gating/plot conclusions without checking channels, marker labels, and compensation coverage.</td>
-          <td>Cites FCS channel names, matrix channels, missing marker labels, and metadata repair action.</td>
+          <td>Sample/cell ids, thresholds, computed metrics, and filter/keep decision.</td>
         </tr>
         <tr>
           <td>Protein structure prep QC</td>
           <td>Public RCSB mmCIF and entry metadata.</td>
           <td>Claiming docking/design readiness without checking experimental method, resolution, ligand, and entity metadata.</td>
-          <td>Cites structure id, method, resolution, ligand id, entity counts, and prep action.</td>
-        </tr>
-        <tr>
-          <td>RNA-seq alignment QC decision</td>
-          <td>Public Qualimap BamQC report from MultiQC test data.</td>
-          <td>Overweighting high mapped-read percentage while missing zero aligned bases, low MAPQ, and negligible coverage.</td>
-          <td>Cites mapped reads, aligned bases, mean mapping quality, coverage, and rerun-analysis action.</td>
+          <td>Structure id, method, resolution, ligand id, entity counts, and prep action.</td>
         </tr>
       </tbody>
     </table>
     <div class="callout warning">
       The first public set should include actual links or provenance ids for
-      every source artifact. If the artifact cannot be shared, keep it for a
-      private design-partner pilot. GitHub issue tasks should be reserve
-      workflow-debug tasks, not the primary public demo.
+      every source artifact or repo fixture. If the artifact cannot be shared,
+      keep it for a private design-partner pilot. GitHub issue tasks should be
+      reserve workflow-debug tasks, not the primary public demo. A seed package
+      with only FlowCyto tasks fails the variety bar.
     </div>
   </section>
 
@@ -753,8 +754,10 @@
       repaired trajectories on the training split, after those trajectories pass
       the deterministic verifier.
     </p>
-    <pre>paper-backed task family
-  -> real source artifact: FastQC report, 10x matrix, FCS metadata, mmCIF, Qualimap report
+    <pre>paper-backed multi-family task set
+  -> real source artifact or domain MCP fixture:
+     FlowCyto FCS workspace, Molecule Biology FASTA/GenBank workspace,
+     FastQC report, 10x matrix, mmCIF, Qualimap report
   -> task.spec.json + replay_bundle.v1 + verifier.spec.json
   -> train/dev/test split by task id
   -> solve only train tasks with human, teacher model, or repaired agent trace
@@ -793,9 +796,10 @@
       SFT.
     </p>
     <div class="callout">
-      First practical batch: pick 30 train tasks, write or teacher-generate 1
-      verified success trace per task, export those traces to SFT, then use
-      failed baseline traces as negative examples for preference and RL.
+      First practical batch: pick 30 train tasks across at least three families,
+      write or teacher-generate 1 verified success trace per task, export those
+      traces to SFT, then use failed baseline traces as negative examples for
+      preference and RL. No family should dominate the train split.
     </div>
   </section>
 
@@ -823,7 +827,7 @@
         </tr>
         <tr>
           <td>10-20 real seed tasks with provenance links</td>
-          <td>He needs real task evidence, not invented examples.</td>
+          <td>He needs real task evidence, not invented examples, and enough family variety to avoid overfitting to FlowCyto-only behavior.</td>
           <td>Datalox</td>
         </tr>
         <tr>
@@ -858,6 +862,7 @@
     </p>
     <pre>handoff/env-data-proof-v0/
   schema/task-output.schema.json
+  selected-agent-native-seed-tasks.csv
   task-candidates.csv
   dataset-scale-plan.md
   cost-estimate.md
@@ -899,7 +904,7 @@
   <section class="section">
     <h2>Concrete Build Steps</h2>
     <p>
-      Build the handoff in this order. Do not ask the training collaborator to
+      Build the handoff in this order. Do not ask the post-training collaborator to
       start until Step 6 exists and Step 7 can be run by another person.
     </p>
     <table>
@@ -909,33 +914,33 @@
       <tbody>
         <tr>
           <td>1. Freeze task/output schema</td>
-          <td>Pick one task family, one prompt contract, and one JSON output contract. For the first proof, prefer scientific-data QC with fields for diagnosis, affected artifacts, computed checks, evidence ids, next action, missing fields, and forbidden actions avoided.</td>
-          <td><code>handoff/env-data-proof-v0/schema/scientific-data-task-output.schema.json</code></td>
-          <td>A sample answer can be validated without reading prose instructions.</td>
+          <td>Freeze one shared output envelope plus family-specific payload schemas. Shared fields should include task id, family, diagnosis, evidence ids, next action, missing fields, forbidden actions avoided, and family output.</td>
+          <td><code>handoff/env-data-proof-v0/schema/task-output.schema.json</code>, <code>flowcyto-task-output.schema.json</code>, <code>molecule-biology-task-output.schema.json</code>, and <code>scientific-data-task-output.schema.json</code></td>
+          <td>Sample answers from FlowCyto, Molecule Biology, and scientific-data QC can all be validated without reading prose instructions.</td>
         </tr>
         <tr>
-          <td>2. Collect 5 real fixture worlds</td>
-          <td>Create one row per source artifact. Use public scientific data artifacts with parser/tool observations. Reject issue-only tasks that do not match the Datalox environment story.</td>
-          <td><code>handoff/env-data-proof-v0/selected-scientific-data-worlds.csv</code></td>
-          <td>Each row has task id, source URL, task type, expected answer class, expected failure mode, public/private flag, include/reject decision, and HF publication note.</td>
+          <td>2. Collect 12-15 real seed tasks</td>
+          <td>Create one row per task across at least three families: FlowCyto, Molecule Biology, and scientific-data QC. Reject issue-only tasks unless they include replay-rich files, logs, command outputs, or tool observations.</td>
+          <td><code>handoff/env-data-proof-v0/selected-agent-native-seed-tasks.csv</code></td>
+          <td>Each row has task id, family, source or fixture path, task type, expected answer class, expected failure mode, public/private flag, include/reject decision, and HF publication note. No family exceeds 40% of the seed.</td>
         </tr>
         <tr>
           <td>3. Create one task spec per task</td>
-          <td>For each included world, create a self-contained task spec with prompt, allowed tools, forbidden tools, output schema, minimum observations, and success criteria.</td>
-          <td><code>worlds/&lt;world_id&gt;/task.spec.json</code></td>
+          <td>For each included task, create a self-contained task spec with prompt, allowed tools, forbidden tools, output schema, minimum observations, family payload schema, and success criteria.</td>
+          <td><code>families/&lt;family&gt;/tasks/&lt;task_id&gt;/task.spec.json</code></td>
           <td>A new agent can understand the task contract without reading the source-selection prose.</td>
         </tr>
         <tr>
           <td>4. Build derived artifacts and tool observations</td>
-          <td>Generate small published artifacts, parser outputs, policy outputs, tool catalogs, and deterministic tool observations from real public sources. Do not publish full raw source files before license review.</td>
+          <td>Generate small published artifacts, parser outputs, policy outputs, domain MCP tool catalogs, and deterministic tool observations from real public sources or repo fixtures. Do not publish full raw source files before license review.</td>
           <td><code>artifacts/manifest.json</code>, <code>tools/tool-catalog.json</code>, and <code>tools/tool-observations.jsonl</code></td>
-          <td>Every world has at least five deterministic agent-visible observations and matching artifact checksums.</td>
+          <td>Every task has deterministic agent-visible observations and matching artifact checksums. FlowCyto and Molecule Biology observations come from their domain tool paths, not hand-written prose.</td>
         </tr>
         <tr>
           <td>5. Capture replay evidence</td>
-          <td>Convert deterministic tool observations into <code>tool_io_record.v1</code> records and one <code>replay_bundle.v1</code> per world. Replay means exact tool-observation lookup by request hash and sequence index, not guaranteed identical model trajectory generation.</td>
-          <td><code>worlds/&lt;world_id&gt;/replay_bundle/</code></td>
-          <td>Recorded requests replay exact observations, unseen requests return replay misses, checksums match, and no live source fallback is possible.</td>
+          <td>Package deterministic tool observations as Datalox-internal replay evidence and export ordinary model-team rows. Replay means exact tool-observation lookup by request hash and sequence index, not guaranteed identical model trajectory generation.</td>
+          <td><code>families/&lt;family&gt;/tasks/&lt;task_id&gt;/replay_bundle/</code> plus <code>exports/eval.seed.jsonl</code></td>
+          <td>Model teams consume JSONL and commands; Datalox keeps replay records as audit/provenance evidence. Recorded requests replay exact observations, unseen requests return replay misses, checksums match, and no live source fallback is possible.</td>
         </tr>
         <tr>
           <td>6. Implement deterministic verifier</td>
@@ -945,9 +950,9 @@
         </tr>
         <tr>
           <td>7. Run cheap baseline and keep real failures</td>
-          <td>Run a small baseline model on the locked task set. Keep tasks where the model actually fails by missing evidence, choosing the wrong action, hallucinating state, or violating the tool/replay boundary.</td>
-          <td><code>baseline.test.jsonl</code> and <code>baseline.failure-report.md</code></td>
-          <td>At least 5 scientific-data worlds have verifier output and concrete baseline failure examples.</td>
+          <td>Run a small baseline model against <code>exports/eval.seed.jsonl</code>. Keep tasks where the model actually fails by missing evidence, choosing the wrong action, hallucinating state, or violating the tool/replay boundary.</td>
+          <td><code>exports/eval.baseline.jsonl</code> and <code>baseline.failure-report.md</code></td>
+          <td>At least 10 seed tasks across at least three families have verifier output and concrete baseline failure examples.</td>
         </tr>
         <tr>
           <td>8. Create verifier-passing train trajectories</td>
@@ -970,10 +975,12 @@
       </tbody>
     </table>
     <pre>minimum handoff acceptance:
-  - 5 included scientific-data worlds with provenance
-  - 5 replay bundles with replay-miss validation
-  - 5 baseline failures with verifier reasons
-  - 5+ verifier-passing SFT rows from train worlds only
+  - 12-15 included seed tasks with provenance or repo fixture refs
+  - at least 3 task families: FlowCyto, Molecule Biology, scientific-data QC
+  - no family above 40% of the seed
+  - replay bundles with replay-miss validation
+  - 10+ baseline failures with verifier reasons
+  - 10+ verifier-passing SFT rows from train tasks only
   - 1 locked dev/test split
   - 1 reproducible eval command
   - 0 judge-model verifier dependencies</pre>
@@ -1127,13 +1134,14 @@ reward evidence</pre>
   <section class="section">
     <h2>Concrete Commands</h2>
     <p>
-      These are target demo commands. Some export and trainer commands may need
+      These are target demo commands. Some export and training-stack commands may need
       thin scripts before the demo can be run end to end. The public target is
-      <code>scientific-data-qc-basic</code>; the current synthetic
-      <code>support-triage-basic</code> fixture is only a pipeline smoke target.
+      <code>agent-native-science-seed</code>, a multi-family fixture set. The
+      current synthetic <code>support-triage-basic</code> fixture is only a
+      pipeline smoke target.
     </p>
     <h3>1. Install The Fixture Set</h3>
-    <pre><code>datalox fixture-sets install scientific-data-qc-basic@2026-06.0 \
+    <pre><code>datalox fixture-sets install agent-native-science-seed@2026-06.0 \
   --catalog ../datalox-replay-fixtures/catalog.json</code></pre>
 
     <h3>2. Serve The Baseline Model</h3>
@@ -1144,7 +1152,7 @@ reward evidence</pre>
 
     <h3>3. Run The Baseline Eval</h3>
     <pre><code>datalox eval \
-  --fixture-set scientific-data-qc-basic@2026-06.0 \
+  --fixture-set agent-native-science-seed@2026-06.0 \
   --catalog ../datalox-replay-fixtures/catalog.json \
   --model Qwen/Qwen2.5-1.5B-Instruct \
   --base-url http://127.0.0.1:8000/v1 \
@@ -1179,7 +1187,7 @@ reward evidence</pre>
   --port 8001
 
 datalox eval \
-  --fixture-set scientific-data-qc-basic@2026-06.0 \
+  --fixture-set agent-native-science-seed@2026-06.0 \
   --catalog ../datalox-replay-fixtures/catalog.json \
   --model datalox-env-sft-lora \
   --base-url http://127.0.0.1:8001/v1 \
@@ -1202,7 +1210,7 @@ datalox eval \
         <tr>
           <td>Real task sourcing and baseline filter</td>
           <td>Public credibility</td>
-          <td>Collect source artifacts from recent public CI, terminal, issue, and support tasks. Capture them as replay bundles and admit only cases with a baseline failure.</td>
+          <td>Collect FlowCyto, Molecule Biology, and scientific-data QC tasks from domain MCP fixtures and public scientific artifacts. Capture them as replay bundles and admit only cases with a baseline failure. Keep workflow-debug issue tasks as reserve.</td>
         </tr>
         <tr>
           <td><code>completion_frame.v1</code></td>
@@ -1248,10 +1256,11 @@ datalox eval \
       H100 PCIe at $3.29/hr. See the source links in the final section.
     </p>
     <p>
-      The text/table-first scientific-data QC path is intentionally cheaper than
-      full FlowCyto gating or protein design: it can use small text models,
-      deterministic parser/JSON/table validators, and short rollouts. Full
-      FlowCyto and protein-design loops should get their own budgets after this
+      The first multi-family seed is still cheaper than full open-ended FlowCyto
+      vision or protein design. FlowCyto v0 is constrained to structured
+      tool/state/evidence paths; Molecule Biology is deterministic sequence
+      tooling; scientific-data QC is text/table first. Full vision-heavy
+      cytometry and protein-design loops should get separate budgets after this
       loop already works.
     </p>
     <table>
@@ -1279,7 +1288,7 @@ datalox eval \
         </tr>
         <tr>
           <td>$5,000 design-partner pilot</td>
-          <td>200+ train tasks, multiple model sizes, more seeds, better ablations, or FlowCyto follow-up</td>
+          <td>200+ train tasks, multiple model sizes, more seeds, better ablations, vision-heavy FlowCyto, or protein-design follow-up</td>
           <td>Multi-day A100/H100 budget</td>
           <td>$2,000-$5,000</td>
         </tr>
@@ -1428,13 +1437,13 @@ datalox eval \
       <tbody>
         <tr>
           <td>Now</td>
-          <td>Create <code>handoff/env-data-proof-v0/</code>: frozen schema, 10-20 domain-relevant candidate tasks, dataset scale plan, cost estimate, verifier spec, baseline command, and the exact question for the training collaborator.</td>
+          <td>Create <code>handoff/env-data-proof-v0/</code>: frozen multi-family schema, 12-15 domain-relevant seed tasks, dataset scale plan, cost estimate, verifier spec, baseline command, and the exact question for the post-training collaborator.</td>
           <td>He can inspect the package and say whether the task/data contract is trainable before spending GPU time. No reliable lift is expected yet.</td>
         </tr>
         <tr>
           <td>Days 1-3</td>
-          <td>Choose the text-first fixture world, collect paper-backed domain-relevant source artifacts, freeze task schema, define reward vector, create first train/dev/test split, and run the cheap baseline.</td>
-          <td>At least 10 scientific workflow/bioinformatics/tool tasks have replay evidence, verifier output, and at least one observed baseline failure mode.</td>
+          <td>Freeze the multi-family seed, collect paper-backed or repo-fixture source artifacts, define family payload schemas and reward vector, create first train/dev/test split, and run the cheap baseline.</td>
+          <td>At least 10 scientific workflow tasks across FlowCyto, Molecule Biology, and scientific-data QC have replay evidence, verifier output, and at least one observed baseline failure mode.</td>
         </tr>
         <tr>
           <td>Days 4-7</td>
@@ -1463,8 +1472,8 @@ datalox eval \
         </tr>
         <tr>
           <td>After demo</td>
-          <td>Port the proven loop to FlowCyto with a separate vision/domain budget.</td>
-          <td>FlowCyto is framed as the serious scientific follow-up, not the first environment-data claim.</td>
+          <td>Expand the strongest family based on observed failures: full FlowCyto visual gating, larger Molecule Biology design workflows, or private scientific app/API traces.</td>
+          <td>The follow-up is chosen by evidence from baseline failures and user interest, not by assuming FlowCyto alone is the whole wedge.</td>
         </tr>
       </tbody>
     </table>

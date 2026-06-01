@@ -36,10 +36,13 @@ replay, verifier evidence, and training/eval exports. Sibling domain repos may
 own live scientific environments that reconstruct traditional applications or
 workflows as agent-native tools, structured state, validators, and constrained
 UI/app surfaces. The current concrete proof target is
-`flowcyto-gating-qc-basic@2026-06.0`: a versioned flow cytometry environment
-pack that combines real domain tools, workspace state, validators, replay
-bundles, and SFT export. See
-[flowcyto-environment-pack-plan.html](./flowcyto-environment-pack-plan.html).
+`agent-native-science-seed@2026-06.0`: a multi-family scientific workflow
+fixture set with FlowCyto as the anchor vertical, Molecule Biology as the
+deterministic sequence-workflow generalization, and scientific-data QC as the
+cheap public scaling lane. FlowCyto remains a key family, but it should not be
+the entire public seed. See
+[budget-agent-rl-proof-demo-guide.html](./budget-agent-rl-proof-demo-guide.html)
+and [flowcyto-environment-pack-plan.html](./flowcyto-environment-pack-plan.html).
 
 Primary consumption loop:
 

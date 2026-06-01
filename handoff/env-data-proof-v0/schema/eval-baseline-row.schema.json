@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/eval-baseline-row.schema.json",
+  "title": "Datalox Env Data Proof Baseline Eval Row",
+  "description": "One baseline run output row with parse and verifier result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "family",
+    "split",
+    "mode",
+    "model",
+    "answer_text",
+    "parsed_answer",
+    "parse_error",
+    "verifier_result"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agent_native_seed_baseline_row.v0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "flowcyto",
+        "molecule-biology",
+        "scientific-data-qc"
+      ]
+    },
+    "split": {
+      "const": "seed"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "openai-compatible",
+        "verifier-smoke"
+      ]
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "answer_text": {
+      "type": "string"
+    },
+    "parsed_answer": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "parse_error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "verifier_result": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  }
+}

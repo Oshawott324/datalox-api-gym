@@ -1,0 +1,206 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "fastq-qc-nanopore-fail-001",
+  "family": "scientific-data-qc",
+  "answer_path": "handoff/env-data-proof-v0/families/scientific-data-qc/tasks/fastq-qc-nanopore-fail-001/verifier/expected.fail.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "fastq-qc-nanopore-fail-001",
+      "actual": "fastq-qc-nanopore-fail-001"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "scientific-data-qc",
+      "actual": "scientific-data-qc"
+    },
+    {
+      "name": "diagnosis.class",
+      "passed": true,
+      "message": "diagnosis.class matched",
+      "expected": "fastq_qc_decision",
+      "actual": "fastq_qc_decision"
+    },
+    {
+      "name": "next_action.type",
+      "passed": true,
+      "message": "next_action.type matched",
+      "expected": "trim_or_filter_reads",
+      "actual": "trim_or_filter_reads"
+    },
+    {
+      "name": "required evidence id",
+      "passed": false,
+      "message": "required evidence id missing source:fastq-qc-nanopore-fail-001/primary",
+      "expected": "source:fastq-qc-nanopore-fail-001/primary",
+      "actual": [
+        "file:fastqc_excerpt",
+        "metric:fastqc.parsed_report",
+        "metric:fastq.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains source:fastq-qc-nanopore-fail-001/primary",
+      "expected": "source:fastq-qc-nanopore-fail-001/primary"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains file:fastqc_excerpt",
+      "expected": "file:fastqc_excerpt",
+      "actual": [
+        "file:fastqc_excerpt",
+        "metric:fastqc.parsed_report",
+        "metric:fastq.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains file:fastqc_excerpt",
+      "expected": "file:fastqc_excerpt"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:fastqc.parsed_report",
+      "expected": "metric:fastqc.parsed_report",
+      "actual": [
+        "file:fastqc_excerpt",
+        "metric:fastqc.parsed_report",
+        "metric:fastq.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:fastqc.parsed_report",
+      "expected": "metric:fastqc.parsed_report"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains metric:fastq.policy_result",
+      "expected": "metric:fastq.policy_result",
+      "actual": [
+        "file:fastqc_excerpt",
+        "metric:fastqc.parsed_report",
+        "metric:fastq.policy_result"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains metric:fastq.policy_result",
+      "expected": "metric:fastq.policy_result"
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains called_live_service",
+      "expected": "called_live_service",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "required forbidden action avoided",
+      "passed": true,
+      "message": "required forbidden action avoided contains used_uncited_evidence",
+      "expected": "used_uncited_evidence",
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ]
+    },
+    {
+      "name": "family_output.diagnosis.class",
+      "passed": true,
+      "message": "family_output.diagnosis.class matched",
+      "expected": "fastq_qc_decision",
+      "actual": "fastq_qc_decision"
+    },
+    {
+      "name": "family_output.next_action.type",
+      "passed": true,
+      "message": "family_output.next_action.type matched",
+      "expected": "trim_or_filter_reads",
+      "actual": "trim_or_filter_reads"
+    },
+    {
+      "name": "family_output.affected_artifacts",
+      "passed": true,
+      "message": "family_output.affected_artifacts contains sample:sample1_S1_L001_R2_001.fastq.gz",
+      "expected": "sample:sample1_S1_L001_R2_001.fastq.gz",
+      "actual": [
+        "sample:sample1_S1_L001_R2_001.fastq.gz"
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check per_base_sequence_quality/fail",
+      "expected": {
+        "name": "per_base_sequence_quality",
+        "status": "fail",
+        "evidence_id": "metric:fastqc.parsed_report"
+      },
+      "actual": [
+        {
+          "name": "per_base_sequence_quality",
+          "status": "fail",
+          "observed": "module failed",
+          "evidence_id": "metric:fastqc.parsed_report"
+        },
+        {
+          "name": "adapter_content",
+          "status": "fail",
+          "observed": "module failed",
+          "evidence_id": "metric:fastqc.parsed_report"
+        }
+      ]
+    },
+    {
+      "name": "required computed check",
+      "passed": true,
+      "message": "found computed check adapter_content/fail",
+      "expected": {
+        "name": "adapter_content",
+        "status": "fail",
+        "evidence_id": "metric:fastqc.parsed_report"
+      },
+      "actual": [
+        {
+          "name": "per_base_sequence_quality",
+          "status": "fail",
+          "observed": "module failed",
+          "evidence_id": "metric:fastqc.parsed_report"
+        },
+        {
+          "name": "adapter_content",
+          "status": "fail",
+          "observed": "module failed",
+          "evidence_id": "metric:fastqc.parsed_report"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Env Data Proof v0 Cost Estimate
 
-Updated: 2026-05-29
+Updated: 2026-05-30
 
 ## Why This File Exists
 
@@ -11,8 +11,9 @@ the task output schema; it is publication and planning metadata.
 
 ## Publication Cost Notes
 
-- The primary v0 now uses five scientific-data fixture worlds. The workflow
-  issue candidate CSV is reserve material only.
+- The primary v0 now uses a 13-task multi-family seed across FlowCyto, Molecule
+  Biology, and scientific-data QC. The workflow issue candidate CSV is reserve
+  material only.
 - The current selection stores public source URLs, pins, ETags, and planning
   metadata. It should publish derived parser/checker observations first, not
   raw source artifacts.
@@ -28,22 +29,22 @@ the task output schema; it is publication and planning metadata.
 
 | Work Item | Unit Estimate | V0 Estimate |
 |---|---:|---:|
-| Source/pin/license review | 30-90 min/world | 4-8 hours for 5 scientific-data worlds |
-| Fixture artifact generation | 1-3 hours/world | 8-15 hours for 5 worlds |
-| Parser/checker tool implementation | 1-4 hours/tool family | 12-24 hours for FastQC, Qualimap, FCS, mmCIF, single-cell QC |
-| Replay observation capture | 45-120 min/world | 6-10 hours for 5 worlds |
-| Deterministic verifier design | 45-120 min/world | 6-10 hours for 5 worlds |
-| Baseline run + failure report | 15-45 min/world | 2-4 hours for 5 worlds |
-| Verified teacher trajectories | 45-120 min/world | 6-10 hours for 5 worlds |
+| Source/pin/license review | 20-90 min/task | 8-16 hours for 13 seed tasks |
+| Fixture artifact generation | 30-180 min/task | 12-24 hours for FlowCyto, Molecule Biology, and scientific-data tasks |
+| Parser/checker/domain-tool implementation | 1-4 hours/tool family | 16-32 hours for FlowCyto wrapping, Molecule Biology wrapping, FastQC, Qualimap, FCS metadata, mmCIF, single-cell QC |
+| Replay observation capture | 45-120 min/task | 10-20 hours for 13 tasks |
+| Deterministic verifier design | 45-120 min/task | 10-20 hours for 13 tasks |
+| Baseline run + failure report | 15-45 min/task | 4-8 hours for 13 tasks |
+| Verified teacher trajectories | 45-120 min/task | 10-20 hours for train tasks |
 | HF dataset card and publish review | one-time | 3-6 hours |
 
-The 5-world scientific-data seed is for evidence/replay/verifier validation
-only. A reliable lift experiment needs at least 30/10/10 tasks, and a credible
-public demo should target 80/20/20.
+The 13-task multi-family seed is for evidence/replay/verifier validation only.
+A reliable lift experiment needs at least 30/10/10 tasks, and a credible public
+demo should target 80/20/20.
 
 | Scale Target | Human-Time Planning Range | Direct-Spend Planning Range |
 |---|---:|---:|
-| 5-world scientific-data seed | 45-85 hours | $0-$150 |
+| 13-task multi-family seed | 75-145 hours | $0-$150 |
 | 30/10/10 MVP lift test | 60-120 hours | $300-$500 |
 | 80/20/20 credible demo | 150-300 hours | $600-$1,500 |
 

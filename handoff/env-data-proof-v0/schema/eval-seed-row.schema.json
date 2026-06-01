@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/eval-seed-row.schema.json",
+  "title": "Datalox Env Data Proof Eval Seed Row",
+  "description": "Post-training workflow-facing eval row for one seed task. The replay bundle remains Datalox-internal provenance; this row is the model-team interface.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "family",
+    "split",
+    "messages",
+    "output_schema_path",
+    "family_output_schema_path",
+    "verifier_spec_path",
+    "observation_path",
+    "evidence_ids",
+    "model_context"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agent_native_seed_eval_row.v0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "flowcyto",
+        "molecule-biology",
+        "scientific-data-qc"
+      ]
+    },
+    "split": {
+      "const": "seed"
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "system",
+              "user"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "output_schema_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family_output_schema_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verifier_spec_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observation_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "model_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_tools",
+        "forbidden_tools",
+        "expected_tool_path",
+        "observations"
+      ],
+      "properties": {
+        "allowed_tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_tool_path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "observations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}
