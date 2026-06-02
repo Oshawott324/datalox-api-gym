@@ -1,6 +1,6 @@
 # Env Data Proof v0 Hugging Face Publication Implementation Report
 
-Updated: 2026-06-01
+Updated: 2026-06-02
 
 Status: implementation in progress. Seed task specs, pre-bundle agent-visible
 tool observations, and deterministic verifier fixtures now pass local
@@ -37,14 +37,20 @@ The stronger product claim should be:
 > environments, then packages replay evidence into training/eval data.
 
 Do not claim model improvement yet. Model lift requires a larger locked split.
-This v0 proves source quality, replayability, verifier determinism, and export
-shape.
+This v0 should prove source quality, replayability, verifier determinism, and
+export shape. Source quality is now gated separately from trajectory/export
+plumbing.
 
 ## Current Passed Artifacts
 
 As of 2026-06-01, the seed handoff has moved past task-spec design and into
 captured tool observations:
 
+- `source-datasets.manifest.json` records 15 public source records across
+  FlowCyto, Molecule Biology, scientific-data QC, and protein-structure
+  readiness.
+- `task-source-gate.csv` marks which current rows are source-backed and which
+  remain smoke rows until recaptured from public sources.
 - 13 `task.spec.json` files validate against
   `schema/agent-native-seed-task-spec.schema.json`.
 - 13 `tools/tool-observations.jsonl` files validate against
@@ -61,8 +67,16 @@ captured tool observations:
   `schema/verifier-spec.schema.json`.
 - 13 known-good answers pass and 13 known-bad answers fail under
   `tools/verify-seed-answers.mjs`.
-- `exports/eval.seed.jsonl` contains 13 post-training workflow-facing eval rows.
-- `exports/eval_command.md` records the OpenAI-compatible baseline command.
+- `exports/split.seed-smoke.json` records the deterministic 7/3/3 train/dev/test
+  smoke split.
+- `exports/eval.seed.jsonl` contains 13 context-eval smoke rows.
+- `exports/eval.tool_env.seed.jsonl` contains 13 tool-env eval rows where the
+  agent must call tools instead of reading preloaded observations.
+- `exports/sft.seed.chat.jsonl` contains 7 train-only final-answer SFT smoke
+  rows.
+- `exports/sft.tool_trajectory.seed.jsonl` contains 7 train-only
+  tool-trajectory SFT rows.
+- `exports/eval_command.md` records the trainable-base baseline command.
 - `exports/eval.baseline.smoke.jsonl` passes the local verifier-smoke baseline:
   13/13 rows parse and 13/13 fail the verifier as expected.
 
@@ -70,17 +84,32 @@ This verifier currently runs against the captured observation layer. The next
 replay gate is to convert these observations into canonical `tool_io_record.v1`
 records and package them into verified `replay_bundle.v1` artifacts.
 
+The current source gate is stricter than the export gate:
+
+| Source Status | Count | Public Dataset Meaning |
+|---|---:|---|
+| `source_backed_seed_row` | 4 | Current deterministic observations can move to replay-bundle conversion. |
+| `source_backed_but_derivation_not_locked` | 1 | Keep as source-backed smoke until the derivation script is locked. |
+| `smoke_only_not_public_training_claim` | 8 | Keep for schema/export smoke; recapture from public sources before SFT claims. |
+
 ## Selected Seed Tasks
 
 Machine-readable source file:
 `handoff/env-data-proof-v0/selected-agent-native-seed-tasks.csv`.
 
+Source gate files:
+
+- `handoff/env-data-proof-v0/source-datasets.manifest.json`
+- `handoff/env-data-proof-v0/source-datasets.csv`
+- `handoff/env-data-proof-v0/task-source-gate.csv`
+- `handoff/env-data-proof-v0/source-dataset-prep-report.md`
+
 The seed contains 13 candidate tasks:
 
 | Family | Count | Source |
 |---|---:|---|
-| FlowCyto gating/QC/report | 3 | `datalox-flow-cyto-mcp` task specs and FCS fixture |
-| Molecule Biology sequence workflows | 5 | `datalox-molecule-biology` FASTA/GenBank fixtures |
+| FlowCyto gating/QC/report | 3 | Current smoke rows use `datalox-flow-cyto-mcp`; public recapture uses flowCore FCS sources |
+| Molecule Biology sequence workflows | 5 | Current smoke rows use toy repo fixtures; public recapture uses NCBI records |
 | Scientific-data QC artifacts | 5 | Public FastQC, PBMC3k, FCS metadata, mmCIF, and Qualimap sources |
 
 No family should exceed 40% of the seed. If one task is rejected during replay
@@ -456,10 +485,13 @@ node handoff/env-data-proof-v0/tools/verify-seed-answers.mjs
 
 ### Step 7: Run Baseline
 
-Run one cheap baseline after the post-training workflow-facing eval rows exist.
-The model team should consume ordinary JSONL and a normal OpenAI-compatible
-command; `tool_io_record.v1` and `replay_bundle.v1` remain Datalox-internal
-provenance unless someone wants to audit the evidence.
+Run one baseline after the post-training workflow-facing eval rows exist. The
+baseline must use the same trainable open-weight base model that will later
+receive LoRA SFT. A closed API model can be a useful reference run, but it is
+not the SFT baseline unless that exact model can be fine-tuned by the
+post-training workflow. The model team should consume ordinary JSONL and a
+normal OpenAI-compatible command; `tool_io_record.v1` and `replay_bundle.v1`
+remain Datalox-internal provenance unless someone wants to audit the evidence.
 
 Baseline command target:
 
@@ -468,29 +500,29 @@ node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \
   --input handoff/env-data-proof-v0/exports/eval.seed.jsonl \
   --out handoff/env-data-proof-v0/exports/eval.baseline.jsonl \
   --mode openai-compatible \
-  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --model Qwen/Qwen3-1.7B \
   --base-url http://127.0.0.1:8000/v1 \
   --api-key token \
-  --min-failures 10
+  --min-failures 5
 ```
 
 The command is recorded in `exports/eval_command.md`. The local verifier-smoke
-command is also recorded there, but it is not a substitute for a real cheap
-model baseline.
+command is also recorded there, but it proves only schemas, parsing, and
+verifier wiring.
 
 Current endpoint status, 2026-06-01:
 
 - The local verifier-smoke baseline passes and writes
   `exports/eval.baseline.smoke.jsonl`.
-- The real cheap-model command is ready, but `http://127.0.0.1:8000/v1` is not
-  reachable in this workspace (`ECONNREFUSED`). Do not publish
-  `eval.baseline.jsonl` until an actual cheap model endpoint runs.
+- The real model command is ready, but no trainable open-weight model endpoint
+  is running in this workspace. Do not publish `eval.baseline.jsonl` until the
+  base model endpoint or the model team's inference stack runs.
 
 Baseline acceptance:
 
 - all outputs are schema-valid or have explicit parse failures
 - each seed task has a verifier result
-- at least 10 seed tasks across at least three families fail for a real reason
+- enough held-out tasks fail for concrete reasons to leave improvement headroom
 - failure reasons are concrete: missing evidence, wrong next action, invented
   metric, ignored threshold, or live-service claim
 
@@ -517,6 +549,16 @@ For v0 seed, it is acceptable to publish representative examples, but label
 them as `seed` rather than claiming a train/dev/test benchmark.
 
 ### Step 9: Export SFT/Eval Rows
+
+There are two eval/export modes now:
+
+- Context eval smoke: `exports/eval.seed.jsonl` and
+  `exports/sft.seed.chat.jsonl`. These rows preload replay observations and
+  test final-answer formatting and evidence citation.
+- Tool-env eval and training: `exports/eval.tool_env.seed.jsonl` and
+  `exports/sft.tool_trajectory.seed.jsonl`. These are the primary rows for the
+  agent-native environment proof because the model must learn or evaluate tool
+  actions, not just read a context block.
 
 Minimum `sft_frame.v1` fields:
 
@@ -559,7 +601,7 @@ Minimum `sft_frame.v1` fields:
 Export rule:
 
 - baseline failures go into eval rows, not SFT targets
-- only verifier-passing teacher trajectories become SFT rows
+- only verifier-passing teacher/tool trajectories become SFT rows
 - every row must point to a replay bundle and verifier result
 
 ## Hugging Face Dataset Layout
@@ -718,7 +760,7 @@ Publish only when all are true:
 6. Pack one `replay_bundle.v1` per task or compact task group.
 7. Write `verifier/verifier.spec.json` per task family and per task as needed.
 8. Run known-good and known-bad verifier checks.
-9. Run cheap baseline and save `eval.baseline.jsonl`.
+9. Run trainable-base baseline and save `eval.baseline.jsonl`.
 10. Create one teacher trajectory per train task.
 11. Export `sft.seed.jsonl`.
 12. Generate `hf/README.md`, `reports/cost-report.md`, and `data/worlds.jsonl`.

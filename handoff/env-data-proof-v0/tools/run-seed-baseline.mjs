@@ -13,7 +13,7 @@ const options = parseArgs(process.argv.slice(2));
 const mode = options.mode ?? "openai-compatible";
 const inputPath = path.resolve(options.input ?? path.join(envRoot, "exports", "eval.seed.jsonl"));
 const outPath = path.resolve(options.out ?? path.join(envRoot, "exports", "eval.baseline.jsonl"));
-const model = options.model ?? "Qwen/Qwen2.5-1.5B-Instruct";
+const model = options.model ?? "Qwen/Qwen3-1.7B";
 const minFailures = Number.parseInt(options["min-failures"] ?? "10", 10);
 
 async function main() {

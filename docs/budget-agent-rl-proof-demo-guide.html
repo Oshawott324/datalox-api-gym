@@ -738,11 +738,14 @@
       </tbody>
     </table>
     <div class="callout warning">
-      The first public set should include actual links or provenance ids for
-      every source artifact or repo fixture. If the artifact cannot be shared,
-      keep it for a private design-partner pilot. GitHub issue tasks should be
-      reserve workflow-debug tasks, not the primary public demo. A seed package
-      with only FlowCyto tasks fails the variety bar.
+      The first public set should use
+      <code>handoff/env-data-proof-v0/source-datasets.manifest.json</code> and
+      <code>task-source-gate.csv</code> as the source gate. Current FlowCyto and
+      Molecule Biology captures are useful smoke rows, but they need public
+      recapture from flowCore and NCBI sources before they support a public
+      training-data claim. GitHub issue tasks should be reserve workflow-debug
+      tasks, not the primary public demo. A seed package with only FlowCyto
+      tasks fails the variety bar.
     </div>
   </section>
 
@@ -920,9 +923,9 @@
         </tr>
         <tr>
           <td>2. Collect 12-15 real seed tasks</td>
-          <td>Create one row per task across at least three families: FlowCyto, Molecule Biology, and scientific-data QC. Reject issue-only tasks unless they include replay-rich files, logs, command outputs, or tool observations.</td>
-          <td><code>handoff/env-data-proof-v0/selected-agent-native-seed-tasks.csv</code></td>
-          <td>Each row has task id, family, source or fixture path, task type, expected answer class, expected failure mode, public/private flag, include/reject decision, and HF publication note. No family exceeds 40% of the seed.</td>
+          <td>Create one row per task across at least three families: FlowCyto, Molecule Biology, and scientific-data QC. Attach approved source ids and reject issue-only tasks unless they include replay-rich files, logs, command outputs, or tool observations.</td>
+          <td><code>selected-agent-native-seed-tasks.csv</code>, <code>source-datasets.manifest.json</code>, and <code>task-source-gate.csv</code></td>
+          <td>Each row has task id, family, approved source ids, task type, expected answer class, expected failure mode, public/private flag, include/reject decision, and HF publication note. No family exceeds 40% of the seed.</td>
         </tr>
         <tr>
           <td>3. Create one task spec per task</td>
@@ -932,7 +935,7 @@
         </tr>
         <tr>
           <td>4. Build derived artifacts and tool observations</td>
-          <td>Generate small published artifacts, parser outputs, policy outputs, domain MCP tool catalogs, and deterministic tool observations from real public sources or repo fixtures. Do not publish full raw source files before license review.</td>
+          <td>Generate small published artifacts, parser outputs, policy outputs, domain MCP tool catalogs, and deterministic tool observations from approved public sources. Keep project-local or toy repo fixtures as smoke rows unless recaptured from the approved source ids.</td>
           <td><code>artifacts/manifest.json</code>, <code>tools/tool-catalog.json</code>, and <code>tools/tool-observations.jsonl</code></td>
           <td>Every task has deterministic agent-visible observations and matching artifact checksums. FlowCyto and Molecule Biology observations come from their domain tool paths, not hand-written prose.</td>
         </tr>
@@ -949,10 +952,10 @@
           <td>Known-good answer passes, known-bad answer fails, and the failure reason names the broken criterion.</td>
         </tr>
         <tr>
-          <td>7. Run cheap baseline and keep real failures</td>
-          <td>Run a small baseline model against <code>exports/eval.seed.jsonl</code>. Keep tasks where the model actually fails by missing evidence, choosing the wrong action, hallucinating state, or violating the tool/replay boundary.</td>
+          <td>7. Run trainable-base baseline and keep real failures</td>
+          <td>Run the same open-weight base model that will later receive LoRA SFT against <code>exports/eval.seed.jsonl</code>. Keep tasks where the model actually fails by missing evidence, choosing the wrong action, hallucinating state, or violating the tool/replay boundary. Closed API models are reference baselines only.</td>
           <td><code>exports/eval.baseline.jsonl</code> and <code>baseline.failure-report.md</code></td>
-          <td>At least 10 seed tasks across at least three families have verifier output and concrete baseline failure examples.</td>
+          <td>Held-out seed tasks have verifier output and concrete baseline failure examples; the smoke split proves mechanics, not reliable lift.</td>
         </tr>
         <tr>
           <td>8. Create verifier-passing train trajectories</td>
@@ -962,15 +965,15 @@
         </tr>
         <tr>
           <td>9. Export <code>sft_frame.v1</code></td>
-          <td>Convert verifier-passing train trajectories into prompt/response or tool-step SFT rows. Failed baseline answers are not SFT targets.</td>
-          <td><code>train.sft.jsonl</code></td>
-          <td>Rows include task id, split, model-visible context, target response/tool step, source run id, replay bundle id, and verifier result id.</td>
+          <td>Convert verifier-passing train trajectories into tool-trajectory SFT rows. Keep final-answer chat rows only as a formatting smoke artifact. Failed baseline answers are not SFT targets.</td>
+          <td><code>exports/sft.tool_trajectory.seed.jsonl</code> plus <code>exports/sft.seed.chat.jsonl</code> for smoke</td>
+          <td>Rows include task id, split, model-visible task prompt, target tool action/observation sequence, source run id, replay bundle id, and verifier result id.</td>
         </tr>
         <tr>
           <td>10. Lock eval command and split</td>
-          <td>Write the exact eval command for baseline and tuned model. Pin split ids and reject export/eval if split metadata is absent.</td>
-          <td><code>splits.json</code> and <code>eval_command.md</code></td>
-          <td>Another person can run baseline vs SFT on the same held-out split without asking how the environment works.</td>
+          <td>Write both context-eval smoke and tool-env eval contracts. Pin split ids and reject export/eval if split metadata is absent.</td>
+          <td><code>exports/split.seed-smoke.json</code>, <code>exports/eval.seed.jsonl</code>, <code>exports/eval.tool_env.seed.jsonl</code>, and <code>eval_command.md</code></td>
+          <td>Another person can run context smoke and baseline-vs-SFT tool-env eval on the same held-out split without asking how the environment works.</td>
         </tr>
       </tbody>
     </table>
@@ -1145,7 +1148,7 @@ reward evidence</pre>
   --catalog ../datalox-replay-fixtures/catalog.json</code></pre>
 
     <h3>2. Serve The Baseline Model</h3>
-    <pre><code>vllm serve Qwen/Qwen2.5-1.5B-Instruct \
+    <pre><code>vllm serve Qwen/Qwen3-1.7B \
   --api-key token \
   --host 127.0.0.1 \
   --port 8000</code></pre>
@@ -1154,7 +1157,7 @@ reward evidence</pre>
     <pre><code>datalox eval \
   --fixture-set agent-native-science-seed@2026-06.0 \
   --catalog ../datalox-replay-fixtures/catalog.json \
-  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --model Qwen/Qwen3-1.7B \
   --base-url http://127.0.0.1:8000/v1 \
   --api-key token \
   --split test \
@@ -1175,7 +1178,7 @@ reward evidence</pre>
 
     <h3>6. Train One Small Adapter</h3>
     <pre><code>python training/sft_lora.py \
-  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --model Qwen/Qwen3-1.7B \
   --train exports/env-data-proof/train.sft.jsonl \
   --dev exports/env-data-proof/dev.sft.jsonl \
   --out models/datalox-env-sft-lora</code></pre>
@@ -1442,18 +1445,18 @@ datalox eval \
         </tr>
         <tr>
           <td>Days 1-3</td>
-          <td>Freeze the multi-family seed, collect paper-backed or repo-fixture source artifacts, define family payload schemas and reward vector, create first train/dev/test split, and run the cheap baseline.</td>
+          <td>Freeze the multi-family seed, collect paper-backed or repo-fixture source artifacts, define family payload schemas and reward vector, create first train/dev/test split, and run the trainable-base baseline.</td>
           <td>At least 10 scientific workflow tasks across FlowCyto, Molecule Biology, and scientific-data QC have replay evidence, verifier output, and at least one observed baseline failure mode.</td>
         </tr>
         <tr>
           <td>Days 4-7</td>
-          <td>Solve train tasks with human references, teacher-agent runs, or repaired baseline traces. Keep only verifier-passing success/recovery trajectories and export SFT rows.</td>
-          <td>Every SFT row traces back to a train-task replay bundle and verifier-passing trajectory. This is the right moment to hand the package to him.</td>
+          <td>Solve train tasks with human references, teacher-agent runs, or repaired baseline traces. Keep only verifier-passing success/recovery trajectories and export tool-trajectory SFT rows; keep final-answer chat rows as smoke only.</td>
+          <td>Every primary SFT row traces back to a train-task replay bundle and verifier-passing tool trajectory. This is the right moment to hand the package to him.</td>
         </tr>
         <tr>
           <td>Days 8-12</td>
-          <td>He runs the minimal SFT LoRA and evaluates on the locked held-out split and, if available, one closest public benchmark. Datalox writes the evidence-backed report.</td>
-          <td>One clear before/after number, cost log, and replay evidence links are ready.</td>
+          <td>He runs the minimal SFT LoRA and evaluates with the locked tool-env held-out split and, if available, one closest public benchmark. Datalox writes the evidence-backed report.</td>
+          <td>One clear before/after tool-env number, cost log, and replay evidence links are ready.</td>
         </tr>
         <tr>
           <td>Days 13-18</td>

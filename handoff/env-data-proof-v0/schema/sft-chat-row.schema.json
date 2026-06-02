@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://datalox.local/schemas/env-data-proof-v0/eval-seed-row.schema.json",
-  "title": "Datalox Env Data Proof Eval Seed Row",
-  "description": "Post-training workflow-facing eval row for one seed task. The replay bundle remains Datalox-internal provenance; this row is the model-team interface.",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/sft-chat-row.schema.json",
+  "title": "Datalox Env Data Proof SFT Chat Row",
+  "description": "One train-split chat SFT row derived from verifier-passing replay evidence.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,17 +11,17 @@
     "family",
     "split",
     "messages",
-    "output_schema_path",
-    "family_output_schema_path",
+    "source_answer_path",
     "verifier_spec_path",
     "observation_path",
     "split_metadata_path",
     "evidence_ids",
-    "model_context"
+    "model_context",
+    "export_gate"
   ],
   "properties": {
     "schema_version": {
-      "const": "agent_native_seed_eval_row.v0"
+      "const": "agent_native_seed_sft_chat_row.v0"
     },
     "task_id": {
       "type": "string",
@@ -36,16 +36,11 @@
       ]
     },
     "split": {
-      "type": "string",
-      "enum": [
-        "train",
-        "dev",
-        "test"
-      ]
+      "const": "train"
     },
     "messages": {
       "type": "array",
-      "minItems": 2,
+      "minItems": 3,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -58,7 +53,8 @@
             "type": "string",
             "enum": [
               "system",
-              "user"
+              "user",
+              "assistant"
             ]
           },
           "content": {
@@ -68,11 +64,7 @@
         }
       }
     },
-    "output_schema_path": {
-      "type": "string",
-      "minLength": 1
-    },
-    "family_output_schema_path": {
+    "source_answer_path": {
       "type": "string",
       "minLength": 1
     },
@@ -98,39 +90,21 @@
       }
     },
     "model_context": {
+      "type": "object"
+    },
+    "export_gate": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "allowed_tools",
-        "forbidden_tools",
-        "expected_tool_path",
-        "observations"
+        "allowed",
+        "redaction"
       ],
       "properties": {
-        "allowed_tools": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "allowed": {
+          "const": true
         },
-        "forbidden_tools": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "expected_tool_path": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "observations": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object"
-          }
+        "redaction": {
+          "const": "none_needed"
         }
       }
     }

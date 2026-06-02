@@ -32,6 +32,7 @@ package, not a benchmark leaderboard and not a model-lift claim.
 
 - multi-family fixture task specs
 - public provenance records
+- source dataset manifest and task-source gate
 - derived parser/domain-tool observations
 - deterministic verifier specs
 - baseline outputs
@@ -75,10 +76,11 @@ This v0 does not claim:
 
 ## Data Construction
 
-Each task starts from a public scientific source artifact or a domain MCP repo
-fixture. Datalox records agent-visible parser/checker/domain-tool observations,
-assigns stable evidence ids, packages the observations into replay evidence,
-and verifies structured outputs with deterministic rules.
+Each public training-claim task must start from an approved source id in
+`source-datasets.manifest.json`. Datalox records agent-visible
+parser/checker/domain-tool observations, assigns stable evidence ids, packages
+the observations into replay evidence, and verifies structured outputs with
+deterministic rules.
 
 Raw source artifacts are linked by provenance by default. Derived observations,
 parser outputs, verifier specs, and export rows are the primary published
@@ -86,26 +88,33 @@ artifacts. Raw files should be copied only after license review.
 
 ## Provenance
 
-See each task's `provenance.json` or fixture reference before using or
-redistributing source artifacts. The source families include FlowCyto fixtures,
-Molecule Biology FASTA/GenBank fixtures, MultiQC test data, 10x Genomics
-PBMC3k, flowCore example FCS files, and RCSB PDB structure metadata.
+See `source-datasets.manifest.json`, `source-datasets.csv`, and
+`task-source-gate.csv` before using or redistributing source artifacts. The
+source pool includes flowCore FCS examples, NCBI accession-versioned sequence
+records, MultiQC test data, 10x Genomics PBMC3k, and RCSB PDB structure
+metadata.
 
 ## Limitations
 
 - The seed contains 13 candidate tasks, not enough for a reliable lift claim.
 - The package is for replay/verifier/export validation, not reliable SFT lift.
+  The primary training handoff is `exports/sft.tool_trajectory.seed.jsonl`; the
+  final-answer `exports/sft.seed.chat.jsonl` is only a formatting smoke file.
+- The current split is `seed-smoke`: 7 train, 3 dev, and 3 test tasks. It is a
+  handoff smoke split, not a lift-grade split.
 - Some raw source artifacts may be linked rather than copied.
 - The single-cell world needs a locked QC-generation script before publication.
-- FlowCyto and Molecule Biology repo fixtures need public pin/license review
-  before publication.
+- Current FlowCyto and Molecule Biology seed rows use project-local or toy repo
+  fixtures. They are smoke rows until recaptured from the approved public
+  flowCore and NCBI sources in `task-source-gate.csv`.
 - No live source URL should be called during replay.
 
 ## Cost
 
-The v0 package is expected to be built mostly with local CPU work plus one cheap
-baseline model pass. See `reports/cost-report.md` or the source repo's
-`cost-estimate.md` for the current planning estimate.
+The v0 package is expected to be built mostly with local CPU work plus one
+trainable open-weight base-model pass when a model endpoint is available. See
+`reports/cost-report.md` or the source repo's `cost-estimate.md` for the
+current planning estimate.
 
 ## Citation
 

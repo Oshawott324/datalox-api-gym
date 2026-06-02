@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datalox Env Data Proof v0 Post-Training Runbook</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #5d6872;
+      --line: #d7dde3;
+      --bg: #f7f9fb;
+      --panel: #ffffff;
+      --accent: #0b6bcb;
+      --ok: #176b3a;
+      --warn: #9a5b00;
+      --bad: #a12828;
+      --code: #101820;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    header, main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+    header {
+      padding-top: 40px;
+      padding-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 34px 0 12px;
+      font-size: 21px;
+      letter-spacing: 0;
+    }
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+    p { margin: 0 0 14px; }
+    a { color: var(--accent); }
+    .lede {
+      max-width: 860px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0 8px;
+    }
+    .metric, .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .metric {
+      padding: 16px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 26px;
+      line-height: 1.15;
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .section {
+      padding: 18px;
+      margin: 16px 0;
+    }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #eef6ff;
+      padding: 13px 14px;
+      margin: 16px 0;
+    }
+    .warn {
+      border-left-color: var(--warn);
+      background: #fff7e8;
+    }
+    .ok {
+      border-left-color: var(--ok);
+      background: #edf8f1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 6px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+    th {
+      background: #edf1f5;
+      font-weight: 700;
+    }
+    tr:last-child td { border-bottom: 0; }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+      background: #eef1f4;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+    pre {
+      margin: 12px 0;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      background: var(--code);
+      color: #f6f8fa;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+    ul {
+      margin: 8px 0 14px;
+      padding-left: 20px;
+    }
+    li { margin: 5px 0; }
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 780px) {
+      header, main { padding-left: 16px; padding-right: 16px; }
+      h1 { font-size: 28px; }
+      .grid { grid-template-columns: 1fr; }
+      th, td { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Datalox Env Data Proof v0 Post-Training Runbook</h1>
+    <p class="lede">
+      This runbook is the handoff contract for a small, real SFT smoke test. The
+      goal is not to claim reliable lift from 13 tasks. The goal is to prove the
+      workflow: agent-native domain tools -> captured rollout evidence ->
+      train-only tool-trajectory SFT rows -> same-base tool-env eval before
+      and after LoRA.
+    </p>
+    <p class="lede">
+      Source readiness is gated by <code>source-datasets.manifest.json</code> and
+      <code>task-source-gate.csv</code>. Current FlowCyto and Molecule Biology
+      rows are smoke data until recaptured from the approved public flowCore and
+      NCBI sources.
+    </p>
+  </header>
+
+  <main>
+    <div class="grid">
+      <div class="metric">
+        <strong>13</strong>
+        <span>eval rows in <code>exports/eval.seed.jsonl</code></span>
+      </div>
+      <div class="metric">
+        <strong>7/3/3</strong>
+        <span>train/dev/test smoke split</span>
+      </div>
+      <div class="metric">
+        <strong>7</strong>
+        <span>train-only final-answer SFT smoke rows</span>
+      </div>
+      <div class="metric">
+        <strong>7</strong>
+        <span>train-only tool-trajectory SFT rows</span>
+      </div>
+    </div>
+
+    <section class="section">
+      <h2>Non-Negotiable Boundary</h2>
+      <p>
+        The baseline model and the SFT target must be the same trainable
+        open-weight base model. A closed API model can be useful as a reference
+        inference run, but it does not answer whether this package supports SFT
+        unless that same model can be fine-tuned.
+      </p>
+      <div class="callout warn">
+        <strong>Do not train on dev/test rows.</strong> The current package keeps
+        target answers for every task so verifiers can be smoke-tested, but the
+        exported SFT files contain train rows only.
+      </div>
+      <div class="callout">
+        <strong>Tool-env eval is the primary training proof.</strong>
+        <code>eval.seed.jsonl</code> is a context-eval smoke file because it
+        preloads replay observations in the prompt. The environment claim is
+        tested by <code>eval.tool_env.seed.jsonl</code>, where the agent must use
+        domain tools and accumulate evidence through actions.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Current Files</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Purpose</th>
+            <th>Rows</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>exports/split.seed-smoke.json</code></td>
+            <td>Deterministic split metadata and leakage warning.</td>
+            <td>7 train, 3 dev, 3 test</td>
+          </tr>
+          <tr>
+            <td><code>exports/eval.seed.jsonl</code></td>
+            <td>Context-eval smoke prompts with replay observation context already in the prompt.</td>
+            <td>13</td>
+          </tr>
+          <tr>
+            <td><code>exports/eval.tool_env.seed.jsonl</code></td>
+            <td>Tool-env eval prompts. The agent must use allowed domain tools; observations are not preloaded.</td>
+            <td>13</td>
+          </tr>
+          <tr>
+            <td><code>exports/sft.seed.chat.jsonl</code></td>
+            <td>Final-answer chat SFT smoke rows derived from verifier-passing train answers.</td>
+            <td>7</td>
+          </tr>
+          <tr>
+            <td><code>exports/sft.tool_trajectory.seed.jsonl</code></td>
+            <td>Primary train-only SFT handoff for tool-use trajectories.</td>
+            <td>7</td>
+          </tr>
+          <tr>
+            <td><code>exports/eval.baseline.smoke.jsonl</code></td>
+            <td>Verifier plumbing smoke output. This is not model evidence.</td>
+            <td>13</td>
+          </tr>
+          <tr>
+            <td><code>exports/eval_command.md</code></td>
+            <td>Canonical base/reference/smoke eval commands.</td>
+            <td>n/a</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Default Smoke Model</h2>
+      <p>
+        Use <a href="https://huggingface.co/Qwen/Qwen3-1.7B"><code>Qwen/Qwen3-1.7B</code></a>
+        as the default public smoke target unless the post-training collaborator
+        prefers another trainable small model. The Hugging Face model card lists
+        it as Apache-2.0, 1.7B parameters, and 32,768-token context, with
+        Transformers support.
+      </p>
+      <p>
+        The model choice is replaceable. The invariant is not Qwen specifically;
+        the invariant is same open-weight base before and after SFT.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Step 0: Regenerate And Verify The Package</h2>
+      <pre><code>node handoff/env-data-proof-v0/tools/export-eval-seed.mjs
+node handoff/env-data-proof-v0/tools/verify-seed-answers.mjs
+node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \
+  --input handoff/env-data-proof-v0/exports/eval.seed.jsonl \
+  --out handoff/env-data-proof-v0/exports/eval.baseline.smoke.jsonl \
+  --mode verifier-smoke \
+  --model deterministic-weak-baseline \
+  --min-failures 10</code></pre>
+      <p class="small">
+        Expected smoke result: 13 tasks, 0 parse failures, 13 verifier failures,
+        0 verifier passes. This only checks the verifier pipeline.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Step 1: Run Context-Eval Smoke</h2>
+      <p>
+        Serve the trainable base model through the collaborator's normal
+        OpenAI-compatible inference stack. This first command only checks the
+        flattened context-eval path.
+      </p>
+      <pre><code>vllm serve Qwen/Qwen3-1.7B \
+  --host 127.0.0.1 \
+  --port 8000</code></pre>
+      <pre><code>node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \
+  --input handoff/env-data-proof-v0/exports/eval.seed.jsonl \
+  --out handoff/env-data-proof-v0/exports/eval.baseline.jsonl \
+  --mode openai-compatible \
+  --model Qwen/Qwen3-1.7B \
+  --base-url http://127.0.0.1:8000/v1 \
+  --api-key token \
+  --min-failures 5</code></pre>
+      <p>
+        Record the endpoint, model id, model revision when available, GPU type,
+        wall time, and total inference cost. If the base model passes nearly all
+        held-out tasks, the seed is too easy for this model.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Step 2: Run Tool-Env Baseline</h2>
+      <p>
+        The primary environment eval consumes
+        <code>exports/eval.tool_env.seed.jsonl</code>. It requires an agent
+        harness that exposes the FlowCyto, Molecule Biology, and fixture tools,
+        records tool calls, and submits the final answer to the verifier.
+      </p>
+      <pre><code># Target harness shape, implemented in the model team's normal agent runner:
+eval.tool_env.seed.jsonl
+  -> model sees task prompt + allowed tools
+  -> model calls domain tools
+  -> tool observations are captured
+  -> verifier scores final answer and evidence
+  -> report pass/fail by split and family</code></pre>
+      <p>
+        The current <code>run-seed-baseline.mjs</code> script does not execute
+        tool-env rows. It only runs the context-eval smoke command above.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Step 3: Prepare Train Rows</h2>
+      <p>
+        Use <code>exports/sft.tool_trajectory.seed.jsonl</code> as the primary
+        SFT source for the agent-native environment proof. Use
+        <code>exports/sft.seed.chat.jsonl</code> only as a final-answer format
+        smoke file. If a stack wants only chat messages without Datalox
+        provenance columns, create a stripped final-answer file:
+      </p>
+      <pre><code>node -e '
+const fs = require("fs");
+const input = "handoff/env-data-proof-v0/exports/sft.seed.chat.jsonl";
+const output = "handoff/env-data-proof-v0/exports/sft.train.messages.jsonl";
+const rows = fs.readFileSync(input, "utf8").trim().split(/\n/).filter(Boolean).map(JSON.parse);
+fs.writeFileSync(output, rows.map((row) => JSON.stringify({ messages: row.messages })).join("\n") + "\n");
+console.log({ input_rows: rows.length, output });
+'</code></pre>
+      <p>
+        The full files keep provenance fields such as <code>source_answer_path</code>,
+        <code>verifier_spec_path</code>, <code>observation_path</code>, and
+        <code>split_metadata_path</code>. Use those fields for audit, not as
+        target text.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Step 4: Run Minimal LoRA SFT</h2>
+      <p>
+        Use the collaborator's normal SFT stack: TRL, Axolotl, Unsloth, LLaMA
+        Factory, or internal tooling. Datalox does not require a custom trainer.
+        The minimum run should use:
+      </p>
+      <ul>
+        <li>Base model: <code>Qwen/Qwen3-1.7B</code> or the agreed replacement.</li>
+        <li>Primary training file: <code>exports/sft.tool_trajectory.seed.jsonl</code>.</li>
+        <li>Format-smoke training file: <code>exports/sft.seed.chat.jsonl</code> or stripped <code>exports/sft.train.messages.jsonl</code>.</li>
+        <li>Training rows only: 7 rows in this smoke split.</li>
+        <li>Output: LoRA adapter or merged model with the base model id recorded.</li>
+      </ul>
+      <div class="callout">
+        This SFT run is intentionally tiny. It validates formatting, trajectory
+        masking, adapter loading, and held-out eval mechanics. It is not a
+        credible model-improvement claim by itself.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Step 5: Re-Run The Same Tool-Env Eval</h2>
+      <p>
+        Serve the SFT adapter or merged model through the same inference path,
+        then run the exact same tool-env eval rows:
+      </p>
+      <pre><code>eval.tool_env.seed.jsonl
+  -> same agent harness
+  -> same allowed tools
+  -> SFT model or base+LoRA adapter
+  -> verifier report by split/family</code></pre>
+      <p>
+        Compare verifier pass rate on dev/test only. Train-pass improvement is
+        useful for debugging the SFT setup, but it is not the public metric.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Report Template</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Required value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Repo commit</td>
+            <td>Commit hash used to generate exports.</td>
+          </tr>
+          <tr>
+            <td>Base model</td>
+            <td>Model id, revision, context limit, license.</td>
+          </tr>
+          <tr>
+            <td>SFT stack</td>
+            <td>Tool name and version: TRL, Axolotl, Unsloth, or internal.</td>
+          </tr>
+          <tr>
+            <td>Hardware and cost</td>
+            <td>GPU type, runtime, provider, approximate USD.</td>
+          </tr>
+          <tr>
+            <td>Base eval</td>
+            <td>Verifier passes/fails by split and family.</td>
+          </tr>
+          <tr>
+            <td>SFT eval</td>
+            <td>Verifier passes/fails by split and family.</td>
+          </tr>
+          <tr>
+            <td>Failure examples</td>
+            <td>At least three concrete before/after verifier reasons.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Decision Gate</h2>
+      <ul>
+        <li><strong>Pass:</strong> the collaborator can load the rows, train a LoRA, re-run eval, and produce a split-aware report without asking how the environment works.</li>
+        <li><strong>Weak pass:</strong> formatting works, but no held-out improvement appears. Next action is to collect the 30/10/10 lift-grade set.</li>
+        <li><strong>Fail:</strong> rows are too long, target format is wrong, or verifier rewards do not match useful model behavior. Fix the export contract before collecting more tasks.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>What This Proves</h2>
+      <p>
+        This proves whether Datalox can package agent-native scientific tasks
+        into a normal post-training workflow: tool-env eval rows, captured
+        tool-use trajectories, train-only SFT rows, deterministic verifier
+        results, and a same-base before/after comparison. The context rows are
+        still useful smoke artifacts, but the environment proof depends on the
+        tool-env path. It does not prove reliable model lift until the dataset
+        is scaled beyond this smoke split.
+      </p>
+      <div class="callout ok">
+        The next dataset scale target is 30 train, 10 dev, 10 test. The more
+        credible public demo target is 80 train, 20 dev, 20 test.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

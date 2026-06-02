@@ -135,9 +135,10 @@ Use these if one selected task fails replay capture:
 ## What Is Still Untested
 
 This selection does not yet prove that current agents actually fail these tasks.
-The next step is to create task specs, replay observations, and a cheap baseline
-run. If the baseline agent passes too many selected tasks, replace the easiest
-tasks with reserve items before producing SFT rows.
+The next step is to create task specs, replay observations, a train/dev/test
+smoke split, and a trainable open-weight base-model baseline. If the baseline
+agent passes too many selected tasks, replace the easiest tasks with reserve
+items before producing SFT rows.
 
 Minimum baseline gate:
 

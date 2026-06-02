@@ -283,7 +283,7 @@ For each scientific-data world:
 3. Implement or stub the domain parser tool.
 4. Capture at least five tool observations.
 5. Write verifier spec against `scientific-data-task-output.schema.json`.
-6. Run a cheap baseline agent.
+6. Run a trainable open-weight base-model baseline.
 7. Keep the world only if the baseline failure is real and verifier evidence is
    deterministic.
 8. Produce one verifier-passing teacher trajectory and one `sft_frame.v1` row.

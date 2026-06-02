@@ -1,6 +1,6 @@
 # Env Data Proof v0 Dataset Scale Plan
 
-Updated: 2026-06-01
+Updated: 2026-06-02
 
 ## Primary v0 Direction
 
@@ -16,14 +16,20 @@ verifier observations.
 Primary v0 files:
 
 - `selected-agent-native-seed-tasks.csv`
+- `source-datasets.manifest.json`
+- `source-datasets.csv`
+- `task-source-gate.csv`
+- `source-dataset-prep-report.md`
 - `selected-scientific-data-worlds.csv`
 - `scientific-data-fixture-worlds.md`
+- `schema/source-dataset-manifest.schema.json`
 - `schema/agent-native-seed-task-spec.schema.json`
 - `schema/agent-visible-tool-observation.schema.json`
 - `schema/task-output.schema.json`
 - `schema/flowcyto-task-output.schema.json`
 - `schema/molecule-biology-task-output.schema.json`
 - `schema/scientific-data-task-output.schema.json`
+- `tools/verify-source-datasets.mjs`
 - `tools/capture-live-observations.mjs`
 
 Primary v0 claim:
@@ -41,6 +47,15 @@ Do not claim model lift from this seed. The first claim is that the fixture
 tasks are source-backed, tool-rich, deterministic, varied across families, and
 exportable.
 
+Do not claim all current seed trajectories are already source-backed. The
+source gate is now explicit:
+
+- `source-datasets.manifest.json` records approved public source artifacts.
+- `task-source-gate.csv` maps each current task to its approved source ids and
+  says whether recapture is required.
+- Current FlowCyto and Molecule Biology rows are schema/export smoke until they
+  are recaptured from the public FlowCore and NCBI sources in the manifest.
+
 ## Outcome Of The Current Task-Selection Step
 
 The current primary seed is `selected-agent-native-seed-tasks.csv`: 13 candidate
@@ -57,6 +72,12 @@ Current primary seed mix:
 Current capture status:
 
 - 13 seed task specs validate.
+- 15 public source records are prepared in
+  `source-datasets.manifest.json` and validate with
+  `tools/verify-source-datasets.mjs`.
+- `task-source-gate.csv` marks 4 tasks as `source_backed_seed_row`, 1 task as
+  `source_backed_but_derivation_not_locked`, and 8 tasks as
+  `smoke_only_not_public_training_claim`.
 - 13 `tools/tool-observations.jsonl` files validate.
 - 67 agent-visible observations are captured.
 - 41 observations are live sibling-domain-tool captures.
@@ -67,12 +88,27 @@ Current capture status:
 - 13 deterministic verifier specs exist.
 - 13 known-good answers pass and 13 known-bad answers fail with
   `tools/verify-seed-answers.mjs`.
-- `exports/eval.seed.jsonl` has 13 model-team-facing eval rows.
-- `exports/eval_command.md` records the OpenAI-compatible cheap baseline
-  command.
+- `exports/split.seed-smoke.json` records the current deterministic 7/3/3
+  train/dev/test smoke split.
+- `exports/eval.seed.jsonl` has 13 context-eval smoke rows over that split.
+- `exports/eval.tool_env.seed.jsonl` has 13 tool-env eval rows with no
+  preloaded replay observations; this is the primary environment-facing eval
+  contract.
+- `exports/sft.seed.chat.jsonl` has 7 train-only final-answer SFT smoke rows
+  derived from verifier-passing answers.
+- `exports/sft.tool_trajectory.seed.jsonl` has 7 train-only tool-trajectory SFT
+  rows. Four rows are captured from sibling domain-tool runtimes
+  (`flowcyto`/`molecule-biology`), and three rows are fixture-tool rollouts from
+  scientific-data QC. The sibling-domain rows remain smoke rows for a public
+  training claim until recaptured from the approved public sources.
+- `exports/eval_command.md` records the trainable-base baseline command. Closed
+  API models are reference baselines only unless that same model can be
+  fine-tuned by the post-training workflow.
 - `exports/eval.baseline.smoke.jsonl` passes local verifier plumbing with
-  13 expected verifier failures. A real cheap-model baseline still requires a
-  reachable model endpoint.
+  13 expected verifier failures. A real model baseline still requires a
+  reachable trainable open-weight model endpoint or the model team's own
+  inference stack. The real training proof still requires a tool-using agent
+  harness for `exports/eval.tool_env.seed.jsonl`.
 
 The current `task-candidates.csv` is a workflow-debug reserve pool, not the
 primary training dataset. Its job is to preserve public provenance candidates

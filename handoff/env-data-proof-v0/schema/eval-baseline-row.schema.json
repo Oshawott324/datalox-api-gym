@@ -34,7 +34,12 @@
       ]
     },
     "split": {
-      "const": "seed"
+      "type": "string",
+      "enum": [
+        "train",
+        "dev",
+        "test"
+      ]
     },
     "mode": {
       "type": "string",

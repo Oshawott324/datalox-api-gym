@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://datalox.local/schemas/env-data-proof-v0/eval-seed-row.schema.json",
-  "title": "Datalox Env Data Proof Eval Seed Row",
-  "description": "Post-training workflow-facing eval row for one seed task. The replay bundle remains Datalox-internal provenance; this row is the model-team interface.",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/tool-env-eval-row.schema.json",
+  "title": "Datalox Env Data Proof Tool Environment Eval Row",
+  "description": "One eval row for a tool-using agent environment. Unlike context eval rows, this row does not preload replay observations.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,18 +10,21 @@
     "task_id",
     "family",
     "split",
+    "eval_mode",
+    "runtime_kind",
     "messages",
+    "allowed_tools",
+    "forbidden_tools",
+    "expected_tool_path",
     "output_schema_path",
     "family_output_schema_path",
     "verifier_spec_path",
-    "observation_path",
     "split_metadata_path",
-    "evidence_ids",
-    "model_context"
+    "source_task_spec_path"
   ],
   "properties": {
     "schema_version": {
-      "const": "agent_native_seed_eval_row.v0"
+      "const": "agent_native_seed_tool_env_eval_row.v0"
     },
     "task_id": {
       "type": "string",
@@ -41,6 +44,16 @@
         "train",
         "dev",
         "test"
+      ]
+    },
+    "eval_mode": {
+      "const": "tool_env"
+    },
+    "runtime_kind": {
+      "type": "string",
+      "enum": [
+        "sibling_domain_tool_runtime",
+        "fixture_tool_runtime"
       ]
     },
     "messages": {
@@ -68,6 +81,29 @@
         }
       }
     },
+    "allowed_tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forbidden_tools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "expected_tool_path": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "output_schema_path": {
       "type": "string",
       "minLength": 1
@@ -80,59 +116,13 @@
       "type": "string",
       "minLength": 1
     },
-    "observation_path": {
-      "type": "string",
-      "minLength": 1
-    },
     "split_metadata_path": {
       "type": "string",
       "minLength": 1
     },
-    "evidence_ids": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "model_context": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "allowed_tools",
-        "forbidden_tools",
-        "expected_tool_path",
-        "observations"
-      ],
-      "properties": {
-        "allowed_tools": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "forbidden_tools": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "expected_tool_path": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "observations": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object"
-          }
-        }
-      }
+    "source_task_spec_path": {
+      "type": "string",
+      "minLength": 1
     }
   }
 }

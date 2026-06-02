@@ -134,8 +134,8 @@ be built and validated.
 
 ## Local Domain Tool Note
 
-The local `/Users/yifanjin/datalox-flow-cyto-mcp` repo already exposes the
-right kind of agent-native flow cytometry path for harder follow-up tasks:
+The sibling FlowCyto MCP repo already exposes the right kind of agent-native
+flow cytometry path for harder follow-up tasks:
 `open_fcs`, `get_plot_context`, `upsert_gate`, `compute_gate_stats`,
 `validate_gate_qc`, and `submit_report`.
 
