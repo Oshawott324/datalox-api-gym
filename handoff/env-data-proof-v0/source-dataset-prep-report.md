@@ -18,7 +18,7 @@ The public source pool now covers:
 
 | Family | Prepared Sources | Role |
 |---|---:|---|
-| FlowCyto | 4 | Public flowCore FCS package, two FCS files, compensation matrix. |
+| FlowCyto | 3 | Public flowCore FCS files and compensation matrix. |
 | Molecule Biology | 4 | NCBI accession-versioned GenBank/FASTA records. |
 | Scientific-data QC | 5 | MultiQC reports/tables and 10x PBMC3k matrix. |
 | Protein structure | 2 | RCSB 1AKE mmCIF and entry JSON. |
@@ -70,8 +70,8 @@ That is a project-local fixture. For public seed recapture, use:
 - `flowcore-0877408774-b08-fcs`
 - `flowcore-compmatrix`
 
-These come from Bioconductor `flowCore_2.22.1` / pinned `RGLab/flowCore`
-commit `4935c7bf318697b3128ee50dae81018a6b246ab8`.
+These come from pinned `RGLab/flowCore` commit
+`4935c7bf318697b3128ee50dae81018a6b246ab8`.
 
 ### Molecule Biology
 

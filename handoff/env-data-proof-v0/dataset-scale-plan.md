@@ -72,7 +72,7 @@ Current primary seed mix:
 Current capture status:
 
 - 13 seed task specs validate.
-- 15 public source records are prepared in
+- 14 public source records are prepared in
   `source-datasets.manifest.json` and validate with
   `tools/verify-source-datasets.mjs`.
 - `task-source-gate.csv` marks 4 tasks as `source_backed_seed_row`, 1 task as

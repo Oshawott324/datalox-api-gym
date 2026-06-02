@@ -8,44 +8,11 @@
   },
   "sources": [
     {
-      "source_id": "flowcore-bioconductor-2-22-1",
-      "family": "flowcyto",
-      "name": "Bioconductor flowCore 2.22.1 source package",
-      "artifact_kind": "fcs_fixture_package",
-      "primary_url": "https://bioconductor.org/packages/3.22/bioc/src/contrib/flowCore_2.22.1.tar.gz",
-      "publication_tier": "public_pinned",
-      "license_status": "artistic-2.0",
-      "raw_artifact_policy": "copy_allowed_after_license_review",
-      "pin": {
-        "kind": "package_version",
-        "value": "flowCore_2.22.1",
-        "etag": "\"f8af4e04d1225cadc85fc24189fdfd37\"",
-        "content_length": "7823077",
-        "last_modified": "Tue, 12 May 2026 14:46:46 GMT"
-      },
-      "verification": {
-        "method": "head",
-        "expected_status": 200,
-        "checked_at": "2026-06-02T11:12:10Z",
-        "expected_content_type_prefix": "application/gzip"
-      },
-      "proposed_task_ids": [
-        "flowcyto-gating-qc-success",
-        "flowcyto-gating-qc-stale-revision-failure",
-        "flowcyto-gating-qc-report-validation-failure",
-        "flowcyto-fcs-compensation-metadata-001"
-      ],
-      "notes": "Official package source for the public FlowCyto lane. Use the package paths for specific FCS artifacts when preparing recapture workspaces."
-    },
-    {
       "source_id": "flowcore-0877408774-e07-fcs",
       "family": "flowcyto",
       "name": "flowCore 0877408774.E07 FCS example",
       "artifact_kind": "fcs_file",
       "primary_url": "https://raw.githubusercontent.com/RGLab/flowCore/4935c7bf318697b3128ee50dae81018a6b246ab8/inst/extdata/0877408774.E07",
-      "companion_urls": [
-        "https://bioconductor.org/packages/3.22/bioc/src/contrib/flowCore_2.22.1.tar.gz"
-      ],
       "publication_tier": "public_pinned",
       "license_status": "artistic-2.0",
       "raw_artifact_policy": "copy_allowed_after_license_review",
@@ -74,9 +41,6 @@
       "name": "flowCore 0877408774.B08 FCS example",
       "artifact_kind": "fcs_file",
       "primary_url": "https://raw.githubusercontent.com/RGLab/flowCore/4935c7bf318697b3128ee50dae81018a6b246ab8/inst/extdata/0877408774.B08",
-      "companion_urls": [
-        "https://bioconductor.org/packages/3.22/bioc/src/contrib/flowCore_2.22.1.tar.gz"
-      ],
       "publication_tier": "public_pinned",
       "license_status": "artistic-2.0",
       "raw_artifact_policy": "copy_allowed_after_license_review",
@@ -94,7 +58,7 @@
         "flowcyto-gating-qc-stale-revision-failure",
         "flowcyto-gating-qc-report-validation-failure"
       ],
-      "notes": "Second public FCS from the same package. Use it to avoid all FlowCyto tasks being the same sample."
+      "notes": "Second public FCS from the same pinned upstream repository. Use it to avoid all FlowCyto tasks being the same sample."
     },
     {
       "source_id": "flowcore-compmatrix",
@@ -102,9 +66,6 @@
       "name": "flowCore compensation matrix example",
       "artifact_kind": "compensation_matrix",
       "primary_url": "https://raw.githubusercontent.com/RGLab/flowCore/4935c7bf318697b3128ee50dae81018a6b246ab8/inst/extdata/compdata/compmatrix",
-      "companion_urls": [
-        "https://bioconductor.org/packages/3.22/bioc/src/contrib/flowCore_2.22.1.tar.gz"
-      ],
       "publication_tier": "public_pinned",
       "license_status": "artistic-2.0",
       "raw_artifact_policy": "copy_allowed_after_license_review",
@@ -409,7 +370,6 @@
     {
       "set_id": "agent-native-science-seed-public-sources-v0",
       "source_ids": [
-        "flowcore-bioconductor-2-22-1",
         "flowcore-0877408774-e07-fcs",
         "flowcore-0877408774-b08-fcs",
         "flowcore-compmatrix",

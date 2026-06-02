@@ -46,7 +46,7 @@ plumbing.
 As of 2026-06-01, the seed handoff has moved past task-spec design and into
 captured tool observations:
 
-- `source-datasets.manifest.json` records 15 public source records across
+- `source-datasets.manifest.json` records 14 public source records across
   FlowCyto, Molecule Biology, scientific-data QC, and protein-structure
   readiness.
 - `task-source-gate.csv` marks which current rows are source-backed and which
