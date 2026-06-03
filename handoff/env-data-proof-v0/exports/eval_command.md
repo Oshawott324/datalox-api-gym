@@ -9,8 +9,12 @@ emit the target JSON.
 `exports/eval.tool_env.seed.jsonl` is the primary environment-facing eval
 contract: the model starts from the task prompt and must use domain tools.
 
-`exports/sft.tool_trajectory.seed.jsonl` is the primary SFT handoff for the
-agent-native environment proof. `exports/sft.seed.chat.jsonl` remains a
+`exports/sft.tool_messages.seed.jsonl` is the collaborator-facing SFT handoff:
+standard `system`/`user`/`assistant`/`tool` messages with assistant tool
+calls followed by tool observations.
+
+`exports/sft.tool_trajectory.seed.jsonl` keeps the same information in a
+Datalox-rich trajectory/audit shape. `exports/sft.seed.chat.jsonl` remains a
 final-answer formatting smoke file.
 
 ## Context-Eval Smoke Baseline

@@ -74,8 +74,11 @@ captured tool observations:
   agent must call tools instead of reading preloaded observations.
 - `exports/sft.seed.chat.jsonl` contains 7 train-only final-answer SFT smoke
   rows.
+- `exports/sft.tool_messages.seed.jsonl` contains 7 train-only
+  system/user/assistant/tool SFT rows for collaborator loaders that expect
+  standard tool-chat turns.
 - `exports/sft.tool_trajectory.seed.jsonl` contains 7 train-only
-  tool-trajectory SFT rows.
+  tool-trajectory SFT rows in the richer Datalox audit/provenance shape.
 - `exports/eval_command.md` records the trainable-base baseline command.
 - `exports/eval.baseline.smoke.jsonl` passes the local verifier-smoke baseline:
   13/13 rows parse and 13/13 fail the verifier as expected.
@@ -556,9 +559,10 @@ There are two eval/export modes now:
   `exports/sft.seed.chat.jsonl`. These rows preload replay observations and
   test final-answer formatting and evidence citation.
 - Tool-env eval and training: `exports/eval.tool_env.seed.jsonl` and
-  `exports/sft.tool_trajectory.seed.jsonl`. These are the primary rows for the
-  agent-native environment proof because the model must learn or evaluate tool
-  actions, not just read a context block.
+  `exports/sft.tool_messages.seed.jsonl`. The message file is the primary
+  collaborator-facing SFT handoff because it uses standard
+  system/user/assistant/tool turns. `exports/sft.tool_trajectory.seed.jsonl`
+  keeps the same rollout in a richer Datalox audit/provenance shape.
 
 Minimum `sft_frame.v1` fields:
 

@@ -10,7 +10,7 @@ an experiment design. It is not ready for a model-lift claim.
 The collaborator should be asked to answer:
 
 ```text
-Does this task schema, tool-trajectory SFT format, and tool-env eval contract
+Does this task schema, tool-message SFT format, and tool-env eval contract
 fit your normal post-training workflow? What needs to change before a real
 30/10/10 run?
 ```
@@ -30,6 +30,7 @@ some rows are plumbing-only rows.
 The collaborator can inspect concrete artifacts instead of vague plans:
 
 - Task/output schemas exist.
+- Standard tool-message SFT rows exist.
 - Tool-trajectory SFT rows exist.
 - Tool-env eval rows exist.
 - Source dataset manifest exists.
@@ -64,6 +65,7 @@ Send these files first:
 - `handoff/env-data-proof-v0/source-dataset-prep-report.md`
 - `handoff/env-data-proof-v0/source-datasets.manifest.json`
 - `handoff/env-data-proof-v0/task-source-gate.csv`
+- `handoff/env-data-proof-v0/exports/sft.tool_messages.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/sft.tool_trajectory.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/eval.tool_env.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/eval.seed.jsonl`
@@ -71,6 +73,7 @@ Send these files first:
 
 Optional supporting files:
 
+- `handoff/env-data-proof-v0/schema/tool-message-sft-row.schema.json`
 - `handoff/env-data-proof-v0/schema/tool-trajectory-sft-row.schema.json`
 - `handoff/env-data-proof-v0/schema/tool-env-eval-row.schema.json`
 - `handoff/env-data-proof-v0/hf/README.md`
@@ -85,7 +88,8 @@ post-training workflow before we scale the dataset.
 
 Can you review:
 
-1. Whether exports/sft.tool_trajectory.seed.jsonl is usable as SFT/LoRA data.
+1. Whether exports/sft.tool_messages.seed.jsonl is usable as SFT/LoRA data in
+   your normal system/user/assistant/tool turn format.
 2. Whether exports/eval.tool_env.seed.jsonl matches the kind of tool-env eval
    harness you would normally use.
 3. Which trainable open-weight base model you would choose for a small first
@@ -98,6 +102,12 @@ Can you review:
 Important boundary: current FlowCyto and Molecule rows are plumbing-only until
 recaptured from public flowCore/NCBI sources. The source gate is explicit in
 task-source-gate.csv.
+
+File boundary: exports/eval.seed.jsonl is not the training file. It is a
+context-eval file that preloads replay observations in the prompt. For SFT,
+start with exports/sft.tool_messages.seed.jsonl. It uses standard
+system/user/assistant/tool turns. exports/sft.tool_trajectory.seed.jsonl keeps
+the same rollout in a richer Datalox audit shape.
 
 The output we need from you is a short feasibility verdict:
 
@@ -145,8 +155,9 @@ wc -l handoff/env-data-proof-v0/exports/*.jsonl
 The handoff is successful if he returns answers to these five decisions:
 
 1. Which base model should be used for the first trainable run?
-2. Which SFT format should Datalox export first: chat messages, tool trajectory
-   turns, or another adapter?
+2. Whether the standard tool-message SFT export matches his loader, or whether
+   he needs a small adapter change such as `assistant.content: null`, sanitized
+   function names, or a different `tool_calls` field shape.
 3. What tool-env eval harness shape does he need?
 4. What exact metadata is missing from the current rows?
 5. What is the minimum dataset size he considers worth training on?
@@ -169,6 +180,8 @@ The package becomes ready for an actual LoRA/SFT run only after:
 - PBMC3k derivation is locked or the task is marked derived-table-only;
 - canonical replay bundles exist for the rows used in training/eval;
 - `eval.tool_env.seed.jsonl` can be executed by a tool-using agent harness;
+- `sft.tool_messages.seed.jsonl` loads in the collaborator's SFT stack without
+  manual conversion;
 - split is at least 30 train / 10 dev / 10 test for a first signal test.
 
 Until then, the correct collaborator ask is workflow review and experiment

@@ -19,6 +19,8 @@ const toolEnvEvalOutPath = process.argv.find((arg) => arg.startsWith("--tool-env
   ?? path.join(exportsRoot, "eval.tool_env.seed.jsonl");
 const toolTrajectorySftOutPath = process.argv.find((arg) => arg.startsWith("--tool-trajectory-out="))?.slice("--tool-trajectory-out=".length)
   ?? path.join(exportsRoot, "sft.tool_trajectory.seed.jsonl");
+const toolMessageSftOutPath = process.argv.find((arg) => arg.startsWith("--tool-message-out="))?.slice("--tool-message-out=".length)
+  ?? path.join(exportsRoot, "sft.tool_messages.seed.jsonl");
 
 const splitAssignments = new Map(Object.entries({
   "flowcyto-gating-qc-success": "train",
@@ -41,6 +43,7 @@ async function main() {
   const validateSftRow = await loadSchemaValidator("sft-chat-row.schema.json");
   const validateToolEnvEvalRow = await loadSchemaValidator("tool-env-eval-row.schema.json");
   const validateToolTrajectorySftRow = await loadSchemaValidator("tool-trajectory-sft-row.schema.json");
+  const validateToolMessageSftRow = await loadSchemaValidator("tool-message-sft-row.schema.json");
   const validateSplitMetadata = await loadSchemaValidator("split-metadata.schema.json");
   const taskDirs = await findTaskDirs();
   await fs.mkdir(exportsRoot, { recursive: true });
@@ -49,6 +52,7 @@ async function main() {
   const sftRows = [];
   const toolEnvEvalRows = [];
   const toolTrajectorySftRows = [];
+  const toolMessageSftRows = [];
   for (const task of taskDirs) {
     const row = await buildEvalRow(task);
     if (!validateEvalRow(row)) {
@@ -74,6 +78,12 @@ async function main() {
         throw new Error(`${task.spec.task_id}: tool-trajectory SFT row failed schema validation ${JSON.stringify(validateToolTrajectorySftRow.errors)}`);
       }
       toolTrajectorySftRows.push(toolTrajectorySftRow);
+
+      const toolMessageSftRow = buildToolMessageSftRow(toolTrajectorySftRow);
+      if (!validateToolMessageSftRow(toolMessageSftRow)) {
+        throw new Error(`${task.spec.task_id}: tool-message SFT row failed schema validation ${JSON.stringify(validateToolMessageSftRow.errors)}`);
+      }
+      toolMessageSftRows.push(toolMessageSftRow);
     }
   }
 
@@ -86,6 +96,7 @@ async function main() {
   await fs.writeFile(sftOutPath, `${sftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(toolEnvEvalOutPath, `${toolEnvEvalRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(toolTrajectorySftOutPath, `${toolTrajectorySftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
+  await fs.writeFile(toolMessageSftOutPath, `${toolMessageSftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(splitOutPath, `${JSON.stringify(splitMetadata, null, 2)}\n`, "utf8");
   await writeBaselineCommand();
   process.stdout.write(`${JSON.stringify({
@@ -94,11 +105,13 @@ async function main() {
     sft_out: path.relative(repoRoot, sftOutPath),
     tool_env_eval_out: path.relative(repoRoot, toolEnvEvalOutPath),
     tool_trajectory_sft_out: path.relative(repoRoot, toolTrajectorySftOutPath),
+    tool_message_sft_out: path.relative(repoRoot, toolMessageSftOutPath),
     split_out: path.relative(repoRoot, splitOutPath),
     eval_rows: rows.length,
     sft_rows: sftRows.length,
     tool_env_eval_rows: toolEnvEvalRows.length,
     tool_trajectory_sft_rows: toolTrajectorySftRows.length,
+    tool_message_sft_rows: toolMessageSftRows.length,
     split_counts: splitMetadata.counts,
   }, null, 2)}\n`);
 }
@@ -309,6 +322,70 @@ async function buildToolTrajectorySftRow({ taskDir, spec }, evalRow) {
   };
 }
 
+function buildToolMessageSftRow(toolTrajectorySftRow) {
+  return {
+    schema_version: "agent_native_seed_tool_message_sft_row.v0",
+    task_id: toolTrajectorySftRow.task_id,
+    family: toolTrajectorySftRow.family,
+    split: toolTrajectorySftRow.split,
+    training_mode: "tool_env_message_sft_handoff",
+    source_kind: toolTrajectorySftRow.source_kind,
+    runtime_kind: toolTrajectorySftRow.runtime_kind,
+    message_format: "openai_tool_messages",
+    messages: [
+      ...toolTrajectorySftRow.messages,
+      ...toolTrajectorySftRow.trajectory.flatMap((step) => {
+        if (step.type === "assistant_action") {
+          return [{
+            role: "assistant",
+            content: "",
+            tool_calls: [
+              {
+                id: toolCallId(step),
+                type: "function",
+                function: {
+                  name: step.tool_name,
+                  arguments: JSON.stringify(step.arguments ?? {}),
+                },
+              },
+            ],
+          }];
+        }
+        if (step.type === "tool_observation") {
+          return [{
+            role: "tool",
+            tool_call_id: toolCallId(step),
+            name: step.tool_name,
+            content: JSON.stringify({
+              observation: step.observation,
+              evidence_ids: step.evidence_ids,
+              workspace_revision: step.workspace_revision,
+            }),
+          }];
+        }
+        if (step.type === "assistant_final") {
+          return [{
+            role: "assistant",
+            content: JSON.stringify(step.answer),
+          }];
+        }
+        throw new Error(`${toolTrajectorySftRow.task_id}: unsupported trajectory step ${step.type}`);
+      }),
+    ],
+    source_answer_path: toolTrajectorySftRow.source_answer_path,
+    verifier_spec_path: toolTrajectorySftRow.verifier_spec_path,
+    observation_path: toolTrajectorySftRow.observation_path,
+    split_metadata_path: toolTrajectorySftRow.split_metadata_path,
+    evidence_ids: toolTrajectorySftRow.evidence_ids,
+    export_gate: toolTrajectorySftRow.export_gate,
+  };
+}
+
+function toolCallId(step) {
+  const safeToolName = step.tool_name.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `call_${String(step.sequence_index).padStart(3, "0")}_${safeToolName}`;
+}
+
 function runtimeKindForFamily(family) {
   if (family === "flowcyto" || family === "molecule-biology") return "sibling_domain_tool_runtime";
   return "fixture_tool_runtime";
@@ -422,8 +499,12 @@ emit the target JSON.
 \`exports/eval.tool_env.seed.jsonl\` is the primary environment-facing eval
 contract: the model starts from the task prompt and must use domain tools.
 
-\`exports/sft.tool_trajectory.seed.jsonl\` is the primary SFT handoff for the
-agent-native environment proof. \`exports/sft.seed.chat.jsonl\` remains a
+\`exports/sft.tool_messages.seed.jsonl\` is the collaborator-facing SFT handoff:
+standard \`system\`/\`user\`/\`assistant\`/\`tool\` messages with assistant tool
+calls followed by tool observations.
+
+\`exports/sft.tool_trajectory.seed.jsonl\` keeps the same information in a
+Datalox-rich trajectory/audit shape. \`exports/sft.seed.chat.jsonl\` remains a
 final-answer formatting smoke file.
 
 ## Context-Eval Smoke Baseline

@@ -965,9 +965,9 @@
         </tr>
         <tr>
           <td>9. Export <code>sft_frame.v1</code></td>
-          <td>Convert verifier-passing train trajectories into tool-trajectory SFT rows. Keep final-answer chat rows only as a formatting smoke artifact. Failed baseline answers are not SFT targets.</td>
-          <td><code>exports/sft.tool_trajectory.seed.jsonl</code> plus <code>exports/sft.seed.chat.jsonl</code> for smoke</td>
-          <td>Rows include task id, split, model-visible task prompt, target tool action/observation sequence, source run id, replay bundle id, and verifier result id.</td>
+          <td>Convert verifier-passing train trajectories into standard system/user/assistant/tool message rows for post-training loaders. Keep the richer Datalox tool-trajectory rows as audit/provenance, and keep final-answer chat rows only as a formatting smoke artifact. Failed baseline answers are not SFT targets.</td>
+          <td><code>exports/sft.tool_messages.seed.jsonl</code> plus <code>exports/sft.tool_trajectory.seed.jsonl</code> and <code>exports/sft.seed.chat.jsonl</code></td>
+          <td>Rows include task id, split, model-visible task prompt, assistant tool calls, tool observations, final verifier-passing answer, evidence ids, source paths, and verifier metadata.</td>
         </tr>
         <tr>
           <td>10. Lock eval command and split</td>

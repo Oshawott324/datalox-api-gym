@@ -196,6 +196,10 @@
         <strong>7</strong>
         <span>train-only tool-trajectory SFT rows</span>
       </div>
+      <div class="metric">
+        <strong>7</strong>
+        <span>train-only system/user/assistant/tool SFT rows</span>
+      </div>
     </div>
 
     <section class="section">
@@ -252,8 +256,13 @@
             <td>7</td>
           </tr>
           <tr>
+            <td><code>exports/sft.tool_messages.seed.jsonl</code></td>
+            <td>Collaborator-facing SFT rows with standard <code>system</code>, <code>user</code>, <code>assistant</code>, and <code>tool</code> turns.</td>
+            <td>7</td>
+          </tr>
+          <tr>
             <td><code>exports/sft.tool_trajectory.seed.jsonl</code></td>
-            <td>Primary train-only SFT handoff for tool-use trajectories.</td>
+            <td>Datalox-rich audit shape for the same train-only tool-use trajectories.</td>
             <td>7</td>
           </tr>
           <tr>
@@ -350,15 +359,22 @@ eval.tool_env.seed.jsonl
     <section class="section">
       <h2>Step 3: Prepare Train Rows</h2>
       <p>
-        Use <code>exports/sft.tool_trajectory.seed.jsonl</code> as the primary
-        SFT source for the agent-native environment proof. Use
-        <code>exports/sft.seed.chat.jsonl</code> only as a final-answer format
-        smoke file. If a stack wants only chat messages without Datalox
-        provenance columns, create a stripped final-answer file:
+        Use <code>exports/sft.tool_messages.seed.jsonl</code> as the primary
+        SFT source for collaborator review. It contains standard
+        <code>system</code>, <code>user</code>, <code>assistant</code>, and
+        <code>tool</code> turns: every assistant tool call is followed by the
+        matching tool observation, and the final assistant turn is the
+        verifier-passing answer.
+      </p>
+      <p>
+        Keep <code>exports/sft.tool_trajectory.seed.jsonl</code> for Datalox
+        audit/provenance. Use <code>exports/sft.seed.chat.jsonl</code> only as a
+        final-answer format smoke file. If a stack wants only the message array
+        without Datalox provenance columns, create a stripped file:
       </p>
       <pre><code>node -e '
 const fs = require("fs");
-const input = "handoff/env-data-proof-v0/exports/sft.seed.chat.jsonl";
+const input = "handoff/env-data-proof-v0/exports/sft.tool_messages.seed.jsonl";
 const output = "handoff/env-data-proof-v0/exports/sft.train.messages.jsonl";
 const rows = fs.readFileSync(input, "utf8").trim().split(/\n/).filter(Boolean).map(JSON.parse);
 fs.writeFileSync(output, rows.map((row) => JSON.stringify({ messages: row.messages })).join("\n") + "\n");
@@ -381,8 +397,9 @@ console.log({ input_rows: rows.length, output });
       </p>
       <ul>
         <li>Base model: <code>Qwen/Qwen3-1.7B</code> or the agreed replacement.</li>
-        <li>Primary training file: <code>exports/sft.tool_trajectory.seed.jsonl</code>.</li>
-        <li>Format-smoke training file: <code>exports/sft.seed.chat.jsonl</code> or stripped <code>exports/sft.train.messages.jsonl</code>.</li>
+        <li>Primary training file: <code>exports/sft.tool_messages.seed.jsonl</code>.</li>
+        <li>Audit/provenance file: <code>exports/sft.tool_trajectory.seed.jsonl</code>.</li>
+        <li>Format-smoke training file: <code>exports/sft.seed.chat.jsonl</code> if the stack cannot yet train tool turns.</li>
         <li>Training rows only: 7 rows in this smoke split.</li>
         <li>Output: LoRA adapter or merged model with the base model id recorded.</li>
       </ul>

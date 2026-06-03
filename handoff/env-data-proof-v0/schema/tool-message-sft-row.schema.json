@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/tool-message-sft-row.schema.json",
+  "title": "Datalox Env Data Proof Tool Message SFT Row",
+  "description": "One train-split SFT row exported as standard system/user/assistant/tool messages, derived from captured tool observations and a verifier-passing final answer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "family",
+    "split",
+    "training_mode",
+    "source_kind",
+    "runtime_kind",
+    "message_format",
+    "messages",
+    "source_answer_path",
+    "verifier_spec_path",
+    "observation_path",
+    "split_metadata_path",
+    "evidence_ids",
+    "export_gate"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agent_native_seed_tool_message_sft_row.v0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "flowcyto",
+        "molecule-biology",
+        "scientific-data-qc"
+      ]
+    },
+    "split": {
+      "const": "train"
+    },
+    "training_mode": {
+      "const": "tool_env_message_sft_handoff"
+    },
+    "source_kind": {
+      "type": "string",
+      "enum": [
+        "live_domain_tool_rollout",
+        "fixture_tool_rollout",
+        "mixed_or_imported_tool_rollout"
+      ]
+    },
+    "runtime_kind": {
+      "type": "string",
+      "enum": [
+        "sibling_domain_tool_runtime",
+        "fixture_tool_runtime"
+      ]
+    },
+    "message_format": {
+      "const": "openai_tool_messages"
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role",
+              "content"
+            ],
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "user"
+                ]
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role",
+              "content",
+              "tool_calls"
+            ],
+            "properties": {
+              "role": {
+                "const": "assistant"
+              },
+              "content": {
+                "type": "string"
+              },
+              "tool_calls": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "type",
+                    "function"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "type": {
+                      "const": "function"
+                    },
+                    "function": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "name",
+                        "arguments"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "arguments": {
+                          "type": "string",
+                          "minLength": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role",
+              "tool_call_id",
+              "name",
+              "content"
+            ],
+            "properties": {
+              "role": {
+                "const": "tool"
+              },
+              "tool_call_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "content": {
+                "type": "string",
+                "minLength": 2
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role",
+              "content"
+            ],
+            "properties": {
+              "role": {
+                "const": "assistant"
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    "source_answer_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verifier_spec_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observation_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "split_metadata_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "export_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed",
+        "redaction"
+      ],
+      "properties": {
+        "allowed": {
+          "const": true
+        },
+        "redaction": {
+          "const": "none_needed"
+        }
+      }
+    }
+  }
+}
