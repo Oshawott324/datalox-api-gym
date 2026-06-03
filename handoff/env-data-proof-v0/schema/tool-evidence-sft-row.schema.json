@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://datalox.local/schemas/env-data-proof-v0/tool-trajectory-sft-row.schema.json",
-  "title": "Datalox Env Data Proof Tool Trajectory SFT Row",
-  "description": "One train-split SFT row for tool-use trajectory learning, derived from captured tool observations and a verifier-passing final answer.",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/tool-evidence-sft-row.schema.json",
+  "title": "Datalox Env Data Proof Tool Evidence SFT Row",
+  "description": "One train-split SFT row for tool-use evidence learning, derived from captured tool observations and a verifier-passing final answer.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,7 +14,7 @@
     "source_kind",
     "runtime_kind",
     "messages",
-    "trajectory",
+    "tool_steps",
     "source_answer_path",
     "verifier_spec_path",
     "observation_path",
@@ -24,7 +24,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "agent_native_seed_tool_trajectory_sft_row.v0"
+      "const": "agent_native_seed_tool_evidence_sft_row.v0"
     },
     "task_id": {
       "type": "string",
@@ -42,7 +42,7 @@
       "const": "train"
     },
     "training_mode": {
-      "const": "tool_env_trajectory_sft_smoke"
+      "const": "tool_env_evidence_sft_smoke"
     },
     "source_kind": {
       "type": "string",
@@ -84,7 +84,7 @@
         }
       }
     },
-    "trajectory": {
+    "tool_steps": {
       "type": "array",
       "minItems": 3,
       "items": {

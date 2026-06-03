@@ -130,7 +130,7 @@ approved source dataset
   -> tool_io_record.v1
   -> replay_bundle.v1
   -> verifier pass
-  -> tool-trajectory SFT/eval export
+  -> tool-evidence SFT/eval export
 ```
 
 The highest-value order is:

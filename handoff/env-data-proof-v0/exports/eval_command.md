@@ -13,8 +13,8 @@ contract: the model starts from the task prompt and must use domain tools.
 standard `system`/`user`/`assistant`/`tool` messages with assistant tool
 calls followed by tool observations.
 
-`exports/sft.tool_trajectory.seed.jsonl` keeps the same information in a
-Datalox-rich trajectory/audit shape. `exports/sft.seed.chat.jsonl` remains a
+`exports/sft.tool_evidence.seed.jsonl` keeps the same information in a
+Datalox-rich evidence/audit shape. `exports/sft.seed.chat.jsonl` remains a
 final-answer formatting smoke file.
 
 ## Context-Eval Smoke Baseline

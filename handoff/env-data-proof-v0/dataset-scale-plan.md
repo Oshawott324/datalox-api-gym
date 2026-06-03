@@ -98,8 +98,8 @@ Current capture status:
   derived from verifier-passing answers.
 - `exports/sft.tool_messages.seed.jsonl` has 7 train-only
   system/user/assistant/tool SFT rows for normal post-training loaders.
-- `exports/sft.tool_trajectory.seed.jsonl` has the same 7 train-only
-  tool-trajectory SFT rows in the Datalox audit/provenance shape. Four rows are
+- `exports/sft.tool_evidence.seed.jsonl` has the same 7 train-only
+  tool-evidence SFT rows in the Datalox audit/provenance shape. Four rows are
   captured from sibling domain-tool runtimes
   (`flowcyto`/`molecule-biology`), and three rows are fixture-tool rollouts from
   scientific-data QC. The sibling-domain rows remain smoke rows for a public

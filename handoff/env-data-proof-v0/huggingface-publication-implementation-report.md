@@ -21,7 +21,7 @@ public scientific artifact or domain MCP fixture
   -> replay_bundle.v1
   -> deterministic verifier result
   -> baseline failure
-  -> verifier-passing teacher trajectory
+  -> verifier-passing teacher tool_steps
   -> sft_frame.v1 / eval rows
   -> Hugging Face dataset repository
 ```
@@ -38,7 +38,7 @@ The stronger product claim should be:
 
 Do not claim model improvement yet. Model lift requires a larger locked split.
 This v0 should prove source quality, replayability, verifier determinism, and
-export shape. Source quality is now gated separately from trajectory/export
+export shape. Source quality is now gated separately from tool_steps/export
 plumbing.
 
 ## Current Passed Artifacts
@@ -77,8 +77,8 @@ captured tool observations:
 - `exports/sft.tool_messages.seed.jsonl` contains 7 train-only
   system/user/assistant/tool SFT rows for collaborator loaders that expect
   standard tool-chat turns.
-- `exports/sft.tool_trajectory.seed.jsonl` contains 7 train-only
-  tool-trajectory SFT rows in the richer Datalox audit/provenance shape.
+- `exports/sft.tool_evidence.seed.jsonl` contains 7 train-only
+  tool-evidence SFT rows in the richer Datalox audit/provenance shape.
 - `exports/eval_command.md` records the trainable-base baseline command.
 - `exports/eval.baseline.smoke.jsonl` passes the local verifier-smoke baseline:
   13/13 rows parse and 13/13 fail the verifier as expected.
@@ -195,7 +195,7 @@ families/<family>/tasks/<task_id>/
   runs/
     baseline.output.json
     teacher.output.json
-    teacher.trajectory.json
+    teacher.tool_steps.json
 ```
 
 Do not use live upstream calls during replay. Live URLs are provenance and
@@ -534,9 +534,9 @@ hide answer-bearing titles, or add harder tasks within the weakest family.
 
 ### Step 8: Create Teacher Trajectories
 
-For each train task, create one verifier-passing teacher trajectory.
+For each train task, create one verifier-passing teacher tool_steps.
 
-Teacher trajectory must include:
+Teacher tool_steps must include:
 
 - task id
 - split
@@ -561,7 +561,7 @@ There are two eval/export modes now:
 - Tool-env eval and training: `exports/eval.tool_env.seed.jsonl` and
   `exports/sft.tool_messages.seed.jsonl`. The message file is the primary
   collaborator-facing SFT handoff because it uses standard
-  system/user/assistant/tool turns. `exports/sft.tool_trajectory.seed.jsonl`
+  system/user/assistant/tool turns. `exports/sft.tool_evidence.seed.jsonl`
   keeps the same rollout in a richer Datalox audit/provenance shape.
 
 Minimum `sft_frame.v1` fields:
@@ -747,7 +747,7 @@ Publish only when all are true:
 | Replay determinism | replay bundle verifies and no live source URL is called during eval |
 | Verifier determinism | known-good output passes and known-bad output fails |
 | Baseline report | baseline output and verifier result exist for every task |
-| Teacher trajectory | one verifier-passing teacher trajectory exists per train task |
+| Teacher tool_steps | one verifier-passing teacher tool_steps exists per train task |
 | Export shape | `sft.seed.jsonl`, `eval.baseline.jsonl`, and `verifier.results.jsonl` validate |
 | Privacy/security | no tokens, private data, credentials, or personal data |
 | Dataset card | `README.md` includes intended use, limitations, provenance, cost, and non-claims |
@@ -765,7 +765,7 @@ Publish only when all are true:
 7. Write `verifier/verifier.spec.json` per task family and per task as needed.
 8. Run known-good and known-bad verifier checks.
 9. Run trainable-base baseline and save `eval.baseline.jsonl`.
-10. Create one teacher trajectory per train task.
+10. Create one teacher tool_steps per train task.
 11. Export `sft.seed.jsonl`.
 12. Generate `hf/README.md`, `reports/cost-report.md`, and `data/worlds.jsonl`.
 13. Validate all JSON/JSONL, schemas, replay bundles, and checksums.

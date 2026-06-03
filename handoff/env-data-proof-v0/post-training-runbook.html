@@ -167,7 +167,7 @@
       This runbook is the handoff contract for a small, real SFT smoke test. The
       goal is not to claim reliable lift from 13 tasks. The goal is to prove the
       workflow: agent-native domain tools -> captured rollout evidence ->
-      train-only tool-trajectory SFT rows -> same-base tool-env eval before
+      train-only tool-evidence SFT rows -> same-base tool-env eval before
       and after LoRA.
     </p>
     <p class="lede">
@@ -194,7 +194,7 @@
       </div>
       <div class="metric">
         <strong>7</strong>
-        <span>train-only tool-trajectory SFT rows</span>
+        <span>train-only tool-evidence SFT rows</span>
       </div>
       <div class="metric">
         <strong>7</strong>
@@ -261,7 +261,7 @@
             <td>7</td>
           </tr>
           <tr>
-            <td><code>exports/sft.tool_trajectory.seed.jsonl</code></td>
+            <td><code>exports/sft.tool_evidence.seed.jsonl</code></td>
             <td>Datalox-rich audit shape for the same train-only tool-use trajectories.</td>
             <td>7</td>
           </tr>
@@ -367,7 +367,7 @@ eval.tool_env.seed.jsonl
         verifier-passing answer.
       </p>
       <p>
-        Keep <code>exports/sft.tool_trajectory.seed.jsonl</code> for Datalox
+        Keep <code>exports/sft.tool_evidence.seed.jsonl</code> for Datalox
         audit/provenance. Use <code>exports/sft.seed.chat.jsonl</code> only as a
         final-answer format smoke file. If a stack wants only the message array
         without Datalox provenance columns, create a stripped file:
@@ -398,13 +398,13 @@ console.log({ input_rows: rows.length, output });
       <ul>
         <li>Base model: <code>Qwen/Qwen3-1.7B</code> or the agreed replacement.</li>
         <li>Primary training file: <code>exports/sft.tool_messages.seed.jsonl</code>.</li>
-        <li>Audit/provenance file: <code>exports/sft.tool_trajectory.seed.jsonl</code>.</li>
+        <li>Audit/provenance file: <code>exports/sft.tool_evidence.seed.jsonl</code>.</li>
         <li>Format-smoke training file: <code>exports/sft.seed.chat.jsonl</code> if the stack cannot yet train tool turns.</li>
         <li>Training rows only: 7 rows in this smoke split.</li>
         <li>Output: LoRA adapter or merged model with the base model id recorded.</li>
       </ul>
       <div class="callout">
-        This SFT run is intentionally tiny. It validates formatting, trajectory
+        This SFT run is intentionally tiny. It validates formatting, tool_steps
         masking, adapter loading, and held-out eval mechanics. It is not a
         credible model-improvement claim by itself.
       </div>

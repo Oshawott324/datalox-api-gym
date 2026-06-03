@@ -31,7 +31,7 @@ The collaborator can inspect concrete artifacts instead of vague plans:
 
 - Task/output schemas exist.
 - Standard tool-message SFT rows exist.
-- Tool-trajectory SFT rows exist.
+- Tool-evidence SFT rows exist.
 - Tool-env eval rows exist.
 - Source dataset manifest exists.
 - Task-source gate exists.
@@ -66,7 +66,7 @@ Send these files first:
 - `handoff/env-data-proof-v0/source-datasets.manifest.json`
 - `handoff/env-data-proof-v0/task-source-gate.csv`
 - `handoff/env-data-proof-v0/exports/sft.tool_messages.seed.jsonl`
-- `handoff/env-data-proof-v0/exports/sft.tool_trajectory.seed.jsonl`
+- `handoff/env-data-proof-v0/exports/sft.tool_evidence.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/eval.tool_env.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/eval.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/eval_command.md`
@@ -74,7 +74,7 @@ Send these files first:
 Optional supporting files:
 
 - `handoff/env-data-proof-v0/schema/tool-message-sft-row.schema.json`
-- `handoff/env-data-proof-v0/schema/tool-trajectory-sft-row.schema.json`
+- `handoff/env-data-proof-v0/schema/tool-evidence-sft-row.schema.json`
 - `handoff/env-data-proof-v0/schema/tool-env-eval-row.schema.json`
 - `handoff/env-data-proof-v0/hf/README.md`
 - `handoff/env-data-proof-v0/huggingface-publication-implementation-report.md`
@@ -106,7 +106,7 @@ task-source-gate.csv.
 File boundary: exports/eval.seed.jsonl is not the training file. It is a
 context-eval file that preloads replay observations in the prompt. For SFT,
 start with exports/sft.tool_messages.seed.jsonl. It uses standard
-system/user/assistant/tool turns. exports/sft.tool_trajectory.seed.jsonl keeps
+system/user/assistant/tool turns. exports/sft.tool_evidence.seed.jsonl keeps
 the same rollout in a richer Datalox audit shape.
 
 The output we need from you is a short feasibility verdict:

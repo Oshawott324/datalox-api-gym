@@ -100,7 +100,7 @@ metadata.
 - The package is for replay/verifier/export validation, not reliable SFT lift.
   The primary collaborator-facing training handoff is
   `exports/sft.tool_messages.seed.jsonl`, which uses standard
-  system/user/assistant/tool turns. `exports/sft.tool_trajectory.seed.jsonl`
+  system/user/assistant/tool turns. `exports/sft.tool_evidence.seed.jsonl`
   keeps the same information in a Datalox audit/provenance shape. The
   final-answer `exports/sft.seed.chat.jsonl` is only a formatting smoke file.
 - The current split is `seed-smoke`: 7 train, 3 dev, and 3 test tasks. It is a

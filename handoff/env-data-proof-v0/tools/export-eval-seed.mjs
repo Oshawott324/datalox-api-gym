@@ -17,8 +17,8 @@ const sftOutPath = process.argv.find((arg) => arg.startsWith("--sft-out="))?.sli
   ?? path.join(exportsRoot, "sft.seed.chat.jsonl");
 const toolEnvEvalOutPath = process.argv.find((arg) => arg.startsWith("--tool-env-out="))?.slice("--tool-env-out=".length)
   ?? path.join(exportsRoot, "eval.tool_env.seed.jsonl");
-const toolTrajectorySftOutPath = process.argv.find((arg) => arg.startsWith("--tool-trajectory-out="))?.slice("--tool-trajectory-out=".length)
-  ?? path.join(exportsRoot, "sft.tool_trajectory.seed.jsonl");
+const toolEvidenceSftOutPath = process.argv.find((arg) => arg.startsWith("--tool-evidence-out="))?.slice("--tool-evidence-out=".length)
+  ?? path.join(exportsRoot, "sft.tool_evidence.seed.jsonl");
 const toolMessageSftOutPath = process.argv.find((arg) => arg.startsWith("--tool-message-out="))?.slice("--tool-message-out=".length)
   ?? path.join(exportsRoot, "sft.tool_messages.seed.jsonl");
 
@@ -42,7 +42,7 @@ async function main() {
   const validateEvalRow = await loadSchemaValidator("eval-seed-row.schema.json");
   const validateSftRow = await loadSchemaValidator("sft-chat-row.schema.json");
   const validateToolEnvEvalRow = await loadSchemaValidator("tool-env-eval-row.schema.json");
-  const validateToolTrajectorySftRow = await loadSchemaValidator("tool-trajectory-sft-row.schema.json");
+  const validateToolEvidenceSftRow = await loadSchemaValidator("tool-evidence-sft-row.schema.json");
   const validateToolMessageSftRow = await loadSchemaValidator("tool-message-sft-row.schema.json");
   const validateSplitMetadata = await loadSchemaValidator("split-metadata.schema.json");
   const taskDirs = await findTaskDirs();
@@ -51,7 +51,7 @@ async function main() {
   const rows = [];
   const sftRows = [];
   const toolEnvEvalRows = [];
-  const toolTrajectorySftRows = [];
+  const toolEvidenceSftRows = [];
   const toolMessageSftRows = [];
   for (const task of taskDirs) {
     const row = await buildEvalRow(task);
@@ -73,13 +73,13 @@ async function main() {
       }
       sftRows.push(sftRow);
 
-      const toolTrajectorySftRow = await buildToolTrajectorySftRow(task, row);
-      if (!validateToolTrajectorySftRow(toolTrajectorySftRow)) {
-        throw new Error(`${task.spec.task_id}: tool-trajectory SFT row failed schema validation ${JSON.stringify(validateToolTrajectorySftRow.errors)}`);
+      const toolEvidenceSftRow = await buildToolEvidenceSftRow(task, row);
+      if (!validateToolEvidenceSftRow(toolEvidenceSftRow)) {
+        throw new Error(`${task.spec.task_id}: tool-evidence SFT row failed schema validation ${JSON.stringify(validateToolEvidenceSftRow.errors)}`);
       }
-      toolTrajectorySftRows.push(toolTrajectorySftRow);
+      toolEvidenceSftRows.push(toolEvidenceSftRow);
 
-      const toolMessageSftRow = buildToolMessageSftRow(toolTrajectorySftRow);
+      const toolMessageSftRow = buildToolMessageSftRow(toolEvidenceSftRow);
       if (!validateToolMessageSftRow(toolMessageSftRow)) {
         throw new Error(`${task.spec.task_id}: tool-message SFT row failed schema validation ${JSON.stringify(validateToolMessageSftRow.errors)}`);
       }
@@ -95,7 +95,7 @@ async function main() {
   await fs.writeFile(outPath, `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(sftOutPath, `${sftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(toolEnvEvalOutPath, `${toolEnvEvalRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
-  await fs.writeFile(toolTrajectorySftOutPath, `${toolTrajectorySftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
+  await fs.writeFile(toolEvidenceSftOutPath, `${toolEvidenceSftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(toolMessageSftOutPath, `${toolMessageSftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(splitOutPath, `${JSON.stringify(splitMetadata, null, 2)}\n`, "utf8");
   await writeBaselineCommand();
@@ -104,13 +104,13 @@ async function main() {
     eval_out: path.relative(repoRoot, outPath),
     sft_out: path.relative(repoRoot, sftOutPath),
     tool_env_eval_out: path.relative(repoRoot, toolEnvEvalOutPath),
-    tool_trajectory_sft_out: path.relative(repoRoot, toolTrajectorySftOutPath),
+    tool_evidence_sft_out: path.relative(repoRoot, toolEvidenceSftOutPath),
     tool_message_sft_out: path.relative(repoRoot, toolMessageSftOutPath),
     split_out: path.relative(repoRoot, splitOutPath),
     eval_rows: rows.length,
     sft_rows: sftRows.length,
     tool_env_eval_rows: toolEnvEvalRows.length,
-    tool_trajectory_sft_rows: toolTrajectorySftRows.length,
+    tool_evidence_sft_rows: toolEvidenceSftRows.length,
     tool_message_sft_rows: toolMessageSftRows.length,
     split_counts: splitMetadata.counts,
   }, null, 2)}\n`);
@@ -273,20 +273,20 @@ function buildToolEnvEvalRow({ taskDir, spec }) {
   };
 }
 
-async function buildToolTrajectorySftRow({ taskDir, spec }, evalRow) {
+async function buildToolEvidenceSftRow({ taskDir, spec }, evalRow) {
   const observations = await readObservations(taskDir);
   const passAnswerPath = path.join(taskDir, "verifier", "expected.pass.json");
   const passAnswer = await readJson(passAnswerPath);
   return {
-    schema_version: "agent_native_seed_tool_trajectory_sft_row.v0",
+    schema_version: "agent_native_seed_tool_evidence_sft_row.v0",
     task_id: spec.task_id,
     family: spec.family,
     split: evalRow.split,
-    training_mode: "tool_env_trajectory_sft_smoke",
+    training_mode: "tool_env_evidence_sft_smoke",
     source_kind: sourceKindForObservations(observations),
     runtime_kind: runtimeKindForFamily(spec.family),
     messages: buildToolEnvEvalRow({ taskDir, spec }).messages,
-    trajectory: [
+    tool_steps: [
       ...observations.flatMap((row) => [
         {
           type: "assistant_action",
@@ -322,19 +322,19 @@ async function buildToolTrajectorySftRow({ taskDir, spec }, evalRow) {
   };
 }
 
-function buildToolMessageSftRow(toolTrajectorySftRow) {
+function buildToolMessageSftRow(toolEvidenceSftRow) {
   return {
     schema_version: "agent_native_seed_tool_message_sft_row.v0",
-    task_id: toolTrajectorySftRow.task_id,
-    family: toolTrajectorySftRow.family,
-    split: toolTrajectorySftRow.split,
+    task_id: toolEvidenceSftRow.task_id,
+    family: toolEvidenceSftRow.family,
+    split: toolEvidenceSftRow.split,
     training_mode: "tool_env_message_sft_handoff",
-    source_kind: toolTrajectorySftRow.source_kind,
-    runtime_kind: toolTrajectorySftRow.runtime_kind,
+    source_kind: toolEvidenceSftRow.source_kind,
+    runtime_kind: toolEvidenceSftRow.runtime_kind,
     message_format: "openai_tool_messages",
     messages: [
-      ...toolTrajectorySftRow.messages,
-      ...toolTrajectorySftRow.trajectory.flatMap((step) => {
+      ...toolEvidenceSftRow.messages,
+      ...toolEvidenceSftRow.tool_steps.flatMap((step) => {
         if (step.type === "assistant_action") {
           return [{
             role: "assistant",
@@ -369,15 +369,15 @@ function buildToolMessageSftRow(toolTrajectorySftRow) {
             content: JSON.stringify(step.answer),
           }];
         }
-        throw new Error(`${toolTrajectorySftRow.task_id}: unsupported trajectory step ${step.type}`);
+        throw new Error(`${toolEvidenceSftRow.task_id}: unsupported tool_steps step ${step.type}`);
       }),
     ],
-    source_answer_path: toolTrajectorySftRow.source_answer_path,
-    verifier_spec_path: toolTrajectorySftRow.verifier_spec_path,
-    observation_path: toolTrajectorySftRow.observation_path,
-    split_metadata_path: toolTrajectorySftRow.split_metadata_path,
-    evidence_ids: toolTrajectorySftRow.evidence_ids,
-    export_gate: toolTrajectorySftRow.export_gate,
+    source_answer_path: toolEvidenceSftRow.source_answer_path,
+    verifier_spec_path: toolEvidenceSftRow.verifier_spec_path,
+    observation_path: toolEvidenceSftRow.observation_path,
+    split_metadata_path: toolEvidenceSftRow.split_metadata_path,
+    evidence_ids: toolEvidenceSftRow.evidence_ids,
+    export_gate: toolEvidenceSftRow.export_gate,
   };
 }
 
@@ -503,8 +503,8 @@ contract: the model starts from the task prompt and must use domain tools.
 standard \`system\`/\`user\`/\`assistant\`/\`tool\` messages with assistant tool
 calls followed by tool observations.
 
-\`exports/sft.tool_trajectory.seed.jsonl\` keeps the same information in a
-Datalox-rich trajectory/audit shape. \`exports/sft.seed.chat.jsonl\` remains a
+\`exports/sft.tool_evidence.seed.jsonl\` keeps the same information in a
+Datalox-rich evidence/audit shape. \`exports/sft.seed.chat.jsonl\` remains a
 final-answer formatting smoke file.
 
 ## Context-Eval Smoke Baseline
