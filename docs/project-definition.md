@@ -43,6 +43,10 @@ cheap public scaling lane. FlowCyto remains a key family, but it should not be
 the entire public seed. See
 [budget-agent-rl-proof-demo-guide.html](./budget-agent-rl-proof-demo-guide.html)
 and [flowcyto-environment-pack-plan.html](./flowcyto-environment-pack-plan.html).
+For the current pilot motion, see
+[buyer-pilot-playbook.html](./buyer-pilot-playbook.html).
+For the physical lab replay and simulation ladder, see
+[physical-lab-replay-sim-ladder.html](./physical-lab-replay-sim-ladder.html).
 
 Primary consumption loop:
 

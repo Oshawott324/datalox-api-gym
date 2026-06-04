@@ -1,0 +1,10 @@
+LOCUS       pCircular                 24 bp    DNA     circular SYN 01-JUN-2026
+DEFINITION  Minimal circular plasmid fixture for Datalox runnable world.
+ACCESSION   PCIRCULAR
+VERSION     PCIRCULAR.1
+FEATURES             Location/Qualifiers
+     source          1..24
+                     /note="complete sequence"
+ORIGIN
+        1 acgtacgtacgtacgtacgtacgt
+//

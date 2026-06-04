@@ -1,0 +1,15 @@
+{
+  "task_id": "molecule-primer-validation-001",
+  "family": "molecule-biology",
+  "diagnosis": {
+    "class": "molecule_primer_decision",
+    "summary": "Primer can be added without tool evidence."
+  },
+  "evidence_ids": [],
+  "next_action": {
+    "type": "upsert_primer",
+    "summary": "Guess the primer."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": []
+}

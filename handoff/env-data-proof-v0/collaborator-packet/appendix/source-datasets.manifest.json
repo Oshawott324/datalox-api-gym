@@ -1,0 +1,391 @@
+{
+  "schema_version": "source_dataset_manifest.v0",
+  "updated": "2026-06-02",
+  "policy": {
+    "raw_artifact_default": "Do not copy raw upstream scientific artifacts into the public handoff by default. Publish source URLs, pins, derived tool observations, verifier specs, and export rows unless license review explicitly allows raw redistribution.",
+    "training_claim_gate": "A seed trajectory is training-claim eligible only when its task starts from one or more source ids in this manifest, the rollout was captured from those sources through the domain or fixture tools, and the final answer passes the deterministic verifier.",
+    "recapture_rule": "If the current task observations were captured from project-local or toy repo fixtures, they remain smoke rows until recaptured from the approved public source ids listed in task-source-gate.csv."
+  },
+  "sources": [
+    {
+      "source_id": "flowcore-0877408774-e07-fcs",
+      "family": "flowcyto",
+      "name": "flowCore 0877408774.E07 FCS example",
+      "artifact_kind": "fcs_file",
+      "primary_url": "https://raw.githubusercontent.com/RGLab/flowCore/4935c7bf318697b3128ee50dae81018a6b246ab8/inst/extdata/0877408774.E07",
+      "publication_tier": "public_pinned",
+      "license_status": "artistic-2.0",
+      "raw_artifact_policy": "copy_allowed_after_license_review",
+      "pin": {
+        "kind": "git_commit",
+        "value": "4935c7bf318697b3128ee50dae81018a6b246ab8",
+        "package_path": "flowCore/inst/extdata/0877408774.E07",
+        "etag": "\"9c15c60e305c825fca67aae73643cafedab83b1bcfcd4bbbdd0da865ce73ba9a\"",
+        "content_length": "162305"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:08Z",
+        "expected_content_type_prefix": "application/octet-stream"
+      },
+      "proposed_task_ids": [
+        "flowcyto-gating-qc-success",
+        "flowcyto-fcs-compensation-metadata-001"
+      ],
+      "notes": "Good first public FCS for recapturing FlowCyto gate/context/stats tasks and for metadata/compensation QC."
+    },
+    {
+      "source_id": "flowcore-0877408774-b08-fcs",
+      "family": "flowcyto",
+      "name": "flowCore 0877408774.B08 FCS example",
+      "artifact_kind": "fcs_file",
+      "primary_url": "https://raw.githubusercontent.com/RGLab/flowCore/4935c7bf318697b3128ee50dae81018a6b246ab8/inst/extdata/0877408774.B08",
+      "publication_tier": "public_pinned",
+      "license_status": "artistic-2.0",
+      "raw_artifact_policy": "copy_allowed_after_license_review",
+      "pin": {
+        "kind": "git_commit",
+        "value": "4935c7bf318697b3128ee50dae81018a6b246ab8",
+        "package_path": "flowCore/inst/extdata/0877408774.B08"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:15:00Z"
+      },
+      "proposed_task_ids": [
+        "flowcyto-gating-qc-stale-revision-failure",
+        "flowcyto-gating-qc-report-validation-failure"
+      ],
+      "notes": "Second public FCS from the same pinned upstream repository. Use it to avoid all FlowCyto tasks being the same sample."
+    },
+    {
+      "source_id": "flowcore-compmatrix",
+      "family": "flowcyto",
+      "name": "flowCore compensation matrix example",
+      "artifact_kind": "compensation_matrix",
+      "primary_url": "https://raw.githubusercontent.com/RGLab/flowCore/4935c7bf318697b3128ee50dae81018a6b246ab8/inst/extdata/compdata/compmatrix",
+      "publication_tier": "public_pinned",
+      "license_status": "artistic-2.0",
+      "raw_artifact_policy": "copy_allowed_after_license_review",
+      "pin": {
+        "kind": "git_commit",
+        "value": "4935c7bf318697b3128ee50dae81018a6b246ab8",
+        "package_path": "flowCore/inst/extdata/compdata/compmatrix",
+        "etag": "\"01cab8ac508712ec0134b24a4f93ba54ea616c32c8457d09f420d2d52fc01e1d\"",
+        "content_length": "134"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:08Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "flowcyto-fcs-compensation-metadata-001"
+      ],
+      "notes": "Pairs with the flowCore FCS files for deterministic channel/compensation coverage checks."
+    },
+    {
+      "source_id": "ncbi-nc005816-genbank",
+      "family": "molecule-biology",
+      "name": "NC_005816.1 plasmid pPCP1 GenBank record",
+      "artifact_kind": "genbank_sequence_record",
+      "primary_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_005816.1&rettype=gb&retmode=text",
+      "publication_tier": "public_versioned_database",
+      "license_status": "public_database_policy_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "accession_version",
+        "value": "NC_005816.1"
+      },
+      "verification": {
+        "method": "get_headers",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:10:51Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "molecule-genbank-feature-annotation-001",
+        "molecule-primer-validation-001",
+        "molecule-restriction-digest-001"
+      ],
+      "notes": "Real circular plasmid record with features; use accession/version as the stable pin and recapture through molecule-biology tools."
+    },
+    {
+      "source_id": "ncbi-nc005816-fasta",
+      "family": "molecule-biology",
+      "name": "NC_005816.1 plasmid pPCP1 FASTA record",
+      "artifact_kind": "fasta_sequence_record",
+      "primary_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_005816.1&rettype=fasta&retmode=text",
+      "publication_tier": "public_versioned_database",
+      "license_status": "public_database_policy_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "accession_version",
+        "value": "NC_005816.1"
+      },
+      "verification": {
+        "method": "get_headers",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:56Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "molecule-fasta-import-context-001"
+      ],
+      "notes": "Replacement for the current 15 bp toy FASTA fixture."
+    },
+    {
+      "source_id": "ncbi-nc001416-genbank",
+      "family": "molecule-biology",
+      "name": "NC_001416.1 bacteriophage lambda GenBank record",
+      "artifact_kind": "genbank_sequence_record",
+      "primary_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001416.1&rettype=gb&retmode=text",
+      "publication_tier": "public_versioned_database",
+      "license_status": "public_database_policy_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "accession_version",
+        "value": "NC_001416.1"
+      },
+      "verification": {
+        "method": "get_headers",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:10:49Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "molecule-pcr-simulation-001",
+        "molecule-genbank-feature-annotation-001"
+      ],
+      "notes": "Real linear sequence record for PCR and feature annotation tasks."
+    },
+    {
+      "source_id": "ncbi-nc001416-fasta",
+      "family": "molecule-biology",
+      "name": "NC_001416.1 bacteriophage lambda FASTA record",
+      "artifact_kind": "fasta_sequence_record",
+      "primary_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001416.1&rettype=fasta&retmode=text",
+      "publication_tier": "public_versioned_database",
+      "license_status": "public_database_policy_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "accession_version",
+        "value": "NC_001416.1"
+      },
+      "verification": {
+        "method": "get_headers",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:56Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "molecule-fasta-import-context-001"
+      ],
+      "notes": "Second real FASTA source for expansion; keep one FASTA task on pPCP1 and reserve this for scale."
+    },
+    {
+      "source_id": "multiqc-fastqc-nan-reads",
+      "family": "scientific-data-qc",
+      "name": "MultiQC FastQC nanopore read report",
+      "artifact_kind": "fastqc_report",
+      "primary_url": "https://raw.githubusercontent.com/MultiQC/test-data/84dc905e6edb97668b87660896dfd78f175008ca/data/modules/fastqc/nan_reads/fastqc_data.txt",
+      "publication_tier": "public_pinned",
+      "license_status": "raw_copy_license_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "git_commit",
+        "value": "84dc905e6edb97668b87660896dfd78f175008ca",
+        "etag": "\"ab8d2041df37698afb21c147042360174aadbbe97e976c6cfbd677141bbb561f\"",
+        "content_length": "107864"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:43Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "fastq-qc-nanopore-fail-001"
+      ],
+      "notes": "Current seed source for FastQC QC; publish parser observations and evidence refs first."
+    },
+    {
+      "source_id": "multiqc-qualimap-zero-aligned",
+      "family": "scientific-data-qc",
+      "name": "MultiQC Qualimap low-mapQ report",
+      "artifact_kind": "qualimap_bamqc_report",
+      "primary_url": "https://raw.githubusercontent.com/MultiQC/test-data/84dc905e6edb97668b87660896dfd78f175008ca/data/modules/qualimap/bam_qc/issue_2199_zero_aligned/genome_results.txt",
+      "publication_tier": "public_pinned",
+      "license_status": "raw_copy_license_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "git_commit",
+        "value": "84dc905e6edb97668b87660896dfd78f175008ca",
+        "etag": "\"de299db987e8c038368088c7584ef2fac900839e7353ebeb1a8c1a13b3bc647b\"",
+        "content_length": "7032"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:43Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "rnaseq-alignment-qualimap-low-mapq-001"
+      ],
+      "notes": "Current seed source for RNA-seq alignment QC; deterministic parser can catch the misleading mapped-read percentage."
+    },
+    {
+      "source_id": "tenx-pbmc3k-filtered-matrix",
+      "family": "scientific-data-qc",
+      "name": "10x Genomics PBMC3k filtered gene-barcode matrix",
+      "artifact_kind": "single_cell_count_matrix",
+      "primary_url": "https://cf.10xgenomics.com/samples/cell-exp/1.1.0/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz",
+      "publication_tier": "public_needs_locked_derivation",
+      "license_status": "provider_terms_review_pending",
+      "raw_artifact_policy": "cache_for_generation_do_not_publish_raw",
+      "pin": {
+        "kind": "http_headers",
+        "value": "10x-pbmc3k-filtered-gene-bc-matrices",
+        "etag": "\"f76d73bf7a582aaf32b798bcae9574d3\"",
+        "content_length": "7621991",
+        "last_modified": "Fri, 02 Jun 2017 00:20:53 GMT"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:42Z",
+        "expected_content_type_prefix": "application/x-tar"
+      },
+      "proposed_task_ids": [
+        "single-cell-pbmc3k-qc-summary-001"
+      ],
+      "notes": "Use only through a locked QC-generation script; do not call the live URL during replay."
+    },
+    {
+      "source_id": "multiqc-checkatlas-pbmc3k-qc",
+      "family": "scientific-data-qc",
+      "name": "MultiQC CheckAtlas PBMC3k Scanpy QC table",
+      "artifact_kind": "derived_single_cell_qc_table",
+      "primary_url": "https://raw.githubusercontent.com/MultiQC/test-data/84dc905e6edb97668b87660896dfd78f175008ca/data/modules/checkatlas/2023/qc/pbmc_3k_scanpy.tsv",
+      "publication_tier": "public_pinned",
+      "license_status": "raw_copy_license_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "git_commit",
+        "value": "84dc905e6edb97668b87660896dfd78f175008ca",
+        "etag": "\"1b59610f107027affd873a4a537f909194f5f783af5a94b0968da2b208c3257f\"",
+        "content_length": "76450"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:43Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "single-cell-pbmc3k-qc-summary-001"
+      ],
+      "notes": "Current seed table for PBMC3k QC smoke; still pair with locked derivation from the 10x source for a stronger claim."
+    },
+    {
+      "source_id": "multiqc-checkatlas-pbmc3k-summary",
+      "family": "scientific-data-qc",
+      "name": "MultiQC CheckAtlas PBMC3k Scanpy summary",
+      "artifact_kind": "derived_single_cell_summary",
+      "primary_url": "https://raw.githubusercontent.com/MultiQC/test-data/84dc905e6edb97668b87660896dfd78f175008ca/data/modules/checkatlas/2023/summary/pbmc_3k_scanpy.tsv",
+      "publication_tier": "public_pinned",
+      "license_status": "raw_copy_license_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "git_commit",
+        "value": "84dc905e6edb97668b87660896dfd78f175008ca",
+        "etag": "\"1526332a6503da631e5a5cf9c4d86939401f48f57df1a569a61494b570f2fa44\"",
+        "content_length": "195"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:56Z",
+        "expected_content_type_prefix": "text/plain"
+      },
+      "proposed_task_ids": [
+        "single-cell-pbmc3k-qc-summary-001"
+      ],
+      "notes": "Small companion summary for the PBMC3k QC task."
+    },
+    {
+      "source_id": "rcsb-1ake-cif",
+      "family": "protein-structure",
+      "name": "RCSB PDB 1AKE mmCIF",
+      "artifact_kind": "mmcif_structure",
+      "primary_url": "https://files.rcsb.org/download/1AKE.cif",
+      "publication_tier": "public_versioned_database",
+      "license_status": "provider_terms_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "provider_record",
+        "value": "RCSB-PDB:1AKE"
+      },
+      "verification": {
+        "method": "head",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:08Z",
+        "expected_content_type_prefix": "chemical/x-cif"
+      },
+      "proposed_task_ids": [
+        "protein-structure-ap5a-prep-001"
+      ],
+      "notes": "Current protein-structure readiness source; not a protein-design task by itself."
+    },
+    {
+      "source_id": "rcsb-1ake-entry-json",
+      "family": "protein-structure",
+      "name": "RCSB PDB 1AKE entry JSON",
+      "artifact_kind": "structure_entry_json",
+      "primary_url": "https://data.rcsb.org/rest/v1/core/entry/1AKE",
+      "publication_tier": "public_versioned_database",
+      "license_status": "provider_terms_review_pending",
+      "raw_artifact_policy": "link_only_publish_derived_observations",
+      "pin": {
+        "kind": "provider_record",
+        "value": "RCSB-PDB:1AKE"
+      },
+      "verification": {
+        "method": "get_headers",
+        "expected_status": 200,
+        "checked_at": "2026-06-02T11:12:57Z",
+        "expected_content_type_prefix": "application/json"
+      },
+      "proposed_task_ids": [
+        "protein-structure-ap5a-prep-001"
+      ],
+      "notes": "Companion metadata source; live check returned X-ray diffraction and resolution_combined [2]."
+    }
+  ],
+  "source_sets": [
+    {
+      "set_id": "agent-native-science-seed-public-sources-v0",
+      "source_ids": [
+        "flowcore-0877408774-e07-fcs",
+        "flowcore-0877408774-b08-fcs",
+        "flowcore-compmatrix",
+        "ncbi-nc005816-genbank",
+        "ncbi-nc005816-fasta",
+        "ncbi-nc001416-genbank",
+        "ncbi-nc001416-fasta",
+        "multiqc-fastqc-nan-reads",
+        "multiqc-qualimap-zero-aligned",
+        "tenx-pbmc3k-filtered-matrix",
+        "multiqc-checkatlas-pbmc3k-qc",
+        "multiqc-checkatlas-pbmc3k-summary",
+        "rcsb-1ake-cif",
+        "rcsb-1ake-entry-json"
+      ],
+      "purpose": "Public source pool for recapturing the v0 seed from real scientific artifacts across FlowCyto, Molecule Biology, scientific-data QC, and protein-structure readiness."
+    }
+  ]
+}

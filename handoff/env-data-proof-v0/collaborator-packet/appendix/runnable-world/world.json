@@ -1,0 +1,23 @@
+{
+  "schema_version": "datalox_runnable_world.v0",
+  "world_id": "datalox-science-runnable-preview@2026-06.0",
+  "name": "Datalox Science Runnable World Preview",
+  "description": "Minimal workspace-first world package with deterministic local tools, verifier, and trajectory logging.",
+  "runtime": {
+    "kind": "local_cli_workspace",
+    "live_network": false,
+    "sandbox": "host_workspace_preview",
+    "agent_contract": [
+      "init_task creates a fresh workspace",
+      "agent reads README.md and task.json",
+      "agent calls ./datalox_tool with tool name and JSON arguments",
+      "agent writes answer.json",
+      "agent calls ./submit_answer answer.json",
+      "trajectory.jsonl and verifier_result.json are written under the run directory"
+    ]
+  },
+  "tasks": [
+    "fastq-qc-nanopore-fail-001",
+    "molecule-primer-validation-001"
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "fastqc_report": {
+    "basic_statistics": {
+      "%GC": "44",
+      "Encoding": "Sanger / Illumina 1.9",
+      "File type": "Conventional base calls",
+      "Filename": "sample1_S1_L001_R2_001.fastq.gz",
+      "Sequence length": "301",
+      "Sequences flagged as poor quality": "0",
+      "Total Sequences": "82330"
+    },
+    "evidence_id": "metric:fastqc.parsed_report",
+    "failed_modules": [
+      "Per base sequence quality",
+      "Per tile sequence quality",
+      "Per base sequence content",
+      "Per base N content",
+      "Sequence Duplication Levels",
+      "Adapter Content"
+    ],
+    "module_statuses": [
+      {
+        "name": "Basic Statistics",
+        "status": "pass"
+      },
+      {
+        "name": "Per base sequence quality",
+        "status": "fail"
+      },
+      {
+        "name": "Per tile sequence quality",
+        "status": "fail"
+      },
+      {
+        "name": "Per sequence quality scores",
+        "status": "warn"
+      },
+      {
+        "name": "Per base sequence content",
+        "status": "fail"
+      },
+      {
+        "name": "Per sequence GC content",
+        "status": "pass"
+      },
+      {
+        "name": "Per base N content",
+        "status": "fail"
+      },
+      {
+        "name": "Sequence Length Distribution",
+        "status": "pass"
+      },
+      {
+        "name": "Sequence Duplication Levels",
+        "status": "fail"
+      },
+      {
+        "name": "Overrepresented sequences",
+        "status": "warn"
+      },
+      {
+        "name": "Adapter Content",
+        "status": "fail"
+      }
+    ],
+    "sample_id": "sample1_S1_L001_R2_001.fastq.gz",
+    "warning_modules": [
+      "Per sequence quality scores",
+      "Overrepresented sequences"
+    ]
+  },
+  "schema_version": "datalox_world_workspace_state.v0",
+  "task_id": "fastq-qc-nanopore-fail-001"
+}

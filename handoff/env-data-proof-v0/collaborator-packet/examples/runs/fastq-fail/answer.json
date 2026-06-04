@@ -1,0 +1,15 @@
+{
+  "task_id": "fastq-qc-nanopore-fail-001",
+  "family": "scientific-data-qc",
+  "diagnosis": {
+    "class": "fastq_qc_decision",
+    "summary": "Looks fine."
+  },
+  "evidence_ids": [],
+  "next_action": {
+    "type": "continue_downstream",
+    "summary": "No action."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": []
+}

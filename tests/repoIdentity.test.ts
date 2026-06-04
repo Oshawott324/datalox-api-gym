@@ -137,7 +137,8 @@ async function collectTrackedRelativePaths(): Promise<string[]> {
   return stdout.toString("utf8")
     .split("\0")
     .filter((relativePath) => relativePath.length > 0)
-    .map((relativePath) => relativePath.replaceAll(path.sep, "/"));
+    .map((relativePath) => relativePath.replaceAll(path.sep, "/"))
+    .filter((relativePath) => existsSync(path.join(repoRoot, relativePath)));
 }
 
 describe("repo identity regression guard", () => {

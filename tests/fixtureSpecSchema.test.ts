@@ -24,12 +24,51 @@ describe("fixture task/verifier/scaffold spec schemas", () => {
       fixtureRefs: ["github-pr-review-basic@2026-05.0"],
       allowedTools: ["github_pull_request_get"],
       successCriteria: ["Names the risky file and why it matters."],
+      environment: {
+        kind: "domain_mcp",
+        sampleRef: {
+          kind: "repo_fixture",
+          path: "testdata/fixtures/CFP_Well_A4.fcs",
+          sampleId: "sample_001",
+        },
+        channelPair: {
+          x: "FSC-A",
+          y: "SSC-A",
+        },
+        targetPopulation: "main FSC/SSC population",
+        validatorThresholds: {
+          minPopulationPercent: 0,
+          maxPopulationPercent: 100,
+        },
+        requiredReportFields: [
+          "title",
+          "summary",
+          "gate_id",
+          "stats_ref",
+          "qc_ref",
+          "caveats",
+        ],
+        expectedFailure: {
+          kind: "report_validation",
+          toolName: "submit_report",
+          errorCode: "missing_report_field",
+        },
+      },
     })).toMatchObject({
       id: "github-pr-review-risk",
       taskFamily: "coding_agent",
       difficulty: "easy",
       sftEligible: true,
       preferenceEligible: false,
+      environment: {
+        kind: "domain_mcp",
+        sampleRef: {
+          sampleId: "sample_001",
+        },
+        expectedFailure: {
+          errorCode: "missing_report_field",
+        },
+      },
     });
   });
 

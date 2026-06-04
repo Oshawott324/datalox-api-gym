@@ -1,0 +1,138 @@
+{
+  "answer_path": "appendix/runnable-world/tasks/fastq-qc-nanopore-fail-001/verifier/expected.pass.json",
+  "checks": [
+    {
+      "actual": "fastq-qc-nanopore-fail-001",
+      "expected": "fastq-qc-nanopore-fail-001",
+      "name": "task_id",
+      "passed": true
+    },
+    {
+      "actual": "scientific-data-qc",
+      "expected": "scientific-data-qc",
+      "name": "family",
+      "passed": true
+    },
+    {
+      "actual": "fastq_qc_decision",
+      "expected": "fastq_qc_decision",
+      "name": "diagnosis_class",
+      "passed": true
+    },
+    {
+      "actual": "trim_or_filter_reads",
+      "expected": "trim_or_filter_reads",
+      "name": "next_action_type",
+      "passed": true
+    },
+    {
+      "actual": [],
+      "expected": [],
+      "name": "missing_fields_empty",
+      "passed": true
+    },
+    {
+      "actual": [
+        "file:fastqc_data",
+        "metric:fastqc.parsed_report",
+        "metric:fastq.policy_result"
+      ],
+      "expected": "metric:fastqc.parsed_report",
+      "name": "required_evidence:metric:fastqc.parsed_report",
+      "passed": true
+    },
+    {
+      "actual": [
+        "file:fastqc_data",
+        "metric:fastq.policy_result",
+        "metric:fastqc.parsed_report"
+      ],
+      "expected": "metric:fastqc.parsed_report",
+      "name": "captured_evidence:metric:fastqc.parsed_report",
+      "passed": true
+    },
+    {
+      "actual": [
+        "file:fastqc_data",
+        "metric:fastqc.parsed_report",
+        "metric:fastq.policy_result"
+      ],
+      "expected": "metric:fastq.policy_result",
+      "name": "required_evidence:metric:fastq.policy_result",
+      "passed": true
+    },
+    {
+      "actual": [
+        "file:fastqc_data",
+        "metric:fastq.policy_result",
+        "metric:fastqc.parsed_report"
+      ],
+      "expected": "metric:fastq.policy_result",
+      "name": "captured_evidence:metric:fastq.policy_result",
+      "passed": true
+    },
+    {
+      "actual": [],
+      "expected": [],
+      "name": "no_uncaptured_evidence_ids",
+      "passed": true
+    },
+    {
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ],
+      "expected": "called_live_service",
+      "name": "forbidden_action_avoided:called_live_service",
+      "passed": true
+    },
+    {
+      "actual": [
+        "called_live_service",
+        "used_uncited_evidence"
+      ],
+      "expected": "used_uncited_evidence",
+      "name": "forbidden_action_avoided:used_uncited_evidence",
+      "passed": true
+    },
+    {
+      "actual": "fastq_qc_decision",
+      "expected": "fastq_qc_decision",
+      "name": "family_diagnosis_class",
+      "passed": true
+    },
+    {
+      "actual": "fail",
+      "expected": "fail",
+      "name": "family_severity",
+      "passed": true
+    },
+    {
+      "actual": {
+        "evidence_id": "metric:fastqc.parsed_report",
+        "name": "per_base_sequence_quality",
+        "observed": "module failed",
+        "status": "fail"
+      },
+      "expected": "fail",
+      "name": "computed_check:per_base_sequence_quality",
+      "passed": true
+    },
+    {
+      "actual": {
+        "evidence_id": "metric:fastqc.parsed_report",
+        "name": "adapter_content",
+        "observed": "module failed",
+        "status": "fail"
+      },
+      "expected": "fail",
+      "name": "computed_check:adapter_content",
+      "passed": true
+    }
+  ],
+  "created_at": "2026-06-04T13:34:18.814440Z",
+  "passed": true,
+  "reward": 1,
+  "schema_version": "datalox_runnable_world_verifier_result.v0",
+  "task_id": "fastq-qc-nanopore-fail-001"
+}

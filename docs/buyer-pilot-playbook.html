@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datalox Buyer Pilot Playbook</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --ink: #171717;
+      --muted: #5c625f;
+      --line: #d9d6ca;
+      --accent: #165f58;
+      --soft: #eef7f4;
+      --warn: #f7efe2;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 1080px);
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 840px;
+      font-size: 42px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 16px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px 16px;
+      margin: 12px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #faf9f5;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .lede {
+      max-width: 860px;
+      color: var(--muted);
+      font-size: 18px;
+      margin-top: 12px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-top: 24px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      border-left-color: #9a5a13;
+      background: var(--warn);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 22px, 1080px);
+        padding-top: 22px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Datalox Buyer Pilot Playbook</h1>
+    <p class="lede">
+      The first buyer motion should not sell "trajectory recording." It should
+      sell a concrete versioned workflow world that lets a training or eval
+      team reproduce real tool-use failures and export evidence-backed data.
+    </p>
+    <p class="meta">Updated June 3, 2026 - Local pilot artifact</p>
+  </header>
+
+  <section class="section">
+    <h2>One-Line Offer</h2>
+    <div class="callout">
+      We reconstruct one real workflow into a versioned, replayable, verifiable
+      agent task world, then export the runs into the customer's training or
+      eval stack.
+    </div>
+    <p>
+      The buyer should see Datalox as an environment supplier, not as a data
+      format vendor. Replay is the evidence layer underneath the environment.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Best First Buyers</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Post-Training Team</h3>
+        <p class="muted">
+          They need tool-use failures, reproducible rollouts, and exportable
+          rows for SFT, preference, reward, or RL experiments.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Workflow Automation Team</h3>
+        <p class="muted">
+          They own a costly domain workflow and need to know whether agents can
+          actually perform it with tools, state, and validators.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Inference Provider</h3>
+        <p class="muted">
+          They need proof that newer models are better on real workflows, not
+          only chat benchmarks or shallow tool-call demos.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>First Meeting Demo</h2>
+    <p>
+      Use the FlowCyto proof as the live demo because it is concrete, stateful,
+      and already wired through the replay runtime.
+    </p>
+    <pre>cd /Users/yifanjin/datalox-agent-replay
+npm run build
+node examples/flowcyto-gating-qc-demo/run-demo.mjs \
+  --catalog /Users/yifanjin/datalox-replay-fixtures/catalog.json</pre>
+    <p>
+      Open the generated report at
+      <code>examples/flowcyto-gating-qc-demo/output/demo-report.html</code>.
+      The demo must show fixture install, replayed FlowCyto tool steps, a
+      replay miss with <code>liveFallback: false</code>, and one SFT export.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Map Pain To Product</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Buyer Pain</th>
+          <th>Datalox Answer</th>
+          <th>Proof Artifact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>We cannot generate enough realistic agent failures.</td>
+          <td>Use real or reconstructed workflow tools with state, validators, and recorded failure cases.</td>
+          <td>Fixture tasks with success, recovery, and failure metadata.</td>
+        </tr>
+        <tr>
+          <td>We cannot reproduce rollouts.</td>
+          <td>Pin the tool catalog, observations, request hashes, fixture version, and replay bundle checksums.</td>
+          <td><code>replay_bundle.v1</code>, catalog archives, <code>archives:verify</code>.</td>
+        </tr>
+        <tr>
+          <td>Our evals are too shallow.</td>
+          <td>Evaluate agent behavior against task specs, tool paths, replay misses, verifier metadata, and final artifacts.</td>
+          <td>Task specs, verifier specs, expected behavior docs, run transcript.</td>
+        </tr>
+        <tr>
+          <td>Our reward or verifier is brittle.</td>
+          <td>Start with deterministic evidence checks and mark reward rubrics as reference-only unless they are executable.</td>
+          <td>Verifier specs, reference reward files, anti-hacking checks.</td>
+        </tr>
+        <tr>
+          <td>We do not know if new models are better on real workflows.</td>
+          <td>Run the same fixture set across models with upstream tools off and compare task outcomes.</td>
+          <td>Versioned fixture set plus run artifacts per model.</td>
+        </tr>
+        <tr>
+          <td>We need training data from tool use, not chat transcripts.</td>
+          <td>Export SFT and later preference/reward/RL views only after verified tool evidence exists.</td>
+          <td><code>datalox export sft</code> output from replay-backed runs.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Pilot Shape</h2>
+    <ol>
+      <li>
+        Pick one workflow with clear state transitions, tool outputs, and a
+        pass/fail outcome.
+      </li>
+      <li>
+        Reconstruct the workflow into agent-native tools or wrap an existing
+        MCP/CLI surface without changing the buyer's production app.
+      </li>
+      <li>
+        Capture 20 to 50 task instances with at least one baseline model
+        failure mode per task family.
+      </li>
+      <li>
+        Publish a private fixture set with task specs, verifier specs,
+        replay bundles, train/dev/test split metadata, and export commands.
+      </li>
+      <li>
+        Run their target model stack against the fixture set and export rows in
+        the format their training team wants.
+      </li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>Pass Criteria</h2>
+    <ul>
+      <li>The customer's agent can run at least one published fixture set locally or in CI.</li>
+      <li>Replay works with upstream tools off and rejects unseen calls through structured replay miss records.</li>
+      <li>Every accepted task has task metadata, verifier metadata, expected tools, forbidden behavior, and split assignment.</li>
+      <li>At least 20 private pilot tasks contain real workflow evidence, not hand-written chat transcripts.</li>
+      <li>The customer can export one training or eval view into their stack without changing Datalox internals.</li>
+      <li>The buyer can name a model behavior they learned from the replayed workflow that they could not see in their existing evals.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>What To Ask The Buyer For</h2>
+    <ul>
+      <li>Five to ten real workflow examples, including successful and failed attempts.</li>
+      <li>The tools, files, APIs, or CLI commands a human or existing automation uses today.</li>
+      <li>The minimum acceptable output and the domain reasons that make an output wrong.</li>
+      <li>Any data restrictions before capture starts. Do not accept sensitive data until the export policy is explicit.</li>
+      <li>The target consumer: eval harness, SFT pipeline, preference data pipeline, or RL environment wrapper.</li>
+    </ul>
+    <div class="callout warning">
+      The pilot should not promise to replace the buyer's application. It should
+      prove that one high-value workflow can become an agent-native task world
+      with reproducible evidence.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Repo Boundary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Repo</th>
+          <th>Owns</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>datalox-agent-replay</code></td>
+          <td>Run agents, install fixture sets, serve replay worlds, verify bundles, and export training/eval views.</td>
+        </tr>
+        <tr>
+          <td><code>datalox-replay-fixtures</code></td>
+          <td>Publish versioned fixture worlds, task specs, verifier specs, splits, prompts, and archived bundles.</td>
+        </tr>
+        <tr>
+          <td>Domain MCP repos</td>
+          <td>Own live domain tools, workspace state, validators, and domain-specific reconstruction of traditional workflows.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

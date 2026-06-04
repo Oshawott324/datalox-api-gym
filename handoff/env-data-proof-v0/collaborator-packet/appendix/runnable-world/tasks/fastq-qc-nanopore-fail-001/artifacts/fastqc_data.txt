@@ -1,0 +1,50 @@
+>>Basic Statistics	pass
+#Measure	Value
+Filename	sample1_S1_L001_R2_001.fastq.gz
+File type	Conventional base calls
+Encoding	Sanger / Illumina 1.9
+Total Sequences	82330
+Sequences flagged as poor quality	0
+Sequence length	301
+%GC	44
+>>END_MODULE
+>>Per base sequence quality	fail
+#Base	Mean	Median	Lower Quartile	Upper Quartile	10th Percentile	90th Percentile
+1	33.27616907567108	34.0	34.0	34.0	34.0	34.0
+300-301	10.231841370095957	9.5	7.5	14.0	4.5	17.0
+>>END_MODULE
+>>Per tile sequence quality	fail
+#Tile	Base	Mean
+1101	1	0.5962914245882303
+2119	300-301	1.2794773730413986
+>>END_MODULE
+>>Per sequence quality scores	warn
+#Quality	Count
+12	5.0
+31	1.0
+>>END_MODULE
+>>Per base sequence content	fail
+#Base	G	A	T	C
+1	99.42649798482837	0.12906839407259488	0.13272127315012117	0.3117123479489084
+100	0.0
+>>END_MODULE
+>>Per sequence GC content	pass
+>>END_MODULE
+>>Per base N content	fail
+#Base	N-Count
+1	0.24656868699137616
+301	82330.0
+>>END_MODULE
+>>Sequence Length Distribution	pass
+>>END_MODULE
+>>Sequence Duplication Levels	fail
+#Total Deduplicated Percentage	29.744928944491676
+#Duplication Level	Percentage of deduplicated	Percentage of total
+>10k+	0.0	0.0
+>>END_MODULE
+>>Overrepresented sequences	warn
+#Sequence	Count	Percentage	Possible Source
+NNNNNNNNN	331	0.4020405684440666	Illumina Single End
+>>END_MODULE
+>>Adapter Content	fail
+>>END_MODULE

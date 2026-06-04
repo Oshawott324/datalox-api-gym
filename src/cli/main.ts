@@ -83,6 +83,7 @@ function usage(): string {
     "  datalox replay --fixture-set <fixture-set-ref> [--cache-root <path>]",
     "  datalox replay --fixtures <fixture-ref>... [--cache-root <path>]",
     "  datalox run --fixture <fixture-ref>|--fixture-set <fixture-set-ref>|--fixtures <fixture-ref>...|--bundle <bundle-path> --base-url <url> --model <model> --prompt <text> --out <run-dir> [--api-key <key>|--api-key-env <env>] [--max-steps <n>] [--json]",
+    "  datalox world run --fixture <fixture-ref>|--fixture-set <fixture-set-ref>|--fixtures <fixture-ref>...|--bundle <bundle-path> --base-url <url> --model <model> --prompt <text> --out <run-dir> [--api-key <key>|--api-key-env <env>] [--max-steps <n>] [--json]",
     "  datalox eval --fixture-set <fixture-set-ref> --catalog <catalog.json> --model <model> [--base-url <url>] [--api-key <key>] [--cache-root <path>] [--split <train|dev|test>] [--max-tasks <n>] [--max-turns <n>] [--out <jsonl>] [--json]",
     "  datalox export sft --run <run-dir>|--run-path <run.json> --out <frames.jsonl> [--json]",
     "  datalox proxy --mode <record|replay> [--repo <path>] [--config <json-path>] [--bundle <bundle-path>] [--json]",
@@ -187,6 +188,62 @@ function parseRunSplit(value: string | string[] | boolean | undefined): "train" 
     return value;
   }
   throw new Error(`Invalid --split ${JSON.stringify(value)}. Allowed values: train, dev, test.`);
+}
+
+async function runReplayWorldFromCli(args: ReturnType<typeof parseCliArgs>, commandLabel: string) {
+  if (typeof args.catalog === "string" || args.split !== undefined || args["max-tasks"] !== undefined || args["max-turns"] !== undefined) {
+    throw new Error(`${commandLabel} no longer accepts --catalog, --split, --max-tasks, or --max-turns; use datalox eval for fixture-set batch evaluation.`);
+  }
+
+  const fixtureRefs = toStringArray(args.fixtures);
+  const bundlePaths = toStringArray(args.bundle);
+  const hasFixture = typeof args.fixture === "string";
+  const hasFixtureSet = typeof args["fixture-set"] === "string";
+  const envModeCount = [
+    hasFixture,
+    hasFixtureSet,
+    fixtureRefs.length > 0,
+    bundlePaths.length > 0,
+  ].filter(Boolean).length;
+  if (envModeCount !== 1) {
+    throw new Error(`${commandLabel} requires exactly one replay world: --fixture, --fixture-set, --fixtures, or --bundle`);
+  }
+
+  return runFixtureAgent({
+    repoPath: typeof args.repo === "string" ? args.repo : undefined,
+    cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
+    fixtureRef: hasFixture ? args.fixture as string : undefined,
+    fixtureRefs: fixtureRefs.length > 0 ? fixtureRefs : undefined,
+    fixtureSetRef: hasFixtureSet ? args["fixture-set"] as string : undefined,
+    bundlePaths: bundlePaths.length > 0 ? bundlePaths : undefined,
+    activeFixtureRefs: toStringArray(args["active-fixture-ref"]),
+    prompt: requireStringArg(args, "prompt"),
+    systemPrompt: typeof args["system-prompt"] === "string" ? args["system-prompt"] : undefined,
+    taskRef: typeof args["task-ref"] === "string" ? args["task-ref"] : undefined,
+    model: {
+      baseUrl: requireStringArg(args, "base-url"),
+      model: requireStringArg(args, "model"),
+      apiKey: typeof args["api-key"] === "string" ? args["api-key"] : undefined,
+      apiKeyEnv: typeof args["api-key-env"] === "string" ? args["api-key-env"] : undefined,
+      timeoutMs: parsePositiveInt(args["timeout-ms"]),
+      temperature: parseOptionalNumber(args.temperature),
+      topP: parseOptionalNumber(args["top-p"]),
+      maxTokens: parsePositiveInt(args["max-tokens"]),
+    },
+    outDir: requireStringArg(args, "out"),
+    maxSteps: parsePositiveInt(args["max-steps"]),
+  });
+}
+
+function summarizeReplayWorldRun(result: Awaited<ReturnType<typeof runFixtureAgent>>): Record<string, unknown> {
+  return {
+    runDir: result.runDir,
+    runPath: result.runPath,
+    transcriptPath: result.transcriptPath,
+    stopReason: result.run.stop_reason,
+    finalAnswer: result.run.final_answer,
+    stepCount: result.run.steps.length,
+  };
 }
 
 function parseInstallHost(value: string | undefined): InstallHost {
@@ -510,56 +567,16 @@ async function main(): Promise<void> {
       throw new Error("replay requires --fixture, --fixture-set, or --fixtures");
     }
     case "run": {
-      if (typeof args.catalog === "string" || args.split !== undefined || args["max-tasks"] !== undefined || args["max-turns"] !== undefined) {
-        throw new Error("datalox run no longer accepts --catalog, --split, --max-tasks, or --max-turns; use datalox eval for fixture-set batch evaluation.");
+      const result = await runReplayWorldFromCli(args, "datalox run");
+      writeResult(summarizeReplayWorldRun(result), true);
+      return;
+    }
+    case "world": {
+      if (positional !== "run") {
+        throw new Error("world requires subcommand run");
       }
-
-      const fixtureRefs = toStringArray(args.fixtures);
-      const bundlePaths = toStringArray(args.bundle);
-      const hasFixture = typeof args.fixture === "string";
-      const hasFixtureSet = typeof args["fixture-set"] === "string";
-      const envModeCount = [
-        hasFixture,
-        hasFixtureSet,
-        fixtureRefs.length > 0,
-        bundlePaths.length > 0,
-      ].filter(Boolean).length;
-      if (envModeCount !== 1) {
-        throw new Error("run requires exactly one replay world: --fixture, --fixture-set, --fixtures, or --bundle");
-      }
-
-      const result = await runFixtureAgent({
-        repoPath: typeof args.repo === "string" ? args.repo : undefined,
-        cacheRoot: typeof args["cache-root"] === "string" ? args["cache-root"] : undefined,
-        fixtureRef: hasFixture ? args.fixture as string : undefined,
-        fixtureRefs: fixtureRefs.length > 0 ? fixtureRefs : undefined,
-        fixtureSetRef: hasFixtureSet ? args["fixture-set"] as string : undefined,
-        bundlePaths: bundlePaths.length > 0 ? bundlePaths : undefined,
-        activeFixtureRefs: toStringArray(args["active-fixture-ref"]),
-        prompt: requireStringArg(args, "prompt"),
-        systemPrompt: typeof args["system-prompt"] === "string" ? args["system-prompt"] : undefined,
-        taskRef: typeof args["task-ref"] === "string" ? args["task-ref"] : undefined,
-        model: {
-          baseUrl: requireStringArg(args, "base-url"),
-          model: requireStringArg(args, "model"),
-          apiKey: typeof args["api-key"] === "string" ? args["api-key"] : undefined,
-          apiKeyEnv: typeof args["api-key-env"] === "string" ? args["api-key-env"] : undefined,
-          timeoutMs: parsePositiveInt(args["timeout-ms"]),
-          temperature: parseOptionalNumber(args.temperature),
-          topP: parseOptionalNumber(args["top-p"]),
-          maxTokens: parsePositiveInt(args["max-tokens"]),
-        },
-        outDir: requireStringArg(args, "out"),
-        maxSteps: parsePositiveInt(args["max-steps"]),
-      });
-      writeResult({
-        runDir: result.runDir,
-        runPath: result.runPath,
-        transcriptPath: result.transcriptPath,
-        stopReason: result.run.stop_reason,
-        finalAnswer: result.run.final_answer,
-        stepCount: result.run.steps.length,
-      }, true);
+      const result = await runReplayWorldFromCli(args, "datalox world run");
+      writeResult(summarizeReplayWorldRun(result), true);
       return;
     }
     case "eval": {

@@ -1,0 +1,12 @@
+{
+  "created_at": "2026-06-04T13:34:19.977946Z",
+  "family": "molecule-biology",
+  "run_dir": "./examples/runs/molecule-pass",
+  "run_id": "molecule-pass",
+  "schema_version": "datalox_world_run.v0",
+  "task_id": "molecule-primer-validation-001",
+  "trajectory_path": "./examples/runs/molecule-pass/trajectory.jsonl",
+  "verifier_result_path": "./examples/runs/molecule-pass/verifier_result.json",
+  "workspace_dir": "./examples/runs/molecule-pass/workspace",
+  "world_id": "datalox-science-runnable-preview@2026-06.0"
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": "agent_native_world_spec.v0",
+  "world_id": "agent-native-science-seed@2026-06.0",
+  "name": "Datalox Env Data Proof v0",
+  "description": "Multi-family scientific workflow seed world for fresh-agent rollout, verifier gating, and SFT/eval export validation.",
+  "task_roots": [
+    "families"
+  ],
+  "tool_runtime": {
+    "kind": "snapshot_observation_v0",
+    "observation_file": "tools/tool-observations.jsonl",
+    "live_fallback": false,
+    "replay_key": "tool_name + canonical request + run-local sequence index"
+  },
+  "families": {
+    "flowcyto": {
+      "runtime_kind": "snapshot_from_flowcyto_domain_tool_observations"
+    },
+    "molecule-biology": {
+      "runtime_kind": "snapshot_from_molecule_domain_tool_observations"
+    },
+    "scientific-data-qc": {
+      "runtime_kind": "snapshot_from_fixture_tool_observations"
+    }
+  },
+  "phase_gate_tasks": [
+    "flowcyto-gating-qc-success",
+    "molecule-primer-validation-001",
+    "fastq-qc-nanopore-fail-001"
+  ]
+}

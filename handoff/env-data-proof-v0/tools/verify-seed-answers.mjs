@@ -12,6 +12,8 @@ const schemaRoot = path.join(envRoot, "schema");
 
 const args = new Set(process.argv.slice(2));
 const taskFilter = process.argv.find((arg) => arg.startsWith("--task="))?.slice("--task=".length);
+const answerPath = process.argv.find((arg) => arg.startsWith("--answer="))?.slice("--answer=".length);
+const resultOutPath = process.argv.find((arg) => arg.startsWith("--result-out="))?.slice("--result-out=".length);
 const writeFixtures = args.has("--write-fixtures");
 const writeResults = args.has("--write-results");
 
@@ -215,8 +217,34 @@ const EXPECTATIONS = {
 async function main() {
   const taskDirs = (await findTaskDirs()).filter(({ spec }) => !taskFilter || spec.task_id === taskFilter);
   if (taskDirs.length === 0) throw new Error("No task specs matched.");
+  if (answerPath && taskDirs.length !== 1) {
+    throw new Error("--answer requires exactly one task; pass --task=<task_id>.");
+  }
 
   const schemas = await loadSchemas();
+  if (answerPath) {
+    const result = await verifySingleAnswer({
+      task: taskDirs[0],
+      schemas,
+      answerPath: path.resolve(answerPath),
+    });
+    if (resultOutPath) await writeJson(path.resolve(resultOutPath), result);
+    process.stdout.write(`${JSON.stringify({
+      ok: result.passed,
+      task_id: result.task_id,
+      answer_path: result.answer_path,
+      result_out: resultOutPath ? path.relative(repoRoot, path.resolve(resultOutPath)) : undefined,
+      failed_checks: result.checks.filter((check) => !check.passed).map(({ name, message, expected, actual }) => ({
+        name,
+        message,
+        expected,
+        actual,
+      })),
+    }, null, 2)}\n`);
+    if (!result.passed) process.exitCode = 1;
+    return;
+  }
+
   if (writeFixtures) {
     for (const task of taskDirs) await writeVerifierFixtures(task, schemas);
   }
@@ -235,6 +263,25 @@ async function main() {
   }, null, 2)}\n`);
 
   if (failures.length > 0) process.exitCode = 1;
+}
+
+async function verifySingleAnswer({ task, schemas, answerPath }) {
+  const verifierDir = path.join(task.taskDir, "verifier");
+  const verifierSpecPath = path.join(verifierDir, "verifier.spec.json");
+  const verifierSpec = await readJson(verifierSpecPath);
+  assertSchema(`${task.spec.task_id}/verifier.spec.json`, schemas.validateVerifierSpec, verifierSpec);
+  const rows = await readObservations(task.taskDir);
+  const capturedEvidence = new Set(rows.flatMap((row) => row.evidence_ids));
+  const answer = await readJson(answerPath);
+  const result = verifyAnswer({
+    answer,
+    answerPath: path.relative(repoRoot, answerPath),
+    verifierSpec,
+    capturedEvidence,
+    schemas,
+  });
+  assertSchema(`${task.spec.task_id}/single answer result`, schemas.validateVerifierResult, result);
+  return result;
 }
 
 async function loadSchemas() {
@@ -635,6 +682,7 @@ async function readJson(filePath) {
 }
 
 async function writeJson(filePath, value) {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 

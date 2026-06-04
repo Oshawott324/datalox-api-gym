@@ -14,6 +14,44 @@ const safeRelativePath = z.string().min(1).refine(isSafeRelativePath, {
 });
 const difficultySchema = z.enum(["easy", "medium", "hard"]);
 
+const taskEnvironmentSchema = z
+  .object({
+    kind: z.enum(["domain_mcp", "api_snapshot", "composite"]),
+    sampleRef: z
+      .object({
+        kind: z.enum(["repo_fixture", "fixture_artifact", "external_ref"]),
+        path: safeRelativePath,
+        sampleId: nonEmptyString,
+      })
+      .strict()
+      .optional(),
+    channelPair: z
+      .object({
+        x: nonEmptyString,
+        y: nonEmptyString,
+      })
+      .strict()
+      .optional(),
+    targetPopulation: nonEmptyString.optional(),
+    validatorThresholds: z
+      .object({
+        minPopulationPercent: z.number().min(0).max(100).optional(),
+        maxPopulationPercent: z.number().min(0).max(100).optional(),
+      })
+      .strict()
+      .optional(),
+    requiredReportFields: z.array(nonEmptyString).min(1).optional(),
+    expectedFailure: z
+      .object({
+        kind: nonEmptyString,
+        toolName,
+        errorCode: nonEmptyString,
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
 const specFileReferenceSchema = z
   .object({
     path: safeRelativePath,
@@ -67,6 +105,7 @@ export const taskSpecSchema = taskSpecBaseSchema
     allowedTools: z.array(toolName).optional(),
     successCriteria: z.array(nonEmptyString).min(1),
     constraints: z.array(nonEmptyString).optional(),
+    environment: taskEnvironmentSchema.optional(),
   })
   .strict();
 

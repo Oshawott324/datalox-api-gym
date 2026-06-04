@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agentic RL Environment Problem - First Principles</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --ink: #171717;
+      --muted: #5f5f57;
+      --line: #d9d6ca;
+      --accent: #165f58;
+      --soft: #eef7f4;
+      --warn: #fff5e8;
+      --code: #f0efea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(100vw - 40px, 1040px);
+      margin: 0 auto;
+      padding: 42px 0 68px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    h1 {
+      font-size: 42px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 18px 0 8px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px 16px;
+      margin: 12px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #faf9f5;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .lede {
+      max-width: 860px;
+      color: var(--muted);
+      font-size: 18px;
+      margin-top: 12px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-top: 24px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      background: var(--warn);
+      border-left-color: #8a4b12;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 22px, 1040px);
+        padding-top: 22px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Agentic RL Environment Problem</h1>
+    <p class="lede">
+      A first-principles view of why environments are hard in agentic RL, what
+      the underlying cause is, and which parts Datalox Agent Replay actually
+      solves.
+    </p>
+    <p class="meta">Updated May 26, 2026 - Local positioning note</p>
+  </header>
+
+  <section class="section">
+    <h2>First Principle</h2>
+    <p>
+      Agentic RL needs a repeated interaction loop:
+    </p>
+    <pre>reset -> observation -> action -> transition -> observation -> reward -> done</pre>
+    <p>
+      The environment problem exists because, for agents, most of those terms
+      are not well-defined. The issue is not just missing Docker or missing
+      logs. It is that agent environments are external, stateful, partially
+      observed, mutable systems whose transition and reward contracts are
+      usually not declared or preserved.
+    </p>
+    <div class="callout">
+      The root cause is missing environment contracts plus missing evidence
+      contracts.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Root Causes</h2>
+    <table>
+      <thead>
+        <tr><th>Cause</th><th>What Breaks</th><th>Why It Matters</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Hidden and unstable state</td>
+          <td>APIs, files, databases, browser pages, tool versions, timestamps, accounts, and app state drift.</td>
+          <td>The same action later may not produce the same observation or outcome.</td>
+        </tr>
+        <tr>
+          <td>Messy action semantics</td>
+          <td>Actions include tool calls, browser clicks, shell commands, code edits, API mutations, UI operations, and final answers.</td>
+          <td>Validity, reversibility, and allowed action space are hard to define.</td>
+        </tr>
+        <tr>
+          <td>Non-canonical observations</td>
+          <td>Screenshots, API JSON, logs, command output, search results, files, and UI state all become observations.</td>
+          <td>Most systems keep prose logs rather than exact model-visible observations.</td>
+        </tr>
+        <tr>
+          <td>Weak reset</td>
+          <td>Real tools often cannot reset cheaply or exactly.</td>
+          <td>Online RL needs many comparable rollouts from known initial states.</td>
+        </tr>
+        <tr>
+          <td>Sparse and fragile reward</td>
+          <td>Success may require hidden state, tests, validators, human judgment, or domain-specific checks.</td>
+          <td>Noisy rewards create reward hacking and misleading training signals.</td>
+        </tr>
+        <tr>
+          <td>Slow rollouts</td>
+          <td>Agent tasks require many tool calls and long horizons.</td>
+          <td>On-policy RL is expensive when every episode takes minutes.</td>
+        </tr>
+        <tr>
+          <td>No replayable evidence</td>
+          <td>Failures cannot be traced back to exact actions, observations, tool drift, prompt changes, or reward changes.</td>
+          <td>Teams cannot reliably debug whether the model, environment, tool, reward, or eval changed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Datalox Fit</h2>
+    <p>
+      Datalox Agent Replay strongly solves the evidence side of the problem:
+    </p>
+    <pre>What exactly did the agent see and do?
+Can we replay that observed tool/API world later?
+Can we export training/eval rows grounded in verified evidence?</pre>
+    <p>
+      That turns messy rollouts into a replayable chain:
+    </p>
+    <pre>tool_io_record.v1
+  -> replay_bundle.v1
+  -> fixture set
+  -> deterministic replay
+  -> SFT / preference / reward / eval exports</pre>
+    <p>
+      This is useful for reproducibility, auditability, snapshot eval,
+      regression, SFT data, preference data, and budget RL preparation.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>What Replay Does Not Solve</h2>
+    <p>
+      Replay evidence is necessary, but it is not the full online RL
+      environment. Replay alone does not solve:
+    </p>
+    <ul>
+      <li>unseen valid actions</li>
+      <li>true reset/step interaction</li>
+      <li>high-throughput online rollout</li>
+      <li>canonical reward design</li>
+      <li>generic sandbox isolation</li>
+      <li>open-ended behavioral simulation</li>
+    </ul>
+    <div class="callout warning">
+      Snapshot replay can reproduce observed behavior. A whole environment must
+      also define how new valid actions change hidden state.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Product Ladder</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Level 1: Snapshot Replay</h3>
+        <p>
+          Versioned API/MCP snapshots, replay bundles, fixture sets, deterministic
+          replay, and grounded exports. This is Datalox's immediate fit.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Level 2: Runtime-Backed Domain Worlds</h3>
+        <p>
+          Constrained Datalox-owned environments such as FlowCyto or bio task
+          worlds, with file-backed state, actions, revisions, validators, and
+          replay evidence.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Level 3: Generative Reset/Step Worlds</h3>
+        <p>
+          Seeded task generation, observation rendering, terminal logic, reward
+          hooks, and high-throughput rollout. This belongs after validators and
+          exports are stable.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Boundary</h2>
+    <table>
+      <thead>
+        <tr><th>Problem</th><th>Datalox Replay</th><th>Datalox Domain Env</th><th>External Runtime</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Exact observed tool behavior</td>
+          <td>Owns</td>
+          <td>Emits evidence</td>
+          <td>Can be recorded</td>
+        </tr>
+        <tr>
+          <td>Domain hidden state</td>
+          <td>References</td>
+          <td>Owns for selected domains</td>
+          <td>Owns when external</td>
+        </tr>
+        <tr>
+          <td>Unseen action transition</td>
+          <td>Does not invent</td>
+          <td>Can implement narrowly</td>
+          <td>Owns broadly</td>
+        </tr>
+        <tr>
+          <td>Verifier and reward evidence</td>
+          <td>Preserves</td>
+          <td>Defines for selected domains</td>
+          <td>May provide</td>
+        </tr>
+        <tr>
+          <td>Canonical reward design</td>
+          <td>Does not own</td>
+          <td>Provides reference schemes</td>
+          <td>Training team owns final reward</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Conclusion</h2>
+    <p>
+      Datalox solves the first necessary cause of the environment problem: lack
+      of reproducible, versioned, inspectable evidence. It does not by itself
+      solve the full RL environment problem.
+    </p>
+    <p>
+      To solve more of it, Datalox should build constrained domain environments
+      where it owns state, action schema, reset, validators, and reward evidence.
+      It should integrate with external whole-environment runtimes where another
+      system already owns the sandbox and transition semantics.
+    </p>
+    <div class="callout">
+      Datalox makes agent environments evidence-grounded first, then
+      progressively runtime-backed.
+    </div>
+  </section>
+</main>
+</body>
+</html>
