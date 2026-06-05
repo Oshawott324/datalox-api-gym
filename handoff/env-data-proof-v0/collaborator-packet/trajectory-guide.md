@@ -29,9 +29,10 @@ exports/sft.messages.examples.jsonl
 It contains two passing rows, one per task, in a standard
 system/user/assistant/tool message shape.
 
-The system prompt now includes current-task tool descriptions and JSON input
-schemas. This follows the feedback that the model needs to know which tools are
-available and how to call them.
+The system prompt now includes the environment tool catalog and a
+task-relevant tool subset with JSON input schemas. This follows the feedback
+that the MCP service is environment-level and task relevance should be carried
+by the prompt.
 
 For environment or RL shape, inspect:
 

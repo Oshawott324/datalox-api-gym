@@ -12,7 +12,7 @@ from ..types import ToolCall
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Datalox World API v0 CLI adapter.")
     sub = parser.add_subparsers(dest="command", required=True)
-    smoke = sub.add_parser("smoke", help="Initialize a world session and run a minimal task-specific tool call.")
+    smoke = sub.add_parser("smoke", help="Initialize a world session and run a minimal task-relevant tool call.")
     smoke.add_argument("--world", required=True)
     smoke.add_argument("--task-id", required=True)
     smoke.add_argument("--run", required=True)

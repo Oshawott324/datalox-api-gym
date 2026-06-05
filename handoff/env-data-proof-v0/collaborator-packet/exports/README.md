@@ -5,7 +5,8 @@
 Two passing example rows exported from the runnable-world trajectories through
 the World API exporter.
 
-The system message includes current-task tool descriptions and input schemas.
+The system message includes the environment tool catalog plus the
+task-relevant tool subset and input schemas.
 
 Shape:
 

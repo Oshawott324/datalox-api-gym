@@ -320,11 +320,11 @@
       </p>
       <p class="small">
         Verified local state: World API smoke tests pass, MCP stdio exposes
-        current-task tools and routes calls, runnable-world oracle answers pass,
-        and bad answers fail for FASTQ QC and molecule primer validation. The
-        wider seed still has 13 tasks, a 7/3/3 smoke split, 7 train-only
-        tool-message SFT rows, and no source-gate claim that the seed is
-        lift-grade data.
+        the environment tool catalog and routes calls, runnable-world oracle
+        answers pass, and bad answers fail for FASTQ QC and molecule primer
+        validation. The wider seed still has 13 tasks, a 7/3/3 smoke split, 7
+        train-only tool-message SFT rows, and no source-gate claim that the seed
+        is lift-grade data.
       </p>
     </section>
 
@@ -333,9 +333,10 @@
       <p>
         The first collaborator task is lifecycle fit, not JSONL review. A
         harness should connect through the MCP adapter or Python API, receive
-        current-task tool schemas and descriptions, call tools through
-        <code>step</code>, submit an answer through <code>finalize</code>, and
-        inspect the produced trajectory and verifier result.
+        the environment tool catalog, use the system prompt's task-relevant tool
+        subset, call tools through <code>step</code>, submit an answer through
+        <code>finalize</code>, and inspect the produced trajectory and verifier
+        result.
       </p>
       <p>
         The useful feedback is whether this lifecycle maps to the team's

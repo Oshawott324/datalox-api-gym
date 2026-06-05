@@ -21,13 +21,19 @@ class WorldApiSmokeTest(unittest.TestCase):
             reset = driver.reset("fastq-qc-nanopore-fail-001", Path(tmp) / "fastq")
 
             self.assertEqual(reset.task_id, "fastq-qc-nanopore-fail-001")
-            self.assertIn("workspace.list_files", [tool["name"] for tool in reset.tools])
+            tool_names = [tool["name"] for tool in reset.tools]
+            self.assertIn("workspace.list_files", tool_names)
+            self.assertIn("open_sequence", tool_names)
+            self.assertIn("workspace.list_files", reset.observation["task_tool_names"])
+            self.assertNotIn("open_sequence", reset.observation["task_tool_names"])
             self.assertIn("prompt", reset.observation)
             self.assertIn("workspace_dir", reset.observation)
 
-            system_prompt = render_system_prompt(reset.tools)
-            self.assertIn("Available tools:", system_prompt)
+            system_prompt = render_system_prompt(reset.tools, reset.observation["task_tool_names"])
+            self.assertIn("Environment tool catalog:", system_prompt)
+            self.assertIn("Task-relevant tools:", system_prompt)
             self.assertIn("workspace.list_files", system_prompt)
+            self.assertIn("open_sequence", system_prompt)
             self.assertIn("List files", system_prompt)
             self.assertIn("input_schema", system_prompt)
 
@@ -64,6 +70,8 @@ class WorldApiSmokeTest(unittest.TestCase):
             row = json.loads(Path(exported.path).read_text(encoding="utf-8").strip())
             self.assertEqual(row["schema_version"], "datalox_world_sft_messages.v0")
             self.assertIn("workspace.list_files", row["messages"][0]["content"])
+            self.assertIn("open_sequence", row["messages"][0]["content"])
+            self.assertIn("Task-relevant tools:", row["messages"][0]["content"])
             self.assertIn("Final answer", row["messages"][0]["content"])
             self.assertTrue(any(message["role"] == "tool" for message in row["messages"]))
 

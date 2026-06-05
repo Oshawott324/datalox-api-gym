@@ -17,6 +17,7 @@ class _Session:
     task_id: str
     run_dir: Path
     tools: list[dict[str, Any]]
+    task_tool_names: list[str]
     finalized: bool = False
 
 
@@ -32,9 +33,15 @@ class RunnableWorldDriver:
         run_root = Path(run_dir).resolve()
         run = self.runtime.create_run(task_id, run_root)
         task = read_json(run_root / "workspace" / "task.json")
-        tools = self._tools_for_task(task)
+        tools = self._environment_tools()
+        task_tool_names = list(task["allowed_tools"])
         session_id = _session_id(task_id, run_root)
-        self.sessions[session_id] = _Session(task_id=task_id, run_dir=run_root, tools=tools)
+        self.sessions[session_id] = _Session(
+            task_id=task_id,
+            run_dir=run_root,
+            tools=tools,
+            task_tool_names=task_tool_names,
+        )
         observation = {
             "schema_version": "datalox_world_initial_observation.v0",
             "world_id": run["world_id"],
@@ -44,6 +51,7 @@ class RunnableWorldDriver:
             "run_dir": str(run_root),
             "workspace_dir": run["workspace_dir"],
             "tool_names": [tool["name"] for tool in tools],
+            "task_tool_names": task_tool_names,
             "seed": seed,
         }
         return ResetResult(
@@ -110,17 +118,16 @@ class RunnableWorldDriver:
         if format != "sft_messages":
             raise ValueError(f"Unsupported export format: {format}")
         target = Path(out_path) if out_path is not None else session.run_dir / "exports" / "sft.messages.jsonl"
-        return export_sft_messages(session.run_dir, session.tools, target)
+        return export_sft_messages(session.run_dir, session.tools, target, session.task_tool_names)
 
-    def _tools_for_task(self, task: dict[str, Any]) -> list[dict[str, Any]]:
+    def _environment_tools(self) -> list[dict[str, Any]]:
         catalog = self.world_spec.get("tool_catalog")
         if not isinstance(catalog, dict):
             raise ValueError("world spec requires tool_catalog object")
         tools = []
-        for name in task["allowed_tools"]:
-            entry = catalog.get(name)
+        for name, entry in catalog.items():
             if not isinstance(entry, dict):
-                raise ValueError(f"Missing tool catalog entry: {name}")
+                raise ValueError(f"Tool catalog entry must be an object: {name}")
             input_schema = entry.get("input_schema")
             if not isinstance(input_schema, dict):
                 raise ValueError(f"Tool entry requires input_schema: {name}")
@@ -133,6 +140,16 @@ class RunnableWorldDriver:
                 "input_schema": input_schema,
             })
         return tools
+
+    def _tools_for_task(self, task: dict[str, Any]) -> list[dict[str, Any]]:
+        tools_by_name = {tool["name"]: tool for tool in self._environment_tools()}
+        scoped = []
+        for name in task["allowed_tools"]:
+            tool = tools_by_name.get(name)
+            if tool is None:
+                raise ValueError(f"Missing tool catalog entry: {name}")
+            scoped.append(tool)
+        return scoped
 
     def _session(self, session_id: str) -> _Session:
         session = self.sessions.get(session_id)

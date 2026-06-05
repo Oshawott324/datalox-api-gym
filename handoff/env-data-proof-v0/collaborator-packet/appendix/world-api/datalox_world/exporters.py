@@ -9,7 +9,12 @@ from .prompting import render_system_prompt
 from .types import ExportResult
 
 
-def export_sft_messages(run_dir: str | Path, tools: list[dict[str, Any]], out_path: str | Path) -> ExportResult:
+def export_sft_messages(
+    run_dir: str | Path,
+    tools: list[dict[str, Any]],
+    out_path: str | Path,
+    task_tool_names: list[str] | None = None,
+) -> ExportResult:
     run_root = Path(run_dir)
     verifier_result = read_json(run_root / "verifier_result.json")
     if verifier_result.get("passed") is not True:
@@ -17,8 +22,9 @@ def export_sft_messages(run_dir: str | Path, tools: list[dict[str, Any]], out_pa
 
     run = read_json(run_root / "run.json")
     task = read_json(run_root / "workspace" / "task.json")
+    scoped_task_tool_names = task_tool_names or list(task["allowed_tools"])
     messages: list[dict[str, Any]] = [
-        {"role": "system", "content": render_system_prompt(tools)},
+        {"role": "system", "content": render_system_prompt(tools, scoped_task_tool_names)},
         {"role": "user", "content": task["prompt"]},
     ]
 

@@ -81,7 +81,6 @@ Send these as secondary training/export context:
 - `handoff/env-data-proof-v0/exports/sft.tool_evidence.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/eval.tool_env.seed.jsonl`
 - `handoff/env-data-proof-v0/exports/eval.seed.jsonl`
-- `handoff/env-data-proof-v0/world.spec.json`
 - `handoff/env-data-proof-v0/families/`
 
 Optional supporting files:
@@ -102,9 +101,10 @@ as derivatives from world trajectories.
 ```text
 We have a Datalox Env Data Proof v0 World API preview. This is not a model-lift
 claim yet. The goal is to check whether your MCP/agent harness can plug into a
-reset/step/finalize/export world lifecycle, use current-task tools, submit an
-answer, and produce a useful trajectory that your post-training workflow can
-consume.
+reset/step/finalize/export world lifecycle where the MCP service exposes the
+environment tool set, the system prompt scopes task-relevant tools, the agent
+submits an answer, and the run produces a useful trajectory that your
+post-training workflow can consume.
 
 Can you review:
 
@@ -157,8 +157,9 @@ The already-validated claims to include in the handoff are:
 - runnable-world bad-answer runs fail for both tasks;
 - runnable-world emits `trajectory.jsonl` and `verifier_result.json`;
 - World API smoke tests pass for reset/step/finalize/export;
-- MCP stdio smoke test exposes current-task tools and routes tool calls;
-- system-message exports include current-task tool descriptions and schemas;
+- MCP stdio smoke test exposes the environment tool catalog and routes tool calls;
+- system-message exports include environment tool descriptions, schemas, and
+  a task-relevant tool subset;
 - source manifest and source gate are present;
 - known-good and known-bad seed answers are verifier-checkable;
 - tool-message SFT rows contain standard system/user/assistant/tool turns;

@@ -35,8 +35,9 @@ python3 handoff/env-data-proof-v0/world-api/datalox_world/adapters/mcp_stdio.py 
   --run /tmp/datalox-fastq-mcp
 ```
 
-The MCP adapter starts one task session and exposes only that task's tools plus
-`datalox_submit_answer`.
+The MCP adapter starts one task session and exposes the environment tool
+catalog plus `datalox_submit_answer`. The task prompt scopes which tools are
+relevant for the current task.
 
 ## Boundary
 

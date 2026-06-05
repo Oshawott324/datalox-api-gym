@@ -37,8 +37,8 @@ class McpStdioSmokeTest(unittest.TestCase):
                 listed = _rpc(server, "tools/list", {})
                 names = [tool["name"] for tool in listed["result"]["tools"]]
                 self.assertIn("workspace.list_files", names)
+                self.assertIn("open_sequence", names)
                 self.assertIn("datalox_submit_answer", names)
-                self.assertNotIn("open_sequence", names)
 
                 tool = next(item for item in listed["result"]["tools"] if item["name"] == "workspace.list_files")
                 self.assertIn("description", tool)

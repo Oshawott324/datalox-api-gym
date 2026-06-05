@@ -11,10 +11,11 @@ canonical interface is the lifecycle below.
 reset(task_id, run_dir, seed=None)
   -> session_id
   -> initial observation
-  -> current-task tool specs
+  -> environment tool specs
+  -> task-relevant tool names in the prompt/observation
 
 tools(session_id)
-  -> current-task tool specs only
+  -> environment tool catalog
 
 step(session_id, tool_call)
   -> observation
@@ -56,7 +57,8 @@ world-api/datalox_world/drivers/runnable_world.py
   wraps the existing runnable-world tools and verifier
 
 world-api/datalox_world/adapters/mcp_stdio.py
-  exposes current-task tools plus datalox_submit_answer
+  exposes environment tools plus datalox_submit_answer
+  relies on the system prompt to scope task-relevant tools
 
 world-api/datalox_world/drivers/sandbox_command.py
   thin command-driver boundary for Docker/E2B/Modal/custom sandboxes
