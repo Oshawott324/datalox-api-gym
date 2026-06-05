@@ -235,9 +235,19 @@
           </tr>
         </thead>
         <tbody>
-      <tr>
+          <tr>
+            <td><code>world-api/</code></td>
+            <td>Reset/step/finalize/export lifecycle API with runnable-world driver, MCP stdio adapter, CLI smoke adapter, and sandbox-command driver boundary.</td>
+            <td>2 tasks</td>
+          </tr>
+          <tr>
+            <td><code>collaborator-packet/</code></td>
+            <td>Reviewer-facing packet with one-page context, task cards, World API contract, example trajectories, verifier results, and SFT message examples.</td>
+            <td>4 example runs</td>
+          </tr>
+          <tr>
             <td><code>runnable-world/</code></td>
-            <td>Workspace-first runnable world preview with two tasks, local deterministic tools, submit, verifier, trajectory logging, and SFT export from passing runs.</td>
+            <td>Workspace-first runtime backend with two tasks, local deterministic tools, submit, verifier, and trajectory logging.</td>
             <td>2 tasks</td>
           </tr>
           <tr>
@@ -302,47 +312,45 @@
     <section class="section">
       <h2>Step 0: Package State</h2>
       <p>
-        The handoff package now contains a runnable world preview at
-        <code>runnable-world/</code>. It creates task workspaces, exposes local
-        deterministic tools through <code>./datalox_tool</code>, accepts
-        <code>./submit_answer answer.json</code>, writes
-        <code>trajectory.jsonl</code>, and writes
-        <code>verifier_result.json</code>.
+        The handoff package now contains a World API preview at
+        <code>world-api/</code>. It exposes a
+        <code>reset</code>/<code>tools</code>/<code>step</code>/<code>finalize</code>/<code>export</code>
+        lifecycle over the current <code>runnable-world/</code> backend, with a
+        minimal MCP stdio adapter for collaborator harness review.
       </p>
       <p class="small">
-        Verified local state: runnable-world oracle answers pass and bad
-        answers fail for FASTQ QC and molecule primer validation. The wider seed
-        still has 13 tasks, a 7/3/3 smoke split, 7 train-only tool-message SFT
-        rows, and no source-gate claim that the seed is lift-grade data.
+        Verified local state: World API smoke tests pass, MCP stdio exposes
+        current-task tools and routes calls, runnable-world oracle answers pass,
+        and bad answers fail for FASTQ QC and molecule primer validation. The
+        wider seed still has 13 tasks, a 7/3/3 smoke split, 7 train-only
+        tool-message SFT rows, and no source-gate claim that the seed is
+        lift-grade data.
       </p>
     </section>
 
     <section class="section">
-      <h2>Step 1: Plug Into The Runnable World</h2>
+      <h2>Step 1: Plug Into The World API</h2>
       <p>
-        The first collaborator task is world fit, not JSONL review. A harness
-        should initialize a task, enter the generated workspace, let the agent
-        read <code>README.md</code> and <code>task.json</code>, call
-        <code>./datalox_tool</code>, write <code>answer.json</code>, and call
-        <code>./submit_answer answer.json</code>.
+        The first collaborator task is lifecycle fit, not JSONL review. A
+        harness should connect through the MCP adapter or Python API, receive
+        current-task tool schemas and descriptions, call tools through
+        <code>step</code>, submit an answer through <code>finalize</code>, and
+        inspect the produced trajectory and verifier result.
       </p>
       <p>
-        The useful feedback is whether this workspace interface maps to the
-        team's existing agent runner, whether it needs HTTP/MCP/Python
-        reset-step wrapping, and whether <code>trajectory.jsonl</code> contains
-        enough information for training and debugging.
+        The useful feedback is whether this lifecycle maps to the team's
+        existing MCP runner, whether a Python or HTTP adapter is needed, and
+        whether <code>trajectory.jsonl</code> contains enough information for
+        training and debugging.
       </p>
     </section>
 
     <section class="section">
       <h2>Step 2: Map The World Contract</h2>
       <p>
-        The current preview contract is workspace-first:
-        <code>init_task</code> creates a workspace, <code>./datalox_tool</code>
-        returns observations, <code>./submit_answer</code> returns verifier
-        result and reward, and the run directory contains durable trajectory
-        artifacts. If the collaborator's stack wants reset/step, wrap this
-        contract instead of treating JSONL rows as the environment.
+        The current preview contract is lifecycle-first. MCP is a compatibility
+        adapter over the same lifecycle, not the canonical environment itself.
+        The runnable workspace remains the backend implementation.
       </p>
       <pre><code># Target harness shape, implemented in the model team's normal agent runner:
 reset(task_id) -> initial system/user messages and available tools
@@ -358,8 +366,8 @@ export_messages() -> system/user/assistant/tool transcript</code></pre>
       </p>
       <p>
         The older <code>exports/eval.tool_env.seed.jsonl</code> rows are
-        secondary eval descriptors. The runnable world is the environment
-        preview.
+        secondary eval descriptors. The World API over the runnable world is
+        the environment preview.
       </p>
     </section>
 
@@ -473,7 +481,7 @@ export_messages() -> system/user/assistant/tool transcript</code></pre>
       <h2>Decision Gate</h2>
       <ul>
         <li><strong>Pass:</strong> the collaborator can load the rows, train a LoRA, re-run eval, and produce a split-aware report without asking how the environment works.</li>
-        <li><strong>Weak pass:</strong> formatting works, but no held-out improvement appears. Next action is to collect the 30/10/10 lift-grade set.</li>
+        <li><strong>Weak pass:</strong> formatting works, but no held-out improvement appears. Next action is to collect the 80/20/20 lift-grade set.</li>
         <li><strong>Fail:</strong> rows are too long, target format is wrong, or verifier rewards do not match useful model behavior. Fix the export contract before collecting more tasks.</li>
       </ul>
     </section>

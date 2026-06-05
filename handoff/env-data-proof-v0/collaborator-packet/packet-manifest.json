@@ -7,6 +7,7 @@
     "README.md",
     "one-page-context.md",
     "task-cards.md",
+    "world-api-contract.md",
     "trajectory-guide.md",
     "review-questions.md",
     "examples/runs/fastq-pass/trajectory.jsonl",
@@ -31,9 +32,8 @@
     {
       "path": "exports/sft.messages.examples.jsonl",
       "rows": 2,
-      "source": "passing runnable-world runs"
+      "source": "passing runnable-world runs exported through World API"
     }
   ],
   "status": "review_ready_packet_not_model_lift_claim"
 }
-

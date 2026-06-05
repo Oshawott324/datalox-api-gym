@@ -4,16 +4,15 @@ Updated: 2026-06-02
 
 ## Handoff Status
 
-This package is ready for a post-training collaborator to review as a runnable
-world preview plus experiment-design input. It is not ready for a model-lift
-claim.
+This package is ready for a post-training collaborator to review as a World API
+preview plus experiment-design input. It is not ready for a model-lift claim.
 
 The collaborator should be asked to answer:
 
 ```text
-Can you plug an agent into this runnable world preview and get a useful
-trajectory? What workspace, tool, verifier, transcript, or environment-contract
-changes are needed before a real 30/10/10 run?
+Can your MCP harness plug into this World API preview and get a useful
+trajectory? What lifecycle, tool, verifier, transcript, or environment-contract
+changes are needed before an 80/20/20 run?
 ```
 
 The collaborator should not yet be asked to:
@@ -38,9 +37,12 @@ The collaborator can inspect concrete artifacts instead of vague plans:
 - Task-source gate exists.
 - Verifier-smoke baseline exists.
 - A two-task runnable world preview exists.
+- A reset/step/finalize/export World API preview exists.
+- A minimal MCP stdio adapter exists over the World API.
 
-He can now give useful feedback on runnable world fit, trajectory shape, row
-format, model choice, eval harness, and minimum experiment design.
+He can now give useful feedback on World API fit, MCP adapter shape,
+trajectory shape, row format, model choice, eval harness, and minimum
+experiment design.
 
 ## What Is Still Not Ready For Training
 
@@ -66,6 +68,8 @@ trajectory logging. It is a packaging proof, not a lift-grade benchmark.
 Send these files first:
 
 - `handoff/env-data-proof-v0/post-training-collaborator-handoff.md`
+- `handoff/env-data-proof-v0/collaborator-packet/`
+- `handoff/env-data-proof-v0/world-api/`
 - `handoff/env-data-proof-v0/runnable-world/`
 - `handoff/env-data-proof-v0/source-dataset-prep-report.md`
 - `handoff/env-data-proof-v0/source-datasets.manifest.json`
@@ -89,38 +93,32 @@ Optional supporting files:
 - `handoff/env-data-proof-v0/huggingface-publication-implementation-report.md`
 - `handoff/env-data-proof-v0/post-training-runbook.html`
 
-Do not lead with JSONL alone. The collaborator should see the runnable world
-package first, then the SFT/eval rows as derivatives from world trajectories.
+Do not lead with JSONL alone. The collaborator should see the World API
+contract and MCP adapter first, then the runnable world, then the SFT/eval rows
+as derivatives from world trajectories.
 
 ## Exact Message To Send
 
 ```text
-We have a Datalox Env Data Proof v0 runnable world preview. This is not a
-model-lift claim yet. The goal is to check whether an agent can plug into the
-workspace, use local tools, submit an answer, and produce a useful trajectory
-that your post-training workflow can consume.
+We have a Datalox Env Data Proof v0 World API preview. This is not a model-lift
+claim yet. The goal is to check whether your MCP/agent harness can plug into a
+reset/step/finalize/export world lifecycle, use current-task tools, submit an
+answer, and produce a useful trajectory that your post-training workflow can
+consume.
 
 Can you review:
 
-1. Whether handoff/env-data-proof-v0/runnable-world/ is a usable environment
-   package shape for your agent harness.
-2. Whether the workspace interface is enough: README/task files, local
-   ./datalox_tool calls, ./submit_answer, trajectory.jsonl, and
-   verifier_result.json.
-3. Which trainable open-weight base model you would choose for a small first
+1. Whether handoff/env-data-proof-v0/world-api/ is a usable lifecycle contract:
+   reset -> tools -> step -> finalize -> export.
+2. Whether the MCP adapter shape fits your current harness.
+3. Whether the workspace interface underneath is enough: README/task files,
+   local tool calls, answer submit, trajectory.jsonl, and verifier_result.json.
+4. Which trainable open-weight base model you would choose for a small first
    run.
-4. What environment API you would prefer for real runs. The current preview is:
-   init_task(task_id) -> workspace;
-   ./datalox_tool tool_name args_json -> observation;
-   ./submit_answer answer.json -> verifier result and reward.
-   If your stack wants reset/step, the equivalent contract is:
-   reset(task_id) -> initial messages and tools;
-   step(tool_call) -> tool observation;
-   finalize(answer) -> verifier result and reward fields;
-   export_messages() -> system/user/assistant/tool transcript.
-5. Whether the source gate is enough to prevent us from overclaiming the
+5. What fields are missing from reset/step/finalize/export for SFT/eval/RL.
+6. Whether the source gate is enough to prevent us from overclaiming the
    current seed.
-6. Whether exports/sft.tool_messages.seed.jsonl is usable as SFT/LoRA data in
+7. Whether exports/sft.tool_messages.seed.jsonl is usable as SFT/LoRA data in
    your normal system/user/assistant/tool turn format.
 
 Important boundary: current FlowCyto and Molecule rows are plumbing-only until
@@ -133,30 +131,34 @@ start with exports/sft.tool_messages.seed.jsonl. It uses standard
 system/user/assistant/tool turns. exports/sft.tool_evidence.seed.jsonl keeps
 the same rollout in a richer Datalox audit shape.
 
-The useful object is the runnable world package. The SFT/eval rows are
-secondary examples and derivatives, not the environment itself.
+The useful object is the World API over a runnable world package. The SFT/eval
+rows are secondary examples and derivatives, not the environment itself.
 
 The output we need from you is a short feasibility verdict:
 
 - usable as-is / needs format changes / not compatible
 - preferred base model
 - preferred SFT runner
-- preferred world/rollout/eval harness shape
-- minimum dataset size before training
+- preferred MCP / Python / HTTP / internal world adapter shape
+- minimum dataset size before training, with 80/20/20 as the current target
 - blockers before you would run the first real LoRA
 ```
 
 ## Internal Validation Boundary
 
-The runnable-world scripts are the preview workspace interface. The older seed
-export/eval scripts are for our own reproducibility checks and should not be the
-collaborator's first task unless he explicitly asks for implementation details.
+The World API scripts are the preview lifecycle interface. The runnable-world
+scripts are the current runtime backend. The older seed export/eval scripts are
+for our own reproducibility checks and should not be the collaborator's first
+task unless he explicitly asks for implementation details.
 
 The already-validated claims to include in the handoff are:
 
 - runnable-world oracle runs pass for FASTQ QC and molecule primer validation;
 - runnable-world bad-answer runs fail for both tasks;
 - runnable-world emits `trajectory.jsonl` and `verifier_result.json`;
+- World API smoke tests pass for reset/step/finalize/export;
+- MCP stdio smoke test exposes current-task tools and routes tool calls;
+- system-message exports include current-task tool descriptions and schemas;
 - source manifest and source gate are present;
 - known-good and known-bad seed answers are verifier-checkable;
 - tool-message SFT rows contain standard system/user/assistant/tool turns;
@@ -165,25 +167,25 @@ The already-validated claims to include in the handoff are:
 
 ## Acceptance Criteria For His Feedback
 
-The handoff is successful if he returns answers to these five decisions:
+The handoff is successful if he returns answers to these six decisions:
 
 1. Which base model should be used for the first trainable run?
-2. Whether the runnable world can plug into his agent harness as-is.
+2. Whether the World API can plug into his agent harness through MCP as-is.
 3. Whether the standard tool-message SFT export matches his loader, or whether
    he needs a small adapter change such as `assistant.content: null`, sanitized
    function names, or a different `tool_calls` field shape.
-4. What reset/tools/step/finalize/export contract his rollout harness needs.
+4. What fields his reset/tools/step/finalize/export contract needs.
 5. What exact metadata is missing from the current world trajectories or rows?
-6. What is the minimum dataset size he considers worth training on?
+6. Whether 80 train / 20 dev / 20 test is enough for the first signal test.
 
 After that feedback, Datalox should not keep iterating abstractly. The next
 implementation step should be one of:
 
 - recapture FlowCyto/Molecule rows from public sources;
 - expand the runnable world beyond two tasks;
-- wrap the runnable world as HTTP/MCP/Python reset-step if his stack needs it;
+- wrap the World API as HTTP or a different internal adapter if MCP is not enough;
 - change export row shape to match his workflow;
-- scale to 30/10/10.
+- scale to 80/20/20.
 
 ## Definition Of Fully Training-Ready
 
@@ -194,10 +196,10 @@ The package becomes ready for an actual LoRA/SFT run only after:
 - current Molecule rows are recaptured from NCBI records;
 - PBMC3k derivation is locked or the task is marked derived-table-only;
 - canonical replay bundles exist for the rows used in training/eval;
-- runnable-world or its successor can be executed by a tool-using agent harness;
+- World API or its successor can be executed by a tool-using agent harness;
 - `sft.tool_messages.seed.jsonl` loads in the collaborator's SFT stack without
   manual conversion;
-- split is at least 30 train / 10 dev / 10 test for a first signal test.
+- split is at least 80 train / 20 dev / 20 test for a first signal test.
 
 Until then, the correct collaborator ask is workflow review and experiment
 design, not model-lift execution.

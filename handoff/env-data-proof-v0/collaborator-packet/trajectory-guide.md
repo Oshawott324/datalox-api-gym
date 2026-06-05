@@ -29,6 +29,10 @@ exports/sft.messages.examples.jsonl
 It contains two passing rows, one per task, in a standard
 system/user/assistant/tool message shape.
 
+The system prompt now includes current-task tool descriptions and JSON input
+schemas. This follows the feedback that the model needs to know which tools are
+available and how to call them.
+
 For environment or RL shape, inspect:
 
 ```text
@@ -52,4 +56,3 @@ your rollout/debug/eval loop:
 The example trajectories are oracle-driven for packet review. They are not yet
 fresh model rollouts. The next phase should plug a real agent harness into the
 same world contract and collect model-generated successes and failures.
-

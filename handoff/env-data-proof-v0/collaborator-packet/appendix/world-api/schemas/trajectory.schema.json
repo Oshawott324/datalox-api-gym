@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "datalox_world_trajectory_event.v0",
+  "type": "object",
+  "required": ["type", "task_id"],
+  "properties": {
+    "type": {"type": "string"},
+    "created_at": {"type": "string"},
+    "task_id": {"type": "string"},
+    "tool_name": {"type": "string"},
+    "arguments": {"type": "object"},
+    "observation": {"type": "object"},
+    "answer": {"type": "object"},
+    "verifier_result": {"type": "object"},
+    "reward": {"type": "number"}
+  },
+  "additionalProperties": true
+}

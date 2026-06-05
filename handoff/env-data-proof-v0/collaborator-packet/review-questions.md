@@ -2,7 +2,7 @@
 
 Please answer these directly.
 
-1. Can your agent harness plug into this world shape?
+1. Can your MCP agent harness plug into this world shape?
 
 Expected answer:
 
@@ -10,19 +10,33 @@ Expected answer:
 usable as-is / needs thin wrapper / incompatible
 ```
 
-2. What environment API do you prefer?
+2. Is the proposed World API lifecycle enough?
+
+Lifecycle:
+
+```text
+reset -> tools -> step -> finalize -> export
+```
+
+Expected answer:
+
+```text
+enough / needs fields / wrong abstraction
+```
+
+3. What environment adapter do you prefer first?
 
 Options to consider:
 
 ```text
-local workspace commands
+MCP server
 Python reset/step/finalize
 HTTP service
-MCP server
+local workspace commands
 other internal runner shape
 ```
 
-3. Is `exports/sft.messages.examples.jsonl` close enough to your SFT loader?
+4. Is `exports/sft.messages.examples.jsonl` close enough to your SFT loader?
 
 Please flag exact required changes, for example:
 
@@ -34,7 +48,7 @@ function names need sanitization
 messages need additional metadata
 ```
 
-4. For eval or RL, is `trajectory.jsonl` enough?
+5. For eval or RL, is `trajectory.jsonl` enough?
 
 If not, what is missing?
 
@@ -49,7 +63,7 @@ token/cost metadata
 other
 ```
 
-5. Would you train from successful trajectories like these after real model
+6. Would you train from successful trajectories like these after real model
 rollout collection?
 
 Expected answer:
@@ -58,7 +72,7 @@ Expected answer:
 yes / only after conversion / no
 ```
 
-6. What minimum dataset size is worth the first trainable run?
+7. What minimum dataset size is worth the first trainable run?
 
 Current assumption:
 
@@ -67,7 +81,6 @@ Current assumption:
 80 train / 20 dev / 20 test preferred if we want a more credible result
 ```
 
-7. Which trainable open-weight base model and SFT runner would you use first?
+8. Which trainable open-weight base model and SFT runner would you use first?
 
 Please include the reason if there is an obvious constraint.
-

@@ -10,5 +10,6 @@ __pycache__/
 examples/verified-replay-quickstart/output/
 examples/flowcyto-gating-qc-demo/output/
 handoff/env-data-proof-v0/runs/
+handoff/env-data-proof-v0/world-api/runs/
 handoff/env-data-proof-v0/runnable-world/runs/*
 !handoff/env-data-proof-v0/runnable-world/runs/.gitkeep

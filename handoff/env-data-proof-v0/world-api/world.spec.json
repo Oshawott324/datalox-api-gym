@@ -1,0 +1,132 @@
+{
+  "schema_version": "datalox_world_spec.v0",
+  "world_id": "datalox-science-world-api-preview@2026-06.0",
+  "name": "Datalox Science World API Preview",
+  "description": "A reset/step/finalize/export API over the runnable-world preview.",
+  "driver": {
+    "type": "runnable_world",
+    "runnable_world_root": "../runnable-world"
+  },
+  "tool_catalog": {
+    "workspace.list_files": {
+      "description": "List files available in the task workspace artifacts directory.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    "provenance.inspect": {
+      "description": "Inspect frozen source provenance for the current task artifact.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    "artifact.read_text": {
+      "description": "Read a text artifact from the current task workspace.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Workspace-relative artifact path."
+          }
+        },
+        "required": ["path"],
+        "additionalProperties": false
+      }
+    },
+    "fastqc.parse_report": {
+      "description": "Parse a FastQC text report into structured module statuses and sample statistics.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Workspace-relative FastQC report path."
+          }
+        },
+        "required": ["path"],
+        "additionalProperties": false
+      }
+    },
+    "qc_policy.evaluate": {
+      "description": "Evaluate parsed FastQC evidence against the QC policy and propose the next action.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "report_ref": {
+            "type": "string",
+            "description": "Evidence id for the parsed FastQC report."
+          }
+        },
+        "required": ["report_ref"],
+        "additionalProperties": false
+      }
+    },
+    "open_sequence": {
+      "description": "Open a GenBank sequence artifact into the molecule workspace state.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Workspace-relative GenBank artifact path."
+          },
+          "molecule_id": {
+            "type": "string",
+            "description": "Identifier to assign to the loaded molecule."
+          }
+        },
+        "required": ["path", "molecule_id"],
+        "additionalProperties": false
+      }
+    },
+    "get_sequence_context": {
+      "description": "Return molecule metadata, features, primers, revision, and optionally the sequence.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "molecule_id": {
+            "type": "string",
+            "description": "Loaded molecule id."
+          },
+          "include_sequence": {
+            "type": "boolean",
+            "description": "Whether to include raw sequence text."
+          }
+        },
+        "required": ["molecule_id"],
+        "additionalProperties": false
+      }
+    },
+    "upsert_primer": {
+      "description": "Create or update a primer through the molecule domain workspace tool.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "description": "Current workspace revision expected by the agent."
+          },
+          "primer": {
+            "type": "object",
+            "description": "Primer object with id, name, sequence, and molecule_id."
+          }
+        },
+        "required": ["expected_revision", "primer"],
+        "additionalProperties": false
+      }
+    },
+    "validate_workspace": {
+      "description": "Validate the molecule workspace state after domain edits.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  }
+}

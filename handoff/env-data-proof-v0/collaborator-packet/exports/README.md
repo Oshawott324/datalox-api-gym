@@ -2,7 +2,10 @@
 
 ## `sft.messages.examples.jsonl`
 
-Two passing example rows exported from the runnable-world trajectories.
+Two passing example rows exported from the runnable-world trajectories through
+the World API exporter.
+
+The system message includes current-task tool descriptions and input schemas.
 
 Shape:
 
@@ -33,4 +36,3 @@ Shape:
 
 This is intended for SFT loader compatibility review, not as a final training
 dataset.
-

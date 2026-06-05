@@ -2,7 +2,7 @@
   "schema_version": "datalox_runnable_world_task.v0",
   "task_id": "molecule-primer-validation-001",
   "family": "molecule-biology",
-  "prompt": "Import the circular GenBank fixture, inspect sequence context, add one verifier-specified primer through upsert_primer using the current expectedRevision, then validate the workspace. Report primer id, molecule id, final revision, and evidence refs.",
+  "prompt": "Import the circular GenBank fixture, inspect sequence context, add one verifier-specified primer through upsert_primer using the current expected_revision argument, then validate the workspace. Report primer id, molecule id, final revision, and evidence refs.",
   "allowed_tools": [
     "open_sequence",
     "get_sequence_context",
