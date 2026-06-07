@@ -84,7 +84,7 @@ async function buildRecordProxyServer(input: ReplayProxyServerInput & {
   });
 
   const server = new McpServer({
-    name: "datalox-agent-replay-proxy",
+    name: "datalox-api-gym-proxy",
     version: "0.1.0",
   });
   server.server.registerCapabilities({
@@ -180,7 +180,7 @@ async function buildReplayOnlyProxyServer(input: ReplayProxyServerInput): Promis
   const replayCounters = new Map<string, number>();
 
   const server = new McpServer({
-    name: "datalox-agent-replay-proxy",
+    name: "datalox-api-gym-proxy",
     version: "0.1.0",
   });
   server.server.registerCapabilities({
@@ -236,7 +236,7 @@ async function connectUpstream(config: DataloxReplayProxyConfigV1): Promise<{ cl
     stderr: "pipe",
   });
   const client = new Client(
-    { name: "datalox-agent-replay-upstream-client", version: "1.0.0" },
+    { name: "datalox-api-gym-upstream-client", version: "1.0.0" },
     { capabilities: {} },
   );
   await client.connect(transport);

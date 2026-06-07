@@ -13,14 +13,14 @@ Read in this order:
 9. trajectory schema docs only when deriving optional trajectory/eval rows
 10. the selected `skills/<name>/SKILL.md` only when the user explicitly asks for that local skill
 
-Use Datalox Agent Replay with this model:
+Use Datalox API Gym with this model:
 
 ```text
-agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
+API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
 ```
 
 - normalized view over replay records and imported traces: `action_observation.v1`
-- layer boundary: Datalox owns tool-I/O record/replay; it does not own sandbox runtime, environment construction, behavioral mocks, reward functions, or judge agents
+- layer boundary: Datalox owns API-world packaging, tool contracts, verifier metadata, replay evidence, and export adapters; it does not own production API aggregation, sandbox runtime, model trainers, reward model research, or generic robot/lab simulators
 - exact replay primitive: `tool_io_record.v1`
 - replay lookup key: `request_hash + sequence_index`
 - optional turn review context: `agent_turn.v1`
@@ -34,7 +34,8 @@ agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay
 
 Business rule:
 
-- Reproducible tool-call replay is the primary project focus.
+- Resettable, verifiable API worlds are the primary project focus; replay is the evidence mode.
+- API aggregators connect agents to real APIs; Datalox API Gym gives agents resettable practice worlds for API workflows.
 - Do not keep note/skill promotion as a second loop in this repo.
 - New replay data writes under `.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.
 - `action_observation.v1` is the strict normalized action/observation view over raw traces and tool I/O records.

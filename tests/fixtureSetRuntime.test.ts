@@ -86,7 +86,7 @@ async function writeFixture(root: string, spec: FixtureSpec): Promise<{
     description: `Fixture ${spec.id}.`,
     status: "verified",
     engine: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimumVersion: "0.1.0",
     },
     tools: [
@@ -216,7 +216,7 @@ async function createFixtureSetRepo(options?: { collide?: boolean }): Promise<{
     id: fixtureSetId,
     version,
     name: fixtureSetId,
-    description: "Composed fixture set.",
+    description: "Composed world set.",
     status: "verified",
     fixtures: [slack.ref, search.ref],
     evalPrompts: {
@@ -240,11 +240,11 @@ async function createFixtureSetRepo(options?: { collide?: boolean }): Promise<{
   const catalog = {
     schema_version: "datalox_fixture_catalog.v1",
     repository: {
-      name: "datalox-replay-fixtures",
-      package: "@datalox/replay-fixtures",
+      name: "datalox-api-gym-worlds",
+      package: "@datalox/api-gym-worlds",
     },
     engine_contract: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimum_version: "0.1.0",
       commands: {
         install_fixture_set: "datalox fixture-sets install <fixture-set-ref>",
@@ -304,8 +304,8 @@ async function createFixtureSetRepo(options?: { collide?: boolean }): Promise<{
   return { catalogPath, fixtureSetRef };
 }
 
-describe("fixture set runtime", () => {
-  it("installs a fixture set by installing member fixtures without copying replay data into the set", async () => {
+describe("world set runtime", () => {
+  it("installs a world set by installing member fixtures without copying replay data into the set", async () => {
     const fixtureRepo = await createFixtureSetRepo();
     const cacheRoot = await makeTempDir("datalox-fixture-set-cache-");
 

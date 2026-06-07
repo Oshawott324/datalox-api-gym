@@ -1,15 +1,18 @@
 # Start Here
 
-Datalox Agent Replay is an MCP-compatible VCR for agent tools. It records exact
-agent-visible tool requests and observations, stores them by deterministic
-request hash, packs sealed replay bundles, and replays the same observations
-later without live upstream tools.
+Datalox API Gym gives agents resettable, verifiable API worlds for practicing
+realistic tool use before touching production systems.
 
-Primary replay loop:
+Primary API Gym loop:
 
 ```text
-agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
+API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
 ```
+
+Replay is the evidence mode inside API Gym. It records exact agent-visible tool
+requests and observations, stores them by deterministic request hash, packs
+sealed replay bundles, and replays the same observations later without live
+upstream tools.
 
 The normalized action schema is
 [docs/action-observation-schema.md](docs/action-observation-schema.md). The
@@ -34,12 +37,12 @@ agent chatbox:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
+PACK_REPO="${HOME}/.datalox/cache/datalox-api-gym"
 mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
+  git clone https://github.com/Oshawott324/datalox-api-gym.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
@@ -56,7 +59,7 @@ stamp, and host shims. Replay data writes under `.datalox/tool-io/`,
 Use this repo handoff:
 
 ```text
-Use this repo's Datalox Agent Replay. Read AGENTS.md and DATALOX.md before acting.
+Use this repo's Datalox API Gym. Read AGENTS.md and DATALOX.md before acting.
 ```
 
 To confirm state:
@@ -92,8 +95,8 @@ node bin/datalox.js status --repo . --json
 ## One-Click Options
 
 - Full setup from the target repo:
-  `TARGET_REPO="$(pwd)" && PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay" && mkdir -p "$(dirname "$PACK_REPO")" && ([ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO") && cd "$PACK_REPO" && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
-- Adopt a target repo from an existing Datalox Agent Replay clone:
+  `TARGET_REPO="$(pwd)" && PACK_REPO="${HOME}/.datalox/cache/datalox-api-gym" && mkdir -p "$(dirname "$PACK_REPO")" && ([ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Oshawott324/datalox-api-gym.git "$PACK_REPO") && cd "$PACK_REPO" && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh "$TARGET_REPO"`
+- Adopt a target repo from an existing Datalox API Gym clone:
   `bash bin/adopt-host-repo.sh /path/to/host-repo`
 - Pull from GitHub and adopt:
   `bash bin/adopt-from-github.sh /path/to/host-repo`

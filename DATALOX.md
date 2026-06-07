@@ -1,19 +1,17 @@
 # Datalox
 
-This repo is the portable implementation package for Datalox Agent Replay: the
-engine for versioned API/MCP snapshot environments.
+This repo is the portable implementation package for Datalox API Gym:
+resettable, verifiable API worlds where agents can practice realistic tool use
+before touching production systems.
 
-Datalox's broader product direction is to reconstruct high-value traditional
-human-facing workflows as agent-native environments, then use replay evidence
-to make those environments auditable, reusable, and useful for training/eval
-teams.
+The product object is an API world, not a replay log. A useful API world has
+stateful entities, side effects, async events, permission boundaries, seeded
+task scenarios, hidden verifier state, replay evidence, and training/eval
+exports.
 
-This repo powers the replay evidence layer for those environments: frozen tool
-catalogs, tool observations, tasks, verifier metadata, fixture packs, fixture
-sets, deterministic replay, and training/eval exports. Sibling Datalox domain
-MCP repos can provide live scientific domain environments with structured
-tools, state, validators, and UI/app surfaces. Recording is an authoring
-mechanism for creating private snapshots, not the object users consume.
+Replay is a feature of API Gym. It freezes exact tool observations from live
+APIs, MCP tools, domain tools, or previous world runs so the same episode can
+be reused later without live upstream calls.
 
 Core replay surfaces:
 
@@ -25,32 +23,30 @@ Core replay surfaces:
 - portable replay artifact: `replay_bundle.v1`
 - optional downstream adapters: `debugging_trajectory.v1`, `agent_task_trajectory.v1`
 
-Primary consumption loop:
+Primary API Gym loop:
 
-`versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports`
+`API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports`
 
 Snapshot authoring loop:
 
-`live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> fixture pack/version`
+`live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> world pack/version`
 
-Datalox Agent Replay owns versioned API/MCP snapshot environments and the
-tool-I/O record/replay layer underneath them. This repo does not own sandbox
-runtimes, generic task environment construction, behavioral mock construction,
-reward functions, or judge agents. Sibling Datalox domain MCP repos may own
-live constrained scientific environments; Agent Replay snapshots and replays
-their agent-visible tool I/O instead of becoming their domain runtime. See
-[docs/agentic-rl-layer-map.md](docs/agentic-rl-layer-map.md).
+Datalox API Gym owns API-world packaging, tool contracts, verifier metadata,
+run evidence, replay mode, and export adapters. This repo does not own
+production API aggregation, sandbox runtimes, model trainers, reward model
+research, or generic robot/lab simulators.
 
-Current concrete proof target:
+Near-term target:
 
 ```text
-agent-native-science-seed@2026-06.0
-  FlowCyto + Molecule Biology + scientific-data QC
-  -> replay bundles -> fixture set -> datalox run -> sft_frame.v1
+billing-support-miniworld@2026-06
+  fake_billing_api + fake_support_api + fake_crm_api + fake_email_api
+  -> sampled state scenarios -> verifier/replay evidence -> export rows
 ```
 
-See [docs/budget-agent-rl-proof-demo-guide.html](docs/budget-agent-rl-proof-demo-guide.html)
-and [docs/flowcyto-environment-pack-plan.html](docs/flowcyto-environment-pack-plan.html).
+API aggregators connect agents to real APIs. Datalox API Gym gives agents
+resettable practice worlds for API workflows. See
+[docs/project-definition.md](docs/project-definition.md).
 
 Do not keep note/skill promotion as a second loop in this repo.
 
@@ -146,9 +142,9 @@ The source clone should live outside the target repo:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
+PACK_REPO="${HOME}/.datalox/cache/datalox-api-gym"
 mkdir -p "$(dirname "$PACK_REPO")"
-[ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
+[ -d "$PACK_REPO/.git" ] && git -C "$PACK_REPO" pull --ff-only || git clone https://github.com/Oshawott324/datalox-api-gym.git "$PACK_REPO"
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
 bash bin/adopt-host-repo.sh "$TARGET_REPO"

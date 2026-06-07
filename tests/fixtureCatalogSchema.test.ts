@@ -17,11 +17,11 @@ function catalog() {
   return {
     schema_version: "datalox_fixture_catalog.v1",
     repository: {
-      name: "datalox-replay-fixtures",
-      package: "@datalox/replay-fixtures",
+      name: "datalox-api-gym-worlds",
+      package: "@datalox/api-gym-worlds",
     },
     engine_contract: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimum_version: "0.1.0",
       commands: {
         install_fixture: "datalox fixtures install <fixture-ref>",

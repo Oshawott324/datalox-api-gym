@@ -27,12 +27,14 @@ exports/sft.messages.examples.jsonl
 ```
 
 It contains two passing rows, one per task, in a standard
-system/user/assistant/tool message shape.
+system/user/assistant/tool message shape with row-level `tools`,
+`tool_choice`, and `provider_format: openai_chat`.
 
-The system prompt now includes the environment tool catalog and a
-task-relevant tool subset with JSON input schemas. This follows the feedback
-that the MCP service is environment-level and task relevance should be carried
-by the prompt.
+The system prompt carries task policy, evidence requirements, final-answer
+contract, and task-relevant tool names/descriptions. Full tool JSON schemas
+stay in the structured `tools` field, matching OpenAI-style function calling.
+The MCP/world boundary remains environment-level; task relevance is carried by
+the task prompt/policy and `task_tool_names`, not a second world mode.
 
 For environment or RL shape, inspect:
 

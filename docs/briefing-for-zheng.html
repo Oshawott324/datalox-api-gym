@@ -221,7 +221,7 @@
       This is intentionally not "Agentic RL infra first." RL is valuable, but it is expensive:
       rollouts are slow, verifiers are bottlenecks, and reward signals are often sparse.
       The near-term product value is agent-native workflow environments plus
-      installable snapshot environments that produce clean trajectories for
+      installable API worlds that produce clean trajectories for
       export.
     </p>
   </section>
@@ -234,7 +234,7 @@
     </p>
     <pre>OpenAI-compatible model endpoint, including vLLM
   -> datalox run
-  -> replay fixture world
+  -> replay-backed API world
   -> datalox_run.v1
   -> datalox export sft
   -> sft_frame.v1 JSONL</pre>
@@ -260,7 +260,7 @@ datalox export sft \
       Implemented now: OpenAI-compatible model adapter, replay tool runtime,
       <code>datalox_run.v1</code>, <code>datalox run</code>,
       <code>sft_frame.v1</code>, and <code>datalox export sft</code>.
-      Still next: published serious fixture sets, completion frame export,
+      Still next: published serious world sets, completion frame export,
       preference pair export, direct verl adapter, and live domain environment
       rollout proofs.
     </p>
@@ -274,13 +274,13 @@ datalox export sft \
         <p>
       Runs agents against real tools, domain MCPs, APIs, or app worlds.
       Uses Datalox to author private snapshots, package replay bundles, and
-      publish versioned fixture worlds.
+      publish versioned API worlds.
         </p>
       </div>
       <div class="card">
         <h3>Training / Eval Consumer</h3>
         <p>
-          Wants installable fixture sets and clean versioned exports, not capture
+          Wants installable world sets and clean versioned exports, not capture
           infrastructure.
           Starts with SFT and preference data; may later use reward/eval rows and online RL.
         </p>
@@ -288,7 +288,7 @@ datalox export sft \
       <div class="card">
         <h3>Fixture / Data Provider</h3>
         <p>
-          Curates approved snapshot fixture packs and fixture sets so downstream
+          Curates approved snapshot world packs and world sets so downstream
           teams can train, evaluate, and compare agents without live tool credentials.
         </p>
       </div>
@@ -302,11 +302,11 @@ live domain MCP / API / app world
   -> Datalox snapshot authoring path
   -> tool_io_record.v1
   -> replay_bundle.v1
-  -> fixture pack
-  -> fixture set
+  -> world pack
+  -> world set
 
 Consumption path  (training/eval consumer - no live tools)
-versioned API/MCP snapshot fixture set install
+versioned API/MCP snapshot world set install
   -> replay runtime
   -> datalox_run.v1
   -> sft_frame.v1 now
@@ -387,7 +387,7 @@ Training team owns:
     <p>
       Datalox should therefore optimize the first mile:
     </p>
-    <pre>fixture/world breadth
+    <pre>API-world breadth
   -> stable tool observations
   -> model-visible transcript
   -> exportable SFT/completion/preference rows
@@ -434,20 +434,20 @@ Training team owns:
       The lesson is not "clone AppWorld." The practical Datalox proof is:
     </p>
     <pre>AppWorld MCP/API server
-  -> Datalox authors a versioned snapshot
+  -> Datalox authors a replay-backed API world
   -> replay_bundle.v1
-  -> fixture set
+  -> world set
   -> SFT/preference/eval exports</pre>
   </section>
 
   <section class="section">
     <h2>Roadmap</h2>
     <ol>
-      <li><strong>Done:</strong> keep fixture replay, fixture sets, and spec metadata stable.</li>
+      <li><strong>Done:</strong> keep fixture replay, world sets, and spec metadata stable.</li>
       <li><strong>Done:</strong> add OpenAI-compatible/vLLM-style <code>datalox run</code> over replay worlds.</li>
       <li><strong>Done:</strong> add <code>datalox_run.v1</code> and <code>sft_frame.v1</code> export.</li>
       <li><strong>Now:</strong> build <code>agent-native-science-seed@2026-06.0</code>: FlowCyto as the anchor family, Molecule Biology as the deterministic sequence-workflow family, and scientific-data QC as the cheap public scaling family.</li>
-      <li><strong>Now:</strong> publish one serious multi-family fixture set in <code>datalox-replay-fixtures</code> with enough variety to be worth an SFT smoke test.</li>
+      <li><strong>Now:</strong> publish one serious multi-family world set in <code>datalox-api-gym-worlds</code> with enough variety to be worth an SFT smoke test.</li>
       <li><strong>Next:</strong> add <code>completion_frame.v1</code> and a model-team-friendly JSONL view.</li>
       <li><strong>Next:</strong> add <code>preference_pair.v1</code> for success/recovery/failure comparisons.</li>
       <li><strong>Next:</strong> add <code>reward_record.v1</code> and reference reward schemes, not canonical reward design.</li>
@@ -470,7 +470,7 @@ Training team owns:
       </li>
       <li>
         Does the bio environment family direction make sense, or should the first serious
-        fixture set be broader app/API tasks before scientific domains?
+        world set be broader app/API tasks before scientific domains?
       </li>
       <li>
         For reward, is preserving source/version/evidence plus a reference scheme enough,

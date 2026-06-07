@@ -54,7 +54,7 @@ function mcpJsonResult(result: unknown) {
 
 export function buildReplayMcpServer(): McpServer {
   const server = new McpServer({
-    name: "datalox-agent-replay",
+    name: "datalox-api-gym",
     version: "0.1.0",
   });
 

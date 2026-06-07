@@ -5,8 +5,9 @@
 Two passing example rows exported from the runnable-world trajectories through
 the World API exporter.
 
-The system message includes the environment tool catalog plus the
-task-relevant tool subset and input schemas.
+The system message includes task policy, evidence requirements, final-answer
+contract, and task-relevant tool names/descriptions. Full JSON input schemas
+are exported separately in the row-level OpenAI Chat `tools` field.
 
 Shape:
 
@@ -16,6 +17,18 @@ Shape:
   "task_id": "...",
   "family": "...",
   "source_run": "...",
+  "provider_format": "openai_chat",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "...",
+        "description": "...",
+        "parameters": {"type": "object"}
+      }
+    }
+  ],
+  "tool_choice": "auto",
   "messages": [
     {"role": "system", "content": "..."},
     {"role": "user", "content": "..."},

@@ -88,7 +88,7 @@ const sharedCommandsInternal: SharedCommandSpec[] = [
   {
     cliCommand: "adopt",
     mcpTool: "adopt_pack",
-    description: "Copy the Datalox Agent Replay replay surfaces into a host repo from the current repo or a git URL.",
+    description: "Copy the Datalox API Gym replay surfaces into a host repo from the current repo or a git URL.",
     args: [hostRepoPathArg, packSourceArg],
     async run(input) {
       return adoptPack({

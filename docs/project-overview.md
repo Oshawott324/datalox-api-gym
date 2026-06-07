@@ -7,7 +7,7 @@ The canonical replay bundle schema lives in [replay-bundle-schema.md](./replay-b
 The canonical per-turn review schema lives in [agent-turn-schema.md](./agent-turn-schema.md).
 The canonical layer boundary lives in [agentic-rl-layer-map.md](./agentic-rl-layer-map.md).
 The verified replay quickstart lives in [verified-replay-quickstart.md](./verified-replay-quickstart.md).
-The fixture-world usage guide lives in [fixture-worlds-and-sets.md](./fixture-worlds-and-sets.md).
+The API-world usage guide lives in [api-worlds-and-sets.md](./api-worlds-and-sets.md).
 The reference-bundle milestone plan lives in [reference-bundle-plan.md](./reference-bundle-plan.md).
 The local-engine to server-ready implementation plan lives in [local-to-server-engine-plan.html](./local-to-server-engine-plan.html).
 The runtime adapter roadmap lives in [runtime-adapter-roadmap.html](./runtime-adapter-roadmap.html).
@@ -19,38 +19,40 @@ The filesystem-backed orchestration protocol lives in [task-orchestration.md](./
 
 Short version:
 
-- Datalox Agent Replay is the engine for versioned API/MCP snapshot environments.
-- The concrete near-term proof is `agent-native-science-seed@2026-06.0`: a
-  multi-family scientific workflow fixture set with FlowCyto, Molecule Biology,
-  scientific-data QC, validators, replay bundles, and SFT export.
+- Datalox API Gym provides resettable, verifiable API worlds where agents can
+  practice realistic tool use before touching production systems.
+- The concrete near-term proof should be `billing-support-miniworld@2026-06`:
+  fake billing, support, CRM, and email APIs with sampled state scenarios,
+  hidden verifier state, replay evidence, and SFT/eval export.
 - `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` records are the exact replay primitive.
 - `mcp_tool_catalog.v1` artifacts preserve MCP proxy `tools/list` metadata.
 - `agent_turn.v1` events are optional turn review context.
 - `replay_bundle.v1` is the portable artifact that can be verified and replayed.
 - `debugging_trajectory.v1` rows are optional compact training/eval adapters.
-- Datalox owns versioned fixture-set activation, verified replay, and training/eval exports
-  from replay evidence, not sandbox runtime, generic environment construction, or reward rules.
+- Datalox owns API-world packaging, tool contracts, verifier metadata, replay
+  evidence, and training/eval exports, not production API aggregation, sandbox
+  runtime, model trainers, reward model research, or generic robot/lab simulators.
 - Datalox MCP is the instrumentation, tool I/O capture, replay, verification, and export-control layer.
-- `datalox-agent-replay` is the repo-local implementation package.
+- `datalox-api-gym` is the repo-local implementation package.
 - Local skills are internal guidance surfaces, not a second replay loop.
 
 Primary consumption loop:
 
 ```text
-versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports
+API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
 ```
 
-Current proof loop:
+Near-term proof loop:
 
 ```text
-flowcyto live MCP -> agent rollout -> replay bundle -> fixture set -> datalox run -> sft_frame.v1
+billing/support scenario -> agent API calls -> verifier/replay evidence -> export rows
 ```
 
 Do not model this repo around legacy note/skill promotion. New replay work
-should consume versioned fixture sets first. When authoring private snapshots,
-record exact tool I/O, assemble replay bundles, then derive trajectory rows only
-when useful.
+should support API worlds first. When authoring replay-backed worlds, record
+exact tool I/O, assemble replay bundles, then derive trajectory rows only when
+useful.
 
 The repo is centered on:
 

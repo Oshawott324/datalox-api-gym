@@ -78,7 +78,7 @@ export const fixtureSetManifestSchema = z
       context.addIssue({
         code: "custom",
         path: ["release", "immutable"],
-        message: "released fixture sets must be immutable",
+        message: "released world sets must be immutable",
       });
     }
   });

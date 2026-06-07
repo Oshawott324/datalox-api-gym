@@ -24,7 +24,7 @@ Body:
 - Exact tool I/O captured once as `tool_io_record.v1`
 - Portable replay artifacts packaged as `replay_bundle.v1`
 - Training/eval exports derived from verified evidence
-- Open source: `github.com/Oshawott324/datalox-agent-replay`
+- Open source: `github.com/Oshawott324/datalox-api-gym`
 
 Speaker note:
 
@@ -147,7 +147,7 @@ Body:
   - record mode stores tool calls and MCP tool catalogs
   - replay mode serves verified bundle observations without upstream fallback
 - Wrapper defaults:
-  - replay-first post-run mode
+  - API-world-first post-run mode
   - trajectory export stays derivative-only
 - Regression gates:
   - canonical docs tests

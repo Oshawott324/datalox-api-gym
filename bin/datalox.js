@@ -28,7 +28,7 @@ function isFullPackRoot(root) {
   }
   try {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-    return packageJson?.name === "datalox-agent-replay";
+    return packageJson?.name === "datalox-api-gym";
   } catch {
     return false;
   }
@@ -70,7 +70,7 @@ function resolveRuntimeEntrypoint(root) {
   const candidates = [
     root,
     readInstallPackRoot(root),
-    path.join(os.homedir(), ".datalox", "cache", "datalox-agent-replay"),
+    path.join(os.homedir(), ".datalox", "cache", "datalox-api-gym"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
@@ -81,7 +81,7 @@ function resolveRuntimeEntrypoint(root) {
     }
   }
 
-  throw new Error("Unable to resolve Datalox Agent Replay runtime root for datalox.js");
+  throw new Error("Unable to resolve Datalox API Gym runtime root for datalox.js");
 }
 
 const entrypoint = resolveRuntimeEntrypoint(repoRoot);

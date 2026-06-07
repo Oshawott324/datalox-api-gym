@@ -1,78 +1,82 @@
 # Agentic RL Layer Map
 
-This document records the product boundary for Datalox Agent Replay inside the
+This document records the product boundary for Datalox API Gym inside the
 larger agentic RL stack.
 
 The short version:
 
 ```text
-Datalox Agent Replay provides versioned API/MCP snapshot environments.
-Teams consume fixture packs and fixture sets. Recording real agent-visible tool
-observations is one authoring path for creating private snapshots.
+Datalox API Gym provides resettable, verifiable API worlds.
+Teams consume runnable worlds and task scenarios. Replay is one evidence mode
+for freezing exact observations, not the center of the product.
 ```
 
 Primary consumption loop:
 
 ```text
-versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports
+API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
 ```
 
-Snapshot authoring loop:
+Replay authoring loop:
 
 ```text
-live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> fixture pack/version
+live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> world pack/version
 ```
 
-This can function as record-based mocking during replay, but this repo is not a
-mock-construction platform, sandbox runtime, generic environment builder, or
-reward engine.
+Datalox API Gym is a stateful API-world runtime and packaging layer. It is not
+a production connector aggregator, sandbox runtime, model trainer, reward model
+research project, or generic robot/lab simulator.
 
 Portfolio nuance:
 
 ```text
-Datalox Agent Replay repo = versioned API/MCP snapshots, fixture worlds, replay bundles
-Datalox domain MCP repos  = live constrained scientific environments when shipped separately
+datalox-api-gym        = runtime, CLI/HTTP/MCP adapters, verifier path, replay evidence, export adapters
+datalox-api-gym-worlds = published API worlds, task scenarios, scenario distributions, verifier specs
+Datalox domain repos   = non-API worlds only after separate buyer pull exists
 ```
 
 Domain MCP environments can own file-backed scientific workspaces, domain tool
 schemas, compact UIs, deterministic domain algorithms, and agent-first tool
-contracts. Agent Replay snapshots and replays their tool I/O; it does not
+contracts. API Gym snapshots and replays their tool I/O; it does not
 become their domain runtime.
 
-Current proof target:
+Current API-world proof target:
 
 ```text
-agent-native-science-seed@2026-06.0
-  FlowCyto + Molecule Biology + scientific-data QC
-  -> replay bundles / fixture set
-  -> datalox run
-  -> sft_frame.v1
+billing-support-miniworld@2026-06
+  fake_billing_api + fake_support_api + fake_crm_api + fake_email_api
+  -> sampled state scenarios
+  -> agent run
+  -> verifier/replay evidence
+  -> training/eval exports
 ```
 
-This is the first test of the combined claim: Datalox ships or composes
-versioned scientific agent environments plus the replay/data layer needed to
-turn real rollouts into SFT, preference, eval, and later RL data.
+The old scientific fixtures remain useful as proof assets, but they should not
+define the main repo identity. The immediate story is API Gym: resettable
+practice worlds for business API workflows.
 
 ## Environment Levels
 
 Use these terms to avoid drifting between "environment" and "data recorder":
 
 ```text
-Level 1: versioned snapshot environment
-  versioned API/MCP snapshot + fixture set + verified replay bundles
-  deterministic over observed scenarios
-  unseen actions return replay_miss
-  useful for SFT, preference data, eval, and regression
+F0 endpoint mock
+  schema-shaped responses only
 
-Level 2: runtime-backed environment
-  live MCP/API/CLI/runtime starts from a declared state
-  valid new actions advance the runtime
-  every rollout emits replay evidence
+F1 protocol fake
+  validates arguments and returns shaped responses
 
-Level 3: generative reset/step environment
-  samples many task instances by seed/difficulty
-  owns hidden state, observation renderer, terminal logic, and verifier hooks
-  useful for scalable online RL after the data/export path is stable
+F2 stateful API world
+  entities mutate correctly across calls
+
+F3 workflow API world
+  async events, permissions, realistic errors, and cross-service tasks
+
+F4 differential-tested world
+  behavior checked against official sandbox/docs/examples
+
+F5 certified world
+  provider or domain expert validates semantics
 ```
 
 ## Layer Map
@@ -80,11 +84,11 @@ Level 3: generative reset/step environment
 Frontier agentic RL systems usually combine several layers.
 
 ```text
-Layer 1    sandbox/runtime foundation
-Layer 2a   constrained domain MCP environments
-Layer 2b   generic task environment construction
-Layer 1.5  versioned snapshot environment + tool-I/O record/replay
-Layer 3    evaluation and reward rules
+Layer 1    host sandbox / container / cluster
+Layer 2    stateful API world runtime
+Layer 2.5  replay evidence mode
+Layer 3    verifier / reward / eval adapters
+Layer 4    trainer / rollout worker / model provider
 ```
 
 ### Layer 1: Sandbox And Runtime
@@ -108,13 +112,38 @@ real sandbox commands through whatever runtime the team already uses: local
 Docker, e2b, Daytona, Modal, a custom sandbox cluster, or a frontier-lab
 internal platform.
 
-### Layer 1.5: Versioned Snapshot Environment And Tool-I/O Record/Replay
+### Layer 2: Stateful API World Runtime
 
-This is Datalox Agent Replay's home layer.
+This is Datalox API Gym's home layer.
 
-Most users should consume this layer as an installed fixture pack or fixture
-set. They do not need to record anything unless they are authoring a new private
-snapshot.
+Most users should consume this layer as an installed API world with task
+scenarios. They do not need to record anything unless they are authoring a
+private replay-backed world from live tools.
+
+An API world should model state machines, not just endpoint shapes:
+
+```text
+customers
+subscriptions
+invoices
+payments
+refunds
+disputes
+support tickets
+CRM records
+email threads
+webhook delivery state
+permission boundaries
+idempotency keys
+failure states
+```
+
+Valid tool calls mutate hidden world state. The verifier checks final outcomes
+against that hidden state, policy rules, and the evidence the agent collected.
+
+### Layer 2.5: Replay Evidence Mode
+
+Replay is a feature inside API Gym.
 
 Snapshot authoring mode:
 
@@ -137,22 +166,21 @@ export/redaction gate
 Consumption/replay mode:
 
 ```text
-fixture set -> tool name + arguments -> request_hash + sequence_index -> recorded observation
+world set -> tool name + arguments -> request_hash + sequence_index -> recorded observation
 ```
 
 No live upstream call happens during replay.
 
-A fixture set is the snapshot environment boundary. It declares which
-fixture packs, task specs, verifier specs, scaffold specs, tool catalogs, and
-reset behavior make up the task world. It is finite: if the agent takes a valid
-but previously unrecorded path, replay must miss clearly instead of inventing a
-new state transition.
+A replay-backed world declares which world packs, task specs, verifier specs,
+scaffold specs, tool catalogs, and reset behavior make up the task scenario. It
+is finite: if the agent takes a valid but previously unrecorded path, replay
+must miss clearly instead of inventing a new state transition.
 
 This is record-based mocking in the narrow technical sense: the replayed result
 stands in for a live tool or API response. But the mock is not hand-written and
 not guessed. It is a real observation captured from an earlier run.
 
-Good fit:
+Good replay fit:
 
 - MCP tools
 - external APIs
@@ -177,24 +205,21 @@ Examples in the broader Datalox portfolio:
 - molecular biology workspaces: FASTA, GenBank, sequence features, plasmid maps
 - protein visualization workflows: PyMOL actions, viewer state, snapshots
 
-These environments may be Datalox-owned when they live in sibling domain repos.
+These environments may be Datalox-owned later when they live in sibling domain repos.
 The common shape is:
 
 ```text
 domain files -> file-backed workspace -> MCP tools -> structured observations -> optional UI
 ```
 
-Agent Replay should capture their agent-visible tool calls, observations,
+API Gym should capture their agent-visible tool calls, observations,
 workspace revisions, validation outputs, and replay bundles. The domain repo
 should own the scientific runtime, UI, parsers, and algorithms.
 
-The first concrete Layer 2a pack should be the FlowCyto family inside
-`agent-native-science-seed@2026-06.0`, not the whole seed by itself. It is not
-just a trajectory format: the live domain environment must expose stateful
-workspace mutations, structured tool errors, deterministic validators, and
-replayable observations.
+These are no longer the center of this repo's name. Keep them as proof assets
+or separate world families unless they reach the same buyer pull as API Gym.
 
-### Layer 2b: Generic Task Environment Construction
+### Layer 2b: Generic Non-API Environment Construction
 
 This layer builds the world the agent acts inside.
 
@@ -207,12 +232,12 @@ Examples:
 - stateful behavioral mocks
 - synthetic task generation with Docker images and validators
 
-Datalox Agent Replay does not own this layer.
+Datalox API Gym does not own this layer unless the world is an API workflow.
 
 If a team needs a stateful phone simulator that responds to unseen camera,
 GPS, or movement actions, record/replay alone is not enough. They need a real
 environment or a behavioral mock. Datalox can still record the tool I/O around
-that environment, but Agent Replay does not construct the generic environment.
+that environment, but API Gym does not construct the generic environment.
 
 ### Layer 3: Evaluation And Reward Rules
 
@@ -229,48 +254,52 @@ Examples:
 
 Datalox does not own this layer.
 
-Datalox Agent Replay should preserve verifier commands, outputs, source
+Datalox API Gym should preserve verifier commands, outputs, source
 references, and reward provenance when available, but it should not become the
 reward engine. The replay bundle lets existing evaluators run or compare
 against stable observations.
 
-## Mocking Vocabulary
+## API Mocking Vocabulary
 
 Use this distinction carefully.
 
 ```text
-record-based mocking:
-  real call once, save request/response, replay exact response later
+endpoint mock:
+  schema-shaped response with little or no state
 
-behavioral mocking:
-  hand-coded or generated fake system that responds to many possible inputs
+protocol fake:
+  validates arguments and returns shaped responses
+
+stateful API world:
+  hidden entities mutate across calls and verifiers inspect final state
+
+replay-backed world:
+  returns exact observations captured from real or prior runs
 ```
-
-Datalox implements the first kind for agent-visible tool I/O.
-
-It does not implement the second kind. When a buyer says "mock," ask which kind
-they mean.
 
 Useful discovery question:
 
-> Is your pain constructing a stateful environment that handles new unseen
-> actions, or reproducing and versioning scenarios you already observed?
+> Do you need agents to practice a stateful API workflow, or do you only need
+> reproducible replay of scenarios you already observed?
 
-If the answer is reproducing observed scenarios, Datalox is directly relevant.
-If the answer is handling unseen stateful behavior, the buyer needs environment
-construction or behavioral simulation; Datalox can be complementary but is not
-the full solution.
+If the answer is stateful API workflow practice, Datalox API Gym is directly
+relevant. If the answer is arbitrary browser/robot/app simulation, that belongs
+in another world family.
 
 ## Product Boundary
 
-Datalox Agent Replay owns:
+Datalox API Gym owns:
 
+- stateful API world packaging
+- scenario distributions and task specs
+- model-visible API tool contracts
+- hidden verifier state and verifier specs
+- local CLI/HTTP/MCP world adapters
 - exact tool-I/O capture
 - deterministic request hashing
 - sequence indexes for repeated identical calls
 - MCP proxy `tools/list` catalog capture
 - replay bundle packing and verification
-- versioned API/MCP snapshot environments and fixture-set activation
 - deterministic replay with no live fallback
 - strict action/observation normalization over replay evidence
 - optional derivative rows after replay evidence exists
@@ -283,7 +312,7 @@ Sibling Datalox domain MCP repos may own:
 - deterministic domain parsers, validators, and algorithms
 - domain-level action contracts that produce replayable tool I/O
 
-Datalox Agent Replay does not own:
+Datalox API Gym does not own:
 
 - sandbox orchestration
 - container image construction

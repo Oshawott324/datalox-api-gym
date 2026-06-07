@@ -42,7 +42,7 @@ export async function installFixtureSet(input: InstallFixtureSetInput): Promise<
     version: sourceFixtureSet.manifest.version,
   });
   if (manifestRef !== ref) {
-    throw new Error(`Fixture set ref mismatch: requested ${ref}, manifest is ${manifestRef}.`);
+    throw new Error(`World set ref mismatch: requested ${ref}, manifest is ${manifestRef}.`);
   }
 
   const installedFixtures: InstallFixtureResult[] = [];

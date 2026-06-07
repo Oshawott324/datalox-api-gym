@@ -1,6 +1,6 @@
 # Replay Quickstart
 
-This is the smallest useful Datalox Agent Replay loop.
+This is the smallest useful Datalox API Gym loop.
 
 ```text
 record_tool_io -> replay_tool_io -> pack_replay_bundle -> verify_replay_bundle

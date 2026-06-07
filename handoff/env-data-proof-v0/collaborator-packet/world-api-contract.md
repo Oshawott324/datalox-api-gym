@@ -12,7 +12,7 @@ reset(task_id, run_dir, seed=None)
   -> session_id
   -> initial observation
   -> environment tool specs
-  -> task-relevant tool names in the prompt/observation
+  -> task-relevant tool names in the observation
 
 tools(session_id)
   -> environment tool catalog
@@ -58,11 +58,29 @@ world-api/datalox_world/drivers/runnable_world.py
 
 world-api/datalox_world/adapters/mcp_stdio.py
   exposes environment tools plus datalox_submit_answer
-  relies on the system prompt to scope task-relevant tools
+  relies on task prompt/policy and task_tool_names to scope relevance
 
 world-api/datalox_world/drivers/sandbox_command.py
   thin command-driver boundary for Docker/E2B/Modal/custom sandboxes
 ```
+
+## SFT Export Boundary
+
+Exported SFT/example rows use OpenAI Chat Completions-compatible structured
+tool fields:
+
+```text
+messages
+tools
+tool_choice
+provider_format: openai_chat
+```
+
+The system prompt should not contain the full environment catalog or full
+`input_schema` JSON. It carries task policy, evidence requirements,
+final-answer contract, and the task-relevant tool names/descriptions. The
+row-level `tools` field contains only task-relevant function tools, ordered by
+`task_tool_names`, with schemas under `function.parameters`.
 
 ## Sandbox Boundary
 

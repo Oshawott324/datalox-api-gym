@@ -41,7 +41,7 @@ function resolveCliPackRoot(): string {
   ];
 
   for (const candidate of candidates) {
-    if (isDataloxAgentReplayRoot(candidate)) {
+    if (isDataloxApiGymRoot(candidate)) {
       return candidate;
     }
   }
@@ -49,14 +49,14 @@ function resolveCliPackRoot(): string {
   return candidates[candidates.length - 1];
 }
 
-function isDataloxAgentReplayRoot(candidate: string): boolean {
+function isDataloxApiGymRoot(candidate: string): boolean {
   const packageJsonPath = path.join(candidate, "package.json");
   if (!existsSync(packageJsonPath) || !existsSync(path.join(candidate, "bin", "datalox.js"))) {
     return false;
   }
   try {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
-    return packageJson.name === "datalox-agent-replay";
+    return packageJson.name === "datalox-api-gym";
   } catch {
     return false;
   }

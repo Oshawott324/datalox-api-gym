@@ -232,7 +232,7 @@
     </div>
     <pre>traditional app/workflow
   -> agent-native tools and structured state
-  -> versioned fixture set
+  -> versioned world set
   -> baseline run
   -> verifier-passing train trajectories
   -> SFT export
@@ -258,14 +258,14 @@
       training stack. Model teams already have those tools. Datalox wins if it
       becomes the standard way to turn messy real workflows into agent-native
       environments whose outputs are reusable, replayable, verifier-backed data
-      capacity: fixture worlds, exact tool-I/O evidence, deterministic
+      capacity: API worlds, exact tool-I/O evidence, deterministic
       verifiers, and clean exports. The training lift is a traction proof that
       the packaged environment data is useful, not the product itself.
     </div>
     <div class="callout">
       Plain words: Datalox makes traditional workflows usable by agents. Domain
       repos expose the key workflow actions as tools and structured state;
-      Agent Replay captures what an agent actually saw and did, freezes it into
+      API Gym captures what an agent actually saw and did, freezes it into
       a replayable task world, checks outcomes with deterministic verifiers,
       and exports grounded rows for eval or training. It is not the live
       sandbox, not the RL optimization stack, not the reward research lab, and not a
@@ -278,7 +278,7 @@
       <tbody>
         <tr>
           <td>What is Datalox?</td>
-          <td>An agent-native environment and replay-data stack: domain tools/state, fixture worlds, tool-I/O records, replay bundles, verifiers, and training/eval exports.</td>
+          <td>An agent-native environment and replay-data stack: domain tools/state, API worlds, tool-I/O records, replay bundles, verifiers, and training/eval exports.</td>
         </tr>
         <tr>
           <td>What is Datalox not?</td>
@@ -290,7 +290,7 @@
         </tr>
         <tr>
           <td>How many benchmarks are needed?</td>
-          <td>One closest benchmark or one held-out Datalox fixture set is enough for the first traction proof. More experiments are follow-up, not launch scope.</td>
+          <td>One closest benchmark or one held-out Datalox world set is enough for the first traction proof. More experiments are follow-up, not launch scope.</td>
         </tr>
         <tr>
           <td>Where does cost reduction come from?</td>
@@ -351,7 +351,7 @@
         </tr>
         <tr>
           <td>Shareable artifact</td>
-          <td>The reusable object is a fixture world with replay bundles and verifiers, not a training script.</td>
+          <td>The reusable object is a API world with replay bundles and verifiers, not a training script.</td>
         </tr>
         <tr>
           <td>Private enterprise path</td>
@@ -361,7 +361,7 @@
     </table>
     <div class="callout">
       The first public tutorial should feel like a <code>from_pretrained</code>
-      moment for verified replay worlds: install a real fixture set, run it,
+      moment for verified replay worlds: install a real world set, run it,
       verify it, export data, and prove one small model can learn from it. Do
       not claim that Datalox is the broad hub for agent environments.
     </div>
@@ -384,7 +384,7 @@
         <tr>
           <td>Hub distribution for models, datasets, Spaces, and agent tools</td>
           <td>Generic artifact hosting or community discovery</td>
-          <td>Publish Datalox fixture worlds as HF-compatible artifacts, but keep replay bundle verification and fixture activation as Datalox-native.</td>
+          <td>Publish Datalox API worlds as HF-compatible artifacts, but keep replay bundle verification and fixture activation as Datalox-native.</td>
         </tr>
         <tr>
           <td>Datasets and dataset viewers</td>
@@ -445,7 +445,7 @@
       strongest anchor vertical because it looks like a traditional scientific
       workflow reconstructed for agents, but a single-domain task set will look
       narrow. The first public package should be a multi-family scientific
-      workflow fixture set: FlowCyto for the visual/stateful anchor, Molecule
+      workflow world set: FlowCyto for the visual/stateful anchor, Molecule
       Biology for deterministic sequence-tool generalization, and scientific
       data QC for cheap public scaling.
     </p>
@@ -596,7 +596,7 @@
         </tr>
         <tr>
           <td>Docker execution environment</td>
-          <td>Layer 1/2 runtime owned by benchmark or domain environment, not by Agent Replay core.</td>
+          <td>Layer 1/2 runtime owned by benchmark or domain environment, not by API Gym core.</td>
           <td>Datalox records and replays the agent-visible tool I/O around that runtime.</td>
         </tr>
         <tr>
@@ -607,7 +607,7 @@
         <tr>
           <td>Verified subset</td>
           <td>Admission gate: clarity, artifact completeness, oracle replayability, verifier validity.</td>
-          <td>Use the same gate for public fixture sets before claiming traction.</td>
+          <td>Use the same gate for public world sets before claiming traction.</td>
         </tr>
       </tbody>
     </table>
@@ -779,7 +779,7 @@
         </tr>
         <tr>
           <td>Teacher-agent success trace</td>
-          <td>A stronger model runs against the replay fixture, uses the tools, and produces a passing answer.</td>
+          <td>A stronger model runs against the replay-backed world, uses the tools, and produces a passing answer.</td>
           <td>Cheap way to scale from seed tasks to 80-200 train tasks.</td>
           <td>Keep only verifier-passing traces with exact evidence refs; discard unsupported claims.</td>
         </tr>
@@ -814,7 +814,7 @@
       Datalox has produced a small, frozen, evidence-backed handoff package.
     </p>
     <div class="callout">
-      The ask should be: "Given this fixture set, verifier, baseline failures,
+      The ask should be: "Given this world set, verifier, baseline failures,
       and SFT JSONL exported from replay evidence, can you run the smallest
       credible LoRA experiment and tell us whether the data signal is real?"
     </div>
@@ -1119,7 +1119,7 @@ reward evidence</pre>
         <tr>
           <td>2</td>
           <td>Closest-benchmark transfer</td>
-          <td>SFT model + nearest public benchmark or held-out Datalox fixture set</td>
+          <td>SFT model + nearest public benchmark or held-out Datalox world set</td>
           <td>One externally understandable number</td>
           <td>Shows the data is useful outside the training split without turning the demo into a benchmark campaign.</td>
         </tr>
@@ -1139,13 +1139,13 @@ reward evidence</pre>
     <p>
       These are target demo commands. Some export and training-stack commands may need
       thin scripts before the demo can be run end to end. The public target is
-      <code>agent-native-science-seed</code>, a multi-family fixture set. The
+      <code>agent-native-science-seed</code>, a multi-family world set. The
       current synthetic <code>support-triage-basic</code> fixture is only a
       pipeline smoke target.
     </p>
-    <h3>1. Install The Fixture Set</h3>
+    <h3>1. Install The World Set</h3>
     <pre><code>datalox fixture-sets install agent-native-science-seed@2026-06.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json</code></pre>
+  --catalog ../datalox-api-gym-worlds/catalog.json</code></pre>
 
     <h3>2. Serve The Baseline Model</h3>
     <pre><code>vllm serve Qwen/Qwen3-1.7B \
@@ -1156,7 +1156,7 @@ reward evidence</pre>
     <h3>3. Run The Baseline Eval</h3>
     <pre><code>datalox eval \
   --fixture-set agent-native-science-seed@2026-06.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json \
+  --catalog ../datalox-api-gym-worlds/catalog.json \
   --model Qwen/Qwen3-1.7B \
   --base-url http://127.0.0.1:8000/v1 \
   --api-key token \
@@ -1191,7 +1191,7 @@ reward evidence</pre>
 
 datalox eval \
   --fixture-set agent-native-science-seed@2026-06.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json \
+  --catalog ../datalox-api-gym-worlds/catalog.json \
   --model datalox-env-sft-lora \
   --base-url http://127.0.0.1:8001/v1 \
   --api-key token \
@@ -1377,7 +1377,7 @@ datalox eval \
   <section class="section">
     <h2>Demo Script</h2>
     <ol>
-      <li>Show the fixture set: task specs, verifier specs, replay bundles, train/dev/test split.</li>
+      <li>Show the world set: task specs, verifier specs, replay bundles, train/dev/test split.</li>
       <li>Run the small baseline model against the held-out split.</li>
       <li>Show failures with replay evidence: missed log evidence, wrong next action, unsupported live mutation, missing fields, or weak report output.</li>
       <li>Export SFT rows and reward/eval evidence from verifier-passing train trajectories.</li>
@@ -1413,11 +1413,11 @@ datalox eval \
         </tr>
         <tr>
           <td>Training-product confusion</td>
-          <td>Keep SFT as a proof step. Lead with fixture worlds, replay bundles, verifiers, and exports.</td>
+          <td>Keep SFT as a proof step. Lead with API worlds, replay bundles, verifiers, and exports.</td>
         </tr>
         <tr>
           <td>Benchmark sprawl</td>
-          <td>Use one closest public benchmark or one held-out public fixture set for the first proof.</td>
+          <td>Use one closest public benchmark or one held-out public world set for the first proof.</td>
         </tr>
         <tr>
           <td>Cost creep</td>
@@ -1500,7 +1500,7 @@ datalox eval \
       <li><a href="https://openai.com/index/browsecomp/">BrowseComp</a> for the hard-to-find, easy-to-verify benchmark design pattern.</li>
       <li><a href="https://arxiv.org/abs/2307.13854">WebArena</a>, <a href="https://arxiv.org/abs/2407.18901">AppWorld</a>, and <a href="https://arxiv.org/abs/2404.07972">OSWorld</a> for realistic web/app/desktop agent difficulty, kept out of the first demo because of environment cost.</li>
       <li><a href="https://openai.com/index/paperbench/">PaperBench</a> and <a href="https://github.com/openai/mle-bench">MLE-bench</a> for expensive long-horizon ML/research-agent tasks that validate the broader opportunity but not the first demo scope.</li>
-      <li><a href="./fixture-worlds-and-sets.md">Datalox fixture worlds and sets</a> for replay fixture installation, eval, and no-live-fallback behavior.</li>
+      <li><a href="./api-worlds-and-sets.md">Datalox API worlds and sets</a> for replay-backed installation, eval, and no-live-fallback behavior.</li>
       <li><a href="./vllm-verl-run-export-quickstart.md">Datalox vLLM and verl quickstart</a> for the existing model-server to replay-world to SFT-export path.</li>
     </ul>
   </section>

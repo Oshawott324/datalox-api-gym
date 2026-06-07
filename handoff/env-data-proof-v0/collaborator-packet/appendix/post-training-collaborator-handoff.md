@@ -102,8 +102,9 @@ as derivatives from world trajectories.
 We have a Datalox Env Data Proof v0 World API preview. This is not a model-lift
 claim yet. The goal is to check whether your MCP/agent harness can plug into a
 reset/step/finalize/export world lifecycle where the MCP service exposes the
-environment tool set, the system prompt scopes task-relevant tools, the agent
-submits an answer, and the run produces a useful trajectory that your
+environment tool set, task relevance is carried by task prompt/policy plus
+task_tool_names, SFT rows expose JSON schemas in a structured tools field, the
+agent submits an answer, and the run produces a useful trajectory that your
 post-training workflow can consume.
 
 Can you review:
@@ -130,6 +131,11 @@ context-eval file that preloads replay observations in the prompt. For SFT,
 start with exports/sft.tool_messages.seed.jsonl. It uses standard
 system/user/assistant/tool turns. exports/sft.tool_evidence.seed.jsonl keeps
 the same rollout in a richer Datalox audit shape.
+
+World API SFT example rows use provider_format=openai_chat with row-level
+tools and tool_choice fields. The system prompt carries task policy and
+evidence/final-answer contracts; it does not dump full tool schemas or the full
+environment catalog.
 
 The useful object is the World API over a runnable world package. The SFT/eval
 rows are secondary examples and derivatives, not the environment itself.

@@ -9,19 +9,19 @@ Claude Code can see Datalox through separate surfaces:
 Project boundary:
 
 - Datalox MCP is the install-facing instrumentation and control layer for desktop agents.
-- Reproducible tool-call replay is the primary project focus.
-- Datalox owns tool-I/O record/replay, not sandbox runtimes, environment
-  construction, behavioral mocks, reward functions, or judge agents.
+- Resettable, verifiable API worlds are the primary project focus; replay is the evidence mode.
+- Datalox owns API-world packaging, tool contracts, verifier metadata, replay evidence, and export adapters.
+- Datalox does not own production API aggregation, sandbox runtimes, model trainers, reward model research, or generic robot/lab simulators.
 - `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` records are the exact replay primitive.
 - `agent_turn.v1` events are optional turn review context.
 - `replay_bundle.v1` is the portable artifact that can be verified and replayed.
 - Lean, outcome-labeled trajectory rows are optional compact training/eval adapters.
 
-Primary replay loop:
+Primary API Gym loop:
 
 ```text
-agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
+API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
 ```
 
 On each loop:

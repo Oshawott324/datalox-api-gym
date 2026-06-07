@@ -306,7 +306,7 @@ datalox export sft \
           </td>
         </tr>
         <tr>
-          <td><code>datalox-agent-replay</code></td>
+          <td><code>datalox-api-gym</code></td>
           <td>Replay and export layer</td>
           <td>
             <code>datalox run</code>, <code>datalox_run.v1</code>,
@@ -315,10 +315,10 @@ datalox export sft \
           </td>
         </tr>
         <tr>
-          <td><code>datalox-replay-fixtures</code></td>
+          <td><code>datalox-api-gym-worlds</code></td>
           <td>Published fixture library</td>
           <td>
-            Versioned fixture pack, fixture set manifest, replay bundles,
+            Versioned world pack, world set manifest, replay bundles,
             task/verifier refs, README, train/dev/test split.
           </td>
         </tr>
@@ -354,12 +354,12 @@ datalox export sft \
       <li>
         <strong>Phase 5 - Fixture publication.</strong>
         Publish <code>flowcyto-gating-qc-basic@2026-06.0</code> in
-        <code>datalox-replay-fixtures</code> with bundle checksums and
+        <code>datalox-api-gym-worlds</code> with bundle checksums and
         train/dev/test split.
       </li>
       <li>
         <strong>Phase 6 - Training export.</strong>
-        Run <code>datalox run</code> against the fixture set and export
+        Run <code>datalox run</code> against the world set and export
         <code>sft_frame.v1</code>. Add completion and preference exports after
         success/failure/recovery labels exist.
       </li>
@@ -369,14 +369,14 @@ datalox export sft \
   <section class="section">
     <h2>Pass Criteria</h2>
     <ol>
-      <li>A fresh checkout can install or resolve the fixture set.</li>
+      <li>A fresh checkout can install or resolve the world set.</li>
       <li><code>datalox run</code> works against a local OpenAI-compatible endpoint.</li>
       <li>The agent must use at least three domain tools to solve a task.</li>
       <li>Wrong or incomplete actions produce structured failures, not fake success.</li>
       <li>The validator emits pass/fail plus evidence refs.</li>
       <li><code>run.json</code> contains messages, tool calls, observations, final answer, fixture refs, and export gate.</li>
       <li><code>datalox export sft</code> produces valid <code>sft_frame.v1</code> JSONL.</li>
-      <li>The first proof contains three deterministic tasks; preference export is not claimed until the fixture set has enough success/recovery/failure breadth.</li>
+      <li>The first proof contains three deterministic tasks; preference export is not claimed until the world set has enough success/recovery/failure breadth.</li>
     </ol>
   </section>
 

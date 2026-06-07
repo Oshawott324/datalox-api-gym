@@ -192,7 +192,7 @@ function resolvePackRootPath(): string {
   ];
 
   for (const candidate of candidates) {
-    if (isDataloxAgentReplayRoot(candidate)) {
+    if (isDataloxApiGymRoot(candidate)) {
       return candidate;
     }
   }
@@ -200,22 +200,22 @@ function resolvePackRootPath(): string {
   return candidates[candidates.length - 1];
 }
 
-function isDataloxAgentReplayRoot(candidate: string): boolean {
+function isDataloxApiGymRoot(candidate: string): boolean {
   const packageJsonPath = path.join(candidate, "package.json");
   if (!existsSync(packageJsonPath) || !existsSync(path.join(candidate, "bin", "datalox.js"))) {
     return false;
   }
   try {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
-    return packageJson.name === "datalox-agent-replay";
+    return packageJson.name === "datalox-api-gym";
   } catch {
     return false;
   }
 }
 
 const PACK_ROOT = resolvePackRootPath();
-const DEFAULT_PACK_URL = "https://github.com/Oshawott324/datalox-agent-replay.git";
-const DEFAULT_PACK_CLONE_DIR = "datalox-agent-replay";
+const DEFAULT_PACK_URL = "https://github.com/Oshawott324/datalox-api-gym.git";
+const DEFAULT_PACK_CLONE_DIR = "datalox-api-gym";
 
 function shellDoubleQuote(value: string): string {
   return JSON.stringify(value);
@@ -253,8 +253,8 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "docs/derivatives/trajectory/agent-task-trajectory-schema.md",
   "docs/derivatives/trajectory/trajectory-training-readiness.md",
   ".github/copilot-instructions.md",
-  ".cursor/rules/datalox-agent-replay.mdc",
-  ".windsurf/rules/datalox-agent-replay.md",
+  ".cursor/rules/datalox-api-gym.mdc",
+  ".windsurf/rules/datalox-api-gym.md",
   ".datalox/config.json",
   ".datalox/config.schema.json",
   ".datalox/manifest.json",
@@ -262,15 +262,15 @@ const SINGLE_FILE_ADOPTION_PATHS = [
   "bin/datalox-claude.js",
   "bin/datalox-codex.js",
   "bin/datalox-mcp.js",
-  "bin/datalox-agent-replay-mcp.js",
+  "bin/datalox-api-gym-mcp.js",
   "bin/datalox.js",
   "bin/datalox-wrap.js",
   "bin/disable-default-host-integrations.sh",
   "bin/install-default-host-integrations.sh",
   "bin/setup-multi-agent.sh",
 ];
-const ADOPTION_INJECTION_BEGIN = "<!-- DATALOX_AGENT_REPLAY:BEGIN -->";
-const ADOPTION_INJECTION_END = "<!-- DATALOX_AGENT_REPLAY:END -->";
+const ADOPTION_INJECTION_BEGIN = "<!-- DATALOX_API_GYM:BEGIN -->";
+const ADOPTION_INJECTION_END = "<!-- DATALOX_API_GYM:END -->";
 const LEGACY_ADOPTION_INJECTION_TOKEN = `DATALOX_${"PACK"}`;
 type ExistingInstructionInjectionMode = "append" | "after_frontmatter";
 interface ExistingInstructionInjectionSpec {
@@ -281,7 +281,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
   "AGENTS.md": {
     mode: "after_frontmatter",
     lines: [
-      "## Datalox Agent Replay",
+      "## Datalox API Gym",
       "If `DATALOX.md` exists in this repo, read it after this file and treat it as the repo-local Datalox contract.",
       "Use `.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/` for replay capture data.",
       "Do not create a parallel wiki/note/event store.",
@@ -296,7 +296,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
   "GEMINI.md": {
     mode: "after_frontmatter",
     lines: [
-      "## Datalox Agent Replay",
+      "## Datalox API Gym",
       "If `DATALOX.md` exists in this repo, read it after this file and use it as the repo-local Datalox loop contract.",
       "Keep replay capture data under `.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.",
       "Do not create a parallel wiki/note/event store.",
@@ -305,7 +305,7 @@ const EXISTING_INSTRUCTION_INJECTIONS: Record<string, ExistingInstructionInjecti
   ".github/copilot-instructions.md": {
     mode: "append",
     lines: [
-      "## Datalox Agent Replay",
+      "## Datalox API Gym",
       "Also consult `AGENTS.md` and `DATALOX.md` when they exist.",
       "Use `.datalox/tool-io/records/`, `.datalox/mcp-tool-catalogs/`, `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/` for replay capture data.",
       "Do not create a parallel wiki/note/event store.",
@@ -654,8 +654,11 @@ function injectAdoptionInstructions(
   spec: ExistingInstructionInjectionSpec,
 ): string {
   const normalizedContent = stripManagedAdoptionInjection(
-    stripManagedAdoptionInjection(content, LEGACY_ADOPTION_INJECTION_TOKEN),
-    "DATALOX_AGENT_REPLAY",
+    stripManagedAdoptionInjection(
+      stripManagedAdoptionInjection(content, LEGACY_ADOPTION_INJECTION_TOKEN),
+      "DATALOX_AGENT_REPLAY",
+    ),
+    "DATALOX_API_GYM",
   );
 
   if (normalizedContent.includes(ADOPTION_INJECTION_BEGIN) && normalizedContent.includes(ADOPTION_INJECTION_END)) {
@@ -769,7 +772,7 @@ async function resolvePackRoot(packSource?: string): Promise<string> {
   }
 
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cacheName = path.basename(packSource).replace(/\.git$/, "") || "datalox-agent-replay";
+  const cacheName = path.basename(packSource).replace(/\.git$/, "") || "datalox-api-gym";
   const cachePath = path.join(cacheRoot, cacheName);
   await mkdir(cacheRoot, { recursive: true });
 
@@ -787,7 +790,7 @@ async function resolvePackRoot(packSource?: string): Promise<string> {
 
 async function ensureLocalPackCache(packRootPath: string): Promise<void> {
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cachePath = path.join(cacheRoot, "datalox-agent-replay");
+  const cachePath = path.join(cacheRoot, "datalox-api-gym");
 
   if (path.resolve(packRootPath) === path.resolve(cachePath)) {
     return;

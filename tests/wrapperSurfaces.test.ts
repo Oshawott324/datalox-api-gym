@@ -52,7 +52,7 @@ describe("wrapper surfaces", () => {
     );
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("# Datalox Agent Replay");
+    expect(result.stdout).toContain("# Datalox API Gym");
     expect(result.stdout).toContain("record_tool_io");
     expect(result.stdout).toContain("DATALOX_SESSION_ID");
     expect(result.stdout).toContain("# Original Prompt");

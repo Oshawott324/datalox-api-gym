@@ -1,6 +1,6 @@
 # Verified Replay Quickstart
 
-This is the first product proof path for Datalox Agent Replay.
+This is the first product proof path for Datalox API Gym.
 
 Primary replay loop:
 

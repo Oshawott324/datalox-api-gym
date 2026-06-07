@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Datalox Agent Replay multi-agent setup
+# Datalox API Gym multi-agent setup
 # Compatibility shim for the CLI-first install flow.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

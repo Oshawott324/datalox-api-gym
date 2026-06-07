@@ -27,21 +27,21 @@ describe("replay adoption scripts", () => {
     });
 
     expect(result.status).toBe(0);
-    expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports");
+    expect(await readFile(path.join(hostDir, "DATALOX.md"), "utf8")).toContain("API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/manifest.json");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/tool-io/records/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/mcp-tool-catalogs/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/events/agent-turns/");
     expect(await readFile(path.join(hostDir, "AGENTS.md"), "utf8")).toContain(".datalox/replay-bundles/");
-    expect(await readFile(path.join(hostDir, "docs", "project-definition.md"), "utf8")).toContain("Datalox Agent Replay provides versioned API/MCP snapshot environments");
+    expect(await readFile(path.join(hostDir, "docs", "project-definition.md"), "utf8")).toContain("Datalox API Gym provides resettable, verifiable API worlds");
     expect(await readFile(path.join(hostDir, "docs", "replay-quickstart.md"), "utf8")).toContain("record_tool_io -> replay_tool_io -> pack_replay_bundle -> verify_replay_bundle");
     expect(await readFile(path.join(hostDir, "docs", "tool-io-store-schema.md"), "utf8")).toContain('schema contract for Datalox tool I/O records');
     expect(spawnSync("test", ["-e", path.join(hostDir, "docs", "product-definition.md")]).status).not.toBe(0);
     expect(await readFile(path.join(hostDir, ".datalox/install.json"), "utf8")).toContain("\"installMode\": \"manual\"");
     expect(JSON.parse(await readFile(path.join(hostDir, "bin", "package.json"), "utf8"))).toEqual({ type: "module" });
-    expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox Agent Replay runtime root for datalox.js");
+    expect(await readFile(path.join(hostDir, "bin/datalox.js"), "utf8")).toContain("Unable to resolve Datalox API Gym runtime root for datalox.js");
     expect(await readFile(path.join(hostDir, "bin/datalox-mcp.js"), "utf8")).toContain("replayServer.js");
-    expect(await readFile(path.join(hostDir, "bin/datalox-agent-replay-mcp.js"), "utf8")).toContain("replayServer.js");
+    expect(await readFile(path.join(hostDir, "bin/datalox-api-gym-mcp.js"), "utf8")).toContain("replayServer.js");
     expect(spawnSync("test", ["-e", path.join(hostDir, legacyWikiDir)]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "WIKI.md")]).status).not.toBe(0);
     expect(spawnSync("test", ["-e", path.join(hostDir, "skills")]).status).not.toBe(0);
@@ -85,7 +85,7 @@ describe("replay adoption scripts", () => {
     expect(result.status).toBe(0);
     for (const relativePath of ["AGENTS.md", ".github/copilot-instructions.md"]) {
       const content = await readFile(path.join(hostDir, relativePath), "utf8");
-      expect(content).toContain("DATALOX_AGENT_REPLAY:BEGIN");
+      expect(content).toContain("DATALOX_API_GYM:BEGIN");
       expect(content).toContain(".datalox/tool-io/records/");
       expect(content).toContain(".datalox/mcp-tool-catalogs/");
       expect(content).toContain(".datalox/events/agent-turns/");
@@ -150,8 +150,8 @@ describe("replay adoption scripts", () => {
     expect(await readFile(path.join(homeDir, ".local/bin/claude"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE:=replay");
     expect(await readFile(path.join(repoRoot, "bin", "datalox-codex.js"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? \"replay\"");
     expect(await readFile(path.join(repoRoot, "bin", "datalox-claude.js"), "utf8")).toContain("DATALOX_DEFAULT_POST_RUN_MODE: process.env.DATALOX_DEFAULT_POST_RUN_MODE ?? \"replay\"");
-    expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/maintain-datalox-agent-replay")]).status).not.toBe(0);
-    expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-agent-replay")]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(homeDir, ".claude/skills/maintain-datalox-api-gym")]).status).not.toBe(0);
+    expect(spawnSync("test", ["-e", path.join(homeDir, ".codex/skills/datalox-api-gym")]).status).not.toBe(0);
   }, 15000);
 
   it("does not expose removed legacy or derivative write commands in help", () => {

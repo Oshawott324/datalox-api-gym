@@ -25,7 +25,7 @@ function resolveRuntimeRoot(root) {
   const candidates = [
     root,
     readInstallPackRoot(root),
-    path.join(os.homedir(), ".datalox", "cache", "datalox-agent-replay"),
+    path.join(os.homedir(), ".datalox", "cache", "datalox-api-gym"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
@@ -35,7 +35,7 @@ function resolveRuntimeRoot(root) {
     }
   }
 
-  throw new Error("Unable to resolve Datalox Agent Replay runtime root for datalox-codex.js");
+  throw new Error("Unable to resolve Datalox API Gym runtime root for datalox-codex.js");
 }
 
 const runtimeRoot = resolveRuntimeRoot(repoRoot);

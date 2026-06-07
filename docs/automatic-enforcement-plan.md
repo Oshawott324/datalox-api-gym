@@ -1,7 +1,7 @@
 # Automatic Enforcement Plan
 
 This document defines what "automatic enforcement" means for
-`datalox-agent-replay`, what counts as supported, and the minimum implementation
+`datalox-api-gym`, what counts as supported, and the minimum implementation
 plan for this repo.
 
 The install-facing goal is replay capture: record exact agent-visible tool I/O,
@@ -23,7 +23,7 @@ Project boundary:
 - `replay_bundle.v1` = portable replay artifact defined by [replay-bundle-schema.md](./replay-bundle-schema.md)
 - `AgentTurnV1` = optional per-turn review context defined by [agent-turn-schema.md](./agent-turn-schema.md)
 - `Datalox MCP` = install-facing instrumentation, tool I/O capture, replay lookup, and control surface
-- `datalox-agent-replay` = portable protocol, CLI, durable local knowledge, and adoption assets
+- `datalox-api-gym` = portable protocol, CLI, durable local knowledge, and adoption assets
 - `adapter` = host-specific enforcement
 - `trajectory rows` = optional derivative adapters defined by [trajectory-dataset-schema.md](./derivatives/trajectory/trajectory-dataset-schema.md) and [agent-task-trajectory-schema.md](./derivatives/trajectory/agent-task-trajectory-schema.md)
 
@@ -165,7 +165,7 @@ Already real:
 - hook reuse of shared observed-turn payload builders
 - `src/adapters/capabilities.ts` as one host-support registry
 - `datalox status --json`
-- replay-first MCP/CLI surfaces for record, pack, verify, and replay
+- API-world-first MCP/CLI surfaces for record, pack, verify, and replay
 
 Planned but not fully implemented:
 

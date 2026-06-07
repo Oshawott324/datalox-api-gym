@@ -234,7 +234,7 @@
               <blockquote>后面几个问题应该以打磨环境为主，具体的 SFT 数据格式还有 reward 设计之类，一般还是需要训练小组自己调整。</blockquote>
             </td>
             <td>Environment quality matters more than locking a universal training row schema.</td>
-            <td>Keep exports adapter-based: SFT, preference, eval, and RL rows are downstream views. The stable core is fixture worlds, tool I/O, tasks, and verifiers.</td>
+            <td>Keep exports adapter-based: SFT, preference, eval, and RL rows are downstream views. The stable core is API worlds, tool I/O, tasks, and verifiers.</td>
           </tr>
           <tr>
             <td>
@@ -270,7 +270,7 @@
               <blockquote>如果目标是提升 agent 的通用能力，将一个环境做得非常深，非常完善，可能不如制造大量弱一点的环境。</blockquote>
             </td>
             <td>General capability may benefit more from breadth across many task worlds than from one perfect vertical environment.</td>
-            <td>Roadmap should include many small, deterministic sub-environments and fixture sets, not only one deep FlowCyto proof.</td>
+            <td>Roadmap should include many small, deterministic sub-environments and world sets, not only one deep FlowCyto proof.</td>
           </tr>
           <tr>
             <td>
@@ -292,6 +292,34 @@
             </td>
             <td>Many users will not have enough compute for heavy RL. SFT is the realistic first training path.</td>
             <td>Open-source copy should say "SFT-first" or "compute-constrained teams" rather than implying every customer will run RL.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>格式倒不是特别大的问题，关键是要包含所需信息。具体内容和 SFT 的目标有关，这个应该由训练者自己取；轨迹格式转换其实也就是一个脚本的事情。</blockquote>
+            </td>
+            <td>The exact JSONL schema is less important than preserving the complete information needed for the training objective.</td>
+            <td>Do not over-sell one universal SFT row format. Keep grounded trajectory evidence as the source, then provide thin adapters that training teams can reshape.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>我们一般会在 system prompt 里告诉 LLM 有哪些工具可用；但 OpenAI 的 function call 格式应该有单独的 tools 字段，不用写进 system prompt 里。</blockquote>
+            </td>
+            <td>Task-relevant tool exposure is a harness concern. Modern function-calling APIs usually pass callable schemas through a structured <code>tools</code> field, while prompts carry policy and task guidance.</td>
+            <td>Export examples should use <code>messages + tools + tool_choice</code>. The system prompt should not dump full tool schemas or the full environment catalog.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>我们这边 MCP service 一般是一个环境 + 对应工具集整成一个 MCP service；task 对应的 tool 可以通过 tools + prompt 实现。</blockquote>
+            </td>
+            <td>The environment can expose a broader MCP tool catalog, and the agent harness can choose the task-relevant subset for the model request.</td>
+            <td>Keep one environment-level service. Avoid adding a second "strict current-task tools" world mode. Scope task relevance in prompt/policy plus the structured tools passed to the model.</td>
+          </tr>
+          <tr>
+            <td>
+              <blockquote>最小数据量我倾向于 80 train / 20 dev / 20 test。模型可以先在 Qwen 小模型试试。</blockquote>
+            </td>
+            <td>A tiny 10-20 task packet is only for handoff validation. A first trainable claim needs a larger split and a small open-weight baseline.</td>
+            <td>Use the current packet to validate world/harness fit, then collect small-Qwen trajectories and scale toward 80/20/20 before claiming model improvement.</td>
           </tr>
         </tbody>
       </table>
@@ -324,12 +352,12 @@
         <tbody>
           <tr>
             <td>SFT-first path</td>
-            <td>Make <code>datalox run</code> and <code>datalox export sft</code> the first visible path for fixture sets.</td>
+            <td>Make <code>datalox run</code> and <code>datalox export sft</code> the first visible path for world sets.</td>
             <td>One command produces <code>run.json</code>, <code>transcript.jsonl</code>, and one or more valid <code>sft_frame.v1</code> rows.</td>
           </tr>
           <tr>
             <td>Reference reward only</td>
-            <td>Each fixture set may include verifier metadata and a reference reward recipe, but no fixed universal reward engine.</td>
+            <td>Each world set may include verifier metadata and a reference reward recipe, but no fixed universal reward engine.</td>
             <td>A training team can ignore or replace reward settings without breaking fixture install/run/export.</td>
           </tr>
           <tr>
@@ -338,9 +366,19 @@
             <td>The same task can produce different model-visible completion frames based on scaffold choice.</td>
           </tr>
           <tr>
+            <td>Provider-native tool exports</td>
+            <td>Export OpenAI-compatible rows with <code>messages</code>, row-level <code>tools</code>, <code>tool_choice</code>, and <code>provider_format</code>. Keep full schemas out of the system prompt.</td>
+            <td>SFT examples show <code>system/user/assistant/tool</code> turns plus structured function tools; the system prompt contains policy and task-relevant names/descriptions only.</td>
+          </tr>
+          <tr>
             <td>Many small environments</td>
             <td>Create multiple small bio sub-environments instead of only one deep FlowCyto vertical.</td>
             <td>Catalog shows multiple task families, each with sample data, tool contracts, failure cases, and at least one export path.</td>
+          </tr>
+          <tr>
+            <td>Harness-first rollout proof</td>
+            <td>Run a small open-weight model, likely Qwen under a standard tool-calling harness, against the world and save real pass/fail trajectories.</td>
+            <td>Each rollout contains model-visible messages, structured tools, tool observations, submitted answer, verifier result, and a clear failure/pass classification.</td>
           </tr>
           <tr>
             <td>Non-substitutability proof</td>
@@ -363,13 +401,13 @@
         </thead>
         <tbody>
           <tr>
-            <td><code>datalox-agent-replay</code></td>
+            <td><code>datalox-api-gym</code></td>
             <td>Fixture install/run/replay/export engine, model endpoint adapter, replay miss behavior, SFT/eval/preference adapters.</td>
             <td>Scientific algorithms, live domain UI, universal reward design, RL training orchestration.</td>
           </tr>
           <tr>
-            <td><code>datalox-replay-fixtures</code></td>
-            <td>Published fixture catalogs, fixture sets, task specs, scaffold specs, verifier metadata, archived replay bundles.</td>
+            <td><code>datalox-api-gym-worlds</code></td>
+            <td>Published fixture catalogs, world sets, task specs, scaffold specs, verifier metadata, archived replay bundles.</td>
             <td>Live MCP runtime implementation or trainer-specific data transformations beyond declared adapters.</td>
           </tr>
           <tr>
@@ -386,6 +424,8 @@
       <ol>
         <li>Finish the visible FlowCyto proof as an agent-native reconstruction of a traditional workflow: structured workspace, typed tools, deterministic validation, replay evidence, and SFT export.</li>
         <li>Turn FlowCyto into multiple small sub-environments, not one oversized demo.</li>
+        <li>Keep the world service environment-level, but pass task-relevant callable schemas through provider-native <code>tools</code> fields when collecting or exporting trajectories.</li>
+        <li>Run a small-Qwen rollout smoke against the current World API to collect real model failures before spending effort on training.</li>
         <li>Add scaffold metadata so the same environment can generate ReAct-style and plan-and-execute-style trajectories.</li>
         <li>Write one "non-substitutability" section for each environment pack.</li>
         <li>Update public copy to lead with agent-native workflow environments and SFT/eval data generation, with RL as a downstream consumer path.</li>
@@ -401,6 +441,7 @@
       <blockquote>Datalox defines the universal trajectory format.</blockquote>
       <blockquote>Datalox records trajectories, therefore it is the product.</blockquote>
       <blockquote>Datalox guarantees identical full agent trajectories in complex live environments.</blockquote>
+      <blockquote>Datalox requires tool schemas to be pasted into the system prompt.</blockquote>
       <div class="callout warning">
         <strong>Open-source note:</strong> if this document is public, use "external researcher feedback" and "compute-constrained teams" rather than private/person-specific phrasing.
       </div>

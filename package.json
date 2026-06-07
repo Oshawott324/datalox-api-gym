@@ -1,9 +1,9 @@
 {
-  "name": "datalox-agent-replay",
+  "name": "datalox-api-gym",
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "Agent replay MCP for reproducible tool I/O, session bundles, and derived trajectory/eval export.",
+  "description": "Resettable, verifiable API worlds for agent practice, replay evidence, and training/eval export.",
   "main": "./dist/src/sdk/index.js",
   "types": "./dist/src/sdk/index.d.ts",
   "exports": {
@@ -13,8 +13,8 @@
   "bin": {
     "datalox": "./bin/datalox.js",
     "datalox-mcp": "./bin/datalox-mcp.js",
-    "datalox-agent-replay": "./bin/datalox-mcp.js",
-    "datalox-agent-replay-mcp": "./bin/datalox-agent-replay-mcp.js",
+    "datalox-api-gym": "./bin/datalox-mcp.js",
+    "datalox-api-gym-mcp": "./bin/datalox-api-gym-mcp.js",
     "datalox-claude": "./bin/datalox-claude.js",
     "datalox-codex": "./bin/datalox-codex.js",
     "datalox-wrap": "./bin/datalox-wrap.js"

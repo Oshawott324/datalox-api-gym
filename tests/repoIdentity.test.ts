@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = process.cwd();
-const expectedRepoUrl = "https://github.com/Oshawott324/datalox-agent-replay.git";
+const expectedRepoUrl = "https://github.com/Oshawott324/datalox-api-gym.git";
 const execFileAsync = promisify(execFile);
 
 const ignoredDirectories = new Set([
@@ -20,16 +20,25 @@ const ignoredDirectories = new Set([
 const ignoredRelativePrefixes = [
   ".datalox/events/",
   ".datalox/tasks/",
+  "handoff/",
 ];
 
 const ignoredFiles = new Set([
   ".claude/settings.local.json",
   ".datalox/install.json",
   ".git",
+  "tests/replayCanonicalDocs.test.ts",
   "tests/repoIdentity.test.ts",
 ]);
 
 const forbiddenActiveStrings = [
+  "Datalox Agent Replay",
+  "datalox-agent-replay",
+  "Agent Replay",
+  "Reproducible tool-call replay is the primary project focus.",
+  "Datalox acts like a VCR for agent tools",
+  "versioned API/MCP snapshot environments",
+  "versioned API/MCP API worlds",
   "datalox-trajectory-mcp",
   "Datalox Trajectory MCP",
   "datalox-pack",
@@ -40,14 +49,14 @@ const forbiddenActiveStrings = [
   "auto-promote",
   "claude-global-auto-promote",
   "datalox-auto-promote",
-  "Complexity-LLC/datalox-agent-replay",
+  "Complexity-LLC/datalox-api-gym",
 ];
 
 const installFacingFiles = [
   "package.json",
   "bin/datalox.js",
   "bin/datalox-mcp.js",
-  "bin/datalox-agent-replay-mcp.js",
+  "bin/datalox-api-gym-mcp.js",
   "bin/datalox-codex.js",
   "bin/datalox-claude.js",
   "src/cli/main.ts",
@@ -142,7 +151,7 @@ async function collectTrackedRelativePaths(): Promise<string[]> {
 }
 
 describe("repo identity regression guard", () => {
-  it("keeps active surfaces on the Datalox Agent Replay identity", async () => {
+  it("keeps active surfaces on the Datalox API Gym identity", async () => {
     const files = await collectTrackedActiveFiles();
     const violations: string[] = [];
 
@@ -188,7 +197,7 @@ describe("repo identity regression guard", () => {
     expect(missing).toEqual([]);
   });
 
-  it("keeps install-facing code replay-first and free of trajectory write surfaces", async () => {
+  it("keeps install-facing code API-world-first and free of trajectory write surfaces", async () => {
     const violations: string[] = [];
 
     for (const relativePath of installFacingFiles) {
@@ -229,6 +238,9 @@ describe("repo identity regression guard", () => {
         return false;
       }
       if (relativePath === "tests/repoIdentity.test.ts") {
+        return false;
+      }
+      if (relativePath.startsWith("handoff/")) {
         return false;
       }
       return true;

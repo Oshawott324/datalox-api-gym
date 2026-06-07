@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a visible local proof for `flowcyto-gating-qc-basic@2026-06.0` that installs the fixture set, runs an OpenAI-compatible model loop through replayed FlowCyto tools, proves replay misses do not fall back to live tools, and exports one `sft_frame.v1`.
+**Goal:** Build a visible local proof for `flowcyto-gating-qc-basic@2026-06.0` that installs the world set, runs an OpenAI-compatible model loop through replayed FlowCyto tools, proves replay misses do not fall back to live tools, and exports one `sft_frame.v1`.
 
-**Architecture:** The demo lives under `examples/flowcyto-gating-qc-demo/`. A deterministic fake OpenAI-compatible server acts as the cheap model endpoint, the existing `datalox` CLI installs/runs/exports the fixture set, and a static HTML report renders the produced artifacts. The demo report is a proof wrapper around real output files, not a parallel runtime.
+**Architecture:** The demo lives under `examples/flowcyto-gating-qc-demo/`. A deterministic fake OpenAI-compatible server acts as the cheap model endpoint, the existing `datalox` CLI installs/runs/exports the world set, and a static HTML report renders the produced artifacts. The demo report is a proof wrapper around real output files, not a parallel runtime.
 
-**Tech Stack:** Node.js ESM scripts, built `dist/src/cli/main.js`, `createReplayToolRuntime`, Vitest for the report-render unit test, fixture catalog from `/Users/yifanjin/datalox-replay-fixtures/catalog.json`.
+**Tech Stack:** Node.js ESM scripts, built `dist/src/cli/main.js`, `createReplayToolRuntime`, Vitest for the report-render unit test, fixture catalog from `/Users/yifanjin/datalox-api-gym-worlds/catalog.json`.
 
 ---
 
@@ -82,10 +82,10 @@ The runner must:
 The README must show:
 
 ```bash
-cd /Users/yifanjin/datalox-agent-replay
+cd /Users/yifanjin/datalox-api-gym
 npm run build
 node examples/flowcyto-gating-qc-demo/run-demo.mjs \
-  --catalog /Users/yifanjin/datalox-replay-fixtures/catalog.json
+  --catalog /Users/yifanjin/datalox-api-gym-worlds/catalog.json
 open examples/flowcyto-gating-qc-demo/output/demo-report.html
 ```
 
@@ -101,7 +101,7 @@ Run:
 ```bash
 npm run build
 node examples/flowcyto-gating-qc-demo/run-demo.mjs \
-  --catalog /Users/yifanjin/datalox-replay-fixtures/catalog.json
+  --catalog /Users/yifanjin/datalox-api-gym-worlds/catalog.json
 ```
 
 Expected: JSON summary with `status: "passed"`, `stopReason: "final_answer"`, `frameCount: 1`, and `replayMiss.liveFallback: false`.

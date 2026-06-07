@@ -6,13 +6,13 @@ Datalox to provide the replay world plus grounded export data.
 ```text
 OpenAI-compatible model endpoint
   -> datalox run
-  -> replay fixture world
+  -> replay-backed API world
   -> datalox_run.v1
   -> datalox export sft
   -> sft_frame.v1 JSONL
 ```
 
-## Run A Replay Fixture With vLLM
+## Run A Replay-Backed World With vLLM
 
 Start a vLLM server with the OpenAI-compatible API:
 
@@ -86,9 +86,9 @@ Runs with replay misses or blocked export state are rejected.
 Datalox does not replace verl. The intended first integration is:
 
 ```text
-Datalox fixture set -> datalox run -> datalox export sft -> verl SFT dataset
+Datalox world set -> datalox run -> datalox export sft -> verl SFT dataset
 ```
 
-Later adapters can expose the same fixture world as a reset/step environment and
+Later adapters can expose the same API world as a reset/step environment and
 reward function, but the first useful path is SFT and completion export from
 verified replay evidence.

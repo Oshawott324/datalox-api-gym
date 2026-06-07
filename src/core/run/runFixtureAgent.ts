@@ -36,7 +36,7 @@ export interface RunFixtureAgentResult {
 }
 
 const DEFAULT_SYSTEM_PROMPT = [
-  "You are an agent running inside a Datalox replay fixture world.",
+  "You are an agent running inside a Datalox API world.",
   "Use only the provided tools when tool evidence is needed.",
   "When you have enough evidence, answer directly.",
 ].join(" ");

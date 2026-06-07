@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Datalox Agent Replay: Local Engine To Server-Ready Plan</title>
+  <title>Datalox API Gym: Local Engine To Server-Ready Plan</title>
   <style>
     :root {
       color-scheme: light;
@@ -238,9 +238,9 @@
     <header>
       <h1>Local Engine To Server-Ready Plan</h1>
       <p class="lede">
-        This plan defines what to do in <code>datalox-agent-replay</code> after Option A:
+        This plan defines what to do in <code>datalox-api-gym</code> after Option A:
         keep this repo as the local MCP VCR engine, make it plug-and-play, shape it for a
-        future server registry, and consume curated fixture packs from the separate fixture
+        future server registry, and consume curated world packs from the separate fixture
         repository.
       </p>
       <p class="meta">
@@ -255,7 +255,7 @@
     <section class="callout">
       <p>
         The product sentence should stay stable:
-        <strong>Datalox turns real agent tool interactions into verified fixture worlds and
+        <strong>Datalox turns real agent tool interactions into verified API worlds and
         grounded trajectory/eval exports.</strong>
       </p>
     </section>
@@ -263,7 +263,7 @@
     <section class="grid" aria-label="repository split">
       <article class="card">
         <h3>This repo</h3>
-        <p><code>datalox-agent-replay</code> is the engine.</p>
+        <p><code>datalox-api-gym</code> is the engine.</p>
         <p>
           It owns proxy record mode, replay mode, bundle packing, bundle verification, local
           storage, SDK entrypoints, CLI UX, server-shaped interfaces, and compact dataset
@@ -271,10 +271,10 @@
         </p>
       </article>
       <article class="card">
-        <h3>Fixture repo</h3>
-        <p><code>datalox-replay-fixtures</code> is the curated fixture library.</p>
+        <h3>API world repo</h3>
+        <p><code>datalox-api-gym-worlds</code> is the curated fixture library.</p>
         <p>
-          It already contains versioned public fixture packs for GitHub workflows, Slack
+          It already contains versioned public world packs for GitHub workflows, Slack
           support threads, search/RAG corpora, and Stripe-style SaaS API edge cases.
         </p>
       </article>
@@ -282,8 +282,8 @@
         <h3>Future server</h3>
         <p>The hosted service is a verified replay and fixture registry first.</p>
         <p>
-          It stores, verifies, indexes, approves, shares, and serves bundles, fixture packs,
-          fixture sets, and export manifests. It does not need to be the first recorder.
+          It stores, verifies, indexes, approves, shares, and serves bundles, world packs,
+          world sets, and export manifests. It does not need to be the first recorder.
         </p>
       </article>
     </section>
@@ -293,16 +293,16 @@
       <p>
         Do not turn this repo into a large fixture/data repository. This repo should remain the
         installable engine that can consume local private bundles, checked-in reference bundles,
-        and later remote fixture packs from a registry.
+        and later remote world packs from a registry.
       </p>
       <p>
         The correct split is:
       </p>
-      <pre><code>datalox-agent-replay  = runtime, CLI, SDK, store, verifier, MCP VCR, export adapters
-datalox-replay-fixtures = versioned public replay fixture packs
+      <pre><code>datalox-api-gym  = runtime, CLI, SDK, store, verifier, MCP VCR, export adapters
+datalox-api-gym-worlds = versioned public replay-backed world packs
 Datalox server         = registry, auth, approvals, object storage, sharing, metrics</code></pre>
       <p>
-        The engine must not depend on the fixture repo or hosted server at runtime. The fixture
+        The engine must not depend on the API world repo or hosted server at runtime. The fixture
         repo and server should depend on the engine contract.
       </p>
       <div class="callout">
@@ -357,28 +357,28 @@ Datalox server         = registry, auth, approvals, object storage, sharing, met
     <section class="section">
       <h2>Fixture Repo Reality Check</h2>
       <p>
-        The sibling <code>datalox-replay-fixtures/</code> directory already matches the split
+        The sibling <code>datalox-api-gym-worlds/</code> directory already matches the split
         better than the earlier roadmap assumed. It is not an engine repo. It stores fixture
         data, manifests, eval prompts, expected behavior docs, replay-bundle payloads, and
         validation/packing scripts.
       </p>
-      <p>Observed fixture packs:</p>
+      <p>Observed world packs:</p>
       <pre><code>github-ci-failure-basic@2026-05.0
 github-pr-review-basic@2026-05.0
 search-policy-corpus-basic@2026-05.0
 slack-support-thread-basic@2026-05.0
 stripe-billing-edge-cases@2026-05.0</code></pre>
       <p>Observed checks:</p>
-      <pre><code>cd ../datalox-replay-fixtures
+      <pre><code>cd ../datalox-api-gym-worlds
 npm test</code></pre>
       <p>
         Result on 2026-05-20: seven fixture-contract tests passed, five fixtures listed, five
         fixtures validated, and the pack command help path passed.
       </p>
       <p>
-        Update on 2026-05-21: the fixture repo now uses the canonical plural directory
-        <code>datalox-replay-fixtures/</code>, has a generated <code>catalog.json</code>, and
-        includes two verified fixture sets:
+        Update on 2026-05-21: the API world repo now uses the canonical plural directory
+        <code>datalox-api-gym-worlds/</code>, has a generated <code>catalog.json</code>, and
+        includes two verified world sets:
       </p>
       <pre><code>coding-review-ci-basic@2026-05.0
 support-triage-basic@2026-05.0</code></pre>
@@ -399,7 +399,7 @@ support-triage-basic@2026-05.0</code></pre>
       </p>
       <p>The ownership rule is:</p>
       <pre><code>Replay bundle = source evidence and replay proof
-Fixture world = pinned replay environment for an agent run
+API world = pinned replay environment for an agent run
 Trajectory = episode view over one task/run
 Transition = step-level state/action/observation/reward view
 Completion frame = exact model-visible prompt/response view
@@ -427,7 +427,7 @@ Split record = train/dev/test/replay partitioning</code></pre>
             <td>Replay, audit, fixture-world runtime.</td>
           </tr>
           <tr>
-            <td>Fixture world</td>
+            <td>API world</td>
             <td>Pinned activation of one or more verified replay bundles.</td>
             <td>Bundle ids and fixture metadata.</td>
             <td>Agent eval harnesses and CI.</td>
@@ -469,7 +469,7 @@ Split record = train/dev/test/replay partitioning</code></pre>
       <h2>Whole Environment Definition</h2>
       <p>
         A whole Agent RL environment is a task world with a stable reset/step protocol. It is
-        larger than Datalox's current replay-backed fixture world because it must respond to
+        larger than Datalox's current replay-backed API world because it must respond to
         new valid actions, not only replay observed tool calls.
       </p>
       <pre><code>reset(task_id, seed) -&gt; initial_observation
@@ -518,7 +518,7 @@ step(action) -&gt; observation, reward, done, info</code></pre>
       </table>
       <p>Roadmap boundary:</p>
       <pre><code>Today:
-  replay-backed fixture world
+  replay-backed API world
   = verified recorded tool/API observations
   = deterministic eval and debugging over observed scenarios
 
@@ -574,7 +574,7 @@ Later:
             <td><code>npm run demo:verified-replay</code> shows record, pack, verify, replay with upstream off, replay miss, and tamper failure.</td>
           </tr>
           <tr>
-            <td>Fixture worlds and sets</td>
+            <td>API worlds and sets</td>
             <td class="status-ok">Implemented</td>
             <td>Pinned fixture activation is implemented so users can run agents inside declared replay worlds instead of pointing at raw bundle paths.</td>
           </tr>
@@ -641,15 +641,15 @@ CLAUDE.md
 GEMINI.md
 .github/copilot-instructions.md</code></pre>
 
-      <h3>2. Keep only Agent Replay surfaces</h3>
+      <h3>2. Keep only API Gym surfaces</h3>
       <p>The active instruction/config surfaces should be:</p>
       <pre><code>DATALOX.md
 AGENTS.md
 CLAUDE.md
 GEMINI.md
 .github/copilot-instructions.md
-.cursor/rules/datalox-agent-replay.mdc
-.windsurf/rules/datalox-agent-replay.md
+.cursor/rules/datalox-api-gym.mdc
+.windsurf/rules/datalox-api-gym.md
 .datalox/manifest.json
 .datalox/config.json</code></pre>
 
@@ -693,7 +693,7 @@ git diff --check</code></pre>
           </tr>
           <tr>
             <td>Active instruction surfaces</td>
-            <td>Only Agent Replay guidance remains in <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>GEMINI.md</code>, and host rule files.</td>
+            <td>Only API Gym guidance remains in <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>GEMINI.md</code>, and host rule files.</td>
           </tr>
           <tr>
             <td>Generated draft handling</td>
@@ -765,11 +765,11 @@ npm run check
 git diff --check
 npm test</code></pre>
 
-      <h3>Phase 2: Fixture Worlds And Fixture Sets</h3>
+      <h3>Phase 2: API Worlds And World Sets</h3>
       <p>
         Move the user-facing model from "bundle" to "tool sandbox." A replay bundle remains the
-        internal portable artifact, but users should start agents inside a pinned fixture world
-        or fixture set.
+        internal portable artifact, but users should start agents inside a pinned API world
+        or world set.
       </p>
       <p>
         Product rule: <strong>install caches; replay activates.</strong> A fixture install should
@@ -779,11 +779,11 @@ npm test</code></pre>
       <p>
         Current execution status: <strong>implemented on 2026-05-21</strong>. The engine can
         install a fixture directly from a local fixture directory, list installed fixtures from
-        cache, install fixture sets from the fixture repo catalog, and replay installed fixture
+        cache, install world sets from the API world repo catalog, and replay installed fixture
         worlds.
       </p>
       <p>Add or update in this repo:</p>
-      <pre><code>docs/fixture-worlds-and-sets.md
+      <pre><code>docs/api-worlds-and-sets.md
 src/core/fixtures/fixtureCatalogSchema.ts
 src/core/fixtures/fixtureManifestSchema.ts
 src/core/fixtures/fixtureSetSchema.ts
@@ -799,22 +799,22 @@ tests/fixtureManifestSchema.test.ts
 tests/installFixturePack.test.ts
 tests/fixtureSetRuntime.test.ts</code></pre>
       <p>Target commands:</p>
-      <pre><code>datalox fixtures install ../datalox-replay-fixtures/fixtures/github-pr-review-basic
+      <pre><code>datalox fixtures install ../datalox-api-gym-worlds/fixtures/github-pr-review-basic
 datalox fixtures list
 
 datalox fixtures install github-pr-review-basic@2026-05.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json
+  --catalog ../datalox-api-gym-worlds/catalog.json
 datalox replay --fixture github-pr-review-basic@2026-05.0
 
 datalox fixture-sets install support-triage-basic@2026-05.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json
+  --catalog ../datalox-api-gym-worlds/catalog.json
 datalox replay --fixture-set support-triage-basic@2026-05.0
 
 datalox replay --fixtures \
   github-pr-review-basic@2026-05.0 \
   slack-support-thread-basic@2026-05.0 \
   search-policy-corpus-basic@2026-05.0</code></pre>
-      <p>Fixture pack shape:</p>
+      <p>World pack shape:</p>
       <pre><code>{
   "$schema": "../../schemas/fixture-manifest.schema.json",
   "id": "github-pr-review-basic",
@@ -823,7 +823,7 @@ datalox replay --fixtures \
   "description": "A finite GitHub pull request review world for coding-agent evals.",
   "status": "verified",
   "engine": {
-    "package": "datalox-agent-replay",
+    "package": "datalox-api-gym",
     "minimumVersion": "0.1.0"
   },
   "tools": [
@@ -854,7 +854,7 @@ datalox replay --fixtures \
     "tags": ["github", "pr-review", "coding-agent"]
   }
 }</code></pre>
-      <p>Fixture set shape:</p>
+      <p>World set shape:</p>
       <pre><code>{
   "schema_version": "datalox_fixture_set.v1",
   "id": "support-triage-basic",
@@ -870,29 +870,29 @@ datalox replay --fixtures \
   }
 }</code></pre>
       <p>Runtime behavior:</p>
-      <pre><code>agent -> Datalox replay runtime -> pinned fixture world -> deterministic tool observations</code></pre>
+      <pre><code>agent -> Datalox replay runtime -> pinned API world -> deterministic tool observations</code></pre>
       <p>Pass criteria:</p>
       <ul>
-        <li>Engine accepts the existing <code>datalox-replay-fixtures</code> manifest shape without lossy translation.</li>
-        <li>Fixture set schema is strict and versioned.</li>
+        <li>Engine accepts the existing <code>datalox-api-gym-worlds</code> manifest shape without lossy translation.</li>
+        <li>World set schema is strict and versioned.</li>
         <li>Fixture install only materializes/caches data; it does not activate replay for a run.</li>
-        <li><code>datalox replay --fixture</code> starts replay from a single pinned fixture world.</li>
-        <li><code>datalox replay --fixtures</code> composes multiple fixture worlds and rejects tool-name collisions unless explicitly namespaced.</li>
+        <li><code>datalox replay --fixture</code> starts replay from a single pinned API world.</li>
+        <li><code>datalox replay --fixtures</code> composes multiple API worlds and rejects tool-name collisions unless explicitly namespaced.</li>
         <li><code>datalox replay --fixture-set</code> starts a composed pinned tool sandbox from a manifest.</li>
         <li>Every bundle referenced by a fixture verifies before it can be served.</li>
-        <li>Unseen calls still return deterministic replay misses; fixture worlds do not invent behavior.</li>
+        <li>Unseen calls still return deterministic replay misses; API worlds do not invent behavior.</li>
         <li>This repo includes only tiny fixtures needed for tests and demos, not a large curated fixture catalog.</li>
       </ul>
       <p>What to do in this repo:</p>
       <ul>
-        <li>Mirror or import the fixture repo manifest schema as an engine-side validator.</li>
+        <li>Mirror or import the API world repo manifest schema as an engine-side validator.</li>
         <li>Implement local install/cache and replay activation commands for local directories, tarballs, and later registry refs.</li>
-        <li>Implement collision detection and namespace rules for composed fixture worlds.</li>
-        <li>Serve fixture worlds through the same verified replay runtime as bundles.</li>
+        <li>Implement collision detection and namespace rules for composed API worlds.</li>
+        <li>Serve API worlds through the same verified replay runtime as bundles.</li>
         <li>Keep only tiny fixture examples needed for tests and demos.</li>
       </ul>
-      <p>What belongs in the fixture repo:</p>
-      <pre><code>datalox-replay-fixtures/
+      <p>What belongs in the API world repo:</p>
+      <pre><code>datalox-api-gym-worlds/
   fixtures/
     github-ci-failure-basic/
     github-pr-review-basic/
@@ -905,7 +905,7 @@ datalox replay --fixtures \
   scripts/validate-fixtures.mjs
   scripts/pack-fixture.mjs</code></pre>
       <p>
-        The fixture repo owns curated public packs, fixture sets, scenario documentation,
+        The API world repo owns curated public packs, world sets, scenario documentation,
         licensing, eval prompts, expected behavior notes, catalog generation, and pack
         validation. It must not contain engine runtime code.
       </p>
@@ -914,7 +914,7 @@ datalox replay --fixtures \
       <p>
         Add the data views that real Agentic RL teams expect, while keeping replay evidence as
         the source of truth. This is not a second source store; it is a set of export adapters
-        grounded in verified bundles and fixture worlds.
+        grounded in verified bundles and API worlds.
       </p>
       <p>Add or update in this repo:</p>
       <pre><code>docs/agentic-rl-export-schema.md
@@ -980,7 +980,7 @@ datalox export completions \
 }</code></pre>
       <p>Pass criteria:</p>
       <ul>
-        <li>Exports can be generated only from a verified replay bundle or fixture world.</li>
+        <li>Exports can be generated only from a verified replay bundle or API world.</li>
         <li>Every trajectory references a task and replay source.</li>
         <li>Every transition references a trajectory and replay observation evidence when a tool observation exists.</li>
         <li>Completion frames distinguish raw, rendered, and compressed tool-result views.</li>
@@ -993,7 +993,7 @@ datalox export completions \
       <p>
         Make adoption boring for teams that already have an MCP server. This is still required,
         but it follows the fixture-world model: record from a real upstream, then materialize a
-        private fixture world or fixture set.
+        private API world or world set.
       </p>
       <p>Add or update:</p>
       <pre><code>src/cli/main.ts
@@ -1026,7 +1026,7 @@ datalox replay --fixture support-api-smoke@2026-05.0</code></pre>
         <li><code>proxy init</code> writes explicit config and refuses ambiguous upstream commands.</li>
         <li>Record mode requires upstream config.</li>
         <li>Replay mode requires a verified bundle and must not start upstream.</li>
-        <li>A recorded bundle can be promoted into a private fixture pack with explicit id and version.</li>
+        <li>A recorded bundle can be promoted into a private world pack with explicit id and version.</li>
         <li>Replay miss includes request hash, sequence index, tool name, and an agent-readable message.</li>
       </ul>
 
@@ -1186,7 +1186,7 @@ Datalox owns tool-I/O evidence, replay bundles, fixture activation, and exports<
       <h3>Phase 8.6: Whole Environment Contract</h3>
       <p>
         Define the shape before implementing a full environment runtime. This prevents Datalox
-        from accidentally mixing pure replay fixtures with live simulator behavior.
+        from accidentally mixing pure API Gym worlds with live simulator behavior.
       </p>
       <p>Proposed schema:</p>
       <pre><code>environment_world.v1
@@ -1212,7 +1212,7 @@ Datalox owns tool-I/O evidence, replay bundles, fixture activation, and exports<
       <h3>Phase 9: Server Registry Client</h3>
       <p>
         Add the client contract before building the hosted service. The server should be a
-        registry for bundles and fixture packs, not the only way to record.
+        registry for bundles and world packs, not the only way to record.
       </p>
       <p>Add:</p>
       <pre><code>src/serverClient/client.ts
@@ -1233,7 +1233,7 @@ datalox fixtures install github-pr-review-basic@2026-05.0</code></pre>
         <li>Run</li>
         <li>Replay bundle</li>
         <li>Content-addressed object</li>
-        <li>Fixture pack</li>
+        <li>World pack</li>
         <li>Approval and redaction state</li>
         <li>Replay metrics</li>
       </ul>
@@ -1242,7 +1242,7 @@ datalox fixtures install github-pr-review-basic@2026-05.0</code></pre>
         <li>Local bundles remain usable without login.</li>
         <li>Remote push requires explicit approval or private project mode.</li>
         <li>Remote pull verifies checksums locally before serving replay.</li>
-        <li>The server API cannot turn unapproved raw traces into public fixture packs.</li>
+        <li>The server API cannot turn unapproved raw traces into public world packs.</li>
       </ul>
 
       <h3>Phase 10: Parallel Tool Interaction Support</h3>
@@ -1276,8 +1276,8 @@ cost?: {
         <thead>
           <tr>
             <th>Concern</th>
-            <th><code>datalox-agent-replay</code></th>
-            <th><code>datalox-replay-fixtures</code></th>
+            <th><code>datalox-api-gym</code></th>
+            <th><code>datalox-api-gym-worlds</code></th>
           </tr>
         </thead>
         <tbody>
@@ -1294,7 +1294,7 @@ cost?: {
           <tr>
             <td>Reference data</td>
             <td>Only tiny examples needed for tests and quickstart.</td>
-            <td>Owns curated public fixture packs.</td>
+            <td>Owns curated public world packs.</td>
           </tr>
           <tr>
             <td>Release cadence</td>
@@ -1323,14 +1323,14 @@ cost?: {
       <pre><code>Local record:
 agent -> local Datalox recording proxy -> real upstream MCP/API -> local bundle
 
-Private fixture world:
-local bundle -> private fixture pack -> datalox replay --fixture private-pack@version
+Private API world:
+local bundle -> private world pack -> datalox replay --fixture private-pack@version
 
-Fixture set replay:
-agent -> local Datalox replay runtime -> pinned fixture set -> deterministic tool observations
+World set replay:
+agent -> local Datalox replay runtime -> pinned world set -> deterministic tool observations
 
 Server registry:
-local Datalox CLI/daemon -> Datalox server -> verified bundles, fixture packs, fixture sets, refs, metrics</code></pre>
+local Datalox CLI/daemon -> Datalox server -> verified bundles, world packs, world sets, refs, metrics</code></pre>
       <p>
         The server should not be required for private internal API recording. It should become
         useful for team sharing, approvals, CI replay, fixture discovery, and cross-machine
@@ -1365,11 +1365,11 @@ npm run check</code></pre>
       <pre><code>npx vitest run tests/fixtureCatalogSchema.test.ts tests/fixtureManifestSchema.test.ts tests/installFixturePack.test.ts tests/fixtureSetRuntime.test.ts tests/referenceBundles.test.ts
 npm run check</code></pre>
       <ul>
-        <li>Engine accepts the existing fixture repo manifest shape and rejects invalid variants.</li>
-        <li>Fixture set schema is strict.</li>
-        <li>Install caches fixture data; replay activates a pinned fixture world or set.</li>
-        <li>Installed fixture packs verify before replay.</li>
-        <li>Only tiny fixtures stay in this repo; curated packs live in the fixture repo.</li>
+        <li>Engine accepts the existing API world repo manifest shape and rejects invalid variants.</li>
+        <li>World set schema is strict.</li>
+        <li>Install caches fixture data; replay activates a pinned API world or set.</li>
+        <li>Installed world packs verify before replay.</li>
+        <li>Only tiny fixtures stay in this repo; curated packs live in the API world repo.</li>
       </ul>
 
       <h3>Agentic RL export gate</h3>
@@ -1377,7 +1377,7 @@ npm run check</code></pre>
 npm run check
 git diff --check</code></pre>
       <ul>
-        <li>Exports are generated only from verified replay bundles or fixture worlds.</li>
+        <li>Exports are generated only from verified replay bundles or API worlds.</li>
         <li>Tasks, trajectories, transitions, rewards, splits, and completion frames have non-overlapping ownership.</li>
         <li>Tool observations remain in replay evidence and are referenced by id/path/hash.</li>
         <li>Completion frames distinguish raw, rendered, and compressed model-visible tool-result views.</li>
@@ -1407,7 +1407,7 @@ npm run check</code></pre>
         <li>
           <strong>Turn BYO MCP config into private fixture recording.</strong>
           Record from a team's real upstream MCP server, pack a verified bundle, promote it
-          into a private fixture pack, then replay it through the same fixture runtime.
+          into a private world pack, then replay it through the same fixture runtime.
         </li>
         <li>
           <strong>Define the runtime adapter SPI.</strong>

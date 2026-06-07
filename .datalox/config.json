@@ -3,13 +3,13 @@
   "version": 1,
   "mode": "repo_only",
   "project": {
-    "id": "datalox-agent-replay",
-    "name": "Datalox Agent Replay"
+    "id": "datalox-api-gym",
+    "name": "Datalox API Gym"
   },
   "sources": [
     {
       "kind": "local_repo",
-      "name": "repo-agent-replay",
+      "name": "repo-api-gym",
       "enabled": true,
       "root": ".datalox"
     }

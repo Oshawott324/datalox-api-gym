@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "kind": "agent_replay_mcp",
-  "name": "Datalox Agent Replay",
+  "kind": "api_gym_runtime",
+  "name": "Datalox API Gym",
   "mode": "repo_only",
   "runtimeRequired": false,
   "configPath": ".datalox/config.json",
@@ -11,8 +11,8 @@
     "CLAUDE.md",
     "GEMINI.md",
     ".github/copilot-instructions.md",
-    ".cursor/rules/datalox-agent-replay.mdc",
-    ".windsurf/rules/datalox-agent-replay.md"
+    ".cursor/rules/datalox-api-gym.mdc",
+    ".windsurf/rules/datalox-api-gym.md"
   ],
   "eventStores": {
     "agentTurns": ".datalox/events/agent-turns",
@@ -59,20 +59,20 @@
     ]
   },
   "distribution": {
-    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Oshawott324/datalox-agent-replay.git datalox-agent-replay && cd datalox-agent-replay && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
+    "oneClickBootstrap": "TARGET_REPO=\"$(pwd)\" && git clone https://github.com/Oshawott324/datalox-api-gym.git datalox-api-gym && cd datalox-api-gym && bash bin/setup-multi-agent.sh codex && bash bin/adopt-host-repo.sh \"$TARGET_REPO\" && node bin/datalox.js status --repo \"$TARGET_REPO\" --json",
     "multiAgentSetup": "bash bin/setup-multi-agent.sh codex",
     "friendlyEntryPoint": "START_HERE.md",
     "agentSetupPrompt": {
       "instruction": "Paste this into the agent chatbox from the repo you want Datalox to manage.",
       "commands": [
         "TARGET_REPO=\"$(pwd)\"",
-        "git clone https://github.com/Oshawott324/datalox-agent-replay.git datalox-agent-replay",
-        "cd datalox-agent-replay",
+        "git clone https://github.com/Oshawott324/datalox-api-gym.git datalox-api-gym",
+        "cd datalox-api-gym",
         "bash bin/setup-multi-agent.sh codex",
         "bash bin/adopt-host-repo.sh \"$TARGET_REPO\"",
         "node bin/datalox.js status --repo \"$TARGET_REPO\" --json"
       ],
-      "sourceRole": "The public GitHub source repo is datalox-agent-replay; the local checkout/package identity is datalox-agent-replay and it owns bin/adopt-host-repo.sh.",
+      "sourceRole": "The public GitHub source repo is datalox-api-gym; the local checkout/package identity is datalox-api-gym and it owns bin/adopt-host-repo.sh.",
       "targetRepoRole": "$TARGET_REPO is the user's current project and receives the Datalox install stamp, instruction surfaces, .datalox config, and host shims."
     },
     "defaultBootstrapBundle": {

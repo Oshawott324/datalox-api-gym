@@ -30,12 +30,12 @@ class WorldApiSmokeTest(unittest.TestCase):
             self.assertIn("workspace_dir", reset.observation)
 
             system_prompt = render_system_prompt(reset.tools, reset.observation["task_tool_names"])
-            self.assertIn("Environment tool catalog:", system_prompt)
             self.assertIn("Task-relevant tools:", system_prompt)
             self.assertIn("workspace.list_files", system_prompt)
-            self.assertIn("open_sequence", system_prompt)
             self.assertIn("List files", system_prompt)
-            self.assertIn("input_schema", system_prompt)
+            self.assertNotIn("open_sequence", system_prompt)
+            self.assertNotIn("Environment tool catalog:", system_prompt)
+            self.assertNotIn("input_schema:", system_prompt)
 
             listed = driver.step(reset.session_id, ToolCall("workspace.list_files", {}))
             self.assertFalse(listed.terminated)
@@ -69,10 +69,21 @@ class WorldApiSmokeTest(unittest.TestCase):
             self.assertEqual(exported.rows, 1)
             row = json.loads(Path(exported.path).read_text(encoding="utf-8").strip())
             self.assertEqual(row["schema_version"], "datalox_world_sft_messages.v0")
+            self.assertEqual(row["provider_format"], "openai_chat")
+            self.assertEqual(row["tool_choice"], "auto")
             self.assertIn("workspace.list_files", row["messages"][0]["content"])
-            self.assertIn("open_sequence", row["messages"][0]["content"])
+            self.assertNotIn("open_sequence", row["messages"][0]["content"])
             self.assertIn("Task-relevant tools:", row["messages"][0]["content"])
             self.assertIn("Final answer", row["messages"][0]["content"])
+            self.assertNotIn("Environment tool catalog:", row["messages"][0]["content"])
+            self.assertNotIn("input_schema:", row["messages"][0]["content"])
+            self.assertEqual(
+                [tool["function"]["name"] for tool in row["tools"]],
+                reset.observation["task_tool_names"],
+            )
+            self.assertEqual(row["tools"][0]["type"], "function")
+            self.assertEqual(row["tools"][0]["function"]["parameters"]["type"], "object")
+            self.assertNotIn("input_schema", row["tools"][0]["function"])
             self.assertTrue(any(message["role"] == "tool" for message in row["messages"]))
 
     def test_export_function_rejects_non_passing_runs(self):

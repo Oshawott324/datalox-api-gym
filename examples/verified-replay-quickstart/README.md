@@ -1,6 +1,6 @@
 # Verified Replay Quickstart
 
-This example is the shortest local proof for Datalox Agent Replay.
+This example is the shortest local proof for Datalox API Gym.
 
 It runs a deterministic MCP fixture through the Datalox MCP VCR proxy, records
 real tool observations, packs a sealed replay bundle, replays with upstream off,

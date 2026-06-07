@@ -200,27 +200,67 @@
   <header>
     <h1>Physical Lab Replay and Simulation Ladder</h1>
     <p class="lede">
-      Physical lab environments are different from virtual app environments.
-      The live lab is expensive and slow, so replay is the first simulator:
-      exact observations from real runs become reusable agent worlds.
+      Physical lab environments sit above sandbox infrastructure. Fast
+      containers and microVMs can reset local processes, but they cannot reset a
+      paid experiment, a lab queue, an external API account, or a robot run.
+      Datalox should package those workflows into API worlds where replay is
+      the high-trust evidence layer and simulation is added only after real
+      observations exist.
     </p>
-    <p class="meta">Updated June 4, 2026 - Local strategy doc</p>
+    <p class="meta">Updated June 7, 2026 - Local strategy doc</p>
   </header>
 
   <section class="section">
-    <h2>The Core Realization</h2>
+    <h2>Updated Core Realization</h2>
     <div class="callout">
-      For a physical lab, the environment is not only software state. It is an
-      endpoint connected to real-world execution, plus recorded or predicted
-      experiment outcomes for agent training and evaluation.
+      Environment infra is the floor, not the product. For physical labs, the
+      scarce object is not a sandbox. It is a resettable, verifiable API world
+      built from real provider workflows, real observations, hidden verifier
+      state, and controlled side-effect boundaries.
     </div>
     <p>
-      In a virtual app environment, Datalox may need to reconstruct the app:
-      workspace state, tools, permissions, reset, and verifier logic. In a
-      physical lab environment, Datalox should first wrap existing providers
-      such as experiment platforms, workcell orchestrators, instrument
-      integration layers, and scientific record systems.
+      The env-scaling memo is right that agentic RL needs fast reset, isolation,
+      checkpoint/restore, and high-throughput rollout infrastructure. But that
+      infra mostly resets local compute state. It does not make a real Adaptyv
+      experiment free, roll back a UniteLabs-connected instrument run, or create
+      a Medra API where none is public. Datalox should therefore own the world
+      layer above sandbox infra: state distributions, tool contracts, replay
+      evidence, verifiers, and exports.
     </p>
+  </section>
+
+  <section class="section">
+    <h2>Layer Boundary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Examples</th>
+          <th>What It Solves</th>
+          <th>Why It Is Not Enough</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sandbox infra</td>
+          <td>Docker, microVM, E2B, Daytona, DeltaBox, Crab, cluster rollout workers.</td>
+          <td>Fast process/file reset, isolation, checkpoint, parallel rollout throughput.</td>
+          <td>Cannot reset external SaaS state, lab queues, physical instruments, reagent cost, or scientific outcomes.</td>
+        </tr>
+        <tr>
+          <td>Datalox API world</td>
+          <td>Adaptyv protein design world, billing-support miniworld, future SiLA/UniteLabs procedural world.</td>
+          <td>Resettable task scenarios, tool schemas, state, replay evidence, hidden verifier state, exportable runs.</td>
+          <td>Needs provider APIs, real observations, domain curation, and verifier design.</td>
+        </tr>
+        <tr>
+          <td>Live provider</td>
+          <td>Experiment API, workcell orchestrator, instrument connector, scientific record system.</td>
+          <td>Ground-truth result, real failure modes, production constraints.</td>
+          <td>Slow, expensive, unsafe to fan out, and often not directly resettable.</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 
   <section class="section">
@@ -264,7 +304,7 @@
   -> capture exact endpoint observations
   -> capture timestamps and state transitions
   -> capture result files and verifier outcomes
-  -> package as replay world
+  -> package as replay-backed API world
   -> let many agents run against the same episode cheaply</pre>
     <p>
       Replay is not a broad simulator. It is a narrow, high-trust simulator. It
@@ -274,7 +314,7 @@
   </section>
 
   <section class="section">
-    <h2>Simulation Layers</h2>
+    <h2>Updated Simulation Ladder</h2>
     <table>
       <thead>
         <tr>
@@ -286,22 +326,34 @@
       </thead>
       <tbody>
         <tr>
-          <td>Live lab</td>
+          <td>L0 Live provider endpoint</td>
           <td>Real result, real constraints, real failures.</td>
           <td>Expensive, slow, scarce, risky.</td>
-          <td>Validate important policies and collect new evidence.</td>
+          <td>Ground truth, selected validation, and new evidence collection.</td>
         </tr>
         <tr>
-          <td>Replay simulator</td>
+          <td>L1 Replay-backed API world</td>
           <td>Exact observations from real runs; high trust.</td>
           <td>Narrow coverage; cannot answer unrecorded physical questions.</td>
           <td>Regression, evaluation, SFT, failure analysis.</td>
         </tr>
         <tr>
-          <td>Generative simulator</td>
+          <td>L2 Stateful API world</td>
+          <td>Cheap resettable scenarios over provider-like state machines: drafts, quotes, queues, permissions, failures.</td>
+          <td>Can model workflow state without proving new scientific outcomes.</td>
+          <td>Agent practice, verifier development, safe failure generation, task distribution scaling.</td>
+        </tr>
+        <tr>
+          <td>L3 Calibrated outcome simulator</td>
           <td>Predicts plausible physical experiment outcomes for new proposed actions, such as binding, expression, yield, QC metrics, instrument errors, or run status transitions.</td>
           <td>Lower trust unless calibrated against real lab runs; can invent outcomes that look plausible but are scientifically wrong.</td>
           <td>RL scale, branch exploration, stress testing, and deciding which new live experiments are worth paying for.</td>
+        </tr>
+        <tr>
+          <td>L4 Live-gated hybrid world</td>
+          <td>Agents practice in replay/sim, then selected high-value actions are approved for real provider execution.</td>
+          <td>Requires budgets, approvals, safety policies, provider partnership, and result ingestion.</td>
+          <td>Closed-loop lab learning where each live run becomes new replay evidence and simulator calibration data.</td>
         </tr>
       </tbody>
     </table>
@@ -362,6 +414,122 @@
   </section>
 
   <section class="section">
+    <h2>Provider Memo Implications</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Provider</th>
+          <th>What It Means For Datalox</th>
+          <th>Next Move</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Adaptyv Bio</td>
+          <td>Best near-term physical-lab API world candidate: public Foundry API, OpenAPI spec, official MCP surface, draft workflow, cost estimation, status lifecycle, and numeric experimental results.</td>
+          <td>Build <code>adaptyv-protein-design-basic@2026-06</code>: target browse, cost estimate, draft experiment, quote/status replay, seeded result retrieval, verifier/export path.</td>
+        </tr>
+        <tr>
+          <td>UniteLabs / SiLA layer</td>
+          <td>Good later procedural lab-operation world. It has rich instrument/action vocabulary, but verifier strength is mostly procedural unless paired with downstream assay outcomes.</td>
+          <td>Do not start here. Use later for <code>sila-workcell-protocol-basic</code> once the API Gym world contract is proven on an outcome-as-a-service API.</td>
+        </tr>
+        <tr>
+          <td>Medra</td>
+          <td>Not a buildable public environment today because no public API surface is available. More likely a future customer or design partner.</td>
+          <td>Track for partnership. Do not spend engineering cycles trying to reconstruct a closed robotics stack from public hints.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Adaptyv Build Plan</h2>
+    <div class="callout warning">
+      Do not equate task count with live experiment count. Twenty API Gym tasks
+      should mean twenty replay/scenario/eval tasks over a small number of
+      recorded or seeded provider episodes. It must not mean twenty paid
+      wet-lab runs, twenty material orders, or twenty quote confirmations.
+    </div>
+    <p>
+      Build Adaptyv in stages so Datalox proves the world contract before
+      spending real lab budget. The first version should be a replay-backed API
+      world with no live mutation path. Live execution comes later behind an
+      explicit approval gate.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>What To Build</th>
+          <th>Live Cost Exposure</th>
+          <th>Pass Criteria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>V0 offline replay proof</td>
+          <td>Create <code>adaptyv-foundry-basic@2026-06.0</code> from public docs and curated replay records: target catalog, target detail, cost estimate, draft experiment, experiment status, quote view, and seeded result retrieval.</td>
+          <td>None. No Adaptyv token required; no provider call required.</td>
+          <td>Install, replay, run, verifier metadata, and SFT/eval export work locally.</td>
+        </tr>
+        <tr>
+          <td>V1 safe live recording</td>
+          <td>Record only safe endpoints: target browse, target detail, cost estimate, draft creation if approved, experiment read, quote read, and historical result read.</td>
+          <td>Near zero if restricted to read/draft/cost-estimate paths. Quote confirmation stays impossible.</td>
+          <td>Every live call becomes <code>tool_io_record.v1</code>; every replayed call has deterministic request hash and replay miss behavior.</td>
+        </tr>
+        <tr>
+          <td>V2 task set</td>
+          <td>Create 20 task scenarios over the same small evidence pool: target selection, cost-aware design, draft setup, status triage, result interpretation, next-round planning, safety-boundary refusal, replay-miss recovery.</td>
+          <td>Still near zero. More tasks reuse the same replay evidence and seeded state branches.</td>
+          <td>Train/dev/test split, task specs, verifier specs, scaffold spec, expected behavior, and eval prompts validate.</td>
+        </tr>
+        <tr>
+          <td>V3 live-gated episodes</td>
+          <td>Add an explicit live gate for rare actions such as quote confirmation or paid experiment submission.</td>
+          <td>Controlled by budget, human approval, provider account policy, and task allowlist.</td>
+          <td>No paid call can happen from replay/eval mode. Live mode logs approval id, cost estimate, quote id, and final result provenance.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Adaptyv Task Design Rules</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Rule</th>
+          <th>Concrete Meaning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Tasks are scenarios, not experiments</td>
+          <td>A task can ask the agent to inspect replayed target data, estimate cost, compare candidate sequences, or explain a result. It does not require a new physical experiment unless it is explicitly a live-gated task.</td>
+        </tr>
+        <tr>
+          <td>Use one episode many ways</td>
+          <td>One recorded provider episode can generate multiple tasks: budget check, safety refusal, result interpretation, status recovery, and next-round planning.</td>
+        </tr>
+        <tr>
+          <td>Separate workflow truth from scientific truth</td>
+          <td>Draft, quote, status, and permission behavior can be deterministic. New binding, expression, or yield outcomes must come from replayed results or a calibrated simulator, never from casual LLM invention.</td>
+        </tr>
+        <tr>
+          <td>Gate paid execution</td>
+          <td><code>confirm_quote</code>, material ordering, and any lab-starting action must be absent in V0/V1 replay worlds or return a live-gate-required result.</td>
+        </tr>
+        <tr>
+          <td>Track marginal cost</td>
+          <td>Every world and task set should report live experiments used, replay episodes used, estimated live cost avoided, and whether any task requires paid execution.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
     <h2>Datalox Boundary</h2>
     <table>
       <thead>
@@ -372,15 +540,16 @@
       </thead>
       <tbody>
         <tr>
-          <td>World package format, tool contract, task specs, verifier specs, replay evidence, replay miss behavior, export adapters.</td>
-          <td>The physical lab, sandbox engine, trainer, Kubernetes, GPU cluster, robot control algorithms, or customer scientific policy.</td>
+          <td>API world package format, state/task distributions, tool contract, task specs, verifier specs, replay evidence, replay miss behavior, live-gate policy metadata, export adapters.</td>
+          <td>The physical lab, sandbox engine, trainer, Kubernetes, GPU cluster, robot control algorithms, low-level provider SDKs, or customer scientific policy.</td>
         </tr>
       </tbody>
     </table>
     <div class="callout warning">
       Do not sell a replay file as the product. Sell the ability to turn each
       expensive physical episode into a runnable, verifiable, replayable agent
-      world.
+      API world. Run it on existing sandbox infra; do not become the sandbox
+      infra.
     </div>
   </section>
 
@@ -390,10 +559,12 @@
       A lab team should care because every live experiment can be reused many
       times for model evaluation, regression testing, and training data export.
       The same captured episode can test many agents without paying the lab
-      cost again.
+      cost again. Infra teams should care because Datalox gives their rollout
+      workers realistic external worlds instead of only local file-system
+      sandboxes.
     </p>
     <pre>real lab episode
-  -> high-trust replay world
+  -> high-trust replay-backed API world
   -> many cheap agent rollouts
   -> identify missing branches
   -> run selected new live experiments
@@ -401,7 +572,8 @@
   -> validate important policies back on the live lab</pre>
     <p>
       The long-term shape is hybrid: replay for trust, outcome simulation for
-      scale, and live lab execution for validation and new data.
+      scale, live lab execution for validation and new data, and sandbox infra
+      underneath for cheap parallel execution.
     </p>
   </section>
 </main>

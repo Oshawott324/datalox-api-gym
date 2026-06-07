@@ -31,7 +31,7 @@ export async function resolveFixtureSetRuntime(input: ResolveFixtureSetRuntimeIn
     version: fixtureSet.manifest.version,
   });
   if (manifestRef !== ref) {
-    throw new Error(`Installed fixture set ref mismatch: requested ${ref}, installed manifest is ${manifestRef}.`);
+    throw new Error(`Installed world set ref mismatch: requested ${ref}, installed manifest is ${manifestRef}.`);
   }
 
   const fixtures = [];

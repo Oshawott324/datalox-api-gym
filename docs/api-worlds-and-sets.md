@@ -1,8 +1,9 @@
-# Fixture Worlds And Fixture Sets
+# API Worlds And World Sets
 
-Fixture worlds are pinned replay runtimes for agent tool I/O. A fixture install
-only materializes verified data into a local cache. Replay activation is a
-separate command.
+API worlds are resettable, verifiable practice environments for agent tool use.
+Some API worlds are replay-backed: installation materializes verified replay
+evidence into a local cache, and activation serves that evidence through the
+same tool contract an agent sees at run time.
 
 Primary rule:
 
@@ -11,23 +12,24 @@ install caches
 replay activates
 ```
 
-Datalox does not invent behavior for calls outside a fixture. Unseen calls
-return deterministic replay misses.
+Datalox does not invent behavior for calls outside an API world. Unseen calls
+return deterministic replay misses so the agent can reason about the finite
+world boundary.
 
-## Fixture Repository
+## API World Repository
 
-The curated fixture repository is expected beside this repo during local
+The curated API world repository is expected beside this repo during local
 development:
 
 ```text
-../datalox-replay-fixtures
+../datalox-api-gym-worlds
 ```
 
-That repo owns fixture data, fixture-set data, expected behavior docs, eval
-prompts, and fixture validation/packing scripts. This repo owns the engine that
-installs, verifies, and serves those fixtures.
+That repo owns published API world data, world-set data, expected behavior docs,
+eval prompts, and validation/packing scripts. This repo owns the runtime that
+installs, verifies, serves, and exports those worlds.
 
-Current known fixture packs:
+Current known replay-backed API worlds:
 
 ```text
 appworld-calendar-basic@2026-06.0
@@ -42,7 +44,7 @@ slack-support-thread-basic@2026-05.0
 stripe-billing-edge-cases@2026-05.0
 ```
 
-Current known fixture sets:
+Current known API world sets:
 
 ```text
 appworld-calendar-basic@2026-06.0
@@ -51,51 +53,51 @@ coding-review-ci-basic@2026-06.0
 support-triage-basic@2026-06.0
 ```
 
-## Install One Fixture
+## Install One API World
 
-Install directly from a local fixture directory:
+Install directly from a local world directory:
 
 ```bash
-datalox fixtures install ../datalox-replay-fixtures/fixtures/github-pr-review-basic
+datalox fixtures install ../datalox-api-gym-worlds/fixtures/github-pr-review-basic
 ```
 
-Install from the fixture repo catalog:
+Install from the API world catalog:
 
 ```bash
 datalox fixtures install github-pr-review-basic@2026-05.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json
+  --catalog ../datalox-api-gym-worlds/catalog.json
 ```
 
-List installed fixture worlds:
+List installed API worlds:
 
 ```bash
 datalox fixtures list
 ```
 
-## Install A Fixture Set
+## Install An API World Set
 
-Fixture sets are catalog-backed because they resolve multiple member fixtures.
+World sets are catalog-backed because they resolve multiple member worlds.
 
 ```bash
 datalox fixture-sets install support-triage-basic@2026-06.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json
+  --catalog ../datalox-api-gym-worlds/catalog.json
 ```
 
-## Replay
+## Replay-Backed Activation
 
-Replay one installed fixture:
+Activate one installed replay-backed API world:
 
 ```bash
 datalox replay --fixture github-pr-review-basic@2026-05.0
 ```
 
-Replay one installed fixture set:
+Activate one installed API world set:
 
 ```bash
 datalox replay --fixture-set support-triage-basic@2026-06.0
 ```
 
-Replay multiple installed fixtures:
+Activate multiple installed API worlds:
 
 ```bash
 datalox replay --fixtures \
@@ -107,7 +109,7 @@ datalox replay --fixtures \
 ## Run One Prompt With An OpenAI-Compatible Model
 
 `datalox run` is the immediate path for putting one model/agent inside one
-declared replay world. It writes a `datalox_run.v1` transcript directory that can
+declared API world. It writes a `datalox_run.v1` transcript directory that can
 later be exported to SFT or other training/eval adapters.
 
 ```bash
@@ -129,15 +131,15 @@ For hosted OpenAI-compatible APIs, change only `OPENAI_BASE_URL`,
 
 ## Eval Fixture-Set Splits
 
-`datalox eval` is the batch path for fixture-set tasks and splits. It
-auto-installs the fixture set, converts the replayed MCP tool catalog into
+`datalox eval` is the batch path for world-set tasks and splits. It
+auto-installs the world set, converts the replayed MCP tool catalog into
 OpenAI function tools, and writes one `datalox_fixture_run.v1` JSONL row per
 eval prompt.
 
 ```bash
 datalox eval \
   --fixture-set support-triage-basic@2026-06.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json \
+  --catalog ../datalox-api-gym-worlds/catalog.json \
   --model Qwen/Qwen2.5-7B-Instruct \
   --base-url "$OPENAI_BASE_URL" \
   --api-key "$OPENAI_API_KEY" \
@@ -147,14 +149,14 @@ datalox eval \
   --json
 ```
 
-The eval runner does not execute verifier specs or
-reference rewards. It records the model-visible episode and replay misses so
+The eval runner does not execute verifier specs or reference rewards. It records
+the model-visible episode and replay misses so
 verl or another trainer/eval harness can consume the JSONL and compute rewards
 outside this repo.
 
 ## Spec Metadata
 
-Fixture packs and fixture sets may reference metadata-only specs:
+Replay-backed API worlds and world sets may reference metadata-only specs:
 
 ```json
 {
@@ -166,22 +168,23 @@ Fixture packs and fixture sets may reference metadata-only specs:
 }
 ```
 
-The engine validates those files during install and preserves the resolved spec
-refs in replay startup output. These specs are declarations only. Installing or
-replaying a fixture must not execute verifier commands, start runtime adapters,
-or infer hidden reward logic from the spec.
+The runtime validates those files during install and preserves the resolved spec
+refs in startup output. These specs are declarations only. Installing or
+activating a replay-backed API world must not execute verifier commands, start
+runtime adapters, or infer hidden reward logic from the spec.
 
 ## Pass Criteria
 
-- Fixture manifests validate against the existing `datalox-replay-fixtures`
+- World manifests validate against the existing `datalox-api-gym-worlds`
   manifest shape.
 - Optional task, verifier, and scaffold specs validate when referenced by a
-  fixture or fixture set.
+  world or world set.
 - Spec refs are preserved through cache install and replay startup output.
-- Every installed fixture verifies its replay bundle before it can be served.
+- Every installed replay-backed world verifies its replay bundle before it can be
+  served.
 - Install does not start replay.
 - Replay verifies bundles again before serving observations.
-- Fixture-set replay rejects tool-name collisions unless namespacing is added
+- World-set replay rejects tool-name collisions unless namespacing is added
   explicitly in a later version.
 - Replay misses include request hash, sequence index, tool name, active fixture
   refs, available tool names, and `liveFallback: false`.
@@ -191,7 +194,7 @@ or infer hidden reward logic from the spec.
   model-visible messages, replayed tool observations, SFT/preference flags, and
   unlabeled quality.
 
-Primary replay loop:
+Replay evidence loop:
 
 ```text
 agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives

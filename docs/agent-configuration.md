@@ -5,8 +5,8 @@ The agent-facing contract is intentionally small.
 Project boundary:
 
 - Datalox MCP is the install-facing instrumentation and control layer.
-- `datalox-agent-replay` is the repo-local implementation package.
-- Reproducible tool-call replay is the primary project focus.
+- `datalox-api-gym` is the repo-local implementation package.
+- Resettable, verifiable API worlds are the primary project focus; replay is the evidence mode.
 - `action_observation.v1` is the strict normalized view over replay records and imported traces.
 - `tool_io_record.v1` is the exact replay primitive.
 - `mcp_tool_catalog.v1` preserves MCP proxy `tools/list` metadata.
@@ -17,14 +17,15 @@ Project boundary:
 
 Layer boundary:
 
-- Datalox owns tool-I/O record/replay.
-- Datalox does not own sandbox runtimes, environment construction, behavioral
-  mock construction, reward functions, or judge agents.
+- Datalox owns API-world packaging, tool contracts, verifier metadata, replay
+  evidence, and export adapters.
+- Datalox does not own production API aggregation, sandbox runtimes, model
+  trainers, reward model research, or generic robot/lab simulators.
 
-Primary replay loop:
+Primary API Gym loop:
 
 ```text
-agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
+API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
 ```
 
 ## Main Surfaces
@@ -139,12 +140,12 @@ Preferred first-time setup from the repo the user wants Datalox to manage:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
+PACK_REPO="${HOME}/.datalox/cache/datalox-api-gym"
 mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
+  git clone https://github.com/Oshawott324/datalox-api-gym.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex

@@ -4,7 +4,7 @@
 
 **Goal:** Build the first thin FlowCyto environment pack proof: one stateful scientific vertical slice that can be replayed and exported without turning the backend into a report-writing lab platform.
 
-**Architecture:** `datalox-flow-cyto-mcp` owns the live scientific workspace and deterministic validation. `datalox-replay-fixtures` owns the published fixture pack/set. `datalox-agent-replay` owns `datalox run`, replay, and export. The agent authors the report; the backend only validates and persists structured report JSON with evidence refs.
+**Architecture:** `datalox-flow-cyto-mcp` owns the live scientific workspace and deterministic validation. `datalox-api-gym-worlds` owns the published world pack/set. `datalox-api-gym` owns `datalox run`, replay, and export. The agent authors the report; the backend only validates and persists structured report JSON with evidence refs.
 
 **Tech Stack:** TypeScript, MCP tools, file-backed `flowcyto.workspace.json`, deterministic JSON artifacts, Datalox replay bundles, fixture-set manifests, Vitest.
 
@@ -54,11 +54,11 @@ reward design
   live domain environment:
   sample data, workspace state, MCP tools, stats, QC validation, report artifact validation
 
-/Users/yifanjin/datalox-replay-fixtures
-  published fixture library:
-  fixture pack, fixture set, task specs, verifier specs, splits, catalog
+/Users/yifanjin/datalox-api-gym-worlds
+  published API world library:
+  world pack, world set, task specs, verifier specs, splits, catalog
 
-/Users/yifanjin/datalox-agent-replay
+/Users/yifanjin/datalox-api-gym
   replay/export engine:
   datalox run, datalox eval, datalox export sft, replay bundle verification
 ```
@@ -243,17 +243,17 @@ npm run check
 npm test
 ```
 
-## Phase 3: Minimal Replay Fixture World
+## Phase 3: Minimal Replay-Backed API World
 
 **Files:**
 
-- Create: `/Users/yifanjin/datalox-replay-fixtures/fixtures/flowcyto-gating-qc-basic/`
-- Create: `/Users/yifanjin/datalox-replay-fixtures/fixture-sets/flowcyto-gating-qc-basic/`
-- Modify: `/Users/yifanjin/datalox-replay-fixtures/catalog.json`
+- Create: `/Users/yifanjin/datalox-api-gym-worlds/fixtures/flowcyto-gating-qc-basic/`
+- Create: `/Users/yifanjin/datalox-api-gym-worlds/fixture-sets/flowcyto-gating-qc-basic/`
+- Modify: `/Users/yifanjin/datalox-api-gym-worlds/catalog.json`
 
-- [x] **Step 1: Add fixture pack**
+- [x] **Step 1: Add world pack**
 
-Create a fixture pack for:
+Create a world pack for:
 
 ```text
 flowcyto-gating-qc-basic@2026-06.0
@@ -261,9 +261,9 @@ flowcyto-gating-qc-basic@2026-06.0
 
 It must include a verified replay bundle with a tool catalog containing the FlowCyto tool path and tool I/O records for at least the success vertical slice.
 
-- [x] **Step 2: Add fixture set**
+- [x] **Step 2: Add world set**
 
-Create a fixture set with:
+Create a world set with:
 
 ```text
 1 success task
@@ -289,12 +289,12 @@ npm run catalog:generate
 npm test
 ```
 
-## Phase 4: Agent Replay Consumer Verification
+## Phase 4: API Gym Consumer Verification
 
 **Files:**
 
-- Modify only if needed: `/Users/yifanjin/datalox-agent-replay/docs/flowcyto-environment-pack-plan.html`
-- Modify only if needed: `/Users/yifanjin/datalox-agent-replay/docs/runtime-adapter-roadmap.html`
+- Modify only if needed: `/Users/yifanjin/datalox-api-gym/docs/flowcyto-environment-pack-plan.html`
+- Modify only if needed: `/Users/yifanjin/datalox-api-gym/docs/runtime-adapter-roadmap.html`
 
 - [x] **Step 1: Verify one prompt-driven run**
 
@@ -322,7 +322,7 @@ datalox export sft \
   --json
 ```
 
-- [x] **Step 3: Verify Agent Replay**
+- [x] **Step 3: Verify API Gym**
 
 Run:
 
@@ -339,6 +339,6 @@ npm test
 - [x] Wrong revision returns structured `stale_revision`.
 - [x] Bad report returns structured `missing_report_field`.
 - [x] Replay bundle verifies.
-- [x] Fixture set installs/resolves.
+- [x] World set installs/resolves.
 - [x] `datalox run` produces `datalox_run.v1`.
 - [x] `datalox export sft` produces valid `sft_frame.v1`.

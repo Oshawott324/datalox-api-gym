@@ -1,22 +1,24 @@
-# datalox-agent-replay
+# datalox-api-gym
 
-`datalox-agent-replay` is the repo-local implementation package for Datalox
-Agent Replay: an MCP-compatible recorder/replay layer for agent tool I/O.
+`datalox-api-gym` is the repo-local implementation package for Datalox API Gym:
+resettable, verifiable API worlds where agents can practice realistic tool use
+before touching production systems.
 
-Datalox acts like a VCR for agent tools. It records the exact agent-visible
-tool request and observation, stores that pair by deterministic request hash,
-packs the records into sealed replay bundles, and can replay the same
-observations later without calling live upstream tools.
+An API Gym world is not a shallow endpoint mock. It is a stateful practice
+system with seeded scenarios, side effects, async events, permission
+boundaries, hidden verifier state, replay evidence, and training/eval exports.
 
-In the broader agentic RL stack, Datalox owns the tool-I/O record/replay layer.
-It is complementary to sandbox runtimes, environment builders, behavioral mocks,
-and reward engines. During replay, recorded observations can act like
-record-based mocks, but Datalox does not construct fake stateful environments or
-invent unseen behavior.
+Primary API Gym loop:
 
-Primary replay loop:
+`API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports`
 
-`agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`
+Replay is a feature, not the product center. It records exact agent-visible
+tool requests and observations, stores them by deterministic request hash,
+packs them into sealed replay bundles, and serves the same observations later
+without calling live upstream tools.
+
+API aggregators connect agents to real APIs. Datalox API Gym gives agents
+resettable practice worlds for API workflows.
 
 This branch does not ship a parallel wiki/note/event replay store.
 
@@ -69,12 +71,12 @@ send it. The agent should run it from the target repo root.
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
+PACK_REPO="${HOME}/.datalox/cache/datalox-api-gym"
 mkdir -p "$(dirname "$PACK_REPO")"
 if [ -d "$PACK_REPO/.git" ]; then
   git -C "$PACK_REPO" pull --ff-only
 else
-  git clone https://github.com/Oshawott324/datalox-agent-replay.git "$PACK_REPO"
+  git clone https://github.com/Oshawott324/datalox-api-gym.git "$PACK_REPO"
 fi
 cd "$PACK_REPO"
 bash bin/setup-multi-agent.sh codex
@@ -82,13 +84,13 @@ bash bin/adopt-host-repo.sh "$TARGET_REPO"
 node bin/datalox.js status --repo "$TARGET_REPO" --json
 ```
 
-After setup, use `datalox-mcp` as the replay capture surface. Trajectory rows
+After setup, use `datalox-mcp` as the replay/evidence capture surface. Trajectory rows
 are derivative-only artifacts and are not the replay capture path.
 
 This does two separate things:
 
-- `https://github.com/Oshawott324/datalox-agent-replay.git` is the current public source repo.
-- `~/.datalox/cache/datalox-agent-replay` is the local source directory and package identity.
+- `https://github.com/Oshawott324/datalox-api-gym.git` is the current public source repo.
+- `~/.datalox/cache/datalox-api-gym` is the local source directory and package identity.
 - `$TARGET_REPO` is the user's current project.
 - Default adoption writes instruction surfaces and `.datalox/install.json` into the target repo.
 - Fresh adoption does not create the removed wiki store or copy seed note/skill corpora.
@@ -97,7 +99,7 @@ Post-install checks from the target repo:
 
 ```bash
 which codex
-node "${HOME}/.datalox/cache/datalox-agent-replay/bin/datalox.js" status --repo . --json
+node "${HOME}/.datalox/cache/datalox-api-gym/bin/datalox.js" status --repo . --json
 codex exec "Check Datalox is active for this repo."
 ```
 
@@ -111,7 +113,7 @@ If the source clone already exists, use it directly:
 
 ```bash
 TARGET_REPO="$(pwd)"
-PACK_REPO="${HOME}/.datalox/cache/datalox-agent-replay"
+PACK_REPO="${HOME}/.datalox/cache/datalox-api-gym"
 cd "$PACK_REPO"
 git pull --ff-only
 bash bin/setup-multi-agent.sh codex
@@ -158,17 +160,17 @@ Record-mode proxy snapshots upstream MCP `tools/list` into
 serves both `tools/list` and `tools/call` from bundled artifacts without
 starting upstream.
 
-Fixture world commands:
+API world commands:
 
 ```bash
-node bin/datalox.js fixtures install ../datalox-replay-fixtures/fixtures/github-pr-review-basic --json
+node bin/datalox.js fixtures install ../datalox-api-gym-worlds/fixtures/github-pr-review-basic --json
 node bin/datalox.js fixtures list --json
-node bin/datalox.js fixture-sets install support-triage-basic@2026-06.0 --catalog ../datalox-replay-fixtures/catalog.json --json
+node bin/datalox.js fixture-sets install support-triage-basic@2026-06.0 --catalog ../datalox-api-gym-worlds/catalog.json --json
 node bin/datalox.js replay --fixture github-pr-review-basic@2026-05.0
 ```
 
 Fixture install only caches and verifies data. Replay activation is separate.
-See [docs/fixture-worlds-and-sets.md](docs/fixture-worlds-and-sets.md).
+See [docs/api-worlds-and-sets.md](docs/api-worlds-and-sets.md).
 
 OpenAI-compatible fixture-set evals:
 
@@ -177,7 +179,7 @@ export OPENAI_BASE_URL=https://api.groq.com/openai/v1
 export OPENAI_API_KEY=<key>
 node bin/datalox.js eval \
   --fixture-set support-triage-basic@2026-06.0 \
-  --catalog ../datalox-replay-fixtures/catalog.json \
+  --catalog ../datalox-api-gym-worlds/catalog.json \
   --model <cheap-model> \
   --split train \
   --max-tasks 1 \
@@ -185,7 +187,7 @@ node bin/datalox.js eval \
   --json
 ```
 
-`datalox eval` auto-installs the fixture set, exposes replayed MCP tool
+`datalox eval` auto-installs the world set, exposes replayed MCP tool
 catalogs as OpenAI function tools, serves observations from
 `request_hash + sequence_index`, and writes `datalox_fixture_run.v1` JSONL.
 It works with OpenAI-compatible model servers, including vLLM and Groq. A
@@ -232,7 +234,7 @@ export DATALOX_DEFAULT_POST_RUN_MODE=off
 
 ## MCP
 
-The install-facing MCP surface should be replay-first:
+The install-facing MCP surface should be API-world-first:
 
 - `record_tool_io`
 - `record_agent_turn`

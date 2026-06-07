@@ -287,7 +287,7 @@ function claudeSkillsDir(): string {
 }
 
 function claudeLegacyPackSkillsLink(): string {
-  return path.join(claudeSkillsDir(), "datalox-agent-replay");
+  return path.join(claudeSkillsDir(), "datalox-api-gym");
 }
 
 function validFullPackRoot(candidate: string): boolean {
@@ -297,7 +297,7 @@ function validFullPackRoot(candidate: string): boolean {
   }
   try {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
-    return packageJson.name === "datalox-agent-replay";
+    return packageJson.name === "datalox-api-gym";
   } catch {
     return false;
   }
@@ -305,7 +305,7 @@ function validFullPackRoot(candidate: string): boolean {
 
 async function ensureLocalPackCache(packRootPath: string): Promise<string> {
   const cacheRoot = path.join(os.homedir(), ".datalox", "cache");
-  const cachePath = path.join(cacheRoot, "datalox-agent-replay");
+  const cachePath = path.join(cacheRoot, "datalox-api-gym");
 
   if (path.resolve(packRootPath) === path.resolve(cachePath)) {
     return cachePath;
@@ -383,7 +383,7 @@ async function skillLinkSpecs(host: InstallHost, packRootPath: string): Promise<
   if (selected.has("codex")) {
     specs.push({
       target: skillsDir,
-      destination: path.join(os.homedir(), ".codex", "skills", "datalox-agent-replay"),
+      destination: path.join(os.homedir(), ".codex", "skills", "datalox-api-gym"),
     });
   }
 
@@ -395,11 +395,11 @@ async function skillLinkSpecs(host: InstallHost, packRootPath: string): Promise<
     specs.push(
       {
         target: skillsDir,
-        destination: path.join(os.homedir(), ".opencode", "skills", "datalox-agent-replay"),
+        destination: path.join(os.homedir(), ".opencode", "skills", "datalox-api-gym"),
       },
       {
         target: skillsDir,
-        destination: path.join(os.homedir(), ".gemini", "skills", "datalox-agent-replay"),
+        destination: path.join(os.homedir(), ".gemini", "skills", "datalox-api-gym"),
       },
       {
         target: skillsDir,

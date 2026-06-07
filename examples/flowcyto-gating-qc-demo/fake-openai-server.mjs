@@ -77,7 +77,7 @@ const TOOL_SEQUENCE = [
         stats_ref: "flowcyto:gate-stats:sample_001:agent_main_population_gate:rev1",
         qc_ref: "flowcyto:gate-qc:sample_001:agent_main_population_gate:rev1",
         caveats: [
-          "Statistics come from the replay fixture preview sample.",
+          "Statistics come from the replay-backed API world preview sample.",
           "This does not perform live wet-lab or live FCS reprocessing.",
         ],
       },
@@ -88,7 +88,7 @@ const TOOL_SEQUENCE = [
 const FINAL_ANSWER = [
   "Completed the FlowCyto replayed fixture run with QC evidence.",
   "The report was agent-authored, cites the replayed stats and QC evidence refs,",
-  "and includes caveats that this is a finite fixture world rather than live wet-lab execution.",
+  "and includes caveats that this is a finite API world rather than live wet-lab execution.",
 ].join(" ");
 
 export async function startFakeOpenAiServer(input = {}) {

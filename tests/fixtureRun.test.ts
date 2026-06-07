@@ -109,10 +109,10 @@ async function createRunnableFixtureRepo(): Promise<{
     id: fixtureId,
     version: fixtureVersion,
     name: "Search Policy Corpus Basic",
-    description: "A finite policy-search replay fixture.",
+    description: "A finite policy-search replay-backed world.",
     status: "verified",
     engine: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimumVersion: "0.1.0",
     },
     tools: [
@@ -245,7 +245,7 @@ async function createRunnableFixtureRepo(): Promise<{
     id: fixtureSetId,
     version: fixtureSetVersion,
     name: "Support Triage Basic",
-    description: "A runnable support fixture set.",
+    description: "A runnable support world set.",
     status: "verified",
     fixtures: [fixtureRef],
     toolCollisionPolicy: {
@@ -285,11 +285,11 @@ async function createRunnableFixtureRepo(): Promise<{
   await writeFile(path.join(root, "catalog.json"), `${JSON.stringify({
     schema_version: "datalox_fixture_catalog.v1",
     repository: {
-      name: "datalox-replay-fixtures",
-      package: "@datalox/replay-fixtures",
+      name: "datalox-api-gym-worlds",
+      package: "@datalox/api-gym-worlds",
     },
     engine_contract: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimum_version: "0.1.0",
       commands: {
         install_fixture_set: "datalox fixture-sets install <fixture-set-ref>",
@@ -302,7 +302,7 @@ async function createRunnableFixtureRepo(): Promise<{
         version: fixtureVersion,
         ref: fixtureRef,
         name: "Search Policy Corpus Basic",
-        description: "A finite policy-search replay fixture.",
+        description: "A finite policy-search replay-backed world.",
         status: "verified",
         source_path: `fixtures/${fixtureId}`,
         manifest_path: `fixtures/${fixtureId}/manifest.json`,
@@ -343,7 +343,7 @@ async function createRunnableFixtureRepo(): Promise<{
         version: fixtureSetVersion,
         ref: fixtureSetRef,
         name: "Support Triage Basic",
-        description: "A runnable support fixture set.",
+        description: "A runnable support world set.",
         status: "verified",
         source_path: `fixture-sets/${fixtureSetId}`,
         manifest_path: `fixture-sets/${fixtureSetId}/manifest.json`,
@@ -413,7 +413,7 @@ async function createRunnableFixtureRepo(): Promise<{
   };
 }
 
-describe("OpenAI-compatible fixture set runs", () => {
+describe("OpenAI-compatible world set runs", () => {
   it("runs a selected split task against replayed tools and writes fixture-run JSONL", async () => {
     const repo = await createRunnableFixtureRepo();
     const outputPath = path.join(await makeTempDir("datalox-run-output-"), "runs.jsonl");
@@ -575,7 +575,7 @@ describe("OpenAI-compatible fixture set runs", () => {
               finish_reason: "stop",
               message: {
                 role: "assistant",
-                content: "The requested live status is outside the replay fixture.",
+                content: "The requested live status is outside the replay-backed world.",
               },
             },
           ],

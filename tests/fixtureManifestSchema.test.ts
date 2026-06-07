@@ -20,7 +20,7 @@ function fixtureManifest(overrides: Record<string, unknown> = {}) {
     description: "A finite GitHub pull request review world.",
     status: "verified",
     engine: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimumVersion: "0.1.0",
     },
     tools: [
@@ -125,7 +125,7 @@ describe("fixture refs", () => {
 });
 
 describe("fixture manifest schema", () => {
-  it("accepts the fixture repo manifest shape", () => {
+  it("accepts the API world repo manifest shape", () => {
     expect(parseFixtureManifest(fixtureManifest()).id).toBe("github-pr-review-basic");
   });
 
@@ -208,8 +208,8 @@ describe("fixture manifest schema", () => {
   });
 });
 
-describe("fixture set manifest schema", () => {
-  it("accepts a composed fixture set shape", () => {
+describe("world set manifest schema", () => {
+  it("accepts a composed world set shape", () => {
     expect(parseFixtureSetManifest(fixtureSetManifest()).fixtures).toEqual([
       "slack-support-thread-basic@2026-05.0",
       "search-policy-corpus-basic@2026-05.0",

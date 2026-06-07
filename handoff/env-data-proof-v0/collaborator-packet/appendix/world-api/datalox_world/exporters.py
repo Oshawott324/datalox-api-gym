@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import read_json, read_jsonl
-from .prompting import render_system_prompt
+from .prompting import openai_chat_tools, render_system_prompt
 from .types import ExportResult
 
 
@@ -68,6 +68,9 @@ def export_sft_messages(
         "task_id": run["task_id"],
         "family": run["family"],
         "source_run": str(run_root),
+        "provider_format": "openai_chat",
+        "tools": openai_chat_tools(tools, scoped_task_tool_names),
+        "tool_choice": "auto",
         "messages": messages,
     }
     target = Path(out_path)

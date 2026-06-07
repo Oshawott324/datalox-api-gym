@@ -175,7 +175,7 @@ export function renderWrappedPrompt(envelope: LoopEnvelope): string {
     return envelope.originalPrompt;
   }
   return [
-    "# Datalox Agent Replay",
+    "# Datalox API Gym",
     "Record exact replay evidence first: tool I/O records, optional agent turns, and replay bundles.",
     "When MCP is available, call replay tools such as `record_tool_io`, `record_agent_turn`, and `pack_replay_bundle` for concrete evidence.",
     "Use `DATALOX_SESSION_ID` as `session_id` so wrapper post-run can attach new tool I/O to the completed turn.",

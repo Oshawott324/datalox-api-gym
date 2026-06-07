@@ -57,7 +57,7 @@ async function createFixtureRepo(): Promise<{
       status: "ok",
       content: {
         number: 42,
-        title: "Fix replay fixture install",
+        title: "Fix replay-backed world install",
       },
     },
     export: {
@@ -163,7 +163,7 @@ async function createFixtureRepo(): Promise<{
     description: "A finite GitHub pull request review world.",
     status: "verified",
     engine: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimumVersion: "0.1.0",
     },
     tools: [
@@ -208,11 +208,11 @@ async function createFixtureRepo(): Promise<{
   const catalog = {
     schema_version: "datalox_fixture_catalog.v1",
     repository: {
-      name: "datalox-replay-fixtures",
-      package: "@datalox/replay-fixtures",
+      name: "datalox-api-gym-worlds",
+      package: "@datalox/api-gym-worlds",
     },
     engine_contract: {
-      package: "datalox-agent-replay",
+      package: "datalox-api-gym",
       minimum_version: "0.1.0",
       commands: {
         install_fixture: "datalox fixtures install <fixture-ref>",

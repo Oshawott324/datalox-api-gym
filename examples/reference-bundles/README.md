@@ -1,6 +1,6 @@
 # Reference Replay Bundles
 
-These examples are public proof artifacts for Datalox Agent Replay.
+These examples are public proof artifacts for Datalox API Gym.
 
 They demonstrate the current core loop:
 

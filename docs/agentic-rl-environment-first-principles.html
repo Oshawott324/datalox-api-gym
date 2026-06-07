@@ -202,7 +202,7 @@
     <h1>Agentic RL Environment Problem</h1>
     <p class="lede">
       A first-principles view of why environments are hard in agentic RL, what
-      the underlying cause is, and which parts Datalox Agent Replay actually
+      the underlying cause is, and which parts Datalox API Gym actually
       solves.
     </p>
     <p class="meta">Updated May 26, 2026 - Local positioning note</p>
@@ -276,7 +276,7 @@
   <section class="section">
     <h2>Datalox Fit</h2>
     <p>
-      Datalox Agent Replay strongly solves the evidence side of the problem:
+      Datalox API Gym strongly solves the evidence side of the problem:
     </p>
     <pre>What exactly did the agent see and do?
 Can we replay that observed tool/API world later?
@@ -286,7 +286,7 @@ Can we export training/eval rows grounded in verified evidence?</pre>
     </p>
     <pre>tool_io_record.v1
   -> replay_bundle.v1
-  -> fixture set
+  -> world set
   -> deterministic replay
   -> SFT / preference / reward / eval exports</pre>
     <p>
@@ -321,7 +321,7 @@ Can we export training/eval rows grounded in verified evidence?</pre>
       <div class="card">
         <h3>Level 1: Snapshot Replay</h3>
         <p>
-          Versioned API/MCP snapshots, replay bundles, fixture sets, deterministic
+          Versioned API/MCP snapshots, replay bundles, world sets, deterministic
           replay, and grounded exports. This is Datalox's immediate fit.
         </p>
       </div>

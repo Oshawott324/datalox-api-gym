@@ -253,10 +253,10 @@
       Use the FlowCyto proof as the live demo because it is concrete, stateful,
       and already wired through the replay runtime.
     </p>
-    <pre>cd /Users/yifanjin/datalox-agent-replay
+    <pre>cd /Users/yifanjin/datalox-api-gym
 npm run build
 node examples/flowcyto-gating-qc-demo/run-demo.mjs \
-  --catalog /Users/yifanjin/datalox-replay-fixtures/catalog.json</pre>
+  --catalog /Users/yifanjin/datalox-api-gym-worlds/catalog.json</pre>
     <p>
       Open the generated report at
       <code>examples/flowcyto-gating-qc-demo/output/demo-report.html</code>.
@@ -298,8 +298,8 @@ node examples/flowcyto-gating-qc-demo/run-demo.mjs \
         </tr>
         <tr>
           <td>We do not know if new models are better on real workflows.</td>
-          <td>Run the same fixture set across models with upstream tools off and compare task outcomes.</td>
-          <td>Versioned fixture set plus run artifacts per model.</td>
+          <td>Run the same world set across models with upstream tools off and compare task outcomes.</td>
+          <td>Versioned world set plus run artifacts per model.</td>
         </tr>
         <tr>
           <td>We need training data from tool use, not chat transcripts.</td>
@@ -326,11 +326,11 @@ node examples/flowcyto-gating-qc-demo/run-demo.mjs \
         failure mode per task family.
       </li>
       <li>
-        Publish a private fixture set with task specs, verifier specs,
+        Publish a private world set with task specs, verifier specs,
         replay bundles, train/dev/test split metadata, and export commands.
       </li>
       <li>
-        Run their target model stack against the fixture set and export rows in
+        Run their target model stack against the world set and export rows in
         the format their training team wants.
       </li>
     </ol>
@@ -339,7 +339,7 @@ node examples/flowcyto-gating-qc-demo/run-demo.mjs \
   <section class="section">
     <h2>Pass Criteria</h2>
     <ul>
-      <li>The customer's agent can run at least one published fixture set locally or in CI.</li>
+      <li>The customer's agent can run at least one published world set locally or in CI.</li>
       <li>Replay works with upstream tools off and rejects unseen calls through structured replay miss records.</li>
       <li>Every accepted task has task metadata, verifier metadata, expected tools, forbidden behavior, and split assignment.</li>
       <li>At least 20 private pilot tasks contain real workflow evidence, not hand-written chat transcripts.</li>
@@ -375,12 +375,12 @@ node examples/flowcyto-gating-qc-demo/run-demo.mjs \
       </thead>
       <tbody>
         <tr>
-          <td><code>datalox-agent-replay</code></td>
-          <td>Run agents, install fixture sets, serve replay worlds, verify bundles, and export training/eval views.</td>
+          <td><code>datalox-api-gym</code></td>
+          <td>Run agents, install world sets, serve replay worlds, verify bundles, and export training/eval views.</td>
         </tr>
         <tr>
-          <td><code>datalox-replay-fixtures</code></td>
-          <td>Publish versioned fixture worlds, task specs, verifier specs, splits, prompts, and archived bundles.</td>
+          <td><code>datalox-api-gym-worlds</code></td>
+          <td>Publish versioned API worlds, task specs, verifier specs, splits, prompts, and archived bundles.</td>
         </tr>
         <tr>
           <td>Domain MCP repos</td>

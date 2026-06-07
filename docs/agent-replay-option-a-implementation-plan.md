@@ -1,11 +1,11 @@
-# Agent Replay Option A Implementation Plan
+# API Gym Option A Implementation Plan
 
 This is the concrete implementation plan for turning this repo into Option A:
 an MCP-compatible VCR for agent tools.
 
 ## Project Boundary
 
-Datalox Agent Replay is not a trajectory-first tool.
+Datalox API Gym is not a trajectory-first tool.
 
 Primary replay loop:
 
@@ -36,7 +36,7 @@ Option A is implemented and regression-gated in this repo.
 
 | Step | Status | Evidence |
 | --- | --- | --- |
-| Step 0: Freeze rename baseline | Done | Repo/package/install-facing surfaces use `datalox-agent-replay`; `tests/repoIdentity.test.ts` guards identity and legacy paths. |
+| Step 0: Freeze rename baseline | Done | Repo/package/install-facing surfaces use `datalox-api-gym`; `tests/repoIdentity.test.ts` guards identity and legacy paths. |
 | Step 1: Replay canonical schema layer | Done | First-read docs use `agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives`; `tests/replayCanonicalDocs.test.ts` guards drift. |
 | Step 2: Content-addressed tool I/O store | Done | `src/core/toolIoStore.ts`, `src/core/toolIoSchema.ts`, and `tests/toolIoStore.test.ts` cover request hash and sequence index replay keys. |
 | Step 3: Replay bundles | Done | `src/core/replayBundle.ts` and `tests/replayBundle.test.ts` cover pack, verify, checksums, MCP catalogs, and sealed-bundle verification. |
@@ -73,12 +73,12 @@ Out of scope for Option A:
 
 Goal:
 
-- finish the `datalox-agent-replay` identity cut before changing project logic
+- finish the `datalox-api-gym` identity cut before changing project logic
 
 Change:
 
-- keep package name as `datalox-agent-replay`
-- keep cache path as `.datalox/cache/datalox-agent-replay`
+- keep package name as `datalox-api-gym`
+- keep cache path as `.datalox/cache/datalox-api-gym`
 - keep install docs pointed at the new repo URL
 - keep active docs and instruction files free of old project names and legacy
   store names
@@ -89,7 +89,7 @@ Pass criteria:
 - `npm run check`
 - `git diff --check`
 - stale identity scan passes through `tests/repoIdentity.test.ts`
-- GitHub repo exists at `Oshawott324/datalox-agent-replay`
+- GitHub repo exists at `Oshawott324/datalox-api-gym`
 
 ## Step 1: Make Replay The Canonical Schema Layer
 
@@ -650,7 +650,7 @@ Docs and adoption:
   proxy commands
 - docs say replay mode has no live fallback
 - docs do not present trajectory rows as proxy output
-- fresh adoption keeps proxy guidance replay-first
+- fresh adoption keeps proxy guidance API-world-first
 
 Regression commands:
 
@@ -703,7 +703,7 @@ Pass criteria:
 
 Goal:
 
-- make every supported wrapper path replay-first by default
+- make every supported wrapper path API-world-first by default
 - make wrapper enforcement visible to the child agent through stable environment
   sentinels
 - make post-run behavior deterministic enough that an agent can reason about it
@@ -876,7 +876,7 @@ Post-run algorithm:
    - resolve `repoPath`
    - auto-bootstrap only when safe
    - generate or reuse `sessionId`
-   - render replay-first wrapped prompt
+   - render API-world-first wrapped prompt
 2. Snapshot replay evidence before the child command.
    - call `readToolIoRecords(repoPath)`
    - store only record ids in memory
@@ -967,7 +967,7 @@ Implementation order:
    - child stderr stays on stderr
    - wrapper post-run summary goes to stderr for command wrappers
    - `--json` returns structured wrapper result and preserves child exit code
-7. Keep install/adoption replay-first.
+7. Keep install/adoption API-world-first.
    - generated host shims route supported host runs through wrappers
    - adopted instruction surfaces describe wrapper replay capture
    - no adopted first-read file tells agents to create trajectory rows as the
@@ -1007,7 +1007,7 @@ Required code changes:
 - `tests/adoptionScripts.test.ts`
   - prove adopted shims and docs use replay defaults
 - `tests/replayCanonicalDocs.test.ts`
-  - prove first-read docs stay replay-first
+  - prove first-read docs stay API-world-first
 
 Pass criteria:
 
@@ -1026,7 +1026,7 @@ Default and mode parsing:
 
 Prompt and enforcement:
 
-- wrapped prompt contains `# Datalox Agent Replay`
+- wrapped prompt contains `# Datalox API Gym`
 - wrapped prompt contains `record_tool_io`
 - wrapped prompt contains `DATALOX_SESSION_ID`
 - wrapped prompt says not to synthesize replay data from prose summaries
@@ -1329,7 +1329,7 @@ Pass criteria:
 
 - fresh adoption creates replay-focused replay surfaces only
 - fresh adoption does not create legacy stores
-- install-facing MCP is replay-first
+- install-facing MCP is API-world-first
 - action/observation normalization remains strict and deterministic
 - full test suite and stale-reference scan pass
 
@@ -1353,7 +1353,7 @@ Status: complete as of 2026-05-20.
 This migration is done only when:
 
 - the repo name, install docs, package identity, and remote repo are
-  `datalox-agent-replay`
+  `datalox-api-gym`
 - the primary MCP surface records and replays tool I/O
 - messy host/tool traces can be normalized into strict action/observation
   records

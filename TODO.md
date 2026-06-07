@@ -19,5 +19,5 @@ agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay
 
 - [x] Rename the canonical definition doc to `docs/project-definition.md`.
 - [x] Remove legacy note/skill/retrieval history docs from the active docs set.
-- [x] Keep first-read docs and adoption surfaces replay-first.
+- [x] Keep first-read docs and adoption surfaces API-world-first.
 - [x] Keep fresh adoption from creating removed wiki/note/event stores.

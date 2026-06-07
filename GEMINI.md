@@ -1,11 +1,11 @@
 # Gemini Instructions
 
-Use Datalox Agent Replay for replay capture.
+Use Datalox API Gym for resettable API-world practice and replay capture.
 
-Primary replay loop:
+Primary API Gym loop:
 
 ```text
-agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives
+API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
 ```
 
 Read:
@@ -24,7 +24,9 @@ Replay data belongs under `.datalox/tool-io/records/`,
 `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`. Do not create a
 parallel wiki/note/event store.
 
-Datalox owns tool-I/O record/replay, not sandbox runtimes, environment
-construction, behavioral mocks, reward functions, or judge agents.
+Datalox owns API-world packaging, tool contracts, verifier metadata, replay
+evidence, and export adapters. It does not own production API aggregation,
+sandbox runtimes, model trainers, reward model research, or generic robot/lab
+simulators.
 
 Trajectory derivation code is derivative-only and is not exposed by the install-facing MCP surface.

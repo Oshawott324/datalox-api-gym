@@ -3,7 +3,7 @@
 Status: active reference set.
 Updated: 2026-05-20.
 
-This plan defines the first proof artifact for Datalox Agent Replay: a small
+This plan defines the first proof artifact for Datalox API Gym: a small
 set of public, verified replay bundles that show the tool-I/O VCR loop working
 end-to-end.
 

@@ -6,7 +6,7 @@ wins for `replay_bundle.v1`.
 
 ## Purpose
 
-A replay bundle is the portable replay artifact for Datalox Agent Replay.
+A replay bundle is the portable replay artifact for Datalox API Gym.
 
 It seals the agent turn summaries and exact tool I/O records needed to inspect,
 audit, and replay an agent episode. Trajectory and eval rows are optional

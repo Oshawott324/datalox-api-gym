@@ -45,7 +45,7 @@ export function findFixtureSetCatalogEntry(
   const ref = formatFixtureRef(parseFixtureRef(fixtureSetRef));
   const entry = catalog.fixture_sets.find((fixtureSet) => fixtureSet.ref === ref);
   if (!entry) {
-    throw new Error(`Fixture set ${ref} not found in catalog.`);
+    throw new Error(`World set ${ref} not found in catalog.`);
   }
   return entry;
 }

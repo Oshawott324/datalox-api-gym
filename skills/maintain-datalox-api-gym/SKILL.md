@@ -1,14 +1,14 @@
 ---
-name: maintain-datalox-agent-replay
-description: Use when changing the Datalox Agent Replay package, schemas, CLI/MCP surfaces, wrappers, docs, or project guidance in this repo.
+name: maintain-datalox-api-gym
+description: Use when changing the Datalox API Gym package, schemas, CLI/MCP surfaces, wrappers, docs, or project guidance in this repo.
 metadata:
   datalox:
-    id: repo-engineering.maintain-datalox-agent-replay
+    id: repo-engineering.maintain-datalox-api-gym
     workflow: repo_engineering
-    trigger: Datalox Agent Replay package maintenance
+    trigger: Datalox API Gym package maintenance
 ---
 
-# Maintain Datalox Agent Replay
+# Maintain Datalox API Gym
 
 Use this skill when changing this repo itself.
 

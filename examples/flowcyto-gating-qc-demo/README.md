@@ -17,13 +17,13 @@ install fixture set
 -> render demo-report.html
 ```
 
-Run it from the Agent Replay checkout:
+Run it from the API Gym checkout:
 
 ```bash
-cd /Users/yifanjin/datalox-agent-replay
+cd /Users/yifanjin/datalox-api-gym
 npm run build
 node examples/flowcyto-gating-qc-demo/run-demo.mjs \
-  --catalog /Users/yifanjin/datalox-replay-fixtures/catalog.json
+  --catalog /Users/yifanjin/datalox-api-gym-worlds/catalog.json
 open examples/flowcyto-gating-qc-demo/output/demo-report.html
 ```
 
@@ -46,11 +46,11 @@ What this proves:
 - `flowcyto-gating-qc-basic@2026-06.0` installs as a fixture set.
 - `datalox run` can execute a prompt-driven OpenAI-compatible agent loop
   against replayed FlowCyto tools.
-- Replay hits return recorded observations from the fixture world.
+- Replay hits return recorded observations from the finite API world.
 - Unrecorded tool arguments return a structured `replay_miss` with
   `liveFallback: false`.
 - `datalox export sft` derives one `sft_frame.v1` from the run artifact.
 
 This does not prove a live FlowCyto MCP server is running. That belongs in the
 `datalox-flow-cyto-mcp` repo. This demo proves the installed snapshot world can
-be consumed by Agent Replay and exported for training/eval users.
+be consumed by API Gym and exported for training/eval users.

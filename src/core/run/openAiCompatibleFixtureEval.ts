@@ -188,10 +188,10 @@ export async function evalFixtureSetOpenAiCompatible(
     cacheRoot: input.cacheRoot,
   });
   if (!runtime.evalPromptsPath) {
-    throw new Error(`Fixture set ${runtime.ref} does not declare evalPrompts.`);
+    throw new Error(`World set ${runtime.ref} does not declare evalPrompts.`);
   }
   if (input.split && !runtime.splitsPath) {
-    throw new Error(`Fixture set ${runtime.ref} does not declare splits; cannot select split ${input.split}.`);
+    throw new Error(`World set ${runtime.ref} does not declare splits; cannot select split ${input.split}.`);
   }
 
   const [taskSpecs, evalPrompts, splits, replayWorld] = await Promise.all([
@@ -569,10 +569,10 @@ function assertSplitMatchesFixtureSet(ref: string, splits: TaskSplits | undefine
 
 function buildSystemPrompt(runtime: FixtureSetRuntime): string {
   return [
-    `You are running in Datalox replay fixture set ${runtime.ref}.`,
-    "Use only the model-visible tools provided by this replay world.",
+    `You are running in Datalox API world set ${runtime.ref}.`,
+    "Use only the model-visible tools provided by this API world.",
     "Do not call live tools, claim live service access, or invent observations.",
-    "If a tool returns replay_miss, treat it as a finite replay-world boundary and recover from the available evidence.",
+    "If a tool returns replay_miss, treat it as a finite API-world boundary and recover from the available evidence.",
     "The replay contract has liveFallback=false.",
   ].join("\n");
 }

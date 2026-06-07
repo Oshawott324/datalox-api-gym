@@ -2,7 +2,7 @@
 
 Read `AGENTS.md` and `DATALOX.md`.
 
-Use Datalox Agent Replay as an MCP-compatible VCR for agent tools.
+Use Datalox API Gym for resettable API-world practice and replay evidence.
 
 Write replay evidence under `.datalox/tool-io/records/`,
 `.datalox/events/agent-turns/`, and `.datalox/replay-bundles/`.

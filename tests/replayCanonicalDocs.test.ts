@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = process.cwd();
 const replayLoop = "agent tool call -> tool_io_record.v1 -> replay_bundle.v1 -> deterministic replay -> optional derivatives";
-const primaryConsumptionLoop = "versioned API/MCP snapshot -> fixture set -> replay runtime -> agent run -> training/eval exports";
-const snapshotAuthoringLoop = "live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> fixture pack/version";
+const primaryConsumptionLoop = "API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports";
+const snapshotAuthoringLoop = "live MCP/API/domain env -> agent rollout -> tool_io_record.v1 -> replay_bundle.v1 -> world pack/version";
 const actionObservationLoop = "tool_io_record.v1 -> action_observation.v1 -> replay_bundle.v1";
 const legacyProductWord = "prod" + "uct";
 
@@ -46,9 +46,10 @@ describe("replay canonical schema docs", () => {
     expect(replayQuickstart).toContain(".datalox/replay-bundles/demo-replay-bundle/");
     expect(replayQuickstart).toContain("Do not call live tools during replay as a hidden fallback.");
 
-    expect(layerMap).toContain("Layer 1.5: Versioned Snapshot Environment And Tool-I/O Record/Replay");
+    expect(layerMap).toContain("Layer 2: Stateful API World Runtime");
+    expect(layerMap).toContain("Layer 2.5: Replay Evidence Mode");
     expect(layerMap).toContain("Datalox does not own this layer.");
-    expect(layerMap).toContain("Datalox implements the first kind for agent-visible tool I/O.");
+    expect(layerMap).toContain("stateful API world:");
     expect(layerMap).toContain(primaryConsumptionLoop);
     expect(layerMap).toContain(snapshotAuthoringLoop);
   });
@@ -125,7 +126,7 @@ describe("replay canonical schema docs", () => {
     expect(plan).toContain("reward functions or judge agents");
   });
 
-  it("keeps first-read docs replay-first", async () => {
+  it("keeps first-read docs API-world-first", async () => {
     const readme = await read("README.md");
     const deprecatedReplayPhrases = [
       "buyer-facing",
@@ -146,8 +147,9 @@ describe("replay canonical schema docs", () => {
     ];
     const readmeViolations = deprecatedReplayPhrases.filter((phrase) => readme.includes(phrase));
 
-    expect(readme).toContain("Datalox acts like a VCR for agent tools");
-    expect(readme).toContain(replayLoop);
+    expect(readme).toContain("resettable, verifiable API worlds");
+    expect(readme).toContain(primaryConsumptionLoop);
+    expect(readme).toContain("Replay is a feature, not the product center.");
     expect(readmeViolations).toEqual([]);
 
     const firstReadDocs = [
@@ -190,7 +192,7 @@ describe("replay canonical schema docs", () => {
       "docs/project-overview.md",
       "docs/agentic-rl-layer-map.md",
       "docs/verified-replay-quickstart.md",
-      "docs/fixture-worlds-and-sets.md",
+      "docs/api-worlds-and-sets.md",
       "docs/reference-bundle-plan.md",
       "docs/local-to-server-engine-plan.html",
       "docs/runtime-adapter-roadmap.html",
@@ -199,12 +201,18 @@ describe("replay canonical schema docs", () => {
       "docs/tool-io-store-schema.md",
       "docs/replay-bundle-schema.md",
       "docs/agent-replay-option-a-implementation-plan.md",
-      "skills/maintain-datalox-agent-replay/SKILL.md",
+      "skills/maintain-datalox-api-gym/SKILL.md",
       "src/adapters/shared.ts",
       ".datalox/manifest.json",
     ];
     const forbiddenPhrases = [
       "buyer-facing",
+      "Datalox Agent Replay",
+      "datalox-agent-replay",
+      "Reproducible tool-call replay is the primary project focus.",
+      "Datalox acts like a VCR for agent tools",
+      "versioned API/MCP snapshot environments",
+      "versioned API/MCP API worlds",
       ["source", "data", legacyProductWord].join(" "),
       ["source", legacyProductWord].join(" "),
       ["source", legacyProductWord, "export target"].join(" "),
