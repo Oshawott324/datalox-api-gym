@@ -35,7 +35,7 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc"
+        "protein-mcp"
       ]
     },
     "split": {
@@ -52,8 +52,7 @@
     "runtime_kind": {
       "type": "string",
       "enum": [
-        "sibling_domain_tool_runtime",
-        "fixture_tool_runtime"
+        "sibling_domain_tool_runtime"
       ]
     },
     "messages": {

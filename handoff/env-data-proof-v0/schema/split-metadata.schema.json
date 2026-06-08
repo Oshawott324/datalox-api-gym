@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://datalox.local/schemas/env-data-proof-v0/split-metadata.schema.json",
   "title": "Datalox Env Data Proof Split Metadata",
-  "description": "Deterministic split metadata for the seed-smoke post-training handoff.",
+  "description": "Deterministic split metadata for the MCP-backed seed handoff.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -21,10 +21,10 @@
       "const": "agent_native_seed_split.v0"
     },
     "split_name": {
-      "const": "seed-smoke"
+      "const": "mcp-seed-v0"
     },
     "split_kind": {
-      "const": "format_smoke_not_lift_proof"
+      "const": "handoff_validation_not_lift_proof"
     },
     "created_at": {
       "type": "string",
@@ -86,7 +86,7 @@
             "enum": [
               "flowcyto",
               "molecule-biology",
-              "scientific-data-qc"
+              "protein-mcp"
             ]
           },
           "split": {

@@ -26,7 +26,7 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc"
+        "protein-mcp"
       ]
     },
     "answer_path": {

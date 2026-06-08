@@ -1,0 +1,171 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "molecule-orf-translation-annotation",
+  "family": "molecule-biology",
+  "answer_path": "handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-orf-translation-annotation/verifier/expected.fail.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "molecule-orf-translation-annotation",
+      "actual": "molecule-orf-translation-annotation"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "molecule-biology",
+      "actual": "molecule-biology"
+    },
+    {
+      "name": "required evidence id",
+      "passed": false,
+      "message": "required evidence id missing tool_io:molecule-orf-translation-annotation/get_sequence_context/1",
+      "expected": "tool_io:molecule-orf-translation-annotation/get_sequence_context/1",
+      "actual": [
+        "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+        "tool_io:molecule-orf-translation-annotation/translate_region/3",
+        "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+        "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-orf-translation-annotation/get_sequence_context/1",
+      "expected": "tool_io:molecule-orf-translation-annotation/get_sequence_context/1"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-orf-translation-annotation/find_orfs/2",
+      "expected": "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+      "actual": [
+        "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+        "tool_io:molecule-orf-translation-annotation/translate_region/3",
+        "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+        "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-orf-translation-annotation/find_orfs/2",
+      "expected": "tool_io:molecule-orf-translation-annotation/find_orfs/2"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-orf-translation-annotation/translate_region/3",
+      "expected": "tool_io:molecule-orf-translation-annotation/translate_region/3",
+      "actual": [
+        "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+        "tool_io:molecule-orf-translation-annotation/translate_region/3",
+        "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+        "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-orf-translation-annotation/translate_region/3",
+      "expected": "tool_io:molecule-orf-translation-annotation/translate_region/3"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+      "expected": "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+      "actual": [
+        "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+        "tool_io:molecule-orf-translation-annotation/translate_region/3",
+        "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+        "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+      "expected": "tool_io:molecule-orf-translation-annotation/upsert_feature/4"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-orf-translation-annotation/validate_workspace/5",
+      "expected": "tool_io:molecule-orf-translation-annotation/validate_workspace/5",
+      "actual": [
+        "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+        "tool_io:molecule-orf-translation-annotation/translate_region/3",
+        "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+        "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-orf-translation-annotation/validate_workspace/5",
+      "expected": "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+    },
+    {
+      "name": "family_output.operation",
+      "passed": true,
+      "message": "family_output.operation matched",
+      "expected": "orf_translation_annotation",
+      "actual": "orf_translation_annotation"
+    },
+    {
+      "name": "family_output.molecule_id",
+      "passed": true,
+      "message": "family_output.molecule_id matched",
+      "expected": "lambda_nc001416",
+      "actual": "lambda_nc001416"
+    },
+    {
+      "name": "family_output.workspace_revision",
+      "passed": true,
+      "message": "family_output.workspace_revision matched",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "family_output.feature_ids",
+      "passed": true,
+      "message": "family_output.feature_ids contains feat_agent_orf_191_736",
+      "expected": "feat_agent_orf_191_736",
+      "actual": [
+        "feat_agent_orf_191_736"
+      ]
+    },
+    {
+      "name": "family_output.orf_ids",
+      "passed": true,
+      "message": "family_output.orf_ids contains orf_191_736_plus",
+      "expected": "orf_191_736_plus",
+      "actual": [
+        "orf_191_736_plus"
+      ]
+    },
+    {
+      "name": "family_output.translation_refs",
+      "passed": true,
+      "message": "family_output.translation_refs contains translation:lambda_nc001416:191-736:+",
+      "expected": "translation:lambda_nc001416:191-736:+",
+      "actual": [
+        "translation:lambda_nc001416:191-736:+"
+      ]
+    }
+  ]
+}

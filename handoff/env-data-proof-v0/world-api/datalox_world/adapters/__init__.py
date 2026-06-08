@@ -1,1 +1,0 @@
-"""World API transport adapters."""

@@ -32,7 +32,7 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc"
+        "protein-mcp"
       ]
     },
     "split": {

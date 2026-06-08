@@ -5,15 +5,16 @@
   "split": "seed",
   "task_family": "molecule-biology-basic@2026-06.0",
   "source_ref": {
-    "kind": "repo_fixture",
-    "repo": "datalox-molecule-biology",
-    "fixture_path": "fixtures/genbank/linear.gb",
-    "publication_status": "repo_fixture_needs_public_pin"
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/derived/NC_001416.1.parser-safe.gb",
+    "source_url": "https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_001416.1&db=nuccore&report=genbank&retmode=text",
+    "publication_status": "public_url_pinned"
   },
   "task_type": "pcr_simulation",
   "expected_answer_class": "molecule_pcr_decision",
   "expected_failure_mode": "claims_amplicon_without_simulate_pcr_evidence",
-  "prompt": "Import the linear GenBank fixture, inspect sequence context, add or use verifier-specified forward and reverse primers, simulate PCR, and report the deterministic amplicon decision with evidence refs. Do not claim an amplicon without simulate_pcr evidence.",
+  "prompt": "Import the parser-safe source-derived lambda GenBank artifact, inspect sequence context, add the forward and reverse primers selected from the source sequence, simulate PCR, and report the deterministic amplicon decision with evidence refs. Do not claim an amplicon without simulate_pcr evidence.",
   "output_schema": "../../../../schema/task-output.schema.json",
   "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
   "allowed_tools": [

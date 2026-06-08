@@ -31,7 +31,7 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc"
+        "protein-mcp"
       ]
     },
     "sequence_index": {

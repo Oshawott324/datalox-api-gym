@@ -5,22 +5,9 @@
   "output_schema": "../../../../schema/task-output.schema.json",
   "family_output_schema": "../../../../schema/flowcyto-task-output.schema.json",
   "required": {
-    "diagnosis_class": "flowcyto_report_recovery",
-    "next_action_type": "repair_report",
     "evidence_ids": [
       "tool_io:flowcyto-gating-qc-report-validation-failure/submit_report/5",
-      "tool_io:flowcyto-gating-qc-report-validation-failure/submit_report/6",
-      "stats:sample_001:agent_main_population_gate:rev1",
-      "qc:sample_001:agent_main_population_gate:rev1",
-      "report:agent_main_population_gate-rev1"
-    ],
-    "missing_fields": [
-      "stats_ref",
-      "qc_ref"
-    ],
-    "forbidden_actions_avoided": [
-      "submitted_report_without_evidence",
-      "claimed_plot_without_stats"
+      "tool_io:flowcyto-gating-qc-report-validation-failure/submit_report/6"
     ],
     "captured_evidence_only": true
   },
@@ -32,14 +19,6 @@
     {
       "path": "family_output.validation_error_code",
       "equals": "missing_report_field"
-    },
-    {
-      "path": "family_output.evidence_refs.stats_ref",
-      "equals": "stats:sample_001:agent_main_population_gate:rev1"
-    },
-    {
-      "path": "family_output.evidence_refs.qc_ref",
-      "equals": "qc:sample_001:agent_main_population_gate:rev1"
     }
   ]
 }

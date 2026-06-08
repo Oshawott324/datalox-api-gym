@@ -1,66 +1,22 @@
-# One-Page Context
+# One-Page Context for Zheng
 
-## Position
+We changed the handoff after your feedback. The active artifact is no longer a schema-first or parser-task packet. It is a small set of domain MCP worlds with captured tool observations.
 
-Datalox is testing whether scientific workflow environments can be packaged as
-agent-native runnable worlds that produce trusted trajectories.
+## What This Contains
 
-The core value is not that Datalox invents a trainer. The value is that a
-training or eval team can plug an agent into a domain world, get tool
-observations, submit an answer, receive deterministic verifier evidence, and
-export the result into the team's existing post-training stack.
+- 12 MCP-backed tasks: FlowCyto (4), Molecule Biology (5), Protein MCP (3).
+- 8/2/2 train/dev/test split for handoff validation.
+- Real captured tool outputs from FlowCyto, Molecule Biology, and Protein MCP sibling runtimes.
+- Standard `system/user/assistant/tool` SFT rows in `exports/sft.tool_messages.seed.jsonl`.
+- Tool-env eval rows in `exports/eval.tool_env.seed.jsonl`.
 
-## World Contract
+## What It Does Not Claim
 
-Conceptually, the world exposes this lifecycle:
+- It does not claim model lift. The split is too small.
+- It does not assign reward for scientific correctness.
+- It does not ask you to adopt a new schema as the main point.
+- It does not include the old parser/report-only or toy sequence rows.
 
-```text
-init_task(task_id) -> task workspace
-agent reads README.md / task.json / artifacts
-agent calls domain tools -> tool observations
-agent submits answer.json
-verifier returns pass/fail + reward + check evidence
-trajectory can export to system/user/assistant/tool messages
-```
+## Why It May Be Useful
 
-The implementation exposes this lifecycle as a small World API:
-
-```text
-reset(task_id) -> initial prompt, tool schemas, workspace refs
-step(tool_call) -> observation
-finalize(answer) -> verifier result, reward
-export_messages() -> system/user/assistant/tool transcript
-```
-
-MCP is the first adapter because your current stack mainly uses MCP. The
-important distinction is:
-
-```text
-MCP = tool transport
-World API = episode lifecycle for rollout / eval / training extraction
-```
-
-## Current Scope
-
-This packet has two preview tasks:
-
-- FASTQ QC failure triage.
-- Molecule primer validation.
-
-Each task has one passing and one failing precomputed trajectory. The examples
-are intentionally small. They prove interface shape and verifier behavior, not
-model improvement.
-
-## The Ask
-
-Please decide whether this is close enough to your normal post-training
-workflow to justify an 80/20/20 dataset build.
-
-The most useful feedback is:
-
-- preferred environment API shape;
-- whether the trajectory has enough information for SFT and eval;
-- whether the SFT messages match your loader expectations;
-- whether the World API + MCP adapter fits your current harness;
-- minimum dataset size before training;
-- blockers before you would run the first trainable open-weight model.
+The useful question is whether a model+harness can interact with resettable domain tools and produce trajectories dense enough for SFT/RL planning. This packet gives you the first runnable evidence shape without asking you to review code first.

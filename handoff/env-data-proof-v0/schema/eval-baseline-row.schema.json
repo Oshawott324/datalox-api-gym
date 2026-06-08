@@ -30,7 +30,7 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc"
+        "protein-mcp"
       ]
     },
     "split": {
@@ -45,7 +45,7 @@
       "type": "string",
       "enum": [
         "openai-compatible",
-        "verifier-smoke"
+        "verifier-check"
       ]
     },
     "model": {

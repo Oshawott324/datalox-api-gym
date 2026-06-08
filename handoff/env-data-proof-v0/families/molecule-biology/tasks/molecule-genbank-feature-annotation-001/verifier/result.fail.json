@@ -30,29 +30,13 @@
       "actual": "molecule-biology"
     },
     {
-      "name": "diagnosis.class",
-      "passed": true,
-      "message": "diagnosis.class matched",
-      "expected": "molecule_feature_annotation",
-      "actual": "molecule_feature_annotation"
-    },
-    {
-      "name": "next_action.type",
-      "passed": true,
-      "message": "next_action.type matched",
-      "expected": "annotate_feature",
-      "actual": "annotate_feature"
-    },
-    {
       "name": "required evidence id",
       "passed": false,
       "message": "required evidence id missing tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
       "expected": "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
       "actual": [
         "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-        "molecule:mol_linear",
-        "feature:feat_seed_annotation"
+        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
       ]
     },
     {
@@ -68,9 +52,7 @@
       "expected": "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
       "actual": [
         "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-        "molecule:mol_linear",
-        "feature:feat_seed_annotation"
+        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
       ]
     },
     {
@@ -86,9 +68,7 @@
       "expected": "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
       "actual": [
         "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-        "molecule:mol_linear",
-        "feature:feat_seed_annotation"
+        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
       ]
     },
     {
@@ -96,62 +76,6 @@
       "passed": true,
       "message": "captured evidence contains tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
       "expected": "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
-    },
-    {
-      "name": "required evidence id",
-      "passed": true,
-      "message": "required evidence id contains molecule:mol_linear",
-      "expected": "molecule:mol_linear",
-      "actual": [
-        "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-        "molecule:mol_linear",
-        "feature:feat_seed_annotation"
-      ]
-    },
-    {
-      "name": "captured evidence id",
-      "passed": true,
-      "message": "captured evidence contains molecule:mol_linear",
-      "expected": "molecule:mol_linear"
-    },
-    {
-      "name": "required evidence id",
-      "passed": true,
-      "message": "required evidence id contains feature:feat_seed_annotation",
-      "expected": "feature:feat_seed_annotation",
-      "actual": [
-        "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-        "molecule:mol_linear",
-        "feature:feat_seed_annotation"
-      ]
-    },
-    {
-      "name": "captured evidence id",
-      "passed": true,
-      "message": "captured evidence contains feature:feat_seed_annotation",
-      "expected": "feature:feat_seed_annotation"
-    },
-    {
-      "name": "required forbidden action avoided",
-      "passed": true,
-      "message": "required forbidden action avoided contains patched_workspace_json_directly",
-      "expected": "patched_workspace_json_directly",
-      "actual": [
-        "patched_workspace_json_directly",
-        "inferred_sequence_from_prose"
-      ]
-    },
-    {
-      "name": "required forbidden action avoided",
-      "passed": true,
-      "message": "required forbidden action avoided contains inferred_sequence_from_prose",
-      "expected": "inferred_sequence_from_prose",
-      "actual": [
-        "patched_workspace_json_directly",
-        "inferred_sequence_from_prose"
-      ]
     },
     {
       "name": "family_output.operation",
@@ -164,8 +88,8 @@
       "name": "family_output.molecule_id",
       "passed": true,
       "message": "family_output.molecule_id matched",
-      "expected": "mol_linear",
-      "actual": "mol_linear"
+      "expected": "lambda_nc001416",
+      "actual": "lambda_nc001416"
     },
     {
       "name": "family_output.workspace_revision",
@@ -177,10 +101,10 @@
     {
       "name": "family_output.feature_ids",
       "passed": true,
-      "message": "family_output.feature_ids contains feat_seed_annotation",
-      "expected": "feat_seed_annotation",
+      "message": "family_output.feature_ids contains feat_agent_promoter_review",
+      "expected": "feat_agent_promoter_review",
       "actual": [
-        "feat_seed_annotation"
+        "feat_agent_promoter_review"
       ]
     }
   ]

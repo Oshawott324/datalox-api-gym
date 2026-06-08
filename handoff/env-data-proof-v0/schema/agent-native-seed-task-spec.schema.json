@@ -38,7 +38,7 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc"
+        "protein-mcp"
       ]
     },
     "split": {
@@ -123,7 +123,7 @@
     },
     "family_output_schema": {
       "type": "string",
-      "pattern": "^\\.\\./\\.\\./\\.\\./\\.\\./schema/(flowcyto-task-output|molecule-biology-task-output|scientific-data-task-output)\\.schema\\.json$"
+      "pattern": "^\\.\\./\\.\\./\\.\\./\\.\\./schema/(flowcyto-task-output|molecule-biology-task-output|protein-mcp-task-output)\\.schema\\.json$"
     },
     "allowed_tools": {
       "type": "array",

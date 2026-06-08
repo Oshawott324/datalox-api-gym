@@ -446,8 +446,8 @@
       workflow reconstructed for agents, but a single-domain task set will look
       narrow. The first public package should be a multi-family scientific
       workflow world set: FlowCyto for the visual/stateful anchor, Molecule
-      Biology for deterministic sequence-tool generalization, and scientific
-      data QC for cheap public scaling.
+      Biology for deterministic sequence-tool generalization, and Protein MCP
+      for structure workspace and scene/view state.
     </p>
     <p>
       Also do not treat GitHub issue triage as the main public proof. It is a
@@ -464,7 +464,7 @@
         <tr>
           <td><code>agent-native-science-seed@2026-06.0</code></td>
           <td>First public environment-to-training-data demo</td>
-          <td>Multi-family seed: 4-6 FlowCyto tasks, 4-6 Molecule Biology tasks, and 4-8 scientific-data QC tasks. This avoids the "all FlowCyto" narrowness while staying scientific and verifier-backed.</td>
+          <td>Multi-family seed: 4 FlowCyto tasks, 5 Molecule Biology tasks, and 3 Protein MCP tasks. This avoids the "all FlowCyto" narrowness while staying environment-relevant and tool-evidence backed.</td>
         </tr>
         <tr>
           <td><code>flowcyto-gating-qc-basic@2026-06.0</code></td>
@@ -474,16 +474,16 @@
         <tr>
           <td><code>molecule-biology-basic@2026-06.0</code></td>
           <td>Second family inside the first package</td>
-          <td>Shows the same pattern on sequence workspaces: FASTA/GenBank import, feature/primer edits, restriction-site checks, digest/PCR simulation, and export validation.</td>
+          <td>Shows the same pattern on sequence workspaces: source-derived GenBank import, feature edits, ORF/translation, restriction-site checks, digest/PCR simulation, and export validation.</td>
         </tr>
         <tr>
-          <td><code>scientific-data-qc-basic@2026-06.0</code></td>
-          <td>Cheap scaling family inside the first package</td>
-          <td>Real FASTQ QC, single-cell QC, FCS metadata, protein structure, and alignment QC artifacts are public, text/table-first, cheap to replay, and clearly scientific rather than generic coding tasks.</td>
+          <td><code>protein-mcp-basic@2026-06.0</code></td>
+          <td>Third family inside the first package</td>
+          <td>Shows structure workspace tasks through real tools: ligand listing, binding-site annotation, scene annotations, revision-safe view updates, and workspace validation.</td>
         </tr>
         <tr>
           <td><code>workflow-debug-basic@2026-06.0</code></td>
-          <td>Reserve / infrastructure smoke</td>
+          <td>Reserve only</td>
           <td>Snakemake, Nextflow, Bioconda, and nf-core issue-derived work can test replay/verifier plumbing, but issue-only tasks should not dominate the public Datalox proof.</td>
         </tr>
       </tbody>
@@ -627,7 +627,7 @@
       <tbody>
         <tr>
           <td>Bioinformatics pipeline triage</td>
-          <td>Real Nextflow/Snakemake/FASTQ/QC failures produce logs, configs, and file outputs.</td>
+          <td>Real workflow failures produce logs, configs, workspace files, and tool outputs.</td>
           <td>Text/log/file verification; no image interpretation required.</td>
         </tr>
         <tr>
@@ -713,39 +713,27 @@
         </tr>
         <tr>
           <td>Molecule Biology sequence workflow</td>
-          <td>FASTA import/context, GenBank feature annotation, primer insertion validation, restriction-site/digest check, PCR simulation, GenBank export validation.</td>
+          <td>Source-derived lambda GenBank import/context, feature annotation, ORF translation annotation, restriction-site/digest check, PCR simulation, GenBank export validation.</td>
           <td>Inferring sequence facts from prose, patching <code>molecule.workspace.json</code> directly, missing <code>expectedRevision</code>, or claiming digest/PCR results without deterministic tool evidence.</td>
           <td>Workspace revision, molecule id, feature/primer ids, deterministic biology-tool result, exported file validation, and no direct workspace patching.</td>
         </tr>
         <tr>
-          <td>FASTQ / RNA-seq QC</td>
-          <td>FastQC report decision and Qualimap BamQC low-MAPQ decision from MultiQC public test data.</td>
-          <td>Anchoring on one attractive metric, missing failed modules, or calling a bad alignment clean because mapped-read percentage looks high.</td>
-          <td>Failed modules, basic statistics, mapped reads, aligned bases, mapping quality, coverage, and next action.</td>
-        </tr>
-        <tr>
-          <td>Single-cell QC</td>
-          <td>10x PBMC3k matrix plus locked Scanpy-derived QC table.</td>
-          <td>Using generic cell-count language without citing actual total-count or gene-count evidence.</td>
-          <td>Sample/cell ids, thresholds, computed metrics, and filter/keep decision.</td>
-        </tr>
-        <tr>
-          <td>Protein structure prep QC</td>
-          <td>Public RCSB mmCIF and entry metadata.</td>
-          <td>Claiming docking/design readiness without checking experimental method, resolution, ligand, and entity metadata.</td>
-          <td>Structure id, method, resolution, ligand id, entity counts, and prep action.</td>
+          <td>Protein MCP structure workflow</td>
+          <td>Open structure, list ligands, annotate HEM binding-site contacts, inspect scene annotations, update view state with revision discipline, validate workspace.</td>
+          <td>Claiming scene or structure state without tool evidence, updating a view without the current revision, or annotating a ligand without first listing ligands.</td>
+          <td>Workspace revision, structure id, ligand id, view id, annotation ids, measurement ids, and validation evidence.</td>
         </tr>
       </tbody>
     </table>
     <div class="callout warning">
       The first public set should use
       <code>handoff/env-data-proof-v0/source-datasets.manifest.json</code> and
-      <code>task-source-gate.csv</code> as the source gate. Current FlowCyto and
-      Molecule Biology captures are useful smoke rows, but they need public
-      recapture from flowCore and NCBI sources before they support a public
-      training-data claim. GitHub issue tasks should be reserve workflow-debug
-      tasks, not the primary public demo. A seed package with only FlowCyto
-      tasks fails the variety bar.
+      <code>task-source-gate.csv</code> as the source gate. Current Molecule
+      Biology captures use a source-derived NCBI lambda GenBank artifact.
+      Current FlowCyto and Protein MCP captures use sibling repo fixtures and
+      need public-source recapture before public benchmark claims. GitHub issue
+      tasks should be reserve workflow-debug tasks, not the primary public
+      demo. A seed package with only FlowCyto tasks fails the variety bar.
     </div>
   </section>
 
@@ -918,13 +906,13 @@
         <tr>
           <td>1. Freeze task/output schema</td>
           <td>Freeze one shared output envelope plus family-specific payload schemas. Shared fields should include task id, family, diagnosis, evidence ids, next action, missing fields, forbidden actions avoided, and family output.</td>
-          <td><code>handoff/env-data-proof-v0/schema/task-output.schema.json</code>, <code>flowcyto-task-output.schema.json</code>, <code>molecule-biology-task-output.schema.json</code>, and <code>scientific-data-task-output.schema.json</code></td>
-          <td>Sample answers from FlowCyto, Molecule Biology, and scientific-data QC can all be validated without reading prose instructions.</td>
+          <td><code>handoff/env-data-proof-v0/schema/task-output.schema.json</code>, <code>flowcyto-task-output.schema.json</code>, <code>molecule-biology-task-output.schema.json</code>, and <code>protein-mcp-task-output.schema.json</code></td>
+          <td>Sample answers from FlowCyto, Molecule Biology, and Protein MCP can all be validated without reading prose instructions.</td>
         </tr>
         <tr>
           <td>2. Collect 12-15 real seed tasks</td>
-          <td>Create one row per task across at least three families: FlowCyto, Molecule Biology, and scientific-data QC. Attach approved source ids and reject issue-only tasks unless they include replay-rich files, logs, command outputs, or tool observations.</td>
-          <td><code>selected-agent-native-seed-tasks.csv</code>, <code>source-datasets.manifest.json</code>, and <code>task-source-gate.csv</code></td>
+          <td>Create one row per task across three active families: FlowCyto, Molecule Biology, and Protein MCP. Attach source ids and reject parser-only or issue-only tasks unless they become replay-rich domain workspaces.</td>
+          <td><code>real-task-pack-v1.csv</code>, <code>source-datasets.manifest.json</code>, and <code>task-source-gate.csv</code></td>
           <td>Each row has task id, family, approved source ids, task type, expected answer class, expected failure mode, public/private flag, include/reject decision, and HF publication note. No family exceeds 40% of the seed.</td>
         </tr>
         <tr>
@@ -935,9 +923,9 @@
         </tr>
         <tr>
           <td>4. Build derived artifacts and tool observations</td>
-          <td>Generate small published artifacts, parser outputs, policy outputs, domain MCP tool catalogs, and deterministic tool observations from approved public sources. Keep project-local or toy repo fixtures as smoke rows unless recaptured from the approved source ids.</td>
-          <td><code>artifacts/manifest.json</code>, <code>tools/tool-catalog.json</code>, and <code>tools/tool-observations.jsonl</code></td>
-          <td>Every task has deterministic agent-visible observations and matching artifact checksums. FlowCyto and Molecule Biology observations come from their domain tool paths, not hand-written prose.</td>
+          <td>Capture deterministic tool observations from the real sibling MCP/domain runtimes. Keep raw source artifacts separate from parser-safe derived artifacts.</td>
+          <td><code>source-artifacts/</code> and <code>tools/tool-observations.jsonl</code></td>
+          <td>Every task has deterministic agent-visible observations. FlowCyto, Molecule Biology, and Protein MCP observations come from domain tool paths, not hand-written prose.</td>
         </tr>
         <tr>
           <td>5. Capture replay evidence</td>
@@ -947,7 +935,7 @@
         </tr>
         <tr>
           <td>6. Implement deterministic verifier</td>
-          <td>Check structured output, required evidence ids, diagnosis class, missing fields, and forbidden claims. Avoid judge-model scoring for the first proof.</td>
+          <td>Check structured output, captured evidence ids, and simple workspace/tool metadata. Avoid judge-model scoring and do not assign scientific reward in v0.</td>
           <td><code>verifier_specs/*.json</code> plus a verifier command or script</td>
           <td>Known-good answer passes, known-bad answer fails, and the failure reason names the broken criterion.</td>
         </tr>
@@ -955,7 +943,7 @@
           <td>7. Run trainable-base baseline and keep real failures</td>
           <td>Run the same open-weight base model that will later receive LoRA SFT against <code>exports/eval.seed.jsonl</code>. Keep tasks where the model actually fails by missing evidence, choosing the wrong action, hallucinating state, or violating the tool/replay boundary. Closed API models are reference baselines only.</td>
           <td><code>exports/eval.baseline.jsonl</code> and <code>baseline.failure-report.md</code></td>
-          <td>Held-out seed tasks have verifier output and concrete baseline failure examples; the smoke split proves mechanics, not reliable lift.</td>
+          <td>Held-out seed tasks have verifier output and concrete baseline failure examples; the handoff split proves mechanics, not reliable lift.</td>
         </tr>
         <tr>
           <td>8. Create verifier-passing train trajectories</td>
@@ -965,21 +953,21 @@
         </tr>
         <tr>
           <td>9. Export <code>sft_frame.v1</code></td>
-          <td>Convert verifier-passing train trajectories into standard system/user/assistant/tool message rows for post-training loaders. Keep the richer Datalox tool-evidence rows as audit/provenance, and keep final-answer chat rows only as a formatting smoke artifact. Failed baseline answers are not SFT targets.</td>
-          <td><code>exports/sft.tool_messages.seed.jsonl</code> plus <code>exports/sft.tool_evidence.seed.jsonl</code> and <code>exports/sft.seed.chat.jsonl</code></td>
+          <td>Convert verifier-passing train trajectories into standard system/user/assistant/tool message rows for post-training loaders. Keep the richer Datalox tool-evidence rows as audit/provenance. Failed baseline answers are not SFT targets.</td>
+          <td><code>exports/sft.tool_messages.seed.jsonl</code> plus <code>exports/sft.tool_evidence.seed.jsonl</code></td>
           <td>Rows include task id, split, model-visible task prompt, assistant tool calls, tool observations, final verifier-passing answer, evidence ids, source paths, and verifier metadata.</td>
         </tr>
         <tr>
           <td>10. Lock eval command and split</td>
-          <td>Write both context-eval smoke and tool-env eval contracts. Pin split ids and reject export/eval if split metadata is absent.</td>
-          <td><code>exports/split.seed-smoke.json</code>, <code>exports/eval.seed.jsonl</code>, <code>exports/eval.tool_env.seed.jsonl</code>, and <code>eval_command.md</code></td>
-          <td>Another person can run context smoke and baseline-vs-SFT tool-env eval on the same held-out split without asking how the environment works.</td>
+          <td>Write both context-eval and tool-env eval contracts. Pin split ids and reject export/eval if split metadata is absent.</td>
+          <td><code>exports/split.mcp-seed-v0.json</code>, <code>exports/eval.seed.jsonl</code>, <code>exports/eval.tool_env.seed.jsonl</code>, and <code>eval_command.md</code></td>
+          <td>Another person can run context eval and baseline-vs-SFT tool-env eval on the same held-out split without asking how the environment works.</td>
         </tr>
       </tbody>
     </table>
     <pre>minimum handoff acceptance:
   - 12-15 included seed tasks with provenance or repo fixture refs
-  - at least 3 task families: FlowCyto, Molecule Biology, scientific-data QC
+  - 3 task families: FlowCyto, Molecule Biology, Protein MCP
   - no family above 40% of the seed
   - replay bundles with replay-miss validation
   - 10+ baseline failures with verifier reasons
@@ -1213,7 +1201,7 @@ datalox eval \
         <tr>
           <td>Real task sourcing and baseline filter</td>
           <td>Public credibility</td>
-          <td>Collect FlowCyto, Molecule Biology, and scientific-data QC tasks from domain MCP fixtures and public scientific artifacts. Capture them as replay bundles and admit only cases with a baseline failure. Keep workflow-debug issue tasks as reserve.</td>
+          <td>Collect FlowCyto, Molecule Biology, and Protein MCP tasks from domain MCP fixtures and public scientific artifacts. Capture real tool observations and admit only cases with a baseline failure. Keep workflow-debug issue tasks as reserve.</td>
         </tr>
         <tr>
           <td><code>completion_frame.v1</code></td>
@@ -1262,9 +1250,9 @@ datalox eval \
       The first multi-family seed is still cheaper than full open-ended FlowCyto
       vision or protein design. FlowCyto v0 is constrained to structured
       tool/state/evidence paths; Molecule Biology is deterministic sequence
-      tooling; scientific-data QC is text/table first. Full vision-heavy
-      cytometry and protein-design loops should get separate budgets after this
-      loop already works.
+      tooling; Protein MCP is structure workspace state, not protein design.
+      Full vision-heavy cytometry and protein-design loops should get separate
+      budgets after this loop already works.
     </p>
     <table>
       <thead>
@@ -1440,17 +1428,17 @@ datalox eval \
       <tbody>
         <tr>
           <td>Now</td>
-          <td>Create <code>handoff/env-data-proof-v0/</code>: frozen multi-family schema, 12-15 domain-relevant seed tasks, dataset scale plan, cost estimate, verifier spec, baseline command, and the exact question for the post-training collaborator.</td>
+          <td>Create <code>handoff/env-data-proof-v0/</code>: 12 MCP-backed domain-relevant seed tasks, source gate, mechanical verifier spec, baseline command, and the exact question for the post-training collaborator.</td>
           <td>He can inspect the package and say whether the task/data contract is trainable before spending GPU time. No reliable lift is expected yet.</td>
         </tr>
         <tr>
           <td>Days 1-3</td>
-          <td>Freeze the multi-family seed, collect paper-backed or repo-fixture source artifacts, define family payload schemas and reward vector, create first train/dev/test split, and run the trainable-base baseline.</td>
-          <td>At least 10 scientific workflow tasks across FlowCyto, Molecule Biology, and scientific-data QC have replay evidence, verifier output, and at least one observed baseline failure mode.</td>
+          <td>Freeze the multi-family seed, collect source artifacts, define family payload schemas, create first train/dev/test split, and run the trainable-base baseline.</td>
+          <td>At least 10 scientific workflow tasks across FlowCyto, Molecule Biology, and Protein MCP have tool evidence, verifier output, and at least one observed baseline failure mode.</td>
         </tr>
         <tr>
           <td>Days 4-7</td>
-          <td>Solve train tasks with human references, teacher-agent runs, or repaired baseline traces. Keep only verifier-passing success/recovery trajectories and export tool-evidence SFT rows; keep final-answer chat rows as smoke only.</td>
+          <td>Solve train tasks with human references, teacher-agent runs, or repaired baseline traces. Keep only verifier-passing success/recovery trajectories and export tool-message SFT rows.</td>
           <td>Every primary SFT row traces back to a train-task replay bundle and verifier-passing tool-step evidence. This is the right moment to hand the package to him.</td>
         </tr>
         <tr>

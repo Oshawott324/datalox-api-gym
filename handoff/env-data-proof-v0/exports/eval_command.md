@@ -2,7 +2,7 @@
 
 ## Corrected Training Boundary
 
-`exports/eval.seed.jsonl` is a context-eval smoke file: it preloads replay
+`exports/eval.seed.jsonl` is a context-eval validation file: it preloads replay
 observations in the prompt and checks whether the model can read evidence and
 emit the target JSON.
 
@@ -14,10 +14,9 @@ standard `system`/`user`/`assistant`/`tool` messages with assistant tool
 calls followed by tool observations.
 
 `exports/sft.tool_evidence.seed.jsonl` keeps the same information in a
-Datalox-rich evidence/audit shape. `exports/sft.seed.chat.jsonl` remains a
-final-answer formatting smoke file.
+Datalox-rich evidence/audit shape.
 
-## Context-Eval Smoke Baseline
+## Context-Eval Baseline
 
 ```bash
 # Serve the same open-weight base model that will later receive LoRA SFT.
@@ -56,7 +55,7 @@ handoff/env-data-proof-v0/exports/eval.tool_env.seed.jsonl
 ```
 
 The current `run-seed-baseline.mjs` script does not execute tool-env rows; it
-only runs the context-eval smoke rows above.
+only runs the context-eval rows above.
 
 Optional closed-model reference command:
 
@@ -71,14 +70,14 @@ node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \
   --min-failures 0
 ```
 
-Local verifier plumbing smoke command. This proves schemas, parsing, and
-verifier wiring only; it is not model evidence:
+Local verifier wiring command. This proves schemas, parsing, and verifier
+wiring only; it is not model evidence:
 
 ```bash
 node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \
   --input handoff/env-data-proof-v0/exports/eval.seed.jsonl \
-  --out handoff/env-data-proof-v0/exports/eval.baseline.smoke.jsonl \
-  --mode verifier-smoke \
+  --out handoff/env-data-proof-v0/exports/eval.baseline.verifier.jsonl \
+  --mode verifier-check \
   --model deterministic-weak-baseline \
   --min-failures 10
 ```

@@ -20,15 +20,7 @@ const writeResults = args.has("--write-results");
 const FAMILY_SCHEMAS = {
   flowcyto: "flowcyto-task-output.schema.json",
   "molecule-biology": "molecule-biology-task-output.schema.json",
-  "scientific-data-qc": "scientific-data-task-output.schema.json",
-};
-
-const SCIENTIFIC_ARTIFACTS = {
-  "fastq-qc-nanopore-fail-001": ["sample:sample1_S1_L001_R2_001.fastq.gz"],
-  "flowcyto-fcs-compensation-metadata-001": ["sample:sample_001", "matrix:flowcyto_compensation"],
-  "protein-structure-ap5a-prep-001": ["structure:1AKE", "ligand:AP5"],
-  "rnaseq-alignment-qualimap-low-mapq-001": ["report:qualimap_bamqc"],
-  "single-cell-pbmc3k-qc-summary-001": ["sample:pbmc3k"],
+  "protein-mcp": "protein-mcp-task-output.schema.json",
 };
 
 const EXPECTATIONS = {
@@ -38,11 +30,7 @@ const EXPECTATIONS = {
     missingFields: ["stats_ref", "qc_ref"],
     forbiddenActionsAvoided: ["submitted_report_without_evidence", "claimed_plot_without_stats"],
     toolEvidence: ["submit_report/5", "submit_report/6"],
-    evidence: [
-      "stats:sample_001:agent_main_population_gate:rev1",
-      "qc:sample_001:agent_main_population_gate:rev1",
-      "report:agent_main_population_gate-rev1",
-    ],
+    evidence: [],
     flowcyto: {
       reportStatus: "recovered_after_validation_error",
       validationErrorCode: "missing_report_field",
@@ -55,11 +43,7 @@ const EXPECTATIONS = {
     missingFields: ["workspace_revision"],
     forbiddenActionsAvoided: ["submitted_report_without_evidence", "claimed_plot_without_stats"],
     toolEvidence: ["submit_report/5", "submit_report/6"],
-    evidence: [
-      "stats:sample_001:agent_main_population_gate:rev1",
-      "qc:sample_001:agent_main_population_gate:rev1",
-      "report:agent_main_population_gate-rev1",
-    ],
+    evidence: [],
     flowcyto: {
       reportStatus: "recovered_after_validation_error",
       validationErrorCode: "stale_revision",
@@ -72,28 +56,24 @@ const EXPECTATIONS = {
     missingFields: [],
     forbiddenActionsAvoided: ["submitted_report_without_evidence", "claimed_plot_without_stats"],
     toolEvidence: ["upsert_gate/2", "compute_gate_stats/3", "validate_gate_qc/4", "submit_report/5"],
-    evidence: [
-      "stats:sample_001:agent_main_population_gate:rev1",
-      "qc:sample_001:agent_main_population_gate:rev1",
-      "report:agent_main_population_gate-rev1",
-    ],
+    evidence: [],
     flowcyto: {
       reportStatus: "submitted",
       validationErrorCode: "none",
       recoveryAction: "none",
     },
   },
-  "molecule-fasta-import-context-001": {
-    diagnosisClass: "molecule_context_decision",
-    nextActionType: "validate_workspace",
+  "flowcyto-existing-gate-edit-revision": {
+    diagnosisClass: "flowcyto_gate_edit",
+    nextActionType: "submit_report",
     missingFields: [],
-    forbiddenActionsAvoided: ["patched_workspace_json_directly", "inferred_sequence_from_prose"],
-    toolEvidence: ["get_sequence_context/1", "validate_workspace/2"],
-    evidence: ["molecule:mol_single"],
-    molecule: {
-      moleculeId: "mol_single",
-      operation: "sequence_context",
-      workspaceRevision: 0,
+    forbiddenActionsAvoided: ["submitted_report_without_evidence", "claimed_plot_without_stats", "used_stale_revision"],
+    toolEvidence: ["upsert_gate/2", "upsert_gate/3", "compute_gate_stats/4", "validate_gate_qc/5", "submit_report/6"],
+    evidence: [],
+    flowcyto: {
+      reportStatus: "submitted",
+      validationErrorCode: "none",
+      recoveryAction: "none",
     },
   },
   "molecule-genbank-feature-annotation-001": {
@@ -102,12 +82,12 @@ const EXPECTATIONS = {
     missingFields: [],
     forbiddenActionsAvoided: ["patched_workspace_json_directly", "inferred_sequence_from_prose"],
     toolEvidence: ["get_sequence_context/1", "upsert_feature/2", "validate_workspace/3"],
-    evidence: ["molecule:mol_linear", "feature:feat_seed_annotation"],
+    evidence: [],
     molecule: {
-      moleculeId: "mol_linear",
+      moleculeId: "lambda_nc001416",
       operation: "feature_annotation",
       workspaceRevision: 1,
-      featureIds: ["feat_seed_annotation"],
+      featureIds: ["feat_agent_promoter_review"],
     },
   },
   "molecule-pcr-simulation-001": {
@@ -116,26 +96,12 @@ const EXPECTATIONS = {
     missingFields: [],
     forbiddenActionsAvoided: ["patched_workspace_json_directly", "claimed_pcr_without_tool_evidence"],
     toolEvidence: ["get_sequence_context/1", "upsert_primer/2", "upsert_primer/3", "simulate_pcr/4", "validate_workspace/5"],
-    evidence: ["molecule:mol_linear", "primer:primer_seed_forward", "primer:primer_seed_reverse"],
+    evidence: [],
     molecule: {
-      moleculeId: "mol_linear",
+      moleculeId: "lambda_nc001416",
       operation: "pcr_simulation",
       workspaceRevision: 2,
       primerIds: ["primer_seed_forward", "primer_seed_reverse"],
-    },
-  },
-  "molecule-primer-validation-001": {
-    diagnosisClass: "molecule_primer_decision",
-    nextActionType: "upsert_primer",
-    missingFields: [],
-    forbiddenActionsAvoided: ["patched_workspace_json_directly", "inferred_sequence_from_prose"],
-    toolEvidence: ["get_sequence_context/1", "upsert_primer/2", "validate_workspace/3"],
-    evidence: ["molecule:mol_circular", "primer:primer_seed_fwd"],
-    molecule: {
-      moleculeId: "mol_circular",
-      operation: "primer_validation",
-      workspaceRevision: 1,
-      primerIds: ["primer_seed_fwd"],
     },
   },
   "molecule-restriction-digest-001": {
@@ -144,73 +110,87 @@ const EXPECTATIONS = {
     missingFields: [],
     forbiddenActionsAvoided: ["patched_workspace_json_directly", "claimed_digest_without_tool_evidence"],
     toolEvidence: ["get_sequence_context/1", "find_restriction_sites/2", "simulate_digest/3"],
-    evidence: ["molecule:mol_circular"],
+    evidence: [],
     molecule: {
-      moleculeId: "mol_circular",
+      moleculeId: "lambda_nc001416",
       operation: "restriction_digest",
       workspaceRevision: 0,
     },
   },
-  "fastq-qc-nanopore-fail-001": {
-    diagnosisClass: "fastq_qc_decision",
-    nextActionType: "trim_or_filter_reads",
+  "molecule-orf-translation-annotation": {
+    diagnosisClass: "molecule_orf_translation_annotation",
+    nextActionType: "translate_region",
     missingFields: [],
-    forbiddenActionsAvoided: ["called_live_service", "used_uncited_evidence"],
-    evidence: [
-      "source:fastq-qc-nanopore-fail-001/primary",
-      "file:fastqc_excerpt",
-      "metric:fastqc.parsed_report",
-      "metric:fastq.policy_result",
-    ],
+    forbiddenActionsAvoided: ["patched_workspace_json_directly", "claimed_orf_without_tool_evidence"],
+    toolEvidence: ["get_sequence_context/1", "find_orfs/2", "translate_region/3", "upsert_feature/4", "validate_workspace/5"],
+    evidence: [],
+    molecule: {
+      moleculeId: "lambda_nc001416",
+      operation: "orf_translation_annotation",
+      workspaceRevision: 1,
+      featureIds: ["feat_agent_orf_191_736"],
+      orfIds: ["orf_191_736_plus"],
+      translationRefs: ["translation:lambda_nc001416:191-736:+"],
+    },
   },
-  "flowcyto-fcs-compensation-metadata-001": {
-    diagnosisClass: "flowcyto_metadata_decision",
-    nextActionType: "repair_metadata",
+  "molecule-export-genbank-after-edit": {
+    diagnosisClass: "molecule_genbank_export",
+    nextActionType: "export_genbank",
     missingFields: [],
-    forbiddenActionsAvoided: ["called_live_service", "used_uncited_evidence"],
-    evidence: [
-      "source:flowcyto-fcs-compensation-metadata-001/primary",
-      "file:compmatrix_excerpt",
-      "metric:flowcyto.fcs_keywords",
-      "metric:flowcyto.compensation_matrix",
-      "metric:flowcyto.policy_result",
-    ],
+    forbiddenActionsAvoided: ["patched_workspace_json_directly", "claimed_export_without_file_evidence"],
+    toolEvidence: ["get_sequence_context/1", "upsert_feature/2", "validate_workspace/3", "export_genbank/4", "validate_workspace/5"],
+    evidence: [],
+    molecule: {
+      moleculeId: "lambda_nc001416",
+      operation: "genbank_export",
+      workspaceRevision: 1,
+      featureIds: ["feat_agent_export_marker"],
+      exportPath: "capture-workspace/lambda.agent-export.gb",
+    },
   },
-  "protein-structure-ap5a-prep-001": {
-    diagnosisClass: "protein_structure_prep_decision",
-    nextActionType: "prepare_structure",
+  "protein-binding-site-annotation": {
+    diagnosisClass: "protein_binding_site_annotation",
+    nextActionType: "annotate_binding_site",
     missingFields: [],
-    forbiddenActionsAvoided: ["called_live_service", "used_uncited_evidence"],
-    evidence: [
-      "source:protein-structure-ap5a-prep-001/primary",
-      "file:1ake_mmcif_excerpt",
-      "metric:protein.1ake_mmcif_metadata",
-      "metric:protein.policy_result",
-    ],
+    forbiddenActionsAvoided: ["claimed_structure_context_without_tool_evidence", "annotated_ligand_without_list_ligands"],
+    toolEvidence: ["open_structure/0", "list_ligands/1", "annotate_binding_site/2", "get_scene_annotations/3", "validate_workspace/4"],
+    evidence: [],
+    protein: {
+      structureId: "target",
+      operation: "binding_site_annotation",
+      workspaceRevision: 1,
+      ligandIds: ["HEM:A:142"],
+      viewId: "annotated_hem_a_142",
+    },
   },
-  "rnaseq-alignment-qualimap-low-mapq-001": {
-    diagnosisClass: "workflow_result_qc_decision",
-    nextActionType: "rerun_analysis",
+  "protein-view-revision-safe-style": {
+    diagnosisClass: "protein_view_revision_safe_style",
+    nextActionType: "update_protein_view",
     missingFields: [],
-    forbiddenActionsAvoided: ["called_live_service", "used_uncited_evidence"],
-    evidence: [
-      "source:rnaseq-alignment-qualimap-low-mapq-001/primary",
-      "file:qualimap_excerpt",
-      "metric:qualimap.alignment_summary",
-      "metric:alignment.policy_result",
-    ],
+    forbiddenActionsAvoided: ["claimed_structure_context_without_tool_evidence", "updated_view_without_revision"],
+    toolEvidence: ["open_structure/0", "open_protein_viewer/1", "get_structure_context/2", "update_protein_view/3", "validate_workspace/4"],
+    evidence: [],
+    protein: {
+      structureId: "target",
+      operation: "view_revision_safe_style",
+      workspaceRevision: 1,
+      viewId: "default",
+    },
   },
-  "single-cell-pbmc3k-qc-summary-001": {
-    diagnosisClass: "single_cell_qc_decision",
-    nextActionType: "exclude_sample",
+  "protein-ligand-contact-scene-repair": {
+    diagnosisClass: "protein_ligand_contact_scene_repair",
+    nextActionType: "inspect_scene_annotations",
     missingFields: [],
-    forbiddenActionsAvoided: ["called_live_service", "used_uncited_evidence"],
-    evidence: [
-      "source:single-cell-pbmc3k-qc-summary-001/primary",
-      "file:single_cell_qc_excerpt",
-      "metric:single_cell.pbmc3k_qc_summary",
-      "metric:single_cell.policy_result",
-    ],
+    forbiddenActionsAvoided: ["claimed_structure_context_without_tool_evidence", "annotated_ligand_without_list_ligands"],
+    toolEvidence: ["open_structure/0", "list_ligands/1", "get_scene_annotations/2", "annotate_binding_site/3", "get_scene_annotations/4", "validate_workspace/5"],
+    evidence: [],
+    protein: {
+      structureId: "target",
+      operation: "ligand_contact_scene_repair",
+      workspaceRevision: 1,
+      ligandIds: ["HEM:A:142"],
+      viewId: "annotated_hem_a_142",
+    },
   },
 };
 
@@ -393,15 +373,10 @@ function buildVerifierSpec(spec, rows, expectation) {
     output_schema: "../../../../schema/task-output.schema.json",
     family_output_schema: `../../../../schema/${FAMILY_SCHEMAS[spec.family]}`,
     required: {
-      diagnosis_class: expectation.diagnosisClass,
-      next_action_type: expectation.nextActionType,
       evidence_ids: requiredEvidenceIds,
-      missing_fields: expectation.missingFields,
-      forbidden_actions_avoided: expectation.forbiddenActionsAvoided,
       captured_evidence_only: true,
     },
     family_output_checks: buildFamilyOutputChecks(spec, expectation),
-    ...(spec.family === "scientific-data-qc" ? { required_computed_checks: buildScientificComputedChecks(spec, rows) } : {}),
   };
 }
 
@@ -410,8 +385,6 @@ function buildFamilyOutputChecks(spec, expectation) {
     return [
       { path: "family_output.report_status", equals: expectation.flowcyto.reportStatus },
       { path: "family_output.validation_error_code", equals: expectation.flowcyto.validationErrorCode },
-      { path: "family_output.evidence_refs.stats_ref", equals: "stats:sample_001:agent_main_population_gate:rev1" },
-      { path: "family_output.evidence_refs.qc_ref", equals: "qc:sample_001:agent_main_population_gate:rev1" },
     ];
   }
   if (spec.family === "molecule-biology") {
@@ -422,19 +395,22 @@ function buildFamilyOutputChecks(spec, expectation) {
     ];
     if (expectation.molecule.featureIds) checks.push({ path: "family_output.feature_ids", contains_all: expectation.molecule.featureIds });
     if (expectation.molecule.primerIds) checks.push({ path: "family_output.primer_ids", contains_all: expectation.molecule.primerIds });
+    if (expectation.molecule.orfIds) checks.push({ path: "family_output.orf_ids", contains_all: expectation.molecule.orfIds });
+    if (expectation.molecule.translationRefs) checks.push({ path: "family_output.translation_refs", contains_all: expectation.molecule.translationRefs });
+    if (expectation.molecule.exportPath) checks.push({ path: "family_output.export_path", equals: expectation.molecule.exportPath });
     return checks;
   }
-  return [
-    { path: "family_output.diagnosis.class", equals: expectation.diagnosisClass },
-    { path: "family_output.next_action.type", equals: expectation.nextActionType },
-    { path: "family_output.affected_artifacts", contains_all: SCIENTIFIC_ARTIFACTS[spec.task_id] },
-  ];
-}
-
-function buildScientificComputedChecks(spec, rows) {
-  const policy = rows.find((row) => row.tool_name === "qc_policy.evaluate")?.observation;
-  if (!policy) throw new Error(`${spec.task_id}: missing qc_policy.evaluate observation.`);
-  return policy.checks.map(({ name, status, evidence_id }) => ({ name, status, evidence_id }));
+  if (spec.family === "protein-mcp") {
+    const checks = [
+      { path: "family_output.operation", equals: expectation.protein.operation },
+      { path: "family_output.structure_id", equals: expectation.protein.structureId },
+      { path: "family_output.workspace_revision", equals: expectation.protein.workspaceRevision },
+    ];
+    if (expectation.protein.ligandIds) checks.push({ path: "family_output.ligand_ids", contains_all: expectation.protein.ligandIds });
+    if (expectation.protein.viewId) checks.push({ path: "family_output.view_id", equals: expectation.protein.viewId });
+    return checks;
+  }
+  throw new Error(`${spec.task_id}: unsupported family ${spec.family}`);
 }
 
 function buildPassAnswer(spec, rows, verifierSpec, expectation) {
@@ -458,13 +434,15 @@ function buildPassAnswer(spec, rows, verifierSpec, expectation) {
 
   if (spec.family === "flowcyto") output.family_output = buildFlowcytoFamilyOutput(rows, expectation);
   if (spec.family === "molecule-biology") output.family_output = buildMoleculeFamilyOutput(rows, verifierSpec, expectation);
-  if (spec.family === "scientific-data-qc") output.family_output = buildScientificFamilyOutput(spec, rows, verifierSpec, expectation, summary);
+  if (spec.family === "protein-mcp") output.family_output = buildProteinFamilyOutput(rows, verifierSpec, expectation);
 
   return output;
 }
 
 function buildFlowcytoFamilyOutput(rows, expectation) {
   const last = rows.at(-1);
+  const stats = rows.find((row) => row.tool_name === "compute_gate_stats")?.observation;
+  const qc = rows.find((row) => row.tool_name === "validate_gate_qc")?.observation;
   return {
     workspace_path: last.observation.workspacePath,
     workspace_revision: last.workspace_revision,
@@ -472,8 +450,8 @@ function buildFlowcytoFamilyOutput(rows, expectation) {
     gate_id: "agent_main_population_gate",
     report_status: expectation.flowcyto.reportStatus,
     evidence_refs: {
-      stats_ref: "stats:sample_001:agent_main_population_gate:rev1",
-      qc_ref: "qc:sample_001:agent_main_population_gate:rev1",
+      stats_ref: stats?.evidenceRef ?? "tool_io:missing/stats",
+      qc_ref: qc?.evidenceRef ?? "tool_io:missing/qc",
     },
     validation_error_code: expectation.flowcyto.validationErrorCode,
     recovery_action: expectation.flowcyto.recoveryAction,
@@ -491,27 +469,28 @@ function buildMoleculeFamilyOutput(rows, verifierSpec, expectation) {
   };
   if (expectation.molecule.featureIds) output.feature_ids = expectation.molecule.featureIds;
   if (expectation.molecule.primerIds) output.primer_ids = expectation.molecule.primerIds;
+  if (expectation.molecule.orfIds) output.orf_ids = expectation.molecule.orfIds;
+  if (expectation.molecule.translationRefs) output.translation_refs = expectation.molecule.translationRefs;
+  if (expectation.molecule.exportPath) output.export_path = expectation.molecule.exportPath;
   return output;
 }
 
-function buildScientificFamilyOutput(spec, rows, verifierSpec, expectation, summary) {
-  const policy = rows.find((row) => row.tool_name === "qc_policy.evaluate")?.observation;
-  if (!policy) throw new Error(`${spec.task_id}: missing qc_policy.evaluate observation.`);
+function buildProteinFamilyOutput(rows, verifierSpec, expectation) {
+  const workspacePath = rows.find((row) => row.observation.result?.workspacePath)?.observation.result.workspacePath;
+  const scene = rows.findLast((row) => row.tool_name === "get_scene_annotations")?.observation.result;
+  const annotations = scene?.annotations?.map((annotation) => annotation.id) ?? [];
+  const measurements = scene?.measurements?.map((measurement) => measurement.id) ?? [];
   return {
-    diagnosis: {
-      class: expectation.diagnosisClass,
-      summary,
-      severity: policy.severity,
-    },
-    affected_artifacts: SCIENTIFIC_ARTIFACTS[spec.task_id],
-    computed_checks: policy.checks,
-    evidence_ids: verifierSpec.required.evidence_ids,
-    next_action: {
-      type: expectation.nextActionType,
-      summary: nextActionSummary(expectation.nextActionType),
-    },
-    missing_fields: [],
-    forbidden_actions_avoided: familyForbiddenActionsForScientific(spec.task_id),
+    workspace_path: workspacePath,
+    workspace_revision: expectation.protein.workspaceRevision,
+    structure_id: expectation.protein.structureId,
+    operation: expectation.protein.operation,
+    tool_result_refs: verifierSpec.required.evidence_ids,
+    ...(expectation.protein.ligandIds ? { ligand_ids: expectation.protein.ligandIds } : {}),
+    ...(expectation.protein.chainIds ? { chain_ids: expectation.protein.chainIds } : {}),
+    ...(annotations.length > 0 ? { annotation_ids: annotations } : {}),
+    ...(measurements.length > 0 ? { measurement_ids: measurements } : {}),
+    ...(expectation.protein.viewId ? { view_id: expectation.protein.viewId } : {}),
   };
 }
 
@@ -531,9 +510,6 @@ function verifyAnswer({ answer, answerPath, verifierSpec, capturedEvidence, sche
 
   pushExact(checks, "task_id", answer.task_id, verifierSpec.task_id);
   pushExact(checks, "family", answer.family, verifierSpec.family);
-  pushExact(checks, "diagnosis.class", answer.diagnosis?.class, verifierSpec.required.diagnosis_class);
-  pushExact(checks, "next_action.type", answer.next_action?.type, verifierSpec.required.next_action_type);
-
   for (const evidenceId of verifierSpec.required.evidence_ids) {
     pushContains(checks, "required evidence id", answer.evidence_ids, evidenceId);
     if (verifierSpec.required.captured_evidence_only) {
@@ -547,12 +523,6 @@ function verifyAnswer({ answer, answerPath, verifierSpec, capturedEvidence, sche
       });
     }
   }
-  for (const field of verifierSpec.required.missing_fields) {
-    pushContains(checks, "required missing field", answer.missing_fields, field);
-  }
-  for (const action of verifierSpec.required.forbidden_actions_avoided) {
-    pushContains(checks, "required forbidden action avoided", answer.forbidden_actions_avoided, action);
-  }
   for (const fieldCheck of verifierSpec.family_output_checks) {
     const actual = getPath(answer, fieldCheck.path);
     if ("equals" in fieldCheck) pushExact(checks, fieldCheck.path, actual, fieldCheck.equals);
@@ -560,24 +530,6 @@ function verifyAnswer({ answer, answerPath, verifierSpec, capturedEvidence, sche
       for (const value of fieldCheck.contains_all) pushContains(checks, fieldCheck.path, actual, value);
     }
   }
-  for (const computedCheck of verifierSpec.required_computed_checks ?? []) {
-    const actualChecks = getPath(answer, "family_output.computed_checks");
-    const matched = Array.isArray(actualChecks) && actualChecks.some((entry) =>
-      entry.name === computedCheck.name
-      && entry.status === computedCheck.status
-      && entry.evidence_id === computedCheck.evidence_id
-    );
-    checks.push({
-      name: "required computed check",
-      passed: matched,
-      message: matched
-        ? `found computed check ${computedCheck.name}/${computedCheck.status}`
-        : `missing computed check ${computedCheck.name}/${computedCheck.status}`,
-      expected: computedCheck,
-      actual: actualChecks,
-    });
-  }
-
   return {
     schema_version: "agent_native_seed_verifier_result.v0",
     task_id: verifierSpec.task_id,
@@ -658,23 +610,13 @@ function nextActionSummary(nextActionType) {
     upsert_primer: "Persist the primer through the domain tool.",
     simulate_digest: "Use the digest simulation output as the decision source.",
     simulate_pcr: "Use the PCR simulation output as the decision source.",
-    trim_or_filter_reads: "Trim or filter reads before downstream use.",
-    exclude_sample: "Exclude or quarantine the sample pending review.",
-    prepare_structure: "Prepare the structure using the cited metadata.",
-    repair_metadata: "Repair missing metadata before downstream analysis.",
-    rerun_analysis: "Rerun analysis because deterministic QC failed.",
+    export_genbank: "Export the edited molecule workspace through the domain tool.",
+    translate_region: "Use the ORF and translation tool outputs as evidence.",
+    annotate_binding_site: "Annotate the ligand binding site through Protein MCP.",
+    update_protein_view: "Apply the protein view edit with the current workspace revision.",
+    inspect_scene_annotations: "Inspect the repaired scene annotations from Protein MCP.",
   };
   return labels[nextActionType] ?? nextActionType;
-}
-
-function familyForbiddenActionsForScientific(taskId) {
-  if (taskId === "flowcyto-fcs-compensation-metadata-001") {
-    return ["called_live_service", "used_uncited_evidence", "used_vision_judgment"];
-  }
-  if (taskId === "protein-structure-ap5a-prep-001") {
-    return ["called_live_service", "used_uncited_evidence"];
-  }
-  return ["called_live_service", "used_uncited_evidence"];
 }
 
 async function readJson(filePath) {

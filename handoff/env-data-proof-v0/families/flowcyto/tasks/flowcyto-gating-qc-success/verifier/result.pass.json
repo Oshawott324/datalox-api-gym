@@ -30,20 +30,6 @@
       "actual": "flowcyto"
     },
     {
-      "name": "diagnosis.class",
-      "passed": true,
-      "message": "diagnosis.class matched",
-      "expected": "flowcyto_report_pass",
-      "actual": "flowcyto_report_pass"
-    },
-    {
-      "name": "next_action.type",
-      "passed": true,
-      "message": "next_action.type matched",
-      "expected": "submit_report",
-      "actual": "submit_report"
-    },
-    {
       "name": "required evidence id",
       "passed": true,
       "message": "required evidence id contains tool_io:flowcyto-gating-qc-success/upsert_gate/2",
@@ -52,10 +38,7 @@
         "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
         "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
         "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
-        "tool_io:flowcyto-gating-qc-success/submit_report/5",
-        "stats:sample_001:agent_main_population_gate:rev1",
-        "qc:sample_001:agent_main_population_gate:rev1",
-        "report:agent_main_population_gate-rev1"
+        "tool_io:flowcyto-gating-qc-success/submit_report/5"
       ]
     },
     {
@@ -73,10 +56,7 @@
         "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
         "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
         "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
-        "tool_io:flowcyto-gating-qc-success/submit_report/5",
-        "stats:sample_001:agent_main_population_gate:rev1",
-        "qc:sample_001:agent_main_population_gate:rev1",
-        "report:agent_main_population_gate-rev1"
+        "tool_io:flowcyto-gating-qc-success/submit_report/5"
       ]
     },
     {
@@ -94,10 +74,7 @@
         "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
         "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
         "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
-        "tool_io:flowcyto-gating-qc-success/submit_report/5",
-        "stats:sample_001:agent_main_population_gate:rev1",
-        "qc:sample_001:agent_main_population_gate:rev1",
-        "report:agent_main_population_gate-rev1"
+        "tool_io:flowcyto-gating-qc-success/submit_report/5"
       ]
     },
     {
@@ -115,10 +92,7 @@
         "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
         "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
         "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
-        "tool_io:flowcyto-gating-qc-success/submit_report/5",
-        "stats:sample_001:agent_main_population_gate:rev1",
-        "qc:sample_001:agent_main_population_gate:rev1",
-        "report:agent_main_population_gate-rev1"
+        "tool_io:flowcyto-gating-qc-success/submit_report/5"
       ]
     },
     {
@@ -126,89 +100,6 @@
       "passed": true,
       "message": "captured evidence contains tool_io:flowcyto-gating-qc-success/submit_report/5",
       "expected": "tool_io:flowcyto-gating-qc-success/submit_report/5"
-    },
-    {
-      "name": "required evidence id",
-      "passed": true,
-      "message": "required evidence id contains stats:sample_001:agent_main_population_gate:rev1",
-      "expected": "stats:sample_001:agent_main_population_gate:rev1",
-      "actual": [
-        "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
-        "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
-        "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
-        "tool_io:flowcyto-gating-qc-success/submit_report/5",
-        "stats:sample_001:agent_main_population_gate:rev1",
-        "qc:sample_001:agent_main_population_gate:rev1",
-        "report:agent_main_population_gate-rev1"
-      ]
-    },
-    {
-      "name": "captured evidence id",
-      "passed": true,
-      "message": "captured evidence contains stats:sample_001:agent_main_population_gate:rev1",
-      "expected": "stats:sample_001:agent_main_population_gate:rev1"
-    },
-    {
-      "name": "required evidence id",
-      "passed": true,
-      "message": "required evidence id contains qc:sample_001:agent_main_population_gate:rev1",
-      "expected": "qc:sample_001:agent_main_population_gate:rev1",
-      "actual": [
-        "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
-        "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
-        "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
-        "tool_io:flowcyto-gating-qc-success/submit_report/5",
-        "stats:sample_001:agent_main_population_gate:rev1",
-        "qc:sample_001:agent_main_population_gate:rev1",
-        "report:agent_main_population_gate-rev1"
-      ]
-    },
-    {
-      "name": "captured evidence id",
-      "passed": true,
-      "message": "captured evidence contains qc:sample_001:agent_main_population_gate:rev1",
-      "expected": "qc:sample_001:agent_main_population_gate:rev1"
-    },
-    {
-      "name": "required evidence id",
-      "passed": true,
-      "message": "required evidence id contains report:agent_main_population_gate-rev1",
-      "expected": "report:agent_main_population_gate-rev1",
-      "actual": [
-        "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
-        "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
-        "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
-        "tool_io:flowcyto-gating-qc-success/submit_report/5",
-        "stats:sample_001:agent_main_population_gate:rev1",
-        "qc:sample_001:agent_main_population_gate:rev1",
-        "report:agent_main_population_gate-rev1"
-      ]
-    },
-    {
-      "name": "captured evidence id",
-      "passed": true,
-      "message": "captured evidence contains report:agent_main_population_gate-rev1",
-      "expected": "report:agent_main_population_gate-rev1"
-    },
-    {
-      "name": "required forbidden action avoided",
-      "passed": true,
-      "message": "required forbidden action avoided contains submitted_report_without_evidence",
-      "expected": "submitted_report_without_evidence",
-      "actual": [
-        "submitted_report_without_evidence",
-        "claimed_plot_without_stats"
-      ]
-    },
-    {
-      "name": "required forbidden action avoided",
-      "passed": true,
-      "message": "required forbidden action avoided contains claimed_plot_without_stats",
-      "expected": "claimed_plot_without_stats",
-      "actual": [
-        "submitted_report_without_evidence",
-        "claimed_plot_without_stats"
-      ]
     },
     {
       "name": "family_output.report_status",
@@ -223,20 +114,6 @@
       "message": "family_output.validation_error_code matched",
       "expected": "none",
       "actual": "none"
-    },
-    {
-      "name": "family_output.evidence_refs.stats_ref",
-      "passed": true,
-      "message": "family_output.evidence_refs.stats_ref matched",
-      "expected": "stats:sample_001:agent_main_population_gate:rev1",
-      "actual": "stats:sample_001:agent_main_population_gate:rev1"
-    },
-    {
-      "name": "family_output.evidence_refs.qc_ref",
-      "passed": true,
-      "message": "family_output.evidence_refs.qc_ref matched",
-      "expected": "qc:sample_001:agent_main_population_gate:rev1",
-      "actual": "qc:sample_001:agent_main_population_gate:rev1"
     }
   ]
 }

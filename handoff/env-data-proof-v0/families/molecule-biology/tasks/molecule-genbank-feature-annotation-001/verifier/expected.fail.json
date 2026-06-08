@@ -7,9 +7,7 @@
   },
   "evidence_ids": [
     "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-    "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-    "molecule:mol_linear",
-    "feature:feat_seed_annotation"
+    "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
   ],
   "next_action": {
     "type": "annotate_feature",
@@ -23,17 +21,15 @@
   "family_output": {
     "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-genbank-feature-annotation-001/capture-workspace/molecule.workspace.json",
     "workspace_revision": 1,
-    "molecule_id": "mol_linear",
+    "molecule_id": "lambda_nc001416",
     "operation": "feature_annotation",
     "tool_result_refs": [
       "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
       "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-      "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-      "molecule:mol_linear",
-      "feature:feat_seed_annotation"
+      "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
     ],
     "feature_ids": [
-      "feat_seed_annotation"
+      "feat_agent_promoter_review"
     ]
   }
 }

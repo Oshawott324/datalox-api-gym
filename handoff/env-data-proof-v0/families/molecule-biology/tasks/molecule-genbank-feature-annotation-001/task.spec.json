@@ -5,15 +5,16 @@
   "split": "seed",
   "task_family": "molecule-biology-basic@2026-06.0",
   "source_ref": {
-    "kind": "repo_fixture",
-    "repo": "datalox-molecule-biology",
-    "fixture_path": "fixtures/genbank/linear.gb",
-    "publication_status": "repo_fixture_needs_public_pin"
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/derived/NC_001416.1.parser-safe.gb",
+    "source_url": "https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_001416.1&db=nuccore&report=genbank&retmode=text",
+    "publication_status": "public_url_pinned"
   },
   "task_type": "feature_annotation",
   "expected_answer_class": "molecule_feature_annotation",
   "expected_failure_mode": "patches_workspace_directly_or_uses_wrong_expected_revision",
-  "prompt": "Import the linear GenBank fixture, inspect sequence context, add or update one verifier-specified feature through upsert_feature using the current expectedRevision, then validate the workspace. Report the molecule id, new feature id, final revision, and evidence refs.",
+  "prompt": "Import the parser-safe source-derived lambda GenBank artifact, inspect sequence context, add the specified promoter-review misc_feature through upsert_feature using the current expectedRevision, then validate the workspace. Report the molecule id, new feature id, final revision, and evidence refs.",
   "output_schema": "../../../../schema/task-output.schema.json",
   "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
   "allowed_tools": [

@@ -1,33 +1,14 @@
-# Message To Send
+Here is the cleaned v0 handoff. I removed the old parser/toy rows and preview lifecycle wrappers.
 
-```text
-我整理了一个 Datalox Env Data Proof v0 collaborator packet。这个不是让你看
-Datalox 代码，也不是 model lift claim。主要想让你判断这个 World API / MCP
-adapter / trajectory shape 是否贴近你们正常的 post-training workflow。
+The active packet is 12 MCP-backed domain tasks: FlowCyto, Molecule Biology, and Protein MCP. It includes captured tool observations, mechanical verifier fixtures, tool-message SFT rows, and tool-env eval rows.
 
-请优先看：
+Main files to inspect:
 
-1. README.md
-2. one-page-context.md
-3. task-cards.md
-4. world-api-contract.md
-5. trajectory-guide.md
-6. examples/runs/*/trajectory.jsonl 和 verifier_result.json
-7. exports/sft.messages.examples.jsonl
-8. review-questions.md
+1. collaborator-packet/one-page-context.md
+2. collaborator-packet/task-cards.md
+3. collaborator-packet/trajectory-guide.md
+4. collaborator-packet/review-questions.md
+5. exports/sft.tool_messages.seed.jsonl
+6. exports/eval.tool_env.seed.jsonl
 
-核心问题是：
-
-Can this kind of runnable domain world generate trajectories that are usable for
-your SFT / eval / RL workflow?
-
-我不希望你先 review 代码。appendix 里的 runnable-world/world-api 只是为了可复现和之后
-对接 agent harness。最需要你判断的是：
-
-- World API 的 reset/tools/step/finalize/export lifecycle 是否够；
-- MCP adapter 是否适合你们现在的 harness；
-- trajectory 里信息是否够；
-- SFT messages 是否接近你们 loader；
-- 如果要跑第一个 LoRA，最小需要改什么；
-- dataset size 至少要多大才值得跑。
-```
+The main question is not whether our schema is perfect. The question is whether this world/task shape is useful enough for your SFT/rollout workflow, and what exact converter or harness boundary you would want before we scale toward 80/20/20.

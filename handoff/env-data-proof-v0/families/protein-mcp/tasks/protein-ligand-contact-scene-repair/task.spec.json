@@ -1,0 +1,51 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "protein-ligand-contact-scene-repair",
+  "family": "protein-mcp",
+  "split": "seed",
+  "task_family": "protein-mcp-basic@2026-06.0",
+  "source_ref": {
+    "kind": "repo_fixture",
+    "repo": "datalox-protein-mcp",
+    "fixture_path": "testing/data/1hbb_entity_poly_seq.cif",
+    "publication_status": "repo_fixture_needs_public_pin"
+  },
+  "task_type": "ligand_contact_scene_repair",
+  "expected_answer_class": "protein_ligand_contact_scene_repair",
+  "expected_failure_mode": "claims_scene_repair_without_before_after_scene_annotation_evidence",
+  "prompt": "Open the hemoglobin structure through Protein MCP, list ligands, inspect scene annotations before repair, annotate the HEM ligand binding site, inspect scene annotations again, validate the workspace, and report the before/after evidence refs, ligand id, view id, and revision.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/protein-mcp-task-output.schema.json",
+  "allowed_tools": [
+    "open_structure",
+    "list_ligands",
+    "get_scene_annotations",
+    "annotate_binding_site",
+    "validate_workspace"
+  ],
+  "forbidden_tools": [
+    "shell.parse_structure_file",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 6,
+  "expected_tool_path": [
+    "open_structure",
+    "list_ligands",
+    "get_scene_annotations",
+    "annotate_binding_site",
+    "get_scene_annotations",
+    "validate_workspace"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against protein-mcp-task-output.schema.json",
+    "diagnosis.class is protein_ligand_contact_scene_repair",
+    "next_action.type is inspect_scene_annotations",
+    "family_output.operation is ligand_contact_scene_repair",
+    "tool_result_refs include before scene, annotation, after scene, and validation evidence",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "pending_step_3"
+}

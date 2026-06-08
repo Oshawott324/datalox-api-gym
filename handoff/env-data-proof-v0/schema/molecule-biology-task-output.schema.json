@@ -30,9 +30,9 @@
       "enum": [
         "sequence_context",
         "feature_annotation",
-        "primer_validation",
         "restriction_digest",
         "pcr_simulation",
+        "orf_translation_annotation",
         "genbank_export",
         "insufficient_evidence"
       ]
@@ -43,7 +43,7 @@
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "pattern": "^(tool_io|molecule|feature|primer|digest|pcr|run)[:/][A-Za-z0-9._:@#/?=-]+$"
+        "pattern": "^(tool_io|molecule|feature|primer|digest|pcr|orf|translation|export|run)[:/][A-Za-z0-9._:@#/?=-]+$"
       }
     },
     "feature_ids": {
@@ -65,6 +65,22 @@
     "export_path": {
       "type": "string",
       "minLength": 1
+    },
+    "orf_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "translation_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   }
 }

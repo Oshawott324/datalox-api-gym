@@ -12,9 +12,7 @@ const exportsRoot = path.join(envRoot, "exports");
 const outPath = process.argv.find((arg) => arg.startsWith("--out="))?.slice("--out=".length)
   ?? path.join(exportsRoot, "eval.seed.jsonl");
 const splitOutPath = process.argv.find((arg) => arg.startsWith("--split-out="))?.slice("--split-out=".length)
-  ?? path.join(exportsRoot, "split.seed-smoke.json");
-const sftOutPath = process.argv.find((arg) => arg.startsWith("--sft-out="))?.slice("--sft-out=".length)
-  ?? path.join(exportsRoot, "sft.seed.chat.jsonl");
+  ?? path.join(exportsRoot, "split.mcp-seed-v0.json");
 const toolEnvEvalOutPath = process.argv.find((arg) => arg.startsWith("--tool-env-out="))?.slice("--tool-env-out=".length)
   ?? path.join(exportsRoot, "eval.tool_env.seed.jsonl");
 const toolEvidenceSftOutPath = process.argv.find((arg) => arg.startsWith("--tool-evidence-out="))?.slice("--tool-evidence-out=".length)
@@ -24,23 +22,21 @@ const toolMessageSftOutPath = process.argv.find((arg) => arg.startsWith("--tool-
 
 const splitAssignments = new Map(Object.entries({
   "flowcyto-gating-qc-success": "train",
-  "molecule-fasta-import-context-001": "train",
+  "flowcyto-existing-gate-edit-revision": "train",
   "molecule-genbank-feature-annotation-001": "train",
-  "molecule-primer-validation-001": "train",
-  "fastq-qc-nanopore-fail-001": "train",
-  "protein-structure-ap5a-prep-001": "train",
-  "single-cell-pbmc3k-qc-summary-001": "train",
+  "molecule-restriction-digest-001": "train",
+  "molecule-pcr-simulation-001": "train",
+  "molecule-orf-translation-annotation": "train",
+  "protein-binding-site-annotation": "train",
+  "protein-view-revision-safe-style": "train",
   "flowcyto-gating-qc-stale-revision-failure": "dev",
-  "molecule-pcr-simulation-001": "dev",
-  "flowcyto-fcs-compensation-metadata-001": "dev",
+  "molecule-export-genbank-after-edit": "dev",
   "flowcyto-gating-qc-report-validation-failure": "test",
-  "molecule-restriction-digest-001": "test",
-  "rnaseq-alignment-qualimap-low-mapq-001": "test",
+  "protein-ligand-contact-scene-repair": "test",
 }));
 
 async function main() {
   const validateEvalRow = await loadSchemaValidator("eval-seed-row.schema.json");
-  const validateSftRow = await loadSchemaValidator("sft-chat-row.schema.json");
   const validateToolEnvEvalRow = await loadSchemaValidator("tool-env-eval-row.schema.json");
   const validateToolEvidenceSftRow = await loadSchemaValidator("tool-evidence-sft-row.schema.json");
   const validateToolMessageSftRow = await loadSchemaValidator("tool-message-sft-row.schema.json");
@@ -49,7 +45,6 @@ async function main() {
   await fs.mkdir(exportsRoot, { recursive: true });
 
   const rows = [];
-  const sftRows = [];
   const toolEnvEvalRows = [];
   const toolEvidenceSftRows = [];
   const toolMessageSftRows = [];
@@ -67,12 +62,6 @@ async function main() {
     toolEnvEvalRows.push(toolEnvEvalRow);
 
     if (row.split === "train") {
-      const sftRow = await buildSftRow(task, row);
-      if (!validateSftRow(sftRow)) {
-        throw new Error(`${task.spec.task_id}: SFT row failed schema validation ${JSON.stringify(validateSftRow.errors)}`);
-      }
-      sftRows.push(sftRow);
-
       const toolEvidenceSftRow = await buildToolEvidenceSftRow(task, row);
       if (!validateToolEvidenceSftRow(toolEvidenceSftRow)) {
         throw new Error(`${task.spec.task_id}: tool-evidence SFT row failed schema validation ${JSON.stringify(validateToolEvidenceSftRow.errors)}`);
@@ -93,7 +82,6 @@ async function main() {
   }
 
   await fs.writeFile(outPath, `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
-  await fs.writeFile(sftOutPath, `${sftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(toolEnvEvalOutPath, `${toolEnvEvalRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(toolEvidenceSftOutPath, `${toolEvidenceSftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
   await fs.writeFile(toolMessageSftOutPath, `${toolMessageSftRows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
@@ -102,13 +90,11 @@ async function main() {
   process.stdout.write(`${JSON.stringify({
     ok: true,
     eval_out: path.relative(repoRoot, outPath),
-    sft_out: path.relative(repoRoot, sftOutPath),
     tool_env_eval_out: path.relative(repoRoot, toolEnvEvalOutPath),
     tool_evidence_sft_out: path.relative(repoRoot, toolEvidenceSftOutPath),
     tool_message_sft_out: path.relative(repoRoot, toolMessageSftOutPath),
     split_out: path.relative(repoRoot, splitOutPath),
     eval_rows: rows.length,
-    sft_rows: sftRows.length,
     tool_env_eval_rows: toolEnvEvalRows.length,
     tool_evidence_sft_rows: toolEvidenceSftRows.length,
     tool_message_sft_rows: toolMessageSftRows.length,
@@ -198,34 +184,6 @@ async function buildEvalRow({ taskDir, spec }) {
   };
 }
 
-async function buildSftRow({ taskDir, spec }, evalRow) {
-  const passAnswerPath = path.join(taskDir, "verifier", "expected.pass.json");
-  const passAnswer = await readJson(passAnswerPath);
-  return {
-    schema_version: "agent_native_seed_sft_chat_row.v0",
-    task_id: spec.task_id,
-    family: spec.family,
-    split: evalRow.split,
-    messages: [
-      ...evalRow.messages,
-      {
-        role: "assistant",
-        content: JSON.stringify(passAnswer),
-      },
-    ],
-    source_answer_path: path.relative(repoRoot, passAnswerPath),
-    verifier_spec_path: evalRow.verifier_spec_path,
-    observation_path: evalRow.observation_path,
-    split_metadata_path: evalRow.split_metadata_path,
-    evidence_ids: passAnswer.evidence_ids,
-    model_context: evalRow.model_context,
-    export_gate: {
-      allowed: true,
-      redaction: "none_needed",
-    },
-  };
-}
-
 function buildToolEnvEvalRow({ taskDir, spec }) {
   const split = splitForTask(spec.task_id);
   return {
@@ -282,7 +240,7 @@ async function buildToolEvidenceSftRow({ taskDir, spec }, evalRow) {
     task_id: spec.task_id,
     family: spec.family,
     split: evalRow.split,
-    training_mode: "tool_env_evidence_sft_smoke",
+    training_mode: "tool_env_evidence_sft_handoff",
     source_kind: sourceKindForObservations(observations),
     runtime_kind: runtimeKindForFamily(spec.family),
     messages: buildToolEnvEvalRow({ taskDir, spec }).messages,
@@ -387,15 +345,14 @@ function toolCallId(step) {
 }
 
 function runtimeKindForFamily(family) {
-  if (family === "flowcyto" || family === "molecule-biology") return "sibling_domain_tool_runtime";
-  return "fixture_tool_runtime";
+  if (family === "flowcyto" || family === "molecule-biology" || family === "protein-mcp") return "sibling_domain_tool_runtime";
+  throw new Error(`Unsupported family ${family}`);
 }
 
 function sourceKindForObservations(observations) {
   const kinds = new Set(observations.map((row) => row.capture_source?.kind ?? "unknown"));
   if (kinds.size === 1 && kinds.has("live_domain_tool")) return "live_domain_tool_rollout";
-  if (kinds.size === 1 && kinds.has("deterministic_fixture_tool")) return "fixture_tool_rollout";
-  return "mixed_or_imported_tool_rollout";
+  throw new Error(`Expected live_domain_tool observations only; got ${[...kinds].join(", ")}`);
 }
 
 function buildSplitMetadata(taskDirs) {
@@ -420,12 +377,12 @@ function buildSplitMetadata(taskDirs) {
 
   return {
     schema_version: "agent_native_seed_split.v0",
-    split_name: "seed-smoke",
-    split_kind: "format_smoke_not_lift_proof",
+    split_name: "mcp-seed-v0",
+    split_kind: "handoff_validation_not_lift_proof",
     created_at: "2026-06-02",
-    intended_use: "Validate post-training handoff mechanics, leakage controls, SFT row shape, and held-out eval commands before collecting a lift-grade 30/10/10 or 80/20/20 dataset.",
+    intended_use: "Validate a MCP-backed handoff with real domain tools, leakage controls, tool-message SFT row shape, and held-out eval commands before collecting a lift-grade 80/20/20 dataset.",
     not_for: "Do not claim reliable SFT lift from this split; it is too small and exists to make the handoff executable.",
-    policy: "Deterministic stratified smoke split. Train/dev/test each include FlowCyto, Molecule Biology, and scientific-data QC coverage where possible; SFT rows are exported for train tasks only.",
+    policy: "Deterministic stratified split over active MCP-backed families only: FlowCyto, Molecule Biology, and Protein MCP. SFT rows are exported for train tasks only.",
     counts,
     tasks,
   };
@@ -448,8 +405,11 @@ function summarizeObservation(toolName, observation) {
   if (["compute_gate_stats", "validate_gate_qc", "submit_report"].includes(toolName)) {
     return pick(observation, ["ok", "workspacePath", "sampleId", "gateId", "revision", "evidenceRef", "stats", "validation", "errors", "reportId"]);
   }
-  if (["open_sequence", "get_sequence_context", "upsert_feature", "upsert_primer", "find_restriction_sites", "simulate_digest", "simulate_pcr", "validate_workspace"].includes(toolName)) {
+  if (["open_sequence", "get_sequence_context", "upsert_feature", "upsert_primer", "find_restriction_sites", "simulate_digest", "simulate_pcr", "find_orfs", "translate_region", "export_genbank", "validate_workspace"].includes(toolName)) {
     return summarizeMoleculeObservation(observation);
+  }
+  if (["open_structure", "open_protein_viewer", "get_structure_context", "update_protein_view", "list_ligands", "annotate_binding_site", "get_scene_annotations"].includes(toolName)) {
+    return summarizeProteinObservation(observation);
   }
   return pruneLargeArrays(observation);
 }
@@ -463,6 +423,17 @@ function summarizeMoleculeObservation(observation) {
     workspacePath: observation.workspacePath,
     revision: observation.revision,
     data,
+  };
+}
+
+function summarizeProteinObservation(observation) {
+  const result = pruneLargeArrays(observation.result ?? {});
+  if (result.metadata?.chains) result.metadata.chains = pruneLargeArrays(result.metadata.chains);
+  if (result.metadata?.ligands) result.metadata.ligands = pruneLargeArrays(result.metadata.ligands);
+  if (result.workspace?.structures) result.workspace.structures = pruneLargeArrays(result.workspace.structures);
+  return {
+    ok: observation.ok,
+    result,
   };
 }
 
@@ -492,7 +463,7 @@ async function writeBaselineCommand() {
 
 ## Corrected Training Boundary
 
-\`exports/eval.seed.jsonl\` is a context-eval smoke file: it preloads replay
+\`exports/eval.seed.jsonl\` is a context-eval validation file: it preloads replay
 observations in the prompt and checks whether the model can read evidence and
 emit the target JSON.
 
@@ -504,10 +475,9 @@ standard \`system\`/\`user\`/\`assistant\`/\`tool\` messages with assistant tool
 calls followed by tool observations.
 
 \`exports/sft.tool_evidence.seed.jsonl\` keeps the same information in a
-Datalox-rich evidence/audit shape. \`exports/sft.seed.chat.jsonl\` remains a
-final-answer formatting smoke file.
+Datalox-rich evidence/audit shape.
 
-## Context-Eval Smoke Baseline
+## Context-Eval Baseline
 
 \`\`\`bash
 # Serve the same open-weight base model that will later receive LoRA SFT.
@@ -546,7 +516,7 @@ handoff/env-data-proof-v0/exports/eval.tool_env.seed.jsonl
 \`\`\`
 
 The current \`run-seed-baseline.mjs\` script does not execute tool-env rows; it
-only runs the context-eval smoke rows above.
+only runs the context-eval rows above.
 
 Optional closed-model reference command:
 
@@ -561,14 +531,14 @@ node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \\
   --min-failures 0
 \`\`\`
 
-Local verifier plumbing smoke command. This proves schemas, parsing, and
-verifier wiring only; it is not model evidence:
+Local verifier wiring command. This proves schemas, parsing, and verifier
+wiring only; it is not model evidence:
 
 \`\`\`bash
 node handoff/env-data-proof-v0/tools/run-seed-baseline.mjs \\
   --input handoff/env-data-proof-v0/exports/eval.seed.jsonl \\
-  --out handoff/env-data-proof-v0/exports/eval.baseline.smoke.jsonl \\
-  --mode verifier-smoke \\
+  --out handoff/env-data-proof-v0/exports/eval.baseline.verifier.jsonl \\
+  --mode verifier-check \\
   --model deterministic-weak-baseline \\
   --min-failures 10
 \`\`\`

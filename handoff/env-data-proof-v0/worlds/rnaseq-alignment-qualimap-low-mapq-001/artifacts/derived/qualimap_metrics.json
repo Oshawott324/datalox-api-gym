@@ -1,9 +1,0 @@
-{
-  "evidence_id": "metric:qualimap.alignment_summary",
-  "read_count": 84125,
-  "mapped_reads": 82635,
-  "mapped_read_percentage": 98.23,
-  "aligned_bases": 0,
-  "mean_mapping_quality": 0.1184,
-  "mean_coverage": 0.0024
-}

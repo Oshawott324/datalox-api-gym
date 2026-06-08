@@ -1,0 +1,190 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "protein-ligand-contact-scene-repair",
+  "family": "protein-mcp",
+  "answer_path": "handoff/env-data-proof-v0/families/protein-mcp/tasks/protein-ligand-contact-scene-repair/verifier/expected.pass.json",
+  "passed": true,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "protein-ligand-contact-scene-repair",
+      "actual": "protein-ligand-contact-scene-repair"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "protein-mcp",
+      "actual": "protein-mcp"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+      "actual": [
+        "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+        "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+        "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+        "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/open_structure/0"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+      "actual": [
+        "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+        "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+        "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+        "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/list_ligands/1"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+      "actual": [
+        "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+        "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+        "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+        "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+      "actual": [
+        "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+        "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+        "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+        "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+      "actual": [
+        "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+        "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+        "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+        "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:protein-ligand-contact-scene-repair/validate_workspace/5",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5",
+      "actual": [
+        "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+        "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+        "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+        "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+        "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:protein-ligand-contact-scene-repair/validate_workspace/5",
+      "expected": "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+    },
+    {
+      "name": "family_output.operation",
+      "passed": true,
+      "message": "family_output.operation matched",
+      "expected": "ligand_contact_scene_repair",
+      "actual": "ligand_contact_scene_repair"
+    },
+    {
+      "name": "family_output.structure_id",
+      "passed": true,
+      "message": "family_output.structure_id matched",
+      "expected": "target",
+      "actual": "target"
+    },
+    {
+      "name": "family_output.workspace_revision",
+      "passed": true,
+      "message": "family_output.workspace_revision matched",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "family_output.ligand_ids",
+      "passed": true,
+      "message": "family_output.ligand_ids contains HEM:A:142",
+      "expected": "HEM:A:142",
+      "actual": [
+        "HEM:A:142"
+      ]
+    },
+    {
+      "name": "family_output.view_id",
+      "passed": true,
+      "message": "family_output.view_id matched",
+      "expected": "annotated_hem_a_142",
+      "actual": "annotated_hem_a_142"
+    }
+  ]
+}

@@ -1,61 +1,16 @@
 # Trajectory Guide
 
-## Example Runs
+The handoff uses captured tool observations, not hand-written final-answer records. Each active task has:
 
-| Run directory | Task | Expected verifier result | Reward | Trajectory events |
-| --- | --- | ---: | ---: | ---: |
-| `examples/runs/fastq-pass/` | FASTQ QC | pass | 1 | 6 |
-| `examples/runs/fastq-fail/` | FASTQ QC | fail | 0 | 6 |
-| `examples/runs/molecule-pass/` | Molecule primer | pass | 1 | 6 |
-| `examples/runs/molecule-fail/` | Molecule primer | fail | 0 | 6 |
+- `task.spec.json`: prompt, allowed tools, source reference, and success criteria.
+- `tools/tool-observations.jsonl`: captured agent-visible tool outputs from the real sibling domain runtime.
+- `verifier/verifier.spec.json`: mechanical evidence gate requiring captured `tool_io:*` ids and simple workspace metadata.
+- `verifier/expected.pass.json` and `expected.fail.json`: positive/negative fixtures for loader and verifier checks.
 
-Each run directory contains:
+Training-facing exports:
 
-- `run.json`: task id, world id, and output paths.
-- `trajectory.jsonl`: initialized task, tool calls, observations, and final
-  submission.
-- `answer.json`: the submitted structured answer.
-- `verifier_result.json`: deterministic checks, pass/fail, and reward.
-- `workspace/`: the task workspace used during the run.
+- `exports/sft.tool_messages.seed.jsonl`: standard system/user/assistant/tool messages for the train split.
+- `exports/eval.tool_env.seed.jsonl`: tool-environment eval rows without preloaded observations.
+- `exports/eval.seed.jsonl`: context-eval rows with observation context preloaded.
 
-## What To Inspect
-
-For SFT shape, start with:
-
-```text
-exports/sft.messages.examples.jsonl
-```
-
-It contains two passing rows, one per task, in a standard
-system/user/assistant/tool message shape with row-level `tools`,
-`tool_choice`, and `provider_format: openai_chat`.
-
-The system prompt carries task policy, evidence requirements, final-answer
-contract, and task-relevant tool names/descriptions. Full tool JSON schemas
-stay in the structured `tools` field, matching OpenAI-style function calling.
-The MCP/world boundary remains environment-level; task relevance is carried by
-the task prompt/policy and `task_tool_names`, not a second world mode.
-
-For environment or RL shape, inspect:
-
-```text
-examples/runs/fastq-pass/trajectory.jsonl
-examples/runs/molecule-pass/trajectory.jsonl
-```
-
-The important question is whether this trajectory has enough information for
-your rollout/debug/eval loop:
-
-- task prompt;
-- tool call names and arguments;
-- tool observations;
-- evidence ids;
-- final answer;
-- verifier checks;
-- reward.
-
-## Known Limitation
-
-The example trajectories are oracle-driven for packet review. They are not yet
-fresh model rollouts. The next phase should plug a real agent harness into the
-same world contract and collect model-generated successes and failures.
+The split is `exports/split.mcp-seed-v0.json`: 8 train, 2 dev, 2 test. It validates the handoff shape; it is not enough to claim model lift.

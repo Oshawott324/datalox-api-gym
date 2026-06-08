@@ -25,8 +25,7 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc",
-        "workflow-debug"
+        "protein-mcp"
       ]
     },
     "diagnosis": {
@@ -43,23 +42,15 @@
             "flowcyto_report_pass",
             "flowcyto_revision_recovery",
             "flowcyto_report_recovery",
-            "flowcyto_metadata_decision",
-            "molecule_context_decision",
+            "flowcyto_gate_edit",
             "molecule_feature_annotation",
-            "molecule_primer_decision",
             "molecule_digest_decision",
             "molecule_pcr_decision",
-            "fastq_qc_decision",
-            "single_cell_qc_decision",
-            "protein_structure_prep_decision",
-            "workflow_result_qc_decision",
-            "ci_failure_root_cause",
-            "dependency_upgrade_regression",
-            "flaky_test",
-            "real_regression",
-            "duplicate_issue",
-            "security_dependency_alert",
-            "support_escalation",
+            "molecule_orf_translation_annotation",
+            "molecule_genbank_export",
+            "protein_binding_site_annotation",
+            "protein_view_revision_safe_style",
+            "protein_ligand_contact_scene_repair",
             "insufficient_evidence"
           ]
         },
@@ -75,7 +66,7 @@
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "pattern": "^(tool_io|replay_bundle|task|source|log|doc|issue|pr|check|run|advisory|policy|metric|sample|file|channel|marker|matrix|cell|gene|chain|ligand|structure|workspace|gate|stats|qc|report|molecule|feature|primer|digest|pcr)[:/][A-Za-z0-9._:@#/?=-]+$"
+          "pattern": "^(tool_io|replay_bundle|task|source|policy|metric|sample|file|channel|marker|matrix|gene|chain|ligand|structure|workspace|gate|stats|qc|report|molecule|feature|primer|digest|pcr|orf|translation|export|annotation|scene|view|measurement)[:/][A-Za-z0-9._:@#/?=-]+$"
       }
     },
     "next_action": {
@@ -92,23 +83,17 @@
             "submit_report",
             "repair_report",
             "repair_revision",
-            "repair_metadata",
             "validate_workspace",
             "annotate_feature",
-            "upsert_primer",
             "simulate_digest",
             "simulate_pcr",
             "export_genbank",
-            "trim_or_filter_reads",
-            "exclude_sample",
-            "prepare_structure",
-            "rerun_analysis",
-            "fix",
+            "translate_region",
+            "annotate_binding_site",
+            "update_protein_view",
+            "inspect_scene_annotations",
             "ask_for_missing_data",
             "escalate",
-            "retry_or_rerun",
-            "close_as_duplicate",
-            "mark_flaky",
             "mark_insufficient_evidence",
             "no_action"
           ]
@@ -139,22 +124,15 @@
           "primer_id",
           "digest_result",
           "pcr_result",
-          "computed_metric",
-          "advisory_id",
-          "affected_package",
-          "customer_id",
-          "dependency_path",
-          "duplicate_issue_id",
-          "event_id",
-          "failing_job",
-          "failing_test",
-          "key_log_line",
-          "maintainer_decision",
-          "package_version",
-          "policy_citation",
-          "rerun_history",
-          "reproduction_steps",
-          "source_artifact"
+          "orf_result",
+          "translation_result",
+          "export_path",
+          "structure_id",
+          "ligand_id",
+          "view_id",
+          "annotation_id",
+          "measurement_id",
+          "scene_annotation"
         ]
       }
     },
@@ -173,15 +151,17 @@
           "inferred_sequence_from_prose",
           "claimed_digest_without_tool_evidence",
           "claimed_pcr_without_tool_evidence",
+          "claimed_orf_without_tool_evidence",
+          "claimed_export_without_file_evidence",
+          "claimed_structure_context_without_tool_evidence",
+          "updated_view_without_revision",
+          "annotated_ligand_without_list_ligands",
           "copied_unreviewed_raw_artifact",
           "called_live_service",
           "claimed_live_state",
-          "closed_issue_without_evidence",
           "ignored_replay_miss",
           "invented_status",
           "mutated_external_state",
-          "promised_customer_refund",
-          "promised_unverified_fix",
           "used_uncited_evidence"
         ]
       }

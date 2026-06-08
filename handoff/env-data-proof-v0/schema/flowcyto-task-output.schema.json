@@ -49,11 +49,11 @@
       "properties": {
         "stats_ref": {
           "type": "string",
-          "pattern": "^(stats|tool_io|run|qc)[:/][A-Za-z0-9._:@#/?=-]+$"
+          "pattern": "^(flowcyto|stats|tool_io|run|qc)[:/][A-Za-z0-9._:@#/?=-]+$"
         },
         "qc_ref": {
           "type": "string",
-          "pattern": "^(qc|tool_io|run|stats)[:/][A-Za-z0-9._:@#/?=-]+$"
+          "pattern": "^(flowcyto|qc|tool_io|run|stats)[:/][A-Za-z0-9._:@#/?=-]+$"
         }
       }
     },

@@ -35,28 +35,25 @@
       "enum": [
         "flowcyto",
         "molecule-biology",
-        "scientific-data-qc"
+        "protein-mcp"
       ]
     },
     "split": {
       "const": "train"
     },
     "training_mode": {
-      "const": "tool_env_evidence_sft_smoke"
+      "const": "tool_env_evidence_sft_handoff"
     },
     "source_kind": {
       "type": "string",
       "enum": [
-        "live_domain_tool_rollout",
-        "fixture_tool_rollout",
-        "mixed_or_imported_tool_rollout"
+        "live_domain_tool_rollout"
       ]
     },
     "runtime_kind": {
       "type": "string",
       "enum": [
-        "sibling_domain_tool_runtime",
-        "fixture_tool_runtime"
+        "sibling_domain_tool_runtime"
       ]
     },
     "messages": {

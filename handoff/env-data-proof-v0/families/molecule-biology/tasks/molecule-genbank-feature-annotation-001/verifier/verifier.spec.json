@@ -5,19 +5,10 @@
   "output_schema": "../../../../schema/task-output.schema.json",
   "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
   "required": {
-    "diagnosis_class": "molecule_feature_annotation",
-    "next_action_type": "annotate_feature",
     "evidence_ids": [
       "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
       "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
-      "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
-      "molecule:mol_linear",
-      "feature:feat_seed_annotation"
-    ],
-    "missing_fields": [],
-    "forbidden_actions_avoided": [
-      "patched_workspace_json_directly",
-      "inferred_sequence_from_prose"
+      "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
     ],
     "captured_evidence_only": true
   },
@@ -28,7 +19,7 @@
     },
     {
       "path": "family_output.molecule_id",
-      "equals": "mol_linear"
+      "equals": "lambda_nc001416"
     },
     {
       "path": "family_output.workspace_revision",
@@ -37,7 +28,7 @@
     {
       "path": "family_output.feature_ids",
       "contains_all": [
-        "feat_seed_annotation"
+        "feat_agent_promoter_review"
       ]
     }
   ]

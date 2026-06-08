@@ -72,8 +72,7 @@
             "enum": [
               "flowcyto",
               "molecule-biology",
-              "scientific-data-qc",
-              "protein-structure"
+              "protein-mcp"
             ]
           },
           "name": {

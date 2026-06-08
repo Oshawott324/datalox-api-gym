@@ -5,15 +5,16 @@
   "split": "seed",
   "task_family": "molecule-biology-basic@2026-06.0",
   "source_ref": {
-    "kind": "repo_fixture",
-    "repo": "datalox-molecule-biology",
-    "fixture_path": "fixtures/genbank/circular.gb",
-    "publication_status": "repo_fixture_needs_public_pin"
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/derived/NC_001416.1.parser-safe.gb",
+    "source_url": "https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_001416.1&db=nuccore&report=genbank&retmode=text",
+    "publication_status": "public_url_pinned"
   },
   "task_type": "restriction_digest",
   "expected_answer_class": "molecule_digest_decision",
   "expected_failure_mode": "claims_digest_result_without_find_restriction_sites_or_simulate_digest",
-  "prompt": "Import the circular GenBank fixture, inspect sequence context, find verifier-specified restriction sites, simulate the digest, and report the deterministic digest decision with evidence refs. Do not claim enzyme or fragment results without tool evidence.",
+  "prompt": "Import the parser-safe source-derived lambda GenBank artifact, inspect sequence context, find EcoRI, BamHI, and HindIII sites, simulate the digest, and report the deterministic digest decision with evidence refs. Do not claim enzyme or fragment results without tool evidence.",
   "output_schema": "../../../../schema/task-output.schema.json",
   "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
   "allowed_tools": [

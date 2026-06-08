@@ -1,0 +1,52 @@
+{
+  "task_id": "protein-ligand-contact-scene-repair",
+  "family": "protein-mcp",
+  "diagnosis": {
+    "class": "protein_ligand_contact_scene_repair",
+    "summary": "Verifier-passing structured decision for protein-ligand-contact-scene-repair."
+  },
+  "evidence_ids": [
+    "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+    "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+    "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+    "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+    "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+    "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+  ],
+  "next_action": {
+    "type": "inspect_scene_annotations",
+    "summary": "Inspect the repaired scene annotations from Protein MCP."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "claimed_structure_context_without_tool_evidence",
+    "annotated_ligand_without_list_ligands"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/protein-mcp/tasks/protein-ligand-contact-scene-repair/capture-workspace/protein.workspace.json",
+    "workspace_revision": 1,
+    "structure_id": "target",
+    "operation": "ligand_contact_scene_repair",
+    "tool_result_refs": [
+      "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+      "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+      "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+      "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+      "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+      "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+    ],
+    "ligand_ids": [
+      "HEM:A:142"
+    ],
+    "annotation_ids": [
+      "label_hem_a_142_ligand",
+      "label_hem_a_142_thr_a_39_1",
+      "label_hem_a_142_met_a_32_1"
+    ],
+    "measurement_ids": [
+      "dist_hem_a_142_thr_a_39_1",
+      "dist_hem_a_142_met_a_32_1"
+    ],
+    "view_id": "annotated_hem_a_142"
+  }
+}

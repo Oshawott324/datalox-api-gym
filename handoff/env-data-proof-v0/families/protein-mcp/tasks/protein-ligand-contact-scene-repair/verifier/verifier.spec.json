@@ -1,0 +1,42 @@
+{
+  "schema_version": "agent_native_seed_verifier_spec.v0",
+  "task_id": "protein-ligand-contact-scene-repair",
+  "family": "protein-mcp",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/protein-mcp-task-output.schema.json",
+  "required": {
+    "evidence_ids": [
+      "tool_io:protein-ligand-contact-scene-repair/open_structure/0",
+      "tool_io:protein-ligand-contact-scene-repair/list_ligands/1",
+      "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/2",
+      "tool_io:protein-ligand-contact-scene-repair/annotate_binding_site/3",
+      "tool_io:protein-ligand-contact-scene-repair/get_scene_annotations/4",
+      "tool_io:protein-ligand-contact-scene-repair/validate_workspace/5"
+    ],
+    "captured_evidence_only": true
+  },
+  "family_output_checks": [
+    {
+      "path": "family_output.operation",
+      "equals": "ligand_contact_scene_repair"
+    },
+    {
+      "path": "family_output.structure_id",
+      "equals": "target"
+    },
+    {
+      "path": "family_output.workspace_revision",
+      "equals": 1
+    },
+    {
+      "path": "family_output.ligand_ids",
+      "contains_all": [
+        "HEM:A:142"
+      ]
+    },
+    {
+      "path": "family_output.view_id",
+      "equals": "annotated_hem_a_142"
+    }
+  ]
+}

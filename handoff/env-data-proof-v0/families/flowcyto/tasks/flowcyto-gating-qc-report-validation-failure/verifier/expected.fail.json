@@ -6,10 +6,7 @@
     "summary": "Verifier-negative fixture: one required evidence id is intentionally missing."
   },
   "evidence_ids": [
-    "tool_io:flowcyto-gating-qc-report-validation-failure/submit_report/6",
-    "stats:sample_001:agent_main_population_gate:rev1",
-    "qc:sample_001:agent_main_population_gate:rev1",
-    "report:agent_main_population_gate-rev1"
+    "tool_io:flowcyto-gating-qc-report-validation-failure/submit_report/6"
   ],
   "next_action": {
     "type": "repair_report",
@@ -30,8 +27,8 @@
     "gate_id": "agent_main_population_gate",
     "report_status": "recovered_after_validation_error",
     "evidence_refs": {
-      "stats_ref": "stats:sample_001:agent_main_population_gate:rev1",
-      "qc_ref": "qc:sample_001:agent_main_population_gate:rev1"
+      "stats_ref": "flowcyto:gate-stats:sample_001:agent_main_population_gate:rev1",
+      "qc_ref": "flowcyto:gate-qc:sample_001:agent_main_population_gate:rev1"
     },
     "validation_error_code": "missing_report_field",
     "recovery_action": "resubmit report with stats_ref and qc_ref evidence refs"

@@ -1,0 +1,46 @@
+{
+  "task_id": "molecule-orf-translation-annotation",
+  "family": "molecule-biology",
+  "diagnosis": {
+    "class": "molecule_orf_translation_annotation",
+    "summary": "Verifier-passing structured decision for molecule-orf-translation-annotation."
+  },
+  "evidence_ids": [
+    "tool_io:molecule-orf-translation-annotation/get_sequence_context/1",
+    "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+    "tool_io:molecule-orf-translation-annotation/translate_region/3",
+    "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+    "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+  ],
+  "next_action": {
+    "type": "translate_region",
+    "summary": "Use the ORF and translation tool outputs as evidence."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "patched_workspace_json_directly",
+    "claimed_orf_without_tool_evidence"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-orf-translation-annotation/capture-workspace/molecule.workspace.json",
+    "workspace_revision": 1,
+    "molecule_id": "lambda_nc001416",
+    "operation": "orf_translation_annotation",
+    "tool_result_refs": [
+      "tool_io:molecule-orf-translation-annotation/get_sequence_context/1",
+      "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+      "tool_io:molecule-orf-translation-annotation/translate_region/3",
+      "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+      "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+    ],
+    "feature_ids": [
+      "feat_agent_orf_191_736"
+    ],
+    "orf_ids": [
+      "orf_191_736_plus"
+    ],
+    "translation_refs": [
+      "translation:lambda_nc001416:191-736:+"
+    ]
+  }
+}

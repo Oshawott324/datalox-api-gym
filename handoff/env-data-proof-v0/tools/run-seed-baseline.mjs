@@ -17,7 +17,7 @@ const model = options.model ?? "Qwen/Qwen3-1.7B";
 const minFailures = Number.parseInt(options["min-failures"] ?? "10", 10);
 
 async function main() {
-  if (!["openai-compatible", "verifier-smoke"].includes(mode)) {
+  if (!["openai-compatible", "verifier-check"].includes(mode)) {
     throw new Error(`Unsupported mode ${mode}`);
   }
   if (mode === "openai-compatible" && !options["base-url"]) {
@@ -28,7 +28,7 @@ async function main() {
   const rows = await readJsonl(inputPath);
   const outputs = [];
   for (const row of rows) {
-    const rawAnswer = mode === "verifier-smoke"
+    const rawAnswer = mode === "verifier-check"
       ? await deterministicWeakAnswer(row)
       : await callOpenAICompatible(row);
     const { parsedAnswer, parseError } = parseAnswer(rawAnswer);

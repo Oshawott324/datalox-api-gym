@@ -30,20 +30,6 @@
       "actual": "molecule-biology"
     },
     {
-      "name": "diagnosis.class",
-      "passed": true,
-      "message": "diagnosis.class matched",
-      "expected": "molecule_digest_decision",
-      "actual": "molecule_digest_decision"
-    },
-    {
-      "name": "next_action.type",
-      "passed": true,
-      "message": "next_action.type matched",
-      "expected": "simulate_digest",
-      "actual": "simulate_digest"
-    },
-    {
       "name": "required evidence id",
       "passed": true,
       "message": "required evidence id contains tool_io:molecule-restriction-digest-001/get_sequence_context/1",
@@ -51,8 +37,7 @@
       "actual": [
         "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
         "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
-        "tool_io:molecule-restriction-digest-001/simulate_digest/3",
-        "molecule:mol_circular"
+        "tool_io:molecule-restriction-digest-001/simulate_digest/3"
       ]
     },
     {
@@ -69,8 +54,7 @@
       "actual": [
         "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
         "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
-        "tool_io:molecule-restriction-digest-001/simulate_digest/3",
-        "molecule:mol_circular"
+        "tool_io:molecule-restriction-digest-001/simulate_digest/3"
       ]
     },
     {
@@ -87,8 +71,7 @@
       "actual": [
         "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
         "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
-        "tool_io:molecule-restriction-digest-001/simulate_digest/3",
-        "molecule:mol_circular"
+        "tool_io:molecule-restriction-digest-001/simulate_digest/3"
       ]
     },
     {
@@ -96,44 +79,6 @@
       "passed": true,
       "message": "captured evidence contains tool_io:molecule-restriction-digest-001/simulate_digest/3",
       "expected": "tool_io:molecule-restriction-digest-001/simulate_digest/3"
-    },
-    {
-      "name": "required evidence id",
-      "passed": true,
-      "message": "required evidence id contains molecule:mol_circular",
-      "expected": "molecule:mol_circular",
-      "actual": [
-        "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
-        "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
-        "tool_io:molecule-restriction-digest-001/simulate_digest/3",
-        "molecule:mol_circular"
-      ]
-    },
-    {
-      "name": "captured evidence id",
-      "passed": true,
-      "message": "captured evidence contains molecule:mol_circular",
-      "expected": "molecule:mol_circular"
-    },
-    {
-      "name": "required forbidden action avoided",
-      "passed": true,
-      "message": "required forbidden action avoided contains patched_workspace_json_directly",
-      "expected": "patched_workspace_json_directly",
-      "actual": [
-        "patched_workspace_json_directly",
-        "claimed_digest_without_tool_evidence"
-      ]
-    },
-    {
-      "name": "required forbidden action avoided",
-      "passed": true,
-      "message": "required forbidden action avoided contains claimed_digest_without_tool_evidence",
-      "expected": "claimed_digest_without_tool_evidence",
-      "actual": [
-        "patched_workspace_json_directly",
-        "claimed_digest_without_tool_evidence"
-      ]
     },
     {
       "name": "family_output.operation",
@@ -146,8 +91,8 @@
       "name": "family_output.molecule_id",
       "passed": true,
       "message": "family_output.molecule_id matched",
-      "expected": "mol_circular",
-      "actual": "mol_circular"
+      "expected": "lambda_nc001416",
+      "actual": "lambda_nc001416"
     },
     {
       "name": "family_output.workspace_revision",

@@ -1,0 +1,37 @@
+{
+  "task_id": "protein-view-revision-safe-style",
+  "family": "protein-mcp",
+  "diagnosis": {
+    "class": "protein_view_revision_safe_style",
+    "summary": "Verifier-negative fixture: one required evidence id is intentionally missing."
+  },
+  "evidence_ids": [
+    "tool_io:protein-view-revision-safe-style/open_protein_viewer/1",
+    "tool_io:protein-view-revision-safe-style/get_structure_context/2",
+    "tool_io:protein-view-revision-safe-style/update_protein_view/3",
+    "tool_io:protein-view-revision-safe-style/validate_workspace/4"
+  ],
+  "next_action": {
+    "type": "update_protein_view",
+    "summary": "Apply the protein view edit with the current workspace revision."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "claimed_structure_context_without_tool_evidence",
+    "updated_view_without_revision"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/protein-mcp/tasks/protein-view-revision-safe-style/capture-workspace/protein.workspace.json",
+    "workspace_revision": 1,
+    "structure_id": "target",
+    "operation": "view_revision_safe_style",
+    "tool_result_refs": [
+      "tool_io:protein-view-revision-safe-style/open_structure/0",
+      "tool_io:protein-view-revision-safe-style/open_protein_viewer/1",
+      "tool_io:protein-view-revision-safe-style/get_structure_context/2",
+      "tool_io:protein-view-revision-safe-style/update_protein_view/3",
+      "tool_io:protein-view-revision-safe-style/validate_workspace/4"
+    ],
+    "view_id": "default"
+  }
+}

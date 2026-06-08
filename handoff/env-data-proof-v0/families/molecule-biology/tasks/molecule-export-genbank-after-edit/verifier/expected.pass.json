@@ -1,0 +1,41 @@
+{
+  "task_id": "molecule-export-genbank-after-edit",
+  "family": "molecule-biology",
+  "diagnosis": {
+    "class": "molecule_genbank_export",
+    "summary": "Verifier-passing structured decision for molecule-export-genbank-after-edit."
+  },
+  "evidence_ids": [
+    "tool_io:molecule-export-genbank-after-edit/get_sequence_context/1",
+    "tool_io:molecule-export-genbank-after-edit/upsert_feature/2",
+    "tool_io:molecule-export-genbank-after-edit/validate_workspace/3",
+    "tool_io:molecule-export-genbank-after-edit/export_genbank/4",
+    "tool_io:molecule-export-genbank-after-edit/validate_workspace/5"
+  ],
+  "next_action": {
+    "type": "export_genbank",
+    "summary": "Export the edited molecule workspace through the domain tool."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "patched_workspace_json_directly",
+    "claimed_export_without_file_evidence"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-export-genbank-after-edit/capture-workspace/molecule.workspace.json",
+    "workspace_revision": 1,
+    "molecule_id": "lambda_nc001416",
+    "operation": "genbank_export",
+    "tool_result_refs": [
+      "tool_io:molecule-export-genbank-after-edit/get_sequence_context/1",
+      "tool_io:molecule-export-genbank-after-edit/upsert_feature/2",
+      "tool_io:molecule-export-genbank-after-edit/validate_workspace/3",
+      "tool_io:molecule-export-genbank-after-edit/export_genbank/4",
+      "tool_io:molecule-export-genbank-after-edit/validate_workspace/5"
+    ],
+    "feature_ids": [
+      "feat_agent_export_marker"
+    ],
+    "export_path": "capture-workspace/lambda.agent-export.gb"
+  }
+}

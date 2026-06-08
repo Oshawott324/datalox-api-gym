@@ -7,8 +7,7 @@
   },
   "evidence_ids": [
     "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
-    "tool_io:molecule-restriction-digest-001/simulate_digest/3",
-    "molecule:mol_circular"
+    "tool_io:molecule-restriction-digest-001/simulate_digest/3"
   ],
   "next_action": {
     "type": "simulate_digest",
@@ -22,13 +21,12 @@
   "family_output": {
     "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-restriction-digest-001/capture-workspace/molecule.workspace.json",
     "workspace_revision": 0,
-    "molecule_id": "mol_circular",
+    "molecule_id": "lambda_nc001416",
     "operation": "restriction_digest",
     "tool_result_refs": [
       "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
       "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
-      "tool_io:molecule-restriction-digest-001/simulate_digest/3",
-      "molecule:mol_circular"
+      "tool_io:molecule-restriction-digest-001/simulate_digest/3"
     ]
   }
 }
