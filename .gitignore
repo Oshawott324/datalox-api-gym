@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# Node
+node_modules/
+website/.vitepress/cache/
+website/.vitepress/dist/
+
+# Local files
+.DS_Store
+.env
+.env.*
+runs/

@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datalox x AI-Ready Lab Automation Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5c6670;
+      --line: #d7dee7;
+      --panel: #ffffff;
+      --soft: #f4f7fb;
+      --accent: #146c72;
+      --accent-2: #7a4f12;
+      --good: #157347;
+      --warn: #9a5b00;
+      --code: #101820;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #eef3f8;
+    }
+
+    .deck {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 1fr auto;
+    }
+
+    .slide {
+      display: none;
+      min-height: calc(100vh - 72px);
+      padding: 44px clamp(24px, 5vw, 72px);
+    }
+
+    .slide.active {
+      display: grid;
+      align-content: center;
+    }
+
+    .shell {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(40px, 6vw, 76px);
+      line-height: .98;
+      max-width: 980px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: clamp(32px, 4vw, 52px);
+      line-height: 1.05;
+      max-width: 980px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 20px;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .lead {
+      margin-top: 22px;
+      max-width: 850px;
+      font-size: clamp(19px, 2vw, 26px);
+      line-height: 1.38;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 30px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 150px;
+      box-shadow: 0 12px 32px rgba(31, 45, 61, .08);
+    }
+
+    .card strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .card p, li {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    ul {
+      margin: 12px 0 0;
+      padding-left: 20px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 34px;
+    }
+
+    .step {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--accent);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 168px;
+    }
+
+    .step .num {
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .step p {
+      color: var(--muted);
+      line-height: 1.42;
+      font-size: 15px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.02fr .98fr;
+      gap: 28px;
+      align-items: start;
+      margin-top: 28px;
+    }
+
+    pre {
+      margin: 0;
+      background: var(--code);
+      color: #e8f1f2;
+      border-radius: 8px;
+      padding: 18px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.45;
+      max-height: 460px;
+      white-space: pre-wrap;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #e8f4f1;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 760;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    .badge.warn {
+      background: #fff1d8;
+      color: var(--warn);
+    }
+
+    .badge.good {
+      background: #e7f6ed;
+      color: var(--good);
+    }
+
+    .callout {
+      margin-top: 24px;
+      border-left: 5px solid var(--accent-2);
+      background: #fff8ed;
+      padding: 18px 20px;
+      border-radius: 8px;
+      color: #473519;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .controls {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(18px, 4vw, 44px);
+      background: rgba(255, 255, 255, .94);
+      border-top: 1px solid var(--line);
+    }
+
+    .controls button {
+      height: 40px;
+      min-width: 94px;
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 8px;
+      font-weight: 760;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .controls button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .progress {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(31, 45, 61, .08);
+    }
+
+    .table th, .table td {
+      text-align: left;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      font-size: 15px;
+    }
+
+    .table th {
+      background: var(--soft);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+    }
+
+    .table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    @media (max-width: 900px) {
+      .grid, .grid.two, .pipeline, .split {
+        grid-template-columns: 1fr;
+      }
+
+      .slide {
+        min-height: auto;
+        padding-bottom: 96px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide active">
+      <div class="shell">
+        <div class="eyebrow">Datalox concept demo for AI-ready lab automation</div>
+        <h1>After programmable lab control, agents need verifiable practice.</h1>
+        <p class="lead">Replay/eval is the front door: capture what an agent did through lab APIs, score whether it was correct, then reuse verified traces as resettable dry-run environments.</p>
+        <div class="callout">Call objective: spend less than 3 minutes on the concept, then learn where this fits relative to UniteLabs' roadmap and customer pain.</div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="shell">
+        <div class="eyebrow">My read on UniteLabs</div>
+        <h2>UniteLabs is building the programmable control plane for labs.</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Control</strong>
+            <p>Connect instruments, expose SDK/API surfaces, and let workflows command devices directly.</p>
+          </div>
+          <div class="card">
+            <strong>Workflow</strong>
+            <p>Run lab-as-code workflows with deployment, logs, artifacts, human-in-the-loop steps, and data capture.</p>
+          </div>
+          <div class="card">
+            <strong>AI-ready</strong>
+            <p>Make instruments and workflows understandable enough for AI systems to plan, call, and adapt.</p>
+          </div>
+        </div>
+        <p class="lead">Datalox should not compete with that layer. It should sit above it: replay, eval, audit, and dry-run environments for agents using programmable lab surfaces.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="shell">
+        <div class="eyebrow">Why another layer</div>
+        <h2>Real execution is the source of truth, but not the right place for every agent attempt.</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Expensive</strong>
+            <p>Instrument time, reagents, consumables, and API quotas make repeated trial-and-error costly.</p>
+          </div>
+          <div class="card">
+            <strong>Slow</strong>
+            <p>Physical workflows have latency. Agents need many attempts, but labs cannot wait for every exploratory rollout.</p>
+          </div>
+          <div class="card">
+            <strong>Side-effectful</strong>
+            <p>Liquid transfers, incubations, measurements, and device state changes cannot be replayed physically for free.</p>
+          </div>
+        </div>
+        <p class="lead">The question is when an agent should pay for reality, and when a verified record can support debugging, audit, eval, or dry-run.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="shell">
+        <div class="eyebrow">Datalox ladder</div>
+        <h2>Replay/eval is the hook. Resettable environments are the compounding layer.</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>1. Capture</strong>
+            <p>Record exact tool/API I/O, observations, state fingerprints, and side effects from real or sandboxed runs.</p>
+          </div>
+          <div class="card">
+            <strong>2. Score</strong>
+            <p>Use verifiers to check final state and invariants, so the trace becomes eval data rather than a passive log.</p>
+          </div>
+          <div class="card">
+            <strong>3. Reuse</strong>
+            <p>Turn verified traces into regression tests and resettable dry-run environments before touching instruments.</p>
+          </div>
+        </div>
+        <div class="callout">This is workflow-level simulation: tools, observations, state ledgers, constraints, and verifiers. It is not a claim to perfectly simulate biology or chemistry.</div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="shell">
+        <div class="eyebrow">Concrete artifact</div>
+        <h2>Structured tool I/O plus state-based verification.</h2>
+        <div class="split">
+          <pre><code>{"tool":"liquid_handler.aspirate",
+ "args":{"source":"source_plate:A1","volume_ul":50},
+ "result":{"ok":true,"observed_volume_ul":50}}
+
+{"tool":"plate_reader.read_absorbance",
+ "args":{"plate":"assay_plate","wells":["B1"]},
+ "result":{"ok":true,"values":{"B1":0.82}}}</code></pre>
+          <pre><code>{
+  "verifier": "plate_qc_transfer_and_readout",
+  "ok": true,
+  "checks": [
+    "source_not_overdrawn",
+    "target_volume_recorded",
+    "readout_after_dispense",
+    "decision_matches_observation"
+  ]
+}</code></pre>
+        </div>
+        <p class="lead">The agent cannot pass by writing a plausible final answer. The verifier checks environment state and workflow invariants.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="shell">
+        <div class="eyebrow">Discovery</div>
+        <h2>The questions for the call.</h2>
+        <div class="grid two">
+          <div class="card">
+            <h3>Current pain</h3>
+            <ul>
+              <li>Is the bottleneck still connectivity, or are replay and validation already painful?</li>
+              <li>When workflows fail mid-run, what state is captured today?</li>
+              <li>What is still hard to reconstruct after a failed run?</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Future agent workflows</h3>
+            <ul>
+              <li>What would make an AI-generated workflow safe enough to execute?</li>
+              <li>Would dry-runs or resettable synthetic worlds be useful before physical runs?</li>
+              <li>Which lab workflow shape would be best for a tiny non-proprietary prototype?</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout">Best close: ask for one representative non-proprietary workflow shape to model as a tiny resettable environment.</div>
+      </div>
+    </section>
+
+    <nav class="controls" aria-label="Slide controls">
+      <button type="button" id="prev">Prev</button>
+      <div class="progress" id="progress">1 / 6</div>
+      <button type="button" id="next">Next</button>
+    </nav>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progress = document.getElementById("progress");
+    const prev = document.getElementById("prev");
+    const next = document.getElementById("next");
+    let index = 0;
+
+    function show(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+      progress.textContent = `${index + 1} / ${slides.length}`;
+      prev.disabled = index === 0;
+      next.disabled = index === slides.length - 1;
+    }
+
+    prev.addEventListener("click", () => show(index - 1));
+    next.addEventListener("click", () => show(index + 1));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === " ") show(index + 1);
+      if (event.key === "ArrowLeft") show(index - 1);
+    });
+    show(0);
+  </script>
+</body>
+</html>

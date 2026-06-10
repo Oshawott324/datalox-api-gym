@@ -1,0 +1,55 @@
+{
+  "agent_facing_instructions": "You are solving a Datalox API Gym billing_support_v0 task.\n\nResolve ticket tkt_df2b8cc057 for Sam Rivera. The customer reports duplicate charges for invoice in_df2b8cc057_01. Use the billing and support APIs to identify the extra payment, refund only the duplicate payment if eligible, then reply to the customer and close the ticket when done.\n\nRules:\n- Use the MCP tools for every state inspection and mutation.\n- Do not answer from task text alone.\n- Do not inspect state.sqlite or hidden verifier state directly.\n- Finish by leaving the run state ready for the verifier command to pass.",
+  "environment": {
+    "API_GYM_MCP_COMMAND": "api-gym mcp --run /Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run",
+    "API_GYM_RUN_DIR": "/Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run",
+    "API_GYM_TASK_JSON": "/Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run/agent_task.json",
+    "API_GYM_VERIFY_COMMAND": "api-gym verify --run /Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run"
+  },
+  "recommended_mcp_command": [
+    "api-gym",
+    "mcp",
+    "--run",
+    "/Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run"
+  ],
+  "recommended_mcp_command_string": "api-gym mcp --run /Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run",
+  "recommended_mcp_config": {
+    "mcpServers": {
+      "api-gym-billing-support-v0": {
+        "args": [
+          "mcp",
+          "--run",
+          "/Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run"
+        ],
+        "command": "api-gym"
+      }
+    }
+  },
+  "rules": [
+    "Use the MCP tools for every state inspection and mutation.",
+    "Do not answer from task text alone.",
+    "Do not inspect state.sqlite or hidden verifier state directly.",
+    "Finish by leaving the run state ready for the verifier command to pass."
+  ],
+  "run_dir": "/Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run",
+  "scenario": "duplicate_payment_refund",
+  "schema_version": "api_gym.agent_task.v0",
+  "seed": 7,
+  "task": {
+    "prompt": "Resolve ticket tkt_df2b8cc057 for Sam Rivera. The customer reports duplicate charges for invoice in_df2b8cc057_01. Use the billing and support APIs to identify the extra payment, refund only the duplicate payment if eligible, then reply to the customer and close the ticket when done.",
+    "scenario": "duplicate_payment_refund",
+    "seed": 7,
+    "ticket_id": "tkt_df2b8cc057",
+    "world": "billing_support_v0"
+  },
+  "task_package_path": "/Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run/agent_task.json",
+  "verifier_command": [
+    "api-gym",
+    "verify",
+    "--run",
+    "/Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run"
+  ],
+  "verifier_command_string": "api-gym verify --run /Users/yifanjin/datalox-api-gym/demos/unitelabs_chat/evidence/billing_demo_run",
+  "world": "billing_support_v0",
+  "world_id": "billing-support-v0"
+}

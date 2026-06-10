@@ -1,0 +1,23 @@
+{
+  "schema_version": "api_gym.world_spec.v0",
+  "id": "billing-support-v0",
+  "version": "0.0.0",
+  "title": "Billing Support v0",
+  "status": "phase1-runtime",
+  "summary": "SQLite-backed resettable billing and support workflow world.",
+  "services": [
+    "fake_billing_api",
+    "fake_support_api",
+    "fake_crm_api",
+    "fake_email_api"
+  ],
+  "state_db": "state.sqlite",
+  "scenarios": [
+    "duplicate_payment_refund",
+    "failed_invoice_retryable",
+    "refund_not_allowed_policy"
+  ],
+  "task_root": "tasks",
+  "seed_corpus_root": "seed_corpus",
+  "policy_root": "policies"
+}

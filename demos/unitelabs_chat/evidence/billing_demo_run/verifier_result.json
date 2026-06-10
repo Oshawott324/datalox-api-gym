@@ -1,0 +1,21 @@
+{
+  "checks": [
+    {
+      "message": "Duplicate payment has a succeeded duplicate refund.",
+      "name": "duplicate_payment_refunded",
+      "ok": true
+    },
+    {
+      "message": "Original invoice payment was not refunded.",
+      "name": "original_payment_not_refunded",
+      "ok": true
+    },
+    {
+      "message": "Ticket has a public agent reply mentioning the refund.",
+      "name": "ticket_reply_mentions_refund",
+      "ok": true
+    }
+  ],
+  "ok": true,
+  "scenario": "duplicate_payment_refund"
+}

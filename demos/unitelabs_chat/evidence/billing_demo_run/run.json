@@ -1,0 +1,8 @@
+{
+  "scenario": "duplicate_payment_refund",
+  "seed": 7,
+  "state_db": "state.sqlite",
+  "task": "task.json",
+  "world": "billing_support_v0",
+  "world_id": "billing-support-v0"
+}

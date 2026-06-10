@@ -1,0 +1,239 @@
+{
+  "ok": true,
+  "policy": "oracle",
+  "scenario": "duplicate_payment_refund",
+  "tool_results": [
+    {
+      "arguments": {
+        "ticket_id": "tkt_df2b8cc057"
+      },
+      "name": "support_get_ticket",
+      "result": {
+        "data": {
+          "assignee_group": "billing-support",
+          "closed_at": "2026-06-09T05:35:40Z",
+          "created_at": "2026-02-17T15:30:00Z",
+          "customer_id": "cus_df2b8cc057",
+          "id": "tkt_df2b8cc057",
+          "messages": [
+            {
+              "author_email": "sam.rivera@example.test",
+              "author_type": "customer",
+              "body": "I see two card charges for $49.00 against invoice in_df2b8cc057_01. One looks like a duplicate. Please refund the extra charge.",
+              "created_at": "2026-02-17T15:30:00Z",
+              "id": 1,
+              "public": 1,
+              "ticket_id": "tkt_df2b8cc057"
+            },
+            {
+              "author_email": "agent@billing-support.example",
+              "author_type": "agent",
+              "body": "The duplicate payment was confirmed and a refund has been issued.",
+              "created_at": "2026-06-09T05:35:40Z",
+              "id": 2,
+              "public": 1,
+              "ticket_id": "tkt_df2b8cc057"
+            }
+          ],
+          "metadata": {
+            "channel": "email"
+          },
+          "priority": "normal",
+          "requester_email": "sam.rivera@example.test",
+          "status": "solved",
+          "subject": "Charged twice for the same invoice",
+          "tags": [
+            "billing",
+            "refund_request",
+            "duplicate_payment"
+          ],
+          "updated_at": "2026-06-09T05:35:40Z"
+        },
+        "ok": true
+      }
+    },
+    {
+      "arguments": {
+        "invoice_id": "in_df2b8cc057_01"
+      },
+      "name": "billing_get_invoice",
+      "result": {
+        "data": {
+          "amount_due": 4900,
+          "amount_paid": 4900,
+          "amount_remaining": 0,
+          "attempt_count": 1,
+          "collection_method": "charge_automatically",
+          "created_at": "2026-02-15T15:30:00Z",
+          "currency": "usd",
+          "customer_id": "cus_df2b8cc057",
+          "due_date": "2026-02-16T15:30:00Z",
+          "id": "in_df2b8cc057_01",
+          "latest_payment_id": "py_df2b8cc057_ok_01",
+          "metadata": {
+            "duplicate_payment_candidate": "py_df2b8cc057_dup_02"
+          },
+          "next_payment_attempt": null,
+          "number": "BS-DF2B8CC057-001",
+          "paid_at": "2026-02-16T15:40:00Z",
+          "payments": [
+            {
+              "amount": 4900,
+              "charge_id": "ch_df2b8cc057_01",
+              "created_at": "2026-02-16T15:40:00Z",
+              "currency": "usd",
+              "customer_id": "cus_df2b8cc057",
+              "decline_code": null,
+              "failure_message": null,
+              "id": "py_df2b8cc057_ok_01",
+              "invoice_id": "in_df2b8cc057_01",
+              "metadata": {
+                "network_status": "approved_by_network"
+              },
+              "payment_intent_id": "pi_df2b8cc057_01",
+              "payment_method": "card_visa_4242",
+              "refunded_amount": 0,
+              "status": "succeeded"
+            },
+            {
+              "amount": 4900,
+              "charge_id": "ch_df2b8cc057_02",
+              "created_at": "2026-02-16T15:43:00Z",
+              "currency": "usd",
+              "customer_id": "cus_df2b8cc057",
+              "decline_code": null,
+              "failure_message": null,
+              "id": "py_df2b8cc057_dup_02",
+              "invoice_id": "in_df2b8cc057_01",
+              "metadata": {
+                "duplicate_of": "py_df2b8cc057_ok_01",
+                "network_status": "approved_by_network"
+              },
+              "payment_intent_id": "pi_df2b8cc057_02",
+              "payment_method": "card_visa_4242",
+              "refunded_amount": 4900,
+              "status": "succeeded"
+            }
+          ],
+          "status": "paid",
+          "subscription_id": "sub_df2b8cc057"
+        },
+        "ok": true
+      }
+    },
+    {
+      "arguments": {
+        "payment_id": "py_df2b8cc057_dup_02"
+      },
+      "name": "billing_get_payment",
+      "result": {
+        "data": {
+          "amount": 4900,
+          "charge_id": "ch_df2b8cc057_02",
+          "created_at": "2026-02-16T15:43:00Z",
+          "currency": "usd",
+          "customer_id": "cus_df2b8cc057",
+          "decline_code": null,
+          "failure_message": null,
+          "id": "py_df2b8cc057_dup_02",
+          "invoice_id": "in_df2b8cc057_01",
+          "metadata": {
+            "duplicate_of": "py_df2b8cc057_ok_01",
+            "network_status": "approved_by_network"
+          },
+          "payment_intent_id": "pi_df2b8cc057_02",
+          "payment_method": "card_visa_4242",
+          "refundable_amount": 0,
+          "refunded_amount": 4900,
+          "refunds": [
+            {
+              "amount": 4900,
+              "created_at": "2026-06-09T05:35:40Z",
+              "currency": "usd",
+              "id": "re_py_df2b8cc057_dup_02_1",
+              "metadata": {
+                "created_by": "agent@billing-support.example"
+              },
+              "payment_id": "py_df2b8cc057_dup_02",
+              "reason": "duplicate",
+              "status": "succeeded",
+              "ticket_id": "tkt_df2b8cc057"
+            }
+          ],
+          "status": "succeeded"
+        },
+        "ok": true
+      }
+    },
+    {
+      "arguments": {
+        "amount": 4900,
+        "payment_id": "py_df2b8cc057_dup_02",
+        "reason": "duplicate",
+        "ticket_id": "tkt_df2b8cc057"
+      },
+      "name": "billing_create_refund",
+      "result": {
+        "error": {
+          "code": "refund_amount_exceeds_remaining",
+          "details": {
+            "payment_id": "py_df2b8cc057_dup_02",
+            "remaining": 0,
+            "requested": 4900
+          },
+          "message": "Refund amount exceeds the unrefunded payment amount."
+        },
+        "ok": false
+      }
+    },
+    {
+      "arguments": {
+        "body": "The duplicate payment was confirmed and a refund has been issued.",
+        "ticket_id": "tkt_df2b8cc057"
+      },
+      "name": "support_add_reply",
+      "result": {
+        "data": {
+          "body": "The duplicate payment was confirmed and a refund has been issued.",
+          "public": true,
+          "ticket_id": "tkt_df2b8cc057"
+        },
+        "ok": true
+      }
+    },
+    {
+      "arguments": {
+        "ticket_id": "tkt_df2b8cc057"
+      },
+      "name": "support_close_ticket",
+      "result": {
+        "data": {
+          "status": "solved",
+          "ticket_id": "tkt_df2b8cc057"
+        },
+        "ok": true
+      }
+    }
+  ],
+  "verifier_result": {
+    "checks": [
+      {
+        "message": "Duplicate payment has a succeeded duplicate refund.",
+        "name": "duplicate_payment_refunded",
+        "ok": true
+      },
+      {
+        "message": "Original invoice payment was not refunded.",
+        "name": "original_payment_not_refunded",
+        "ok": true
+      },
+      {
+        "message": "Ticket has a public agent reply mentioning the refund.",
+        "name": "ticket_reply_mentions_refund",
+        "ok": true
+      }
+    ],
+    "ok": true,
+    "scenario": "duplicate_payment_refund"
+  }
+}
