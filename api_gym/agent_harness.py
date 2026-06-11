@@ -12,9 +12,7 @@ from pathlib import Path
 from typing import Any, TextIO
 
 import api_gym
-from api_gym.worlds.billing_support_v0.state import RUN_METADATA_NAME, TASK_NAME, resolve_state_db_path
-from api_gym.worlds.billing_support_v0.tools import TOOL_DEFINITIONS, dispatch_tool
-from api_gym.worlds.billing_support_v0.verifier import verify_run
+from api_gym.worlds.registry import WorldRuntime, get_runtime_for_run, read_run_metadata
 
 AGENT_TASK_NAME = "agent_task.json"
 AGENT_TOOL_TRACE_NAME = "agent_tool_calls.jsonl"
@@ -27,9 +25,9 @@ SUPPORTED_MCP_PROTOCOL_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26")
 def build_agent_task_package(run_dir: Path) -> dict[str, Any]:
     """Build the JSON payload an agent host should receive for one run."""
     run_dir = run_dir.resolve()
-    _ensure_supported_run(run_dir)
-    task = _read_json(run_dir / TASK_NAME)
-    metadata = _read_json(run_dir / RUN_METADATA_NAME)
+    runtime = _ensure_supported_run(run_dir)
+    task = _read_json(run_dir / runtime.task_name)
+    metadata = _read_json(run_dir / runtime.run_metadata_name)
     prompt = str(task.get("prompt", "")).strip()
     mcp_command = ["api-gym", "mcp", "--run", str(run_dir)]
     verifier_command = ["api-gym", "verify", "--run", str(run_dir)]
@@ -42,7 +40,7 @@ def build_agent_task_package(run_dir: Path) -> dict[str, Any]:
     ]
     instructions = "\n".join(
         [
-            "You are solving a Datalox API Gym billing_support_v0 task.",
+            f"You are solving a Datalox API Gym {runtime.world} task.",
             "",
             prompt,
             "",
@@ -67,7 +65,7 @@ def build_agent_task_package(run_dir: Path) -> dict[str, Any]:
         "recommended_mcp_command_string": shlex.join(mcp_command),
         "recommended_mcp_config": {
             "mcpServers": {
-                MCP_SERVER_NAME: {
+                runtime.mcp_server_name: {
                     "command": "api-gym",
                     "args": ["mcp", "--run", str(run_dir)],
                 }
@@ -99,7 +97,7 @@ def run_host_command(*, run_dir: Path, command: list[str], result_out: Path | No
         raise ValueError("Host command is required after '--'.")
 
     run_dir = run_dir.resolve()
-    _ensure_supported_run(run_dir)
+    runtime = _ensure_supported_run(run_dir)
     task_package_path = write_agent_task_package(run_dir, run_dir / AGENT_TASK_NAME)
     mcp_command = ["api-gym", "mcp", "--run", str(run_dir)]
     verifier_command = ["api-gym", "verify", "--run", str(run_dir)]
@@ -114,7 +112,7 @@ def run_host_command(*, run_dir: Path, command: list[str], result_out: Path | No
     )
 
     completed = subprocess.run(command, env=env, check=False)
-    verifier_result = verify_run(run_dir).to_dict()
+    verifier_result = runtime.verify_run(run_dir).to_dict()
     result_path = (result_out or (run_dir / HOST_RESULT_NAME)).resolve()
     result = {
         "ok": completed.returncode == 0 and verifier_result["ok"],
@@ -132,14 +130,29 @@ def run_host_command(*, run_dir: Path, command: list[str], result_out: Path | No
 
 
 class BillingSupportMcpHandler:
-    """Minimal MCP JSON-RPC handler for one billing_support_v0 run."""
+    """Compatibility MCP handler for one billing_support_v0 run."""
+
+    def __init__(self, run_dir: Path) -> None:
+        self._handler = create_mcp_handler(run_dir)
+        if self._handler.metadata.get("world") != "billing_support_v0":
+            raise ValueError("BillingSupportMcpHandler only supports billing_support_v0 runs.")
+
+    @property
+    def stop_requested(self) -> bool:
+        return self._handler.stop_requested
+
+    def handle_message(self, message: dict[str, Any]) -> dict[str, Any] | None:
+        return self._handler.handle_message(message)
+
+
+class ApiGymMcpHandler:
+    """Minimal MCP JSON-RPC handler for one sampled API Gym run."""
 
     def __init__(self, run_dir: Path) -> None:
         self.run_dir = run_dir.resolve()
-        self.db_path = resolve_state_db_path(self.run_dir)
-        self.metadata = _read_json(self.run_dir / RUN_METADATA_NAME)
-        if self.metadata.get("world") != "billing_support_v0":
-            raise ValueError("MCP server only supports billing_support_v0 runs.")
+        self.runtime = _ensure_supported_run(self.run_dir)
+        self.db_path = self.runtime.resolve_state_db_path(self.run_dir)
+        self.metadata = _read_json(self.run_dir / self.runtime.run_metadata_name)
         self.protocol_version = MCP_PROTOCOL_VERSION
         self.stop_requested = False
 
@@ -160,7 +173,7 @@ class BillingSupportMcpHandler:
         if method == "initialize":
             return self._initialize(request_id, message.get("params"))
         if method == "tools/list":
-            return _jsonrpc_result(request_id, {"tools": [_to_mcp_tool(tool) for tool in TOOL_DEFINITIONS]})
+            return _jsonrpc_result(request_id, {"tools": [_to_mcp_tool(tool) for tool in self.runtime.tool_definitions]})
         if method == "tools/call":
             return self._call_tool(request_id, message.get("params"))
         if method == "shutdown":
@@ -177,8 +190,8 @@ class BillingSupportMcpHandler:
                 "protocolVersion": self.protocol_version,
                 "capabilities": {"tools": {"listChanged": False}},
                 "serverInfo": {
-                    "name": MCP_SERVER_NAME,
-                    "title": "API Gym Billing Support",
+                    "name": self.runtime.mcp_server_name,
+                    "title": self.runtime.mcp_server_title,
                     "version": api_gym.__version__,
                 },
             },
@@ -194,7 +207,7 @@ class BillingSupportMcpHandler:
         if not isinstance(arguments, dict):
             return _jsonrpc_error(request_id, -32602, "tools/call arguments must be an object.")
 
-        result = dispatch_tool(self.db_path, name=name, arguments=arguments)
+        result = self.runtime.dispatch_tool(self.db_path, name=name, arguments=arguments)
         self._append_tool_trace(name=name, arguments=arguments, result=result)
         return _jsonrpc_result(
             request_id,
@@ -221,7 +234,7 @@ class BillingSupportMcpHandler:
 
 def serve_mcp_stdio(run_dir: Path, input_stream: TextIO | None = None, output_stream: TextIO | None = None) -> None:
     """Serve one run over line-delimited MCP JSON-RPC on stdio."""
-    handler = BillingSupportMcpHandler(run_dir)
+    handler = create_mcp_handler(run_dir)
     input_stream = input_stream or sys.stdin
     output_stream = output_stream or sys.stdout
 
@@ -249,14 +262,21 @@ def serve_mcp_stdio(run_dir: Path, input_stream: TextIO | None = None, output_st
             break
 
 
-def _ensure_supported_run(run_dir: Path) -> None:
-    resolve_state_db_path(run_dir)
-    metadata = _read_json(run_dir / RUN_METADATA_NAME)
-    if metadata.get("world") != "billing_support_v0":
-        raise ValueError("Agent harness only supports billing_support_v0 runs.")
-    task_path = run_dir / TASK_NAME
+def create_mcp_handler(run_dir: Path) -> ApiGymMcpHandler:
+    """Create an MCP handler for the world declared by run metadata."""
+    return ApiGymMcpHandler(run_dir)
+
+
+def _ensure_supported_run(run_dir: Path) -> WorldRuntime:
+    runtime = get_runtime_for_run(run_dir)
+    runtime.resolve_state_db_path(run_dir)
+    metadata = read_run_metadata(run_dir)
+    if metadata.get("world") != runtime.world:
+        raise ValueError(f"Run metadata world does not match runtime world '{runtime.world}'.")
+    task_path = run_dir / runtime.task_name
     if not task_path.exists():
-        raise FileNotFoundError(f"Missing {TASK_NAME} in run directory: {run_dir}")
+        raise FileNotFoundError(f"Missing {runtime.task_name} in run directory: {run_dir}")
+    return runtime
 
 
 def _read_json(path: Path) -> dict[str, Any]:

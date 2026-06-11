@@ -1,0 +1,29 @@
+{
+  "id": "unitelabs-plate-qc-v0",
+  "world": "unitelabs_plate_qc_v0",
+  "title": "UniteLabs Plate QC Dry Run",
+  "version": "0.1.0",
+  "description": "A deterministic dry-run lab workflow world for plate transfer quality control.",
+  "scenarios": [
+    {
+      "name": "plate_transfer_qc",
+      "objective": "Evaluate whether the plate QC workflow should continue.",
+      "summary": "Inspect dry-run deck state, perform a 50 uL source-to-assay transfer, read OD600, and submit a continue or hold protocol decision with evidence."
+    }
+  ],
+  "runtime": {
+    "package": "api_gym.worlds.unitelabs_plate_qc_v0",
+    "state_db": "state.sqlite",
+    "task": "task.json",
+    "run_metadata": "run.json"
+  },
+  "tools": [
+    "get_deck_state",
+    "get_labware_state",
+    "aspirate",
+    "dispense",
+    "read_absorbance",
+    "add_workflow_note",
+    "submit_protocol"
+  ]
+}
