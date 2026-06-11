@@ -22,10 +22,16 @@ from api_gym.session import check_session_tools, create_world_session, finalize_
 from api_gym.worlds.billing_support_v0.sampler import SCENARIOS as BILLING_SCENARIOS
 from api_gym.worlds.billing_support_v0.oracle import resolve_run
 from api_gym.worlds.registry import SUPPORTED_WORLDS, get_runtime_for_run, get_world_runtime
+from api_gym.worlds.unitelabs_plate_qc_v0.api_contract_sampler import (
+    UnitelabsApiContractSamplingError,
+    write_openapi_contract_sample,
+)
 
 app = typer.Typer(help="Datalox API Gym command line tools.")
 session_app = typer.Typer(help="World session lifecycle commands.")
+unitelabs_app = typer.Typer(help="Unitelabs-specific grounding commands.")
 app.add_typer(session_app, name="session")
+app.add_typer(unitelabs_app, name="unitelabs")
 
 
 @app.command()
@@ -233,6 +239,29 @@ def report(input: Annotated[Path, typer.Option(help="Eval JSONL path.")]) -> Non
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as exc:
         _exit_error("report_failed", str(exc), {"input": str(input)})
     typer.echo(json.dumps(summary, indent=2, sort_keys=True))
+
+
+@unitelabs_app.command("sample-api-contract")
+def unitelabs_sample_api_contract(
+    out: Annotated[Path, typer.Option(help="Path to write the normalized API contract sample JSON.")],
+    openapi_file: Annotated[Path | None, typer.Option(help="Explicit local UniteLabs OpenAPI JSON file.")] = None,
+    openapi_url: Annotated[str | None, typer.Option(help="Explicit UniteLabs OpenAPI JSON URL to fetch with GET.")] = None,
+    bearer_token_env: Annotated[
+        str | None,
+        typer.Option(help="Optional env var containing a bearer token for --openapi-url."),
+    ] = None,
+) -> None:
+    """Sample a UniteLabs OpenAPI contract without executing workflow or hardware actions."""
+    try:
+        sample_payload = write_openapi_contract_sample(
+            out=out,
+            openapi_file=openapi_file,
+            openapi_url=openapi_url,
+            bearer_token_env=bearer_token_env,
+        )
+    except UnitelabsApiContractSamplingError as exc:
+        _exit_error(exc.code, str(exc), exc.details)
+    _echo_json({"ok": True, "out": str(out), "sample": sample_payload})
 
 
 @session_app.command("create")

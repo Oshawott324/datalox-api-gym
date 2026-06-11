@@ -3,6 +3,10 @@
 `unitelabs_plate_qc_v0` is a deterministic dry-run API Gym world for a plate
 transfer QC workflow.
 
+See [API_GROUNDING.md](API_GROUNDING.md) before changing the dry-run tool
+semantics. V0 should be grounded from an explicit UniteLabs OpenAPI contract
+sample, not guessed from demo scripts or live workflow execution.
+
 The `plate_transfer_qc` scenario starts with:
 
 - `source_plate:A1` containing `120 uL`
