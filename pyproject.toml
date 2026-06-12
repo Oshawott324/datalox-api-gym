@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "datalox-api-gym"
 version = "0.0.0"
-description = "Resettable fake APIs for training and evaluating tool-using agents."
+description = "Source-backed dry-run worlds for testing, evaluating, training, and auditing tool-using agents."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

@@ -1,0 +1,23 @@
+{
+  "schema_version": "api_gym.api_source_pack.v0",
+  "source_pack_id": "api.square.2026-06-12",
+  "provider": "square",
+  "version": "2026-06-12",
+  "status": "normalized",
+  "source_types": [
+    "docs"
+  ],
+  "records": {
+    "docs_index": "docs_index.jsonl",
+    "operations": "operations.jsonl",
+    "schemas": "schemas.jsonl",
+    "examples": "examples.jsonl",
+    "response_cases": "response_cases.jsonl",
+    "observed_errors": "observed_errors.jsonl",
+    "world_candidates": "world_candidates.jsonl"
+  },
+  "live_execution": {
+    "allowed": false,
+    "reason": "Source substrate only; API Gym source-pack validation and world sessions must not execute live Square calls."
+  }
+}

@@ -19,6 +19,7 @@ from api_gym.exports.run_export import build_run_export, write_run_export
 from api_gym.runner.openai_compatible import run_openai_compatible_agent
 from api_gym.server.app import create_app
 from api_gym.session import check_session_tools, create_world_session, finalize_world_session
+from api_gym.source_packs import SourcePackValidationError, validate_source_pack
 from api_gym.worlds.billing_support_v0.sampler import SCENARIOS as BILLING_SCENARIOS
 from api_gym.worlds.billing_support_v0.oracle import resolve_run
 from api_gym.worlds.registry import SUPPORTED_WORLDS, get_runtime_for_run, get_world_runtime
@@ -29,8 +30,10 @@ from api_gym.worlds.unitelabs_plate_qc_v0.api_contract_sampler import (
 
 app = typer.Typer(help="Datalox API Gym command line tools.")
 session_app = typer.Typer(help="World session lifecycle commands.")
+source_pack_app = typer.Typer(help="API source-pack commands.")
 unitelabs_app = typer.Typer(help="Unitelabs-specific grounding commands.")
 app.add_typer(session_app, name="session")
+app.add_typer(source_pack_app, name="source-pack")
 app.add_typer(unitelabs_app, name="unitelabs")
 
 
@@ -239,6 +242,16 @@ def report(input: Annotated[Path, typer.Option(help="Eval JSONL path.")]) -> Non
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as exc:
         _exit_error("report_failed", str(exc), {"input": str(input)})
     typer.echo(json.dumps(summary, indent=2, sort_keys=True))
+
+
+@source_pack_app.command("validate")
+def source_pack_validate(path: Annotated[Path, typer.Argument(help="Source-pack directory or source_pack.json path.")]) -> None:
+    """Validate one API source pack."""
+    try:
+        result = validate_source_pack(path)
+    except SourcePackValidationError as exc:
+        _exit_error(exc.code, str(exc), exc.details)
+    _echo_json(result)
 
 
 @unitelabs_app.command("sample-api-contract")

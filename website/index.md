@@ -1,21 +1,36 @@
 # Datalox API Gym
 
-Datalox API Gym packages resettable fake APIs for training and evaluating
-tool-using agents.
+Datalox API Gym packages source-backed dry-run worlds for testing, evaluating,
+training, and auditing tool-using agents.
 
-An API Gym world is a stateful fake business system with seeded scenarios,
-model-visible tools, hidden verifier state, side effects, and exportable run
-evidence. It gives agents practice worlds for API workflows instead of another
-connector catalog.
+An API Gym world is a resettable, stateful action system with source grounding,
+episode state, actions, dynamics, observations, hidden verifier state, and
+exportable evidence. It gives agent runtimes a safe place to dry-run, test,
+evaluate, train, and audit workflows before touching production systems or
+physical execution.
 
-Phase 1 includes `billing_support_v0`, a SQLite-backed billing-support world
-with duplicate-payment refund, retryable failed invoice, and refund-policy
-scenarios.
+```text
+source substrate
+  -> world package
+  -> world session
+  -> MCP/action interface
+  -> agent rollout
+  -> verifier outcome
+  -> run_export evidence
+```
+
+## Current Worlds
+
+`billing_support_v0` is a deterministic business workflow world for billing and
+support tasks.
+
+`unitelabs_plate_qc_v0` is a deterministic dry-run lab workflow world for plate
+transfer QC.
 
 ## Start
 
 - [Quickstart](./guide/quickstart.md)
-- [Stateful fake APIs](./concepts/stateful-fake-apis.md)
+- [Agentic World Contract](./concepts/agentic-world-contract.md)
 - [Billing Support v0](./worlds/billing-support-v0.md)
-- [UniteLabs chat demo](./demos/unitelabs-chat-demo.md)
+- [UniteLabs Chat Demo](./demos/unitelabs-chat-demo.md)
 - [Benchmarks](./benchmarks.md)

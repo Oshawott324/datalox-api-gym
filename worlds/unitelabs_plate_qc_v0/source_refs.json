@@ -1,0 +1,18 @@
+{
+  "schema_version": "api_gym.world_source_refs.v0",
+  "world": "unitelabs_plate_qc_v0",
+  "world_evidence": [
+    {
+      "path": "API_GROUNDING.md",
+      "records": [
+        "unitelabs.openapi_contract_required",
+        "unitelabs.no_live_workflow_execution_v0"
+      ],
+      "role": "grounding_policy"
+    },
+    {
+      "path": "spec.json",
+      "role": "world_contract"
+    }
+  ]
+}

@@ -1,152 +1,213 @@
 # Datalox API Gym
 
-Datalox API Gym provides resettable fake APIs for training and evaluating
-tool-using agents.
+Datalox API Gym packages source-backed dry-run worlds for testing, evaluating,
+training, and auditing tool-using agents before they touch real systems.
 
-The product object is an API world: a stateful fake business system with seeded
-scenarios, model-visible tool contracts, side effects, hidden verifier state,
-and exportable run evidence. Agents can practice workflows repeatedly without
-touching production services.
-
-Datalox API Gym is not an API aggregator. Aggregators connect agents to real
-APIs. API Gym gives agents resettable practice worlds for API workflows.
-
-Datalox API Gym is also not a replacement for official provider sandboxes.
-Provider sandboxes are useful for integration testing against a provider's own
-surface. API Gym focuses on agent training and evaluation: sampled tasks,
-per-episode reset, cross-service fake APIs, hidden verifiers, replay evidence,
-and compact training/eval exports.
-
-Phase 1 implements the first concrete world:
+An API Gym world is a resettable, stateful action system:
 
 ```text
-billing_support_v0
-  fake_billing_api
-  fake_support_api
-  fake_crm_api
-  fake_email_api
+World = source substrate
+      + mutable episode state
+      + actions
+      + dynamics
+      + observations
+      + verifier
+      + evidence
 ```
 
-The world uses one SQLite database per sampled run. The first scenarios are:
+The product object is not a connector catalog and not just a fake API. It is a
+world package that an agent runtime can attach to, dry-run inside, verify, and
+export as audit/eval/training evidence.
 
-- `duplicate_payment_refund`
-- `failed_invoice_retryable`
-- `refund_not_allowed_policy`
+```text
+source substrate
+  -> world package
+  -> world session
+  -> MCP/action interface
+  -> agent rollout
+  -> verifier outcome
+  -> run_export evidence
+```
 
-The operation-level reality map is documented at
-`worlds/billing_support_v0/reality-map.md`.
+API Gym owns world/session/runtime behavior. `datalox-rollout-collector` owns
+dataset packaging downstream from exported evidence.
+
+API source packs are first-class source substrate. Validate a pack before using
+it to design or update a world:
+
+```bash
+api-gym source-pack validate source_packs/apis/<provider>/<version>
+```
+
+Source packs include response cases for dry-run gating. An agent can call an
+original-shaped API surface, while Datalox returns a grounded sampled response
+case instead of calling the live provider.
+
+## Current Worlds
+
+`billing_support_v0`
+
+- deterministic business workflow world
+- SQLite episode state
+- billing, support, CRM, and email tools
+- hidden verifier checks final business state
+
+`unitelabs_plate_qc_v0`
+
+- deterministic dry-run lab workflow world
+- SQLite episode state
+- labware, liquid transfer, plate readout, workflow note, and protocol decision
+  tools
+- hidden verifier checks dry-run workflow invariants
+- API semantics should be grounded from an explicit UniteLabs OpenAPI contract
 
 ## Quickstart
 
+Install the package and run the tests:
+
 ```bash
 python -m pip install -e '.[dev]'
-api-gym sample --world billing_support_v0 --scenario duplicate_payment_refund --seed 1 --out runs/demo
-api-gym task --run runs/demo --out runs/demo/agent_task.json
-api-gym serve --run runs/demo --port 8080
-api-gym resolve --run runs/demo --policy oracle
-api-gym verify --run runs/demo
-api-gym run --run runs/demo --model qwen --base-url http://localhost:8000/v1 --api-key EMPTY
-api-gym run-host --run runs/demo -- <agent-host-command>
-api-gym eval --world billing_support_v0 --scenarios duplicate_payment_refund,failed_invoice_retryable,refund_not_allowed_policy --seeds 1,2,3 --model qwen --base-url http://localhost:8000/v1 --api-key EMPTY --out runs/billing-eval.jsonl
-api-gym report --input runs/billing-eval.jsonl
 python -m pytest -q
 ```
 
-`sample` writes `runs/demo/state.sqlite`, `runs/demo/task.json`, and
-`runs/demo/run.json`. The prompt in `task.json` is agent-visible. The expected
-resolution is hidden in SQLite verifier state.
+Create one world session:
 
-The fake service operations are Python functions under
-`api_gym.worlds.billing_support_v0.services`. They expose support ticket
-updates, invoice retries, payment lookup, and refund creation with structured
-`ok/data` or `ok/error` responses for agents.
+```bash
+api-gym session create \
+  --world unitelabs_plate_qc_v0 \
+  --scenario plate_transfer_qc \
+  --seed 1 \
+  --out runs/unitelabs-demo \
+  --json
+```
 
-Phase 2 exposes the same causal service functions through:
+This writes:
 
-- FastAPI endpoints served by `api-gym serve`
-- OpenAI-compatible function schemas in
-  `api_gym.worlds.billing_support_v0.tools`
-- a scripted oracle resolver via `api-gym resolve --policy oracle`
-- an OpenAI-compatible runner via `api-gym run`
-- an OpenAI-compatible eval suite via `api-gym eval` and `api-gym report`
+```text
+runs/unitelabs-demo/
+  run.json
+  state.sqlite
+  task.json
+  agent_task.json
+  session_manifest.json
+```
 
-Phase 4 adds an agent-host harness for real tool-using hosts such as coding
-agents and local agent runners:
+The session manifest is the integration contract for external agent
+environments. It contains the task package, recommended MCP config,
+`expected_tools`, a tool preflight command, finalization command, and artifact
+paths.
 
-- `api-gym task --run runs/demo` prints an agent-facing task package with the
-  task instructions, world/scenario metadata, verifier command, and recommended
-  MCP stdio config.
-- `api-gym mcp --run runs/demo` serves the billing-support tools over MCP
-  stdio for one sampled run. Hosts should launch this command from their MCP
-  configuration; it is a protocol server, not an interactive shell.
-- `api-gym run-host --run runs/demo -- <agent-host-command>` sets
-  `API_GYM_RUN_DIR`, `API_GYM_TASK_JSON`, `API_GYM_MCP_COMMAND`, and
-  `API_GYM_VERIFY_COMMAND`, executes the host command, then runs the verifier
-  and writes `runs/demo/host_result.json`.
+Before rollout:
 
-The real-agent workflow is:
+```bash
+api-gym session check-tools --run runs/unitelabs-demo
+```
+
+The host must also compare its own agent-visible tool registry against
+`expected_tools`. The Datalox check proves the API Gym MCP server has the right
+catalog; the host check proves the agent can actually see those tools.
+
+After the agent stops:
+
+```bash
+api-gym session finalize --run runs/unitelabs-demo --json
+```
+
+Finalize runs the verifier, writes `run_export.json`, writes
+`session_finalization.json`, and exits nonzero if the verifier fails.
+
+## Integration Contract
+
+Agent hosts should treat API Gym as a world provider:
+
+```ts
+type DataloxWorldSessionAdapter = {
+  createSession(input: {
+    world: string;
+    scenario: string;
+    seed: number;
+    out: string;
+  }): Promise<SessionManifest>;
+
+  attachTools(manifest: SessionManifest): Promise<void>;
+  assertToolsVisible(expectedTools: string[]): Promise<void>;
+  runAgent(taskPackagePath: string): Promise<unknown>;
+  finalizeSession(runDir: string): Promise<SessionFinalization>;
+};
+```
+
+MCP is the action channel. The session manifest is the lifecycle contract.
+
+## Evidence Output
+
+`run_export.json` is upstream evidence for collectors. It contains:
+
+- world and scenario metadata
+- task package
+- captured tool trace
+- verifier result
+- artifact paths
+
+The agent must not receive hidden verifier state or direct access to mutable
+state files such as `state.sqlite`.
+
+## Manual Debug Commands
+
+The lower-level commands are still useful when debugging a world:
 
 ```bash
 api-gym sample --world billing_support_v0 --scenario duplicate_payment_refund --seed 1 --out runs/demo
 api-gym task --run runs/demo --out runs/demo/agent_task.json
-
-# Configure the agent host with the recommended_mcp_config from agent_task.json.
-# The host should use tools for state inspection and mutation, not answer from text alone.
-api-gym run-host --run runs/demo -- <agent-host-command>
-
+api-gym mcp --run runs/demo
 api-gym verify --run runs/demo
+api-gym export --run runs/demo --out runs/demo/run_export.json
 ```
 
-MCP tool calls append `runs/demo/agent_tool_calls.jsonl` with timestamp, tool
-name, arguments, and result. Hidden verifier state is not exposed through MCP.
-
-## Optional Live Model Smoke
-
-Live model eval is opt-in. Start a cheap local OpenAI-compatible server first,
-then point API Gym at it:
+Billing-only HTTP/oracle/model-eval surfaces remain available:
 
 ```bash
-export OPENAI_BASE_URL=http://127.0.0.1:8000/v1
-export OPENAI_API_KEY=EMPTY
-
-api-gym eval \
-  --world billing_support_v0 \
-  --scenarios duplicate_payment_refund,failed_invoice_retryable,refund_not_allowed_policy \
-  --seeds 1,2,3 \
-  --model Qwen/Qwen2.5-7B-Instruct \
-  --base-url "$OPENAI_BASE_URL" \
-  --api-key "$OPENAI_API_KEY" \
-  --out runs/billing-eval.jsonl
-
+api-gym serve --run runs/demo --port 8080
+api-gym resolve --run runs/demo --policy oracle
+api-gym run --run runs/demo --model qwen --base-url http://localhost:8000/v1 --api-key EMPTY
+api-gym eval --world billing_support_v0 --scenarios duplicate_payment_refund,failed_invoice_retryable,refund_not_allowed_policy --seeds 1,2,3 --model qwen --base-url http://localhost:8000/v1 --api-key EMPTY --out runs/billing-eval.jsonl
 api-gym report --input runs/billing-eval.jsonl
 ```
 
-The eval command samples fresh SQLite-backed runs and uses the same
-OpenAI-compatible runner and tool dispatcher as `api-gym run`. Failed model
-tasks are recorded as `passed: false` rows; the command exits nonzero only for
-infrastructure failures such as invalid inputs or an unreachable endpoint.
+## Project Boundary
+
+Read [docs/product-definition.md](docs/product-definition.md) for the canonical
+boundary.
+
+API Gym owns:
+
+- API source packs and source references
+- world specs
+- world sessions
+- state backends
+- action contracts
+- dynamics backends
+- observation contracts
+- hidden verifier execution
+- tool traces
+- run exports
+
+API Gym does not own:
+
+- dataset manifests
+- train/dev/test split assignment
+- dataset quality labels
+- dataset validation reports
+- model training recipes
 
 ## Layout
 
 ```text
-api_gym/                 Python package surfaces
-worlds/                  World specs, tasks, seeds, and policies
-tests/                   Smoke tests
-website/                 VitePress documentation scaffold
+api_gym/                 Python package and world runtime surfaces
+source_packs/apis/       Raw and normalized API source substrate
+worlds/                  World specs, grounding notes, evidence, and policies
+website/                 VitePress documentation
+tests/                   Runtime and contract tests
 ```
 
-## Public API Inspiration
-
-Billing behavior is intentionally narrow but grounded in public provider
-patterns:
-
-- Stripe refund creation requires a charge or PaymentIntent and only refunds
-  the remaining unrefunded amount; refund reasons include `duplicate` and
-  `requested_by_customer`: https://docs.stripe.com/api/refunds/create
-- Stripe Billing models failed invoice retries with invoice payment attempts,
-  `attempt_count`, `next_payment_attempt`, and hard decline handling:
-  https://docs.stripe.com/billing/revenue-recovery/smart-retries
-- Zendesk ticket updates combine comments, status changes, and tags:
-  https://developer.zendesk.com/api-reference/ticketing/tickets/tickets/
-  and ticket comments can be public or private:
-  https://developer.zendesk.com/api-reference/ticketing/tickets/ticket_comments/
+See [source_packs/apis/README.md](source_packs/apis/README.md) for the source
+pack boundary and schema guidance.

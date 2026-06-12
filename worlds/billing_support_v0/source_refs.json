@@ -1,0 +1,77 @@
+{
+  "schema_version": "api_gym.world_source_refs.v0",
+  "world": "billing_support_v0",
+  "source_packs": [
+    {
+      "source_pack_id": "api.stripe.2026-06-12",
+      "path": "../../source_packs/apis/stripe/2026-06-12/source_pack.json",
+      "records": [
+        "operation:createRefund",
+        "operation:payInvoice",
+        "schema:Refund",
+        "schema:Invoice",
+        "world_candidate:billing_support_v0:stripe_refunds_and_invoice_payment"
+      ],
+      "role": "billing_operation_grounding"
+    },
+    {
+      "source_pack_id": "api.zendesk.2026-06-12",
+      "path": "../../source_packs/apis/zendesk/2026-06-12/source_pack.json",
+      "records": [
+        "operation:showTicket",
+        "operation:updateTicket",
+        "operation:listTicketComments",
+        "operation:listTicketAudits",
+        "schema:TicketUpdate",
+        "schema:TicketComment",
+        "schema:TicketAudit",
+        "world_candidate:billing_support_v0:zendesk_ticket_update_comments_audits"
+      ],
+      "role": "support_operation_grounding"
+    },
+    {
+      "source_pack_id": "api.hubspot.2026-06-12",
+      "path": "../../source_packs/apis/hubspot/2026-06-12/source_pack.json",
+      "records": [
+        "operation:searchCrmObject",
+        "operation:createContact",
+        "operation:updateTicket",
+        "operation:readContactTicketAssociations",
+        "schema:CrmSearchRequest",
+        "schema:ContactCreate",
+        "schema:TicketUpdate",
+        "world_candidate:billing_support_v0:hubspot_crm_contact_ticket_context"
+      ],
+      "role": "crm_context_grounding"
+    }
+  ],
+  "world_evidence": [
+    {
+      "path": "evidence/observed_instances.jsonl",
+      "records": [
+        "docs.stripe.refund.create.full_charge_refund.example",
+        "docs.stripe.refund.create.amount_limit",
+        "docs.stripe.refund.create.partial_amount",
+        "docs.stripe.refund.create.reason_values",
+        "docs.stripe.refund.create.invalid_or_already_refunded_error",
+        "docs.stripe.error.object.invalid_request_shape",
+        "docs.zendesk.ticket_comment.create_via_ticket_update.example",
+        "docs.zendesk.ticket_comment.list.example_response"
+      ],
+      "role": "provider_behavior_grounding"
+    },
+    {
+      "path": "evidence/normalized_cases.jsonl",
+      "records": [
+        "case.refund.create.full_refund_success",
+        "case.refund.create.partial_refund",
+        "case.refund.create.remaining_amount",
+        "case.refund.create.reason_values",
+        "case.refund.create.error_shape",
+        "case.ticket.comment.create_via_ticket_update",
+        "case.ticket.comment.public_conversation_record"
+      ],
+      "role": "world_case_mapping"
+    }
+  ]
+}
