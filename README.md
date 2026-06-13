@@ -211,3 +211,6 @@ tests/                   Runtime and contract tests
 
 See [source_packs/apis/README.md](source_packs/apis/README.md) for the source
 pack boundary and schema guidance.
+
+For contributor workflow, see
+[docs/playbooks/api-gym-builder-playbook.md](docs/playbooks/api-gym-builder-playbook.md).
