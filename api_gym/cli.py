@@ -19,6 +19,13 @@ from api_gym.exports.run_export import build_run_export, write_run_export
 from api_gym.runner.openai_compatible import run_openai_compatible_agent
 from api_gym.server.app import create_app
 from api_gym.session import check_session_tools, create_world_session, finalize_world_session
+from api_gym.source_pack_gate_server import create_gate_app
+from api_gym.source_pack_gate import (
+    SourcePackGateError,
+    build_gate_response,
+    choose_response_case,
+    find_operation,
+)
 from api_gym.source_packs import SourcePackValidationError, validate_source_pack
 from api_gym.worlds.billing_support_v0.sampler import SCENARIOS as BILLING_SCENARIOS
 from api_gym.worlds.billing_support_v0.oracle import resolve_run
@@ -30,9 +37,11 @@ from api_gym.worlds.unitelabs_plate_qc_v0.api_contract_sampler import (
 
 app = typer.Typer(help="Datalox API Gym command line tools.")
 session_app = typer.Typer(help="World session lifecycle commands.")
+gate_app = typer.Typer(help="API source-pack HTTP gate commands.")
 source_pack_app = typer.Typer(help="API source-pack commands.")
 unitelabs_app = typer.Typer(help="Unitelabs-specific grounding commands.")
 app.add_typer(session_app, name="session")
+app.add_typer(gate_app, name="gate")
 app.add_typer(source_pack_app, name="source-pack")
 app.add_typer(unitelabs_app, name="unitelabs")
 
@@ -254,6 +263,52 @@ def source_pack_validate(path: Annotated[Path, typer.Argument(help="Source-pack 
     _echo_json(result)
 
 
+@source_pack_app.command("respond")
+def source_pack_respond(
+    provider: Annotated[str, typer.Option(help="API source-pack provider id.")],
+    method: Annotated[str, typer.Option(help="HTTP method to match.")],
+    path: Annotated[str, typer.Option(help="HTTP path to match.")],
+    case: Annotated[str, typer.Option(help="Response case selector.")] = "success",
+    version: Annotated[str | None, typer.Option(help="Optional source-pack version.")] = None,
+) -> None:
+    """Build a grounded dry-run response from a source-pack response case."""
+    try:
+        operation = find_operation(provider, method, path, version=version)
+        response_case = choose_response_case(provider, operation["id"], case=case, version=version)
+        response = build_gate_response(response_case)
+    except SourcePackGateError as exc:
+        _exit_error(exc.code, str(exc), exc.details)
+
+    payload: dict[str, object] = {
+        "ok": True,
+        "provider": provider,
+        "operation": operation,
+        "response_case": response_case,
+        "response": response,
+    }
+    source_pack_version = version or _source_pack_version(provider, operation)
+    if source_pack_version is not None:
+        payload["version"] = source_pack_version
+    _echo_json(payload)
+
+
+@gate_app.command("serve")
+def gate_serve(
+    provider: Annotated[str, typer.Option(help="API source-pack provider id.")],
+    version: Annotated[str | None, typer.Option(help="Optional source-pack version.")] = None,
+    host: Annotated[str, typer.Option(help="Host interface for the HTTP gate server.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="Port for the HTTP gate server.")] = 8787,
+    response_case: Annotated[str, typer.Option("--case", help="Default response case selector.")] = "success",
+    trace: Annotated[Path | None, typer.Option(help="Optional JSONL path for gated-call evidence rows.")] = None,
+) -> None:
+    """Serve source-pack response cases through an original-shaped HTTP gate."""
+    fastapi_app = create_gate_app(provider, version=version, default_case=response_case, evidence_path=trace)
+
+    import uvicorn
+
+    uvicorn.run(fastapi_app, host=host, port=port)
+
+
 @unitelabs_app.command("sample-api-contract")
 def unitelabs_sample_api_contract(
     out: Annotated[Path, typer.Option(help="Path to write the normalized API contract sample JSON.")],
@@ -329,6 +384,16 @@ def _exit_error(code: str, message: str, details: dict[str, object]) -> None:
 
 def _echo_json(payload: dict[str, object]) -> None:
     typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _source_pack_version(provider: str, operation: dict[str, object]) -> str | None:
+    source_pack_id = operation.get("source_pack_id")
+    if not isinstance(source_pack_id, str):
+        return None
+    prefix = f"api.{provider}."
+    if not source_pack_id.startswith(prefix):
+        return None
+    return source_pack_id.removeprefix(prefix)
 
 
 def _ensure_billing_run_surface(run: Path, surface: str) -> None:
