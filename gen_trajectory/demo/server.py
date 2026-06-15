@@ -194,9 +194,7 @@ async def demo_start(payload: dict[str, Any]) -> dict[str, Any]:
 
     seed = int(payload.get("seed", 42))
     scenario = str(payload.get("scenario", "plate_transfer_qc"))
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-    if not api_key:
-        raise HTTPException(400, "DEEPSEEK_API_KEY environment variable is not set.")
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "") or "sk-353c00831093487ca08314983ec3317f"
     if not api_key:
         raise HTTPException(400, "DEEPSEEK_API_KEY environment variable is not set.")
 
