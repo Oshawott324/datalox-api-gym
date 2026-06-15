@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniteLabs Plate QC v0 — Trajectory Demo</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d1117; --card: #161b22; --border: #30363d;
+  --text: #c9d1d9; --text-muted: #8b949e; --text-bright: #f0f6fc;
+  --blue: #58a6ff; --green: #3fb950; --red: #f85149; --orange: #d29922;
+  --purple: #a371f7; --cyan: #39d2c0;
+  --radius: 8px; --radius-sm: 4px;
+}
+html { font-size: 15px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.5;
+  min-height: 100vh;
+}
+a { color: var(--blue); }
+pre, code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 0.85rem; }
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+#app { max-width: 1060px; margin: 0 auto; padding: 20px 24px 60px; }
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.header { text-align: center; padding: 24px 0 16px; }
+.header h1 { font-size: 1.5rem; color: var(--text-bright); display: flex; align-items: center; justify-content: center; gap: 10px; }
+.header p { color: var(--text-muted); margin-top: 4px; font-size: 0.9rem; }
+
+/* ── Control Bar ──────────────────────────────────────────────────── */
+.controls {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 20px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 18px; flex-wrap: wrap;
+}
+.controls label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; }
+.controls input {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-bright); padding: 6px 10px; width: 80px; text-align: center;
+  font-family: monospace; font-size: 0.9rem;
+}
+.controls input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(88,166,255,0.2); }
+.btn {
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 16px;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  color: var(--text); background: var(--card); white-space: nowrap;
+}
+.btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-primary:hover:not(:disabled) { background: #4090e0; }
+.btn-success { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-success:hover:not(:disabled) { background: #2ea043; }
+.btn-accent { background: var(--purple); color: #fff; border-color: var(--purple); }
+.btn-accent:hover:not(:disabled) { background: #8b5cf6; }
+
+/* ── Progress ─────────────────────────────────────────────────────── */
+.progress { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 22px; }
+.stage-dot {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border);
+  background: var(--card); color: var(--text-muted); font-weight: 700; font-size: 0.9rem;
+  transition: all 0.3s;
+}
+.stage-dot.active { border-color: var(--blue); color: var(--blue); background: rgba(88,166,255,0.1); }
+.stage-dot.done { border-color: var(--green); color: var(--green); background: rgba(63,185,80,0.1); }
+.stage-bar { width: 60px; height: 2px; background: var(--border); transition: background 0.3s; }
+.stage-bar.done { background: var(--green); }
+.stage-label { font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 4px; min-width: 40px; }
+
+/* ── Section Cards ────────────────────────────────────────────────── */
+.section {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 16px; overflow: hidden;
+}
+.section-header {
+  display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+  cursor: pointer; user-select: none;
+}
+.section-header:hover { background: rgba(255,255,255,0.02); }
+.section-icon { font-size: 1.3rem; }
+.section-title { font-weight: 600; color: var(--text-bright); flex: 1; }
+.section-badge {
+  font-size: 0.75rem; padding: 2px 10px; border-radius: 20px;
+  font-weight: 600;
+}
+.section-badge.ready { background: rgba(88,166,255,0.15); color: var(--blue); }
+.section-badge.pass { background: rgba(63,185,80,0.15); color: var(--green); }
+.section-badge.fail { background: rgba(248,81,73,0.15); color: var(--red); }
+.section-body { padding: 0 18px 16px; display: none; }
+.section.expanded .section-body { display: block; }
+
+/* ── Stage 1: Task + State ────────────────────────────────────────── */
+.task-prompt {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px 16px; margin-bottom: 12px; white-space: pre-wrap; font-size: 0.9rem;
+  color: var(--text-bright); line-height: 1.7;
+}
+
+/* ── State Table ──────────────────────────────────────────────────── */
+.state-tables { display: flex; flex-direction: column; gap: 8px; }
+.table-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.table-header {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  background: var(--bg); cursor: pointer; user-select: none;
+}
+.table-header:hover { background: rgba(255,255,255,0.03); }
+.table-name { font-weight: 600; color: var(--cyan); font-family: monospace; font-size: 0.85rem; }
+.table-count { font-size: 0.75rem; color: var(--text-muted); }
+.table-content { display: none; overflow-x: auto; }
+.table-wrap.expanded .table-content { display: block; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.data-table th {
+  background: var(--bg); color: var(--text-muted); font-weight: 600; text-align: left;
+  padding: 5px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  position: sticky; top: 0;
+}
+.data-table td {
+  padding: 4px 10px; border-bottom: 1px solid var(--border);
+  white-space: nowrap; max-width: 280px; overflow: hidden; text-overflow: ellipsis;
+  color: var(--text);
+}
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.data-table .col-key { color: var(--purple); font-weight: 600; }
+.data-table .col-null { color: var(--text-muted); font-style: italic; }
+
+/* ── Stage 2: Tool Cards ──────────────────────────────────────────── */
+.tool-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.tool-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.tool-card-name { font-weight: 700; color: var(--blue); font-family: monospace; font-size: 0.88rem; }
+.tool-card-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+.tool-card-params { margin-top: 8px; }
+.tool-card-param {
+  display: inline-block; font-size: 0.72rem; background: rgba(163,113,247,0.1);
+  color: var(--purple); padding: 2px 8px; border-radius: 10px; margin: 2px 3px;
+  font-family: monospace;
+}
+.tool-card-param.required { font-weight: 700; }
+
+/* ── Stage 3: Timeline ────────────────────────────────────────────── */
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before {
+  content: ""; position: absolute; left: 15px; top: 0; bottom: 0;
+  width: 2px; background: var(--border);
+}
+.timeline-step { position: relative; margin-bottom: 16px; }
+.timeline-dot {
+  position: absolute; left: -21px; top: 6px;
+  width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border);
+  background: var(--card); z-index: 1;
+}
+.timeline-dot.pass { border-color: var(--green); background: var(--green); }
+.timeline-dot.fail { border-color: var(--red); background: var(--red); }
+.timeline-dot.running { border-color: var(--orange); background: var(--orange); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+.timeline-card { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.timeline-card-header {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: var(--bg); cursor: pointer; user-select: none;
+}
+.timeline-card-header:hover { background: rgba(255,255,255,0.02); }
+.timeline-step-num { font-weight: 700; color: var(--text-muted); font-size: 0.8rem; min-width: 28px; }
+.timeline-step-name { font-weight: 700; color: var(--text-bright); font-family: monospace; flex: 1; }
+.timeline-step-status { font-size: 0.8rem; font-weight: 600; }
+.timeline-card-body { display: none; padding: 12px 14px; border-top: 1px solid var(--border); }
+.timeline-step.expanded .timeline-card-body { display: block; }
+.thought-bubble {
+  background: rgba(210,153,34,0.08); border-left: 3px solid var(--orange);
+  padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 10px; font-size: 0.85rem; color: var(--orange); font-style: italic;
+}
+.code-block {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 14px; margin-bottom: 8px; overflow-x: auto; font-size: 0.82rem;
+  line-height: 1.6;
+}
+.code-block .key { color: var(--purple); }
+.code-block .str { color: var(--cyan); }
+.code-block .num { color: var(--blue); }
+.code-block .bool { color: var(--orange); }
+.diff-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 6px; }
+.diff-table th { background: var(--bg); color: var(--text-muted); text-align: left; padding: 4px 10px; border-bottom: 1px solid var(--border); }
+.diff-table td { padding: 4px 10px; border-bottom: 1px solid var(--border); }
+.diff-changed { color: var(--orange); font-weight: 600; }
+
+/* ── Stage 4: Verifier Checks ─────────────────────────────────────── */
+.check-grid { display: flex; flex-direction: column; gap: 8px; }
+.check-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+.check-icon { font-size: 1.1rem; flex-shrink: 0; }
+.check-name { font-family: monospace; font-size: 0.82rem; font-weight: 600; flex: 1; color: var(--text-bright); }
+.check-msg { font-size: 0.8rem; color: var(--text-muted); }
+.check-row.pass { border-left: 3px solid var(--green); }
+.check-row.fail { border-left: 3px solid var(--red); }
+
+/* ── Status Bar ───────────────────────────────────────────────────── */
+.status-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
+  border-top: 1px solid var(--border); padding: 8px 24px; font-size: 0.8rem;
+  display: flex; align-items: center; gap: 20px; color: var(--text-muted);
+  z-index: 50;
+}
+.status-bar span { display: flex; align-items: center; gap: 6px; }
+.status-value { color: var(--text-bright); font-weight: 600; }
+
+/* ── Utilities ────────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.text-orange { color: var(--orange); }
+.mono { font-family: monospace; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.gap-8 { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <div class="header">
+    <h1>🧪 UniteLabs Plate QC v0 — Trajectory Demo</h1>
+    <p>LLM-driven agent trajectory (DeepSeek v4-pro) | Dry-run lab deck | Zero live hardware</p>
+  </div>
+
+  <!-- ── Controls ────────────────────────────────────────────────── -->
+  <div class="controls">
+    <label for="seed-input">Seed:</label>
+    <input id="seed-input" type="number" value="42" min="0" max="9999" style="width:65px">
+    <button class="btn btn-primary" id="btn-start" onclick="startSession()">▶ Start</button>
+    <button class="btn" id="btn-check" onclick="checkTools()" disabled>🔍 Check Tools</button>
+    <button class="btn" id="btn-next" onclick="runNextStep()" disabled>⏭ Run Next</button>
+    <button class="btn btn-accent" id="btn-all" onclick="runAllSteps()" disabled>⏩ Run All</button>
+    <button class="btn btn-success" id="btn-finalize" onclick="finalizeSession()" disabled>✅ Finalize</button>
+    <button class="btn" id="btn-reset" onclick="resetAll()">↺ Reset</button>
+  </div>
+
+  <!-- ── Progress ────────────────────────────────────────────────── -->
+  <div class="progress">
+    <div style="text-align:center">
+      <div class="stage-dot" id="dot-1">1</div>
+      <div class="stage-label">Sample</div>
+    </div>
+    <div class="stage-bar" id="bar-1"></div>
+    <div style="text-align:center">
+      <div class="stage-dot" id="dot-2">2</div>
+      <div class="stage-label">Tools</div>
+    </div>
+    <div class="stage-bar" id="bar-2"></div>
+    <div style="text-align:center">
+      <div class="stage-dot" id="dot-3">3</div>
+      <div class="stage-label">Execute</div>
+    </div>
+    <div class="stage-bar" id="bar-3"></div>
+    <div style="text-align:center">
+      <div class="stage-dot" id="dot-4">4</div>
+      <div class="stage-label">Verify</div>
+    </div>
+  </div>
+
+  <!-- ── Stage 1: Session Created ────────────────────────────────── -->
+  <div class="section hidden" id="sec-1">
+    <div class="section-header" onclick="toggleSection('sec-1')">
+      <span class="section-icon">📦</span>
+      <span class="section-title">Stage 1 — Session Created (Initial State)</span>
+      <span class="section-badge ready" id="badge-1">ready</span>
+    </div>
+    <div class="section-body">
+      <div class="mb-12" style="color:var(--text-muted);font-size:0.85rem;">
+        Run dir: <span class="mono" id="s1-rundir" style="color:var(--text-bright);">—</span>
+      </div>
+      <h4 style="color:var(--text-bright);margin-bottom:8px;">📋 Task Prompt</h4>
+      <div class="task-prompt" id="s1-prompt">—</div>
+      <h4 style="color:var(--text-bright);margin:14px 0 8px;">🗄️ SQLite State (<span id="s1-table-count">0</span> tables, click to expand)</h4>
+      <div class="state-tables" id="s1-tables"></div>
+    </div>
+  </div>
+
+  <!-- ── Stage 2: Tools Verified ─────────────────────────────────── -->
+  <div class="section hidden" id="sec-2">
+    <div class="section-header" onclick="toggleSection('sec-2')">
+      <span class="section-icon">🔧</span>
+      <span class="section-title">Stage 2 — MCP Tool Verification</span>
+      <span class="section-badge ready" id="badge-2">ready</span>
+    </div>
+    <div class="section-body">
+      <div id="s2-check-result" class="mb-12"></div>
+      <h4 style="color:var(--text-bright);margin-bottom:8px;">Available Tools (7)</h4>
+      <div class="tool-cards" id="s2-tools"></div>
+    </div>
+  </div>
+
+  <!-- ── Stage 3: Agent Execution ─────────────────────────────────── -->
+  <div class="section hidden" id="sec-3">
+    <div class="section-header" onclick="toggleSection('sec-3')">
+      <span class="section-icon">🤖</span>
+      <span class="section-title">Stage 3 — LLM Agent Execution</span>
+      <span class="section-badge ready" id="badge-3">ready</span>
+    </div>
+    <div class="section-body">
+      <div id="s3-summary" class="mb-12" style="color:var(--text-muted);font-size:0.85rem;"></div>
+      <div class="timeline" id="s3-timeline"></div>
+    </div>
+  </div>
+
+  <!-- ── Stage 4: Finalized ───────────────────────────────────────── -->
+  <div class="section hidden" id="sec-4">
+    <div class="section-header" onclick="toggleSection('sec-4')">
+      <span class="section-icon">✅</span>
+      <span class="section-title">Stage 4 — Verification &amp; Export</span>
+      <span class="section-badge" id="badge-4">pending</span>
+    </div>
+    <div class="section-body">
+      <h4 style="color:var(--text-bright);margin-bottom:8px;">Verifier Checks</h4>
+      <div class="check-grid" id="s4-checks"></div>
+      <h4 style="color:var(--text-bright);margin:14px 0 8px;">Run Export Summary</h4>
+      <div id="s4-export" style="font-size:0.85rem;color:var(--text-muted);"></div>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- ── Status Bar ──────────────────────────────────────────────────── -->
+<div class="status-bar">
+  <span>🟢 Server: <span class="status-value" id="status-server">—</span></span>
+  <span>📌 Session: <span class="status-value" id="status-session">none</span></span>
+  <span>📍 Stage: <span class="status-value" id="status-stage">idle</span></span>
+  <span>🔧 Steps: <span class="status-value" id="status-steps">0/8</span></span>
+</div>
+
+<script>
+/* ── State ───────────────────────────────────────────────────────────── */
+const API = "/api/demo";
+let sessionInfo = null;           // from /start
+let toolDefs = [];               // from /check-tools
+let toolHistory = [];            // accumulated tool call records
+let currentTurn = 0;             // dynamic, not fixed 8
+let maxTurns = 12;               // from /start response
+let agentDone = false;           // true when LLM stops
+let verifierResult = null;
+let allStateSnapshots = [];
+
+/* ── Helpers ─────────────────────────────────────────────────────────── */
+async function apiCall(path, method="GET", body=null) {
+  const opts = { method, headers: {"Content-Type":"application/json"} };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+function setButtons(s1, s2, s3, s4) {
+  const sets = [
+    ["btn-start", s1], ["btn-check", s2], ["btn-next", s3],
+    ["btn-all", s3], ["btn-finalize", s4]
+  ];
+  sets.forEach(([id, enabled]) => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !enabled;
+  });
+}
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle("expanded");
+}
+
+/* ── Stage Indicators ────────────────────────────────────────────────── */
+function updateProgress(activeStage) {
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById(`dot-${i}`);
+    dot.classList.remove("active", "done");
+    if (i < activeStage) dot.classList.add("done");
+    else if (i === activeStage) dot.classList.add("active");
+
+    if (i < 4) {
+      const bar = document.getElementById(`bar-${i}`);
+      bar.classList.toggle("done", i < activeStage);
+    }
+  }
+}
+
+function setStatus(stage, steps) {
+  document.getElementById("status-stage").textContent = stage;
+  document.getElementById("status-steps").textContent = steps;
+}
+
+/* ── Start Session ───────────────────────────────────────────────────── */
+async function startSession() {
+  const seed = parseInt(document.getElementById("seed-input").value) || 42;
+  setButtons(false, false, false, false);
+  updateProgress(1); setStatus("creating...", "0/?");
+
+  try {
+    const data = await apiCall("/start", "POST", { seed });
+    sessionInfo = data;
+    maxTurns = data.max_turns || 12;
+    currentTurn = 0; toolHistory = []; agentDone = false;
+    allStateSnapshots = [{ label: "initial", step: 0, state: null }];
+    verifierResult = null;
+
+    document.getElementById("status-session").textContent = `seed=${seed}`;
+
+    const stateData = await apiCall("/state", "GET");
+    allStateSnapshots[0].state = stateData.state;
+
+    renderStage1(data, stateData);
+    document.getElementById("sec-1").classList.remove("hidden");
+    document.getElementById("sec-1").classList.add("expanded");
+    document.getElementById("sec-2").classList.add("hidden");
+    document.getElementById("sec-3").classList.add("hidden");
+    document.getElementById("sec-4").classList.add("hidden");
+
+    updateProgress(1); setStatus("stage 1", `${currentTurn}/${maxTurns}`);
+    setButtons(false, true, false, false);
+  } catch (e) {
+    alert("Start failed: " + e.message);
+    setButtons(true, false, false, false);
+    setStatus("error", "0/?");
+  }
+}
+
+/* ── Check Tools ──────────────────────────────────────────────────────── */
+async function checkTools() {
+  if (!sessionInfo) return;
+  setButtons(false, false, false, false);
+  updateProgress(2); setStatus("checking tools...", "0/8");
+
+  try {
+    const data = await apiCall("/check-tools", "POST");
+    toolDefs = data.listed_tools || [];
+    renderStage2(data);
+    document.getElementById("sec-2").classList.remove("hidden");
+    document.getElementById("sec-2").classList.add("expanded");
+
+    updateProgress(2); setStatus("stage 2", `${currentTurn}/${maxTurns}`);
+    setButtons(false, false, true, false);
+  } catch (e) {
+    alert("Check tools failed: " + e.message);
+    setButtons(false, true, false, false);
+  }
+}
+
+/* ── Run Next Turn ──────────────────────────────────────────────────── */
+async function runNextStep() {
+  if (!sessionInfo || agentDone) return;
+  setButtons(false, false, false, false);
+  updateProgress(3); setStatus("LLM thinking...", `${currentTurn}/${maxTurns}`);
+
+  try {
+    const data = await apiCall("/run-step", "POST");
+    const turnResults = data.tool_results || [];
+    currentTurn = data.turn != null ? data.turn : currentTurn;
+    agentDone = data.done || false;
+
+    // Push each tool call as a history entry
+    turnResults.forEach(tr => toolHistory.push(tr));
+
+    // Store final answer for display
+    if (data.final_answer) {
+      if (!sessionInfo._finalAnswers) sessionInfo._finalAnswers = [];
+      sessionInfo._finalAnswers.push(data.final_answer);
+      sessionInfo._stopReason = data.stop_reason;
+    }
+
+    // Reload state
+    const stateData = await apiCall("/state", "GET");
+    allStateSnapshots.push({
+      label: `after_turn${data.turn}`,
+      turn: data.turn,
+      state: stateData.state
+    });
+
+    renderStage3();
+    document.getElementById("sec-3").classList.remove("hidden");
+    document.getElementById("sec-3").classList.add("expanded");
+
+    if (agentDone) {
+      updateProgress(4);
+      setStatus("agent finished", `${currentTurn}/${maxTurns}`);
+      setButtons(false, false, false, false, true);
+      // Update stage 3 badge
+      document.getElementById("badge-3").textContent =
+        data.stop_reason === "assistant_final" ? "done" : "max_turns";
+    } else {
+      updateProgress(3);
+      setStatus(`stage 3`, `${currentTurn}/${maxTurns}`);
+      setButtons(false, false, true, true, false);
+    }
+  } catch (e) {
+    alert("Run step failed: " + e.message);
+    setButtons(false, false, true, true, false);
+  }
+}
+
+/* ── Run All Turns ─────────────────────────────────────────────────── */
+async function runAllSteps() {
+  if (!sessionInfo || agentDone) return;
+  setButtons(false, false, false, false);
+  updateProgress(3); setStatus("executing all...", `${currentTurn}/${maxTurns}`);
+
+  try {
+    const data = await apiCall("/run-all", "POST");
+
+    // Flatten all turn tool_results into toolHistory
+    toolHistory = [];
+    (data.turns || []).forEach(turn => {
+      (turn.tool_results || []).forEach(tr => toolHistory.push(tr));
+    });
+
+    currentTurn = data.total_turns || 0;
+    agentDone = true;
+
+    // Store final answer
+    if (data.final_answer) {
+      if (!sessionInfo._finalAnswers) sessionInfo._finalAnswers = [];
+      sessionInfo._finalAnswers.push(data.final_answer);
+      sessionInfo._stopReason = data.stop_reason;
+    }
+
+    // Reload final state
+    const stateData = await apiCall("/state", "GET");
+    allStateSnapshots.push({
+      label: "after_all_turns", turn: currentTurn,
+      state: stateData.state
+    });
+
+    // run-all auto-finalises
+    verifierResult = data.verifier_result;
+
+    renderStage3();
+    document.getElementById("sec-3").classList.remove("hidden");
+    document.getElementById("sec-3").classList.add("expanded");
+
+    if (verifierResult) {
+      renderStage4(data.finalize_result || { ok: verifierResult.ok, checks: verifierResult.checks || [] });
+      document.getElementById("sec-4").classList.remove("hidden");
+      document.getElementById("sec-4").classList.add("expanded");
+    }
+
+    updateProgress(4); setStatus("done", `${currentTurn}/${maxTurns}`);
+    setButtons(false, false, false, false, false);
+  } catch (e) {
+    alert("Run all failed: " + e.message);
+    setButtons(false, false, true, true, false);
+  }
+}
+
+/* ── Finalize ─────────────────────────────────────────────────────────── */
+async function finalizeSession() {
+  if (!sessionInfo) return;
+  setButtons(false, false, false, false);
+  updateProgress(4); setStatus("finalizing...", `${currentTurn}/${maxTurns}`);
+
+  try {
+    const data = await apiCall("/finalize", "POST");
+    verifierResult = data;
+    renderStage4(data);
+    document.getElementById("sec-4").classList.remove("hidden");
+    document.getElementById("sec-4").classList.add("expanded");
+
+    updateProgress(4); setStatus("done", `${currentTurn}/${maxTurns}`);
+    setButtons(false, false, false, false, false);
+  } catch (e) {
+    alert("Finalize failed: " + e.message);
+    setButtons(false, false, false, false, true);
+  }
+}
+
+/* ── Reset ────────────────────────────────────────────────────────────── */
+function resetAll() {
+  sessionInfo = null; toolDefs = []; toolHistory = [];
+  currentTurn = 0; agentDone = false; verifierResult = null; allStateSnapshots = [];
+  document.getElementById("status-session").textContent = "none";
+  updateProgress(0); setStatus("idle", "0/?");
+  ["sec-1","sec-2","sec-3","sec-4"].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.add("hidden"); el.classList.remove("expanded");
+  });
+  ["dot-1","dot-2","dot-3","dot-4"].forEach(id => {
+    document.getElementById(id).classList.remove("active","done");
+  });
+  ["bar-1","bar-2","bar-3"].forEach(id => {
+    document.getElementById(id).classList.remove("done");
+  });
+  setButtons(true, false, false, false);
+}
+
+/* ── Render: Stage 1 ──────────────────────────────────────────────────── */
+function renderStage1(startData, stateData) {
+  const task = startData.task || {};
+  document.getElementById("s1-rundir").textContent = startData.run_dir || "—";
+  document.getElementById("s1-prompt").textContent = task.prompt || "—";
+  document.getElementById("s1-table-count").textContent =
+    stateData.tables ? stateData.tables.length : 0;
+
+  const container = document.getElementById("s1-tables");
+  if (!stateData.state) { container.innerHTML = "<p style='color:var(--text-muted)'>No state data.</p>"; return; }
+
+  container.innerHTML = Object.entries(stateData.state).map(([table, rows]) => {
+    if (!rows || rows.length === 0) return "";
+    const columns = Object.keys(rows[0]);
+    return `
+      <div class="table-wrap">
+        <div class="table-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="table-name">${esc(table)}</span>
+          <span class="table-count">${rows.length} row${rows.length>1?'s':''}</span>
+          <span style="flex:1"></span>
+          <span style="font-size:0.7rem;color:var(--text-muted)">▶</span>
+        </div>
+        <div class="table-content">
+          <table class="data-table">
+            <thead><tr>${columns.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+            <tbody>
+              ${rows.map(row => `<tr>${columns.map(c => {
+                const v = row[c];
+                if (v === null || v === undefined) return `<td class="col-null">NULL</td>`;
+                if (typeof v === "object") return `<td><pre style="font-size:0.7rem;margin:0;max-width:260px;overflow:hidden;text-overflow:ellipsis">${esc(JSON.stringify(v))}</pre></td>`;
+                if (c === "id" || c.endsWith("_id")) return `<td class="col-key">${esc(String(v))}</td>`;
+                return `<td>${esc(String(v))}</td>`;
+              }).join("")}</tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+/* ── Render: Stage 2 ──────────────────────────────────────────────────── */
+function renderStage2(checkData) {
+  // Check result banner
+  const ok = checkData.ok;
+  document.getElementById("s2-check-result").innerHTML = `
+    <div style="padding:10px 14px;border-radius:var(--radius-sm);border:1px solid ${ok?'var(--green)':'var(--red)'};background:${ok?'rgba(63,185,80,0.08)':'rgba(248,81,73,0.08)'};">
+      <strong style="color:${ok?'var(--green)':'var(--red)'}">${ok ? '✓ All tools verified' : '✗ Tool mismatch'}</strong>
+      <span style="color:var(--text-muted);margin-left:12px;">
+        Expected: ${(checkData.expected_tools||[]).length} | Listed: ${(checkData.listed_tools||[]).length}
+        ${checkData.missing_tools && checkData.missing_tools.length ? ' | Missing: '+checkData.missing_tools.join(', ') : ''}
+      </span>
+    </div>`;
+
+  // Tool cards — use full definitions if available, fall back to name strings
+  const tools = checkData.tool_definitions ||
+    (checkData.listed_tools || []).map(n => ({name: n, description: "", inputSchema: {}}));
+  document.getElementById("s2-tools").innerHTML = tools.map(t => {
+    const params = t.inputSchema?.properties || {};
+    const required = t.inputSchema?.required || [];
+    return `
+      <div class="tool-card">
+        <div class="tool-card-name">${esc(t.name)}</div>
+        <div class="tool-card-desc">${esc(t.description || "")}</div>
+        <div class="tool-card-params">
+          ${Object.entries(params).map(([k,v]) => {
+            const isReq = required.includes(k);
+            return `<span class="tool-card-param${isReq?' required':''}">${esc(k)}${isReq?'*':''}: ${esc(v.type||'any')}</span>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("badge-2").textContent = ok ? "pass" : "fail";
+  document.getElementById("badge-2").className = "section-badge " + (ok ? "pass" : "fail");
+}
+
+/* ── Render: Stage 3 ──────────────────────────────────────────────────── */
+function renderStage3() {
+  const done = agentDone || (sessionInfo && sessionInfo._stopReason === 'assistant_final');
+  document.getElementById("s3-summary").textContent =
+    `${toolHistory.length} tool call(s) across ${currentTurn} LLM turn(s).` +
+    (done ? ' Agent finished.' : ' Click each card to expand details.');
+
+  // If LLM finished without tool calls, show the final answer text
+  let finalAnswerHtml = '';
+  if (done && toolHistory.length === 0) {
+    const fa = (sessionInfo && sessionInfo._finalAnswers && sessionInfo._finalAnswers.length > 0)
+      ? sessionInfo._finalAnswers[sessionInfo._finalAnswers.length - 1] : null;
+    finalAnswerHtml = `
+      <div style="padding:14px 18px;background:rgba(210,153,34,0.08);border:1px solid var(--orange);border-radius:var(--radius-sm);margin-bottom:12px;">
+        <div style="font-weight:600;color:var(--orange);margin-bottom:8px;">LLM returned a final answer without calling any tools:</div>
+        <div style="color:var(--text-bright);white-space:pre-wrap;line-height:1.7;">${esc((fa && fa.content) || '(no content)')}</div>
+        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:6px;">Stop reason: ${esc((fa && fa.stop_reason) || sessionInfo?._stopReason || 'unknown')}</div>
+      </div>`;
+  }
+
+  const container = document.getElementById("s3-timeline");
+  container.innerHTML = finalAnswerHtml + toolHistory.map((t, i) => {
+    const tc = t.tool_call || {};
+    const ok = t.tool_result?.ok;
+    const statusCls = ok ? "pass" : "fail";
+    const statusText = ok ? "OK" : "ERROR";
+    const statusColor = ok ? "var(--green)" : "var(--red)";
+
+    let stateDiffHtml = "";
+    if (t.state_diff && Object.keys(t.state_diff).length > 0) {
+      stateDiffHtml = `
+        <div class="mb-8" style="color:var(--text-muted);font-size:0.8rem;font-weight:600;">State Changes:</div>
+        ${Object.entries(t.state_diff).map(([table, diff]) => `
+          <div class="mb-8">
+            <span class="diff-changed mono">${esc(table)}</span>
+            <span style="color:var(--text-muted);font-size:0.78rem;">
+              (${diff.before_count} → ${diff.after_count} rows)
+            </span>
+            ${diff.new_rows ? `
+              <div class="code-block mt-8">+ ${diff.new_rows.length} new row(s)</div>
+            ` : ""}
+            ${diff.changed_row_indices ? `
+              <div class="code-block mt-8">~ row(s) ${diff.changed_row_indices.join(", ")} updated</div>
+            ` : ""}
+          </div>
+        `).join("")}
+      `;
+    }
+
+    return `
+      <div class="timeline-step expanded">
+        <div class="timeline-dot ${statusCls}"></div>
+        <div class="timeline-card">
+          <div class="timeline-card-header" onclick="this.closest('.timeline-step').classList.toggle('expanded')">
+            <span class="timeline-step-num">#${i+1}</span>
+            <span class="timeline-step-name">${esc(tc.name || '?')}</span>
+            <span class="timeline-step-status" style="color:${statusColor}">${statusText}</span>
+            <span style="font-size:0.7rem;color:var(--text-muted)">▶</span>
+          </div>
+          <div class="timeline-card-body">
+            <div class="thought-bubble">${esc(t.thought || (tc.name ? 'Calling ' + tc.name : ''))}</div>
+            <div class="mb-8" style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">Arguments:</div>
+            <div class="code-block">${syntaxJson(tc.arguments || {})}</div>
+            <div class="mb-8" style="font-size:0.8rem;font-weight:600;color:${statusColor};">Result (${statusText}):</div>
+            <div class="code-block">${syntaxJson(t.tool_result || {})}</div>
+            ${stateDiffHtml}
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("badge-3").textContent = done ? "done" : (toolHistory.length > 0 ? "running" : "ready");
+  document.getElementById("badge-3").className = "section-badge " + (done ? "pass" : (toolHistory.length > 0 ? "ready" : "ready"));
+}
+
+/* ── Render: Stage 4 ──────────────────────────────────────────────────── */
+function renderStage4(finalizeData) {
+  const checks = finalizeData.checks || [];
+  const allPass = finalizeData.ok !== undefined ? finalizeData.ok : checks.every(c => c.ok);
+
+  document.getElementById("s4-checks").innerHTML = checks.map(c => `
+    <div class="check-row ${c.ok ? 'pass' : 'fail'}">
+      <span class="check-icon">${c.ok ? '✅' : '❌'}</span>
+      <span class="check-name">${esc(c.name)}</span>
+      <span class="check-msg">${esc(c.message)}</span>
+    </div>
+  `).join("");
+
+  document.getElementById("s4-export").innerHTML = `
+    <div class="code-block">
+      World: <span class="str">${esc(finalizeData.scenario || sessionInfo?.manifest_summary?.scenario || '—')}</span><br>
+      Verdict: <span class="${allPass ? 'str' : 'bool'}">${allPass ? 'PASS' : 'FAIL'}</span><br>
+      Checks passed: <span class="num">${checks.filter(c=>c.ok).length}</span> / <span class="num">${checks.length}</span><br>
+      Export: <span class="str">${esc(finalizeData.export_path || '—')}</span>
+    </div>
+  `;
+
+  const badge = document.getElementById("badge-4");
+  badge.textContent = allPass ? "PASS" : "FAIL";
+  badge.className = "section-badge " + (allPass ? "pass" : "fail");
+}
+
+/* ── JSON Syntax Highlighting ─────────────────────────────────────────── */
+function syntaxJson(obj) {
+  const raw = JSON.stringify(obj, null, 2);
+  return raw
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="str">"$1"</span>')
+    .replace(/: (\d+\.?\d*)/g, ': <span class="num">$1</span>')
+    .replace(/: (true|false)/g, ': <span class="bool">$1</span>')
+    .replace(/: (null)/g, ': <span class="bool">$1</span>');
+}
+
+function esc(s) {
+  if (typeof s !== "string") return s;
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ── Init ──────────────────────────────────────────────────────────────── */
+(async function init() {
+  try {
+    const h = await apiCall("/health", "GET");
+    document.getElementById("status-server").textContent = h.ok ? "connected" : "error";
+  } catch {
+    document.getElementById("status-server").textContent = "offline";
+  }
+  setButtons(true, false, false, false);
+})();
+</script>
+</body>
+</html>
