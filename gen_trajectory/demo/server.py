@@ -197,8 +197,6 @@ async def demo_start(payload: dict[str, Any]) -> dict[str, Any]:
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
     if not api_key:
         raise HTTPException(400, "DEEPSEEK_API_KEY environment variable is not set.")
-    if not api_key:
-        raise HTTPException(400, "DEEPSEEK_API_KEY environment variable is not set.")
 
     # Create a fresh run directory
     base_dir = PROJECT_ROOT / "runs" / "demo_web"
