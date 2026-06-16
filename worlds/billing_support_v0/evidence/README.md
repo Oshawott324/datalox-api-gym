@@ -1,13 +1,13 @@
 # Billing Support v0 Evidence
 
-Phase 5 starts from observed provider behavior instances before changing fake
-world behavior.
+Phase 5 starts from observed provider behavior instances before changing world
+behavior.
 
 This directory contains:
 
 - `observed_instances.jsonl`: provider behavior instances from official docs or
   live probes.
-- `normalized_cases.jsonl`: small fake-world-relevant cases that cite observed
+- `normalized_cases.jsonl`: small world-relevant cases that cite observed
   instance ids.
 - `probes/stripe_refund_instances.py`: a Stripe test-mode probe for refund
   behavior.
@@ -47,14 +47,14 @@ Targeted Stripe cases:
 - duplicate-like second payment refunded with reason `duplicate`
 - invalid refund reason, if Stripe exposes it as a clean API error
 
-## How Evidence Feeds Fake-World Design
+## How Evidence Feeds World Design
 
-Agents should be able to inspect this directory and see exactly why fake billing
-and support behaviors exist. `normalized_cases.jsonl` is the bridge:
+Agents should be able to inspect this directory and see exactly why billing and
+support behaviors exist. `normalized_cases.jsonl` is the bridge:
 
 1. Read one normalized case.
 2. Follow `observed_instance_ids` back to `observed_instances.jsonl`.
-3. Implement or adjust fake-world behavior only when the provider instance
+3. Implement or adjust world behavior only when the provider instance
    supports it.
 4. Keep verifiers tied to SQLite state changes, not prose summaries.
 

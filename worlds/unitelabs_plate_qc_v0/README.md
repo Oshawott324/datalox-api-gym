@@ -20,6 +20,61 @@ After a valid `50 uL` aspirate from `source_plate:A1` and dispense into
 The verifier expects the final submitted protocol decision to cite that readout
 and choose `continue`.
 
+## World Contract
+
+Source substrate:
+
+- explicit UniteLabs OpenAPI contract sample
+- UniteLabs technical docs for workflow, run, log, and artifact surfaces
+- no live workflow execution in V0
+
+Episode state:
+
+- `state.sqlite` per sampled run
+- deck layout
+- labware inventory
+- well volume ledger
+- absorbance readout ledger
+- workflow notes
+- submitted protocol decision
+
+Actions:
+
+- inspect deck state
+- inspect labware state
+- aspirate
+- dispense
+- read absorbance
+- add workflow note
+- submit final protocol decision
+
+Dynamics:
+
+- deterministic dry-run lab workflow logic
+- no live hardware, workflow run, or device endpoint call
+
+Observations:
+
+- structured MCP tool responses
+- structured errors for invalid dry-run actions
+- readout ids used as evidence in the final protocol decision
+
+Verifier:
+
+- reads final SQLite state
+- checks source volume, target volume, readout ordering, submitted target,
+  decision, readout evidence, and dry-run safety constraints
+
+Evidence:
+
+- `run.json`
+- `task.json`
+- `agent_task.json`
+- `agent_tool_calls.jsonl`
+- `session_manifest.json`
+- `session_finalization.json`
+- `run_export.json`
+
 ## Session Handoff
 
 Agent runtimes should integrate through the session manifest, not by calling
@@ -127,3 +182,9 @@ api-gym session check-tools --run runs/unitelabs-demo
 
 api-gym session finalize --run runs/unitelabs-demo --json
 ```
+
+## Collector Boundary
+
+`run_export.json` is upstream evidence. Dataset rows, labels, splits,
+manifests, and validation reports belong in `datalox-rollout-collector`, not in
+this world.

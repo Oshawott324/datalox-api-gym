@@ -102,6 +102,7 @@ Worlds cite selected source packs instead of duplicating them:
       "path": "../../source_packs/apis/example/2026-06-12/source_pack.json",
       "records": [
         "operation:listWidgets",
+        "response_case:listWidgets:success",
         "schema:Widget",
         "observed_error:listWidgets:401"
       ],

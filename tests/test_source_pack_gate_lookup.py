@@ -36,8 +36,9 @@ def test_choose_success_response_case_for_create_refund_returns_gate_payload() -
     response = build_gate_response(response_case)
 
     assert response["status"] == "2xx"
-    assert response["response_mode"] == "body_shape"
-    assert "body_shape" in response
+    assert response["response_mode"] == "body_excerpt"
+    assert response["body_excerpt"]["object"] == "refund"
+    assert response["body_excerpt"]["status"] == "succeeded"
 
 
 def test_list_response_cases_filters_by_operation_ref() -> None:

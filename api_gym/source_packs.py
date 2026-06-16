@@ -10,6 +10,8 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PACK_SCHEMA_VERSION = "api_gym.api_source_pack.v0"
 WORLD_SOURCE_REFS_SCHEMA_VERSION = "api_gym.world_source_refs.v0"
+RESPONSE_CASE_PAYLOAD_FIELDS = ("body", "body_excerpt", "body_shape", "error_shape", "headers")
+RESPONSE_CASE_RESPONSE_MODES = frozenset((*RESPONSE_CASE_PAYLOAD_FIELDS, "no_body"))
 
 
 class SourcePackValidationError(ValueError):
@@ -49,6 +51,7 @@ def validate_source_pack(path: Path) -> dict[str, object]:
     response_operation_refs: set[str] = set()
     response_cases_path: Path | None = None
     record_counts: dict[str, int] = {}
+    record_ids: dict[str, tuple[Path, int]] = {}
     for record_name, rel_path_value in records.items():
         if not isinstance(record_name, str) or not isinstance(rel_path_value, str):
             _raise("source_pack_record_ref_invalid", "Record names and paths must be strings.", source_pack_path)
@@ -66,6 +69,17 @@ def validate_source_pack(path: Path) -> dict[str, object]:
                 record_path=record_path,
                 source_pack_id=source_pack_id,
             )
+            row_id = row["id"]
+            if row_id in record_ids:
+                first_path, first_line = record_ids[row_id]
+                _raise_row(
+                    "source_pack_record_id_duplicate",
+                    "`id` values must be unique across listed source-pack record files.",
+                    record_path,
+                    row_number,
+                    extra={"id": row_id, "first_path": str(first_path), "first_line": first_line},
+                )
+            record_ids[row_id] = (record_path, row_number)
             if record_name == "operations":
                 operation_refs.add(row["id"])
             elif record_name == "response_cases":
@@ -78,6 +92,13 @@ def validate_source_pack(path: Path) -> dict[str, object]:
     if "operations" in records:
         if "response_cases" not in records:
             _raise("source_pack_response_cases_missing", "`records.response_cases` is required when operations are listed.", source_pack_path)
+        for operation_ref in sorted(response_operation_refs - operation_refs):
+            _raise(
+                "source_pack_response_case_operation_missing",
+                "Response case references an operation that is not listed in operations.jsonl.",
+                response_cases_path or source_pack_path,
+                extra={"operation_ref": operation_ref},
+            )
         for operation_ref in sorted(operation_refs):
             if operation_ref not in response_operation_refs:
                 _raise(
@@ -217,17 +238,11 @@ def _validate_record_row(
     elif record_name == "response_cases":
         _require_row_string(row, "operation_ref", record_path, row_number)
         _require_row_string(row, "case", record_path, row_number)
-        _require_row_string(row, "response_mode", record_path, row_number)
+        response_mode = _require_row_string(row, "response_mode", record_path, row_number)
+        _validate_response_case_payload(row, response_mode, record_path, row_number)
         if "status" not in row:
             _raise_row("source_pack_response_case_status_missing", "`status` is required.", record_path, row_number)
         _require_row_source_refs(row, record_path, row_number)
-        if not any(key in row for key in ("body", "body_excerpt", "body_shape", "error_shape", "headers", "gating_notes")):
-            _raise_row(
-                "source_pack_response_case_payload_missing",
-                "Response cases need a body, shape, error shape, headers, or gating notes.",
-                record_path,
-                row_number,
-            )
     elif record_name == "probes":
         if row.get("live_execution_allowed") is not False:
             _raise_row("source_pack_probe_live_execution_not_allowed", "Probe rows must set `live_execution_allowed` to false.", record_path, row_number)
@@ -313,16 +328,85 @@ def _record_ids_from_file(path: Path) -> set[str]:
     return {row["id"] for row in _read_record_rows(path) if isinstance(row.get("id"), str)}
 
 
-def _require_row_string(row: dict[str, Any], key: str, path: Path, row_number: int) -> None:
+def _require_row_string(row: dict[str, Any], key: str, path: Path, row_number: int) -> str:
     value = row.get(key)
     if not isinstance(value, str) or not value:
         _raise_row("source_pack_record_string_field_missing", f"`{key}` must be a non-empty string.", path, row_number)
+    return value
 
 
 def _require_row_source_refs(row: dict[str, Any], path: Path, row_number: int) -> None:
     value = row.get("source_refs")
     if not isinstance(value, list) or not value:
         _raise_row("source_pack_record_source_refs_missing", "`source_refs` must be a non-empty list.", path, row_number)
+    for index, source_ref in enumerate(value):
+        if not isinstance(source_ref, dict):
+            _raise_row(
+                "source_pack_record_source_ref_invalid",
+                "Each source_ref must be an object.",
+                path,
+                row_number,
+                extra={"source_ref_index": index},
+            )
+        kind = source_ref.get("kind")
+        if not isinstance(kind, str) or not kind:
+            _raise_row(
+                "source_pack_record_source_ref_invalid",
+                "Each source_ref must have a non-empty kind.",
+                path,
+                row_number,
+                extra={"source_ref_index": index},
+            )
+        if not any(source_ref.get(key) for key in ("url", "path", "pointer", "record_id", "evidence_id")):
+            _raise_row(
+                "source_pack_record_source_ref_invalid",
+                "Each source_ref must include url, path, pointer, record_id, or evidence_id.",
+                path,
+                row_number,
+                extra={"source_ref_index": index},
+            )
+
+
+def _validate_response_case_payload(row: dict[str, Any], response_mode: str, path: Path, row_number: int) -> None:
+    if response_mode not in RESPONSE_CASE_RESPONSE_MODES:
+        _raise_row(
+            "source_pack_response_case_mode_invalid",
+            "`response_mode` must be a supported response case mode.",
+            path,
+            row_number,
+            extra={"response_mode": response_mode},
+        )
+
+    present_payloads = [field for field in RESPONSE_CASE_PAYLOAD_FIELDS if field in row]
+    if response_mode == "no_body":
+        if present_payloads:
+            _raise_row(
+                "source_pack_response_case_payload_invalid",
+                "`no_body` response cases must not include response payload fields.",
+                path,
+                row_number,
+                extra={"response_mode": response_mode, "disallowed_payloads": present_payloads},
+            )
+        return
+
+    if response_mode not in present_payloads:
+        _raise_row(
+            "source_pack_response_case_payload_invalid",
+            "`response_mode` must match the response payload field.",
+            path,
+            row_number,
+            extra={"response_mode": response_mode, "required_payload": response_mode},
+        )
+
+    disallowed_payloads = [field for field in present_payloads if field != response_mode]
+    if disallowed_payloads:
+        _raise_row(
+            "source_pack_response_case_payload_invalid",
+            "`response_mode` must match the response payload field.",
+            path,
+            row_number,
+            extra={"response_mode": response_mode, "disallowed_payloads": disallowed_payloads},
+        )
 
 
 def _resolve_child(root: Path, rel_path: str, source_path: Path) -> Path:
@@ -350,5 +434,8 @@ def _raise(code: str, message: str, path: Path, *, extra: dict[str, object] | No
     raise SourcePackValidationError(code, message, details)
 
 
-def _raise_row(code: str, message: str, path: Path, row_number: int) -> None:
-    raise SourcePackValidationError(code, message, {"path": str(path), "line": row_number})
+def _raise_row(code: str, message: str, path: Path, row_number: int, *, extra: dict[str, object] | None = None) -> None:
+    details = {"path": str(path), "line": row_number}
+    if extra is not None:
+        details.update(extra)
+    raise SourcePackValidationError(code, message, details)

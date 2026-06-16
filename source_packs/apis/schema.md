@@ -102,6 +102,11 @@ Rules:
 
 - Every operation listed in `operations.jsonl` must have at least one response
   case.
+- `response_mode` must be one of `body`, `body_excerpt`, `body_shape`,
+  `error_shape`, `headers`, or `no_body`.
+- The payload field must match `response_mode`. For example,
+  `response_mode: "body_excerpt"` requires `body_excerpt`, and
+  `response_mode: "error_shape"` requires `error_shape`.
 - Prefer concrete `body` or `body_excerpt` rows from official examples,
   OpenAPI examples, safe test-mode probes, or recorded observations.
 - Use `body_shape` only when the provider docs support the response contract but
@@ -111,6 +116,9 @@ Rules:
   permission, not-found, conflict, or rate-limit outcomes.
 - Response cases must cite source evidence. They are not lane labels and not
   world runtime behavior by themselves.
+- Structural validation only proves the rows are well-formed. A runtime world
+  should still use a separate coverage gate to decide whether selected response
+  cases are sampled well enough for dry-run behavior.
 
 ## `probes.jsonl`
 

@@ -1,0 +1,21 @@
+{
+  "schema_version": "api_gym.api_source_pack.v0",
+  "source_pack_id": "api.brex.2026-06-16",
+  "provider": "brex",
+  "version": "2026-06-16",
+  "status": "normalized",
+  "source_types": [
+    "docs"
+  ],
+  "records": {
+    "docs_index": "docs_index.jsonl",
+    "operations": "operations.jsonl",
+    "response_cases": "response_cases.jsonl",
+    "observed_errors": "observed_errors.jsonl",
+    "world_candidates": "world_candidates.jsonl"
+  },
+  "live_execution": {
+    "allowed": false,
+    "reason": "Source substrate only; API Gym source-pack validation and world sessions must not execute live Brex API calls."
+  }
+}

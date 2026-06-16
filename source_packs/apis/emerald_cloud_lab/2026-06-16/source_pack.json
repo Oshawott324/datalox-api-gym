@@ -1,0 +1,21 @@
+{
+  "schema_version": "api_gym.api_source_pack.v0",
+  "source_pack_id": "api.emerald_cloud_lab.2026-06-16",
+  "provider": "emerald_cloud_lab",
+  "version": "2026-06-16",
+  "status": "normalized",
+  "source_types": [
+    "docs"
+  ],
+  "records": {
+    "docs_index": "docs_index.jsonl",
+    "operations": "operations.jsonl",
+    "response_cases": "response_cases.jsonl",
+    "observed_errors": "observed_errors.jsonl",
+    "world_candidates": "world_candidates.jsonl"
+  },
+  "live_execution": {
+    "allowed": false,
+    "reason": "Source substrate only; this pack must not submit experiments, operate ECL instruments, ship samples, execute lab work, or call live lab-operation APIs."
+  }
+}

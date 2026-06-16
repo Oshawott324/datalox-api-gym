@@ -53,12 +53,39 @@ def test_source_pack_validator_rejects_empty_listed_record_file(tmp_path: Path) 
 
 def test_source_pack_validator_requires_response_case_per_operation(tmp_path: Path) -> None:
     pack_root = _write_minimal_source_pack(tmp_path)
+    (pack_root / "operations.jsonl").write_text(
+        (pack_root / "operations.jsonl").read_text(encoding="utf-8")
+        + json.dumps(
+            {
+                "id": "operation:createWidget",
+                "source_pack_id": "api.example.2026-06-12",
+                "operation_id": "createWidget",
+                "method": "POST",
+                "path": "/widgets",
+                "source_refs": [{"kind": "docs", "url": "https://docs.example.invalid/widgets"}],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    try:
+        validate_source_pack(pack_root)
+    except SourcePackValidationError as exc:
+        assert exc.code == "source_pack_response_case_missing"
+        assert exc.details == {"path": str(pack_root / "response_cases.jsonl"), "operation_ref": "operation:createWidget"}
+    else:
+        raise AssertionError("expected SourcePackValidationError")
+
+
+def test_source_pack_validator_rejects_response_case_for_unknown_operation(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
     (pack_root / "response_cases.jsonl").write_text(
         json.dumps(
             {
-                "id": "response_case:otherOperation:success",
+                "id": "response_case:unknown:success",
                 "source_pack_id": "api.example.2026-06-12",
-                "operation_ref": "operation:otherOperation",
+                "operation_ref": "operation:unknown",
                 "case": "success",
                 "status": "2xx",
                 "response_mode": "body_shape",
@@ -73,8 +100,107 @@ def test_source_pack_validator_requires_response_case_per_operation(tmp_path: Pa
     try:
         validate_source_pack(pack_root)
     except SourcePackValidationError as exc:
-        assert exc.code == "source_pack_response_case_missing"
-        assert exc.details == {"path": str(pack_root / "response_cases.jsonl"), "operation_ref": "operation:listWidgets"}
+        assert exc.code == "source_pack_response_case_operation_missing"
+        assert exc.details == {
+            "path": str(pack_root / "response_cases.jsonl"),
+            "operation_ref": "operation:unknown",
+        }
+    else:
+        raise AssertionError("expected SourcePackValidationError")
+
+
+def test_source_pack_validator_rejects_duplicate_record_ids_across_files(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+    (pack_root / "world_candidates.jsonl").write_text(
+        json.dumps(
+            {
+                "id": "operation:listWidgets",
+                "source_pack_id": "api.example.2026-06-12",
+                "candidate_world": "widget_triage_v0",
+                "operation_refs": ["operation:listWidgets"],
+                "design_status": "candidate",
+                "not_world_contract": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    try:
+        validate_source_pack(pack_root)
+    except SourcePackValidationError as exc:
+        assert exc.code == "source_pack_record_id_duplicate"
+        assert exc.details == {
+            "path": str(pack_root / "world_candidates.jsonl"),
+            "line": 1,
+            "id": "operation:listWidgets",
+            "first_path": str(pack_root / "operations.jsonl"),
+            "first_line": 1,
+        }
+    else:
+        raise AssertionError("expected SourcePackValidationError")
+
+
+def test_source_pack_validator_rejects_invalid_response_mode(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+    _rewrite_response_case(pack_root, response_mode="full_body")
+
+    try:
+        validate_source_pack(pack_root)
+    except SourcePackValidationError as exc:
+        assert exc.code == "source_pack_response_case_mode_invalid"
+        assert exc.details == {"path": str(pack_root / "response_cases.jsonl"), "line": 1, "response_mode": "full_body"}
+    else:
+        raise AssertionError("expected SourcePackValidationError")
+
+
+def test_source_pack_validator_rejects_response_payload_that_does_not_match_mode(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+    _rewrite_response_case(pack_root, response_mode="body", body_shape={"object": "Widget"})
+
+    try:
+        validate_source_pack(pack_root)
+    except SourcePackValidationError as exc:
+        assert exc.code == "source_pack_response_case_payload_invalid"
+        assert exc.details == {
+            "path": str(pack_root / "response_cases.jsonl"),
+            "line": 1,
+            "response_mode": "body",
+            "required_payload": "body",
+        }
+    else:
+        raise AssertionError("expected SourcePackValidationError")
+
+
+def test_source_pack_validator_rejects_no_body_response_case_with_payload(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+    _rewrite_response_case(pack_root, response_mode="no_body", body={"ok": True})
+
+    try:
+        validate_source_pack(pack_root)
+    except SourcePackValidationError as exc:
+        assert exc.code == "source_pack_response_case_payload_invalid"
+        assert exc.details == {
+            "path": str(pack_root / "response_cases.jsonl"),
+            "line": 1,
+            "response_mode": "no_body",
+            "disallowed_payloads": ["body"],
+        }
+    else:
+        raise AssertionError("expected SourcePackValidationError")
+
+
+def test_source_pack_validator_rejects_malformed_source_refs(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+    operation = json.loads((pack_root / "operations.jsonl").read_text(encoding="utf-8"))
+    operation["source_refs"] = [{"kind": "docs"}]
+    (pack_root / "operations.jsonl").write_text(json.dumps(operation) + "\n", encoding="utf-8")
+
+    try:
+        validate_source_pack(pack_root)
+    except SourcePackValidationError as exc:
+        assert exc.code == "source_pack_record_source_ref_invalid"
+        assert exc.details == {"path": str(pack_root / "operations.jsonl"), "line": 1, "source_ref_index": 0}
     else:
         raise AssertionError("expected SourcePackValidationError")
 
@@ -101,6 +227,22 @@ def test_existing_world_source_refs_are_valid() -> None:
         assert result["citation_count"] > 0
 
 
+def test_billing_world_source_pack_refs_include_response_cases() -> None:
+    refs_path = REPO_ROOT / "worlds" / "billing_support_v0" / "source_refs.json"
+    refs = json.loads(refs_path.read_text(encoding="utf-8"))
+
+    selected_pack_ids = {
+        "api.stripe.2026-06-12",
+        "api.zendesk.2026-06-12",
+        "api.hubspot.2026-06-12",
+    }
+    refs_by_pack = {entry["source_pack_id"]: entry["records"] for entry in refs["source_packs"]}
+
+    assert selected_pack_ids <= refs_by_pack.keys()
+    for source_pack_id in selected_pack_ids:
+        assert any(record.startswith("response_case:") for record in refs_by_pack[source_pack_id])
+
+
 def test_checked_in_source_packs_validate() -> None:
     roots = sorted((REPO_ROOT / "source_packs" / "apis").glob("*/*/source_pack.json"))
 
@@ -109,6 +251,92 @@ def test_checked_in_source_packs_validate() -> None:
         result = validate_source_pack(source_pack_json.parent)
         assert result["ok"] is True
         assert result["source_pack_id"]
+
+
+def test_appointment_service_source_packs_are_checked_in_and_validate() -> None:
+    required_providers = {
+        "google_calendar",
+        "microsoft_graph_calendar",
+        "calendly",
+        "servicetitan",
+    }
+
+    for provider in sorted(required_providers):
+        provider_root = REPO_ROOT / "source_packs" / "apis" / provider
+        source_pack_paths = sorted(provider_root.glob("*/source_pack.json"))
+
+        assert source_pack_paths, f"missing source pack for {provider}"
+        for source_pack_path in source_pack_paths:
+            result = validate_source_pack(source_pack_path.parent)
+            assert result["ok"] is True
+            assert result["provider"] == provider
+            assert result["record_counts"]["operations"] > 0
+            assert result["record_counts"]["response_cases"] > 0
+
+
+def test_workflow_saas_source_packs_are_checked_in_and_validate() -> None:
+    required_providers = {
+        "slack",
+        "gmail",
+        "linear",
+        "jira",
+        "github",
+        "notion",
+    }
+
+    for provider in sorted(required_providers):
+        provider_root = REPO_ROOT / "source_packs" / "apis" / provider
+        source_pack_paths = sorted(provider_root.glob("*/source_pack.json"))
+
+        assert source_pack_paths, f"missing source pack for {provider}"
+        for source_pack_path in source_pack_paths:
+            result = validate_source_pack(source_pack_path.parent)
+            assert result["ok"] is True
+            assert result["provider"] == provider
+            assert result["record_counts"]["operations"] > 0
+            assert result["record_counts"]["response_cases"] > 0
+
+
+def test_finance_approval_source_packs_are_checked_in_and_validate() -> None:
+    required_providers = {
+        "quickbooks",
+        "xero",
+        "bill_com",
+        "ramp",
+        "brex",
+    }
+
+    for provider in sorted(required_providers):
+        provider_root = REPO_ROOT / "source_packs" / "apis" / provider
+        source_pack_paths = sorted(provider_root.glob("*/source_pack.json"))
+
+        assert source_pack_paths, f"missing source pack for {provider}"
+        for source_pack_path in source_pack_paths:
+            result = validate_source_pack(source_pack_path.parent)
+            assert result["ok"] is True
+            assert result["provider"] == provider
+            assert result["record_counts"]["operations"] > 0
+            assert result["record_counts"]["response_cases"] > 0
+
+
+def test_lab_physical_action_source_packs_are_checked_in_and_validate() -> None:
+    required_providers = {
+        "unitelabs",
+        "opentrons",
+        "emerald_cloud_lab",
+    }
+
+    for provider in sorted(required_providers):
+        provider_root = REPO_ROOT / "source_packs" / "apis" / provider
+        source_pack_paths = sorted(provider_root.glob("*/source_pack.json"))
+
+        assert source_pack_paths, f"missing source pack for {provider}"
+        for source_pack_path in source_pack_paths:
+            result = validate_source_pack(source_pack_path.parent)
+            assert result["ok"] is True
+            assert result["provider"] == provider
+            assert result["record_counts"]["operations"] > 0
+            assert result["record_counts"]["response_cases"] > 0
 
 
 def test_world_source_refs_reject_missing_jsonl_record(tmp_path: Path) -> None:
@@ -215,3 +443,17 @@ def _write_minimal_source_pack(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return pack_root
+
+
+def _rewrite_response_case(pack_root: Path, **overrides: object) -> None:
+    row = {
+        "id": "response_case:listWidgets:success",
+        "source_pack_id": "api.example.2026-06-12",
+        "operation_ref": "operation:listWidgets",
+        "case": "success",
+        "status": "2xx",
+        "response_mode": "body_shape",
+        "source_refs": [{"kind": "docs", "url": "https://docs.example.invalid/widgets"}],
+    }
+    row.update(overrides)
+    (pack_root / "response_cases.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
