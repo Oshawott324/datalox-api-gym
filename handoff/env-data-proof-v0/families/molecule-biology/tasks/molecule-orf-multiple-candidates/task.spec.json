@@ -1,0 +1,54 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "molecule-orf-multiple-candidates",
+  "family": "molecule-biology",
+  "split": "seed",
+  "task_family": "molecule-biology-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/derived/NC_001416.1.parser-safe.gb",
+    "source_url": "https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_001416.1&db=nuccore&report=genbank&retmode=text",
+    "publication_status": "public_url_pinned"
+  },
+  "task_type": "orf_translation_annotation",
+  "expected_answer_class": "molecule_orf_translation_annotation",
+  "expected_failure_mode": "claims_orf_or_translation_without_find_orfs_and_translate_region_evidence",
+  "prompt": "Import the parser-safe source-derived lambda GenBank artifact, inspect sequence context, find ORFs with the deterministic molecule tool, translate two candidate ORFs, annotate the selected candidate as a CDS through upsert_feature using the current revision, then validate the workspace.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "allowed_tools": [
+    "open_sequence",
+    "get_sequence_context",
+    "find_orfs",
+    "translate_region",
+    "upsert_feature",
+    "validate_workspace"
+  ],
+  "forbidden_tools": [
+    "shell.parse_sequence_file",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 7,
+  "expected_tool_path": [
+    "open_sequence",
+    "get_sequence_context",
+    "find_orfs",
+    "translate_region",
+    "translate_region",
+    "upsert_feature",
+    "validate_workspace"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against molecule-biology-task-output.schema.json",
+    "diagnosis.class is molecule_orf_translation_annotation",
+    "next_action.type is translate_region",
+    "family_output.operation is orf_translation_annotation",
+    "tool_result_refs include find_orfs, both translate_region calls, upsert_feature, and validate_workspace evidence",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "planned"
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": "agent_native_seed_verifier_spec.v0",
+  "task_id": "molecule-pcr-simulation-001",
+  "family": "molecule-biology",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "required": {
+    "evidence_ids": [
+      "tool_io:molecule-pcr-simulation-001/get_sequence_context/1",
+      "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+      "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+      "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+      "tool_io:molecule-pcr-simulation-001/validate_workspace/5"
+    ],
+    "captured_evidence_only": true
+  },
+  "family_output_checks": [
+    {
+      "path": "family_output.operation",
+      "equals": "pcr_simulation"
+    },
+    {
+      "path": "family_output.molecule_id",
+      "equals": "lambda_nc001416"
+    },
+    {
+      "path": "family_output.workspace_revision",
+      "equals": 2
+    },
+    {
+      "path": "family_output.primer_ids",
+      "contains_all": [
+        "primer_seed_forward",
+        "primer_seed_reverse"
+      ]
+    }
+  ]
+}

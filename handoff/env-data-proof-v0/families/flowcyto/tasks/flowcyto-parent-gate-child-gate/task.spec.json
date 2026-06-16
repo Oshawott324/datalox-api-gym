@@ -1,0 +1,54 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "flowcyto-parent-gate-child-gate",
+  "family": "flowcyto",
+  "split": "seed",
+  "task_family": "flowcyto-gating-qc-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/public-pins/flowcyto/flowWorkspaceData/inst/extdata/CytoTrol_CytoTrol_1.fcs",
+    "source_url": "https://bioconductor.org/packages/release/data/experiment/src/contrib/flowWorkspaceData_3.24.0.tar.gz",
+    "publication_status": "public_url_pinned"
+  },
+  "task_type": "hierarchical_gate_qc_report",
+  "expected_answer_class": "flowcyto_report_pass",
+  "expected_failure_mode": "creates_child_gate_without_parent_gate_stats_or_qc_evidence",
+  "prompt": "Open the public CytoTrol FlowCyto FCS fixture, inspect FSC-A/SSC-A context and create a parent main-population gate, then inspect a marker-pair context under that parent and create a child gate. Compute statistics for both gates, validate QC evidence, and submit an evidence-backed report for the child gate with parent-gate evidence cited.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/flowcyto-task-output.schema.json",
+  "allowed_tools": [
+    "open_fcs",
+    "get_plot_context",
+    "upsert_gate",
+    "compute_gate_stats",
+    "validate_gate_qc",
+    "submit_report"
+  ],
+  "forbidden_tools": [
+    "shell.read_fcs_directly",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 8,
+  "expected_tool_path": [
+    "open_fcs",
+    "get_plot_context",
+    "upsert_gate",
+    "upsert_gate",
+    "compute_gate_stats",
+    "compute_gate_stats",
+    "validate_gate_qc",
+    "submit_report"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against flowcyto-task-output.schema.json",
+    "diagnosis.class is flowcyto_report_pass",
+    "evidence_ids include parent gate, child gate, stats, qc, workspace revision, and report evidence",
+    "family_output.report_status is submitted",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "planned"
+}

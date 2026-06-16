@@ -1,0 +1,38 @@
+{
+  "task_id": "flowcyto-existing-gate-edit-revision",
+  "family": "flowcyto",
+  "diagnosis": {
+    "class": "flowcyto_gate_edit",
+    "summary": "Verifier-passing structured decision for flowcyto-existing-gate-edit-revision."
+  },
+  "evidence_ids": [
+    "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/2",
+    "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+    "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+    "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+    "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6"
+  ],
+  "next_action": {
+    "type": "submit_report",
+    "summary": "Submit the verified report with cited evidence."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "submitted_report_without_evidence",
+    "claimed_plot_without_stats",
+    "used_stale_revision"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/flowcyto/tasks/flowcyto-existing-gate-edit-revision/capture-workspace/flowcyto.workspace.json",
+    "workspace_revision": 2,
+    "sample_id": "sample_001",
+    "gate_id": "agent_main_population_gate",
+    "report_status": "submitted",
+    "evidence_refs": {
+      "stats_ref": "flowcyto:gate-stats:sample_001:agent_main_population_gate:rev2",
+      "qc_ref": "flowcyto:gate-qc:sample_001:agent_main_population_gate:rev2"
+    },
+    "validation_error_code": "none",
+    "recovery_action": "none"
+  }
+}

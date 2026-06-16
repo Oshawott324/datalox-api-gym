@@ -1,0 +1,175 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/task-output.schema.json",
+  "title": "Datalox Env Data Proof Task Output",
+  "description": "Shared structured output envelope for multi-family agent-native scientific workflow tasks used in the env-data-proof-v0 handoff.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "family",
+    "diagnosis",
+    "evidence_ids",
+    "next_action",
+    "missing_fields",
+    "forbidden_actions_avoided",
+    "family_output"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "flowcyto",
+        "molecule-biology",
+        "protein-mcp"
+      ]
+    },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "summary"
+      ],
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "flowcyto_report_pass",
+            "flowcyto_revision_recovery",
+            "flowcyto_report_recovery",
+            "flowcyto_gate_edit",
+            "molecule_feature_annotation",
+            "molecule_digest_decision",
+            "molecule_pcr_decision",
+            "molecule_orf_translation_annotation",
+            "molecule_genbank_export",
+            "protein_binding_site_annotation",
+            "protein_view_revision_safe_style",
+            "protein_ligand_contact_scene_repair",
+            "insufficient_evidence"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+          "pattern": "^(tool_io|replay_bundle|task|source|policy|metric|sample|file|channel|marker|matrix|gene|chain|ligand|structure|workspace|gate|stats|qc|report|molecule|feature|primer|digest|pcr|orf|translation|export|annotation|scene|view|measurement)[:/][A-Za-z0-9._:@#/?=-]+$"
+      }
+    },
+    "next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "summary"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "submit_report",
+            "repair_report",
+            "repair_revision",
+            "validate_workspace",
+            "annotate_feature",
+            "simulate_digest",
+            "simulate_pcr",
+            "export_genbank",
+            "translate_region",
+            "annotate_binding_site",
+            "update_protein_view",
+            "inspect_scene_annotations",
+            "ask_for_missing_data",
+            "escalate",
+            "mark_insufficient_evidence",
+            "no_action"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "missing_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "enum": [
+          "workspace_path",
+          "workspace_revision",
+          "sample_id",
+          "gate_id",
+          "stats_ref",
+          "qc_ref",
+          "report_field",
+          "molecule_id",
+          "sequence_context",
+          "feature_id",
+          "primer_id",
+          "digest_result",
+          "pcr_result",
+          "orf_result",
+          "translation_result",
+          "export_path",
+          "structure_id",
+          "ligand_id",
+          "view_id",
+          "annotation_id",
+          "measurement_id",
+          "scene_annotation"
+        ]
+      }
+    },
+    "forbidden_actions_avoided": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "enum": [
+          "patched_workspace_json_directly",
+          "skipped_required_tool",
+          "submitted_report_without_evidence",
+          "used_stale_revision",
+          "claimed_plot_without_stats",
+          "inferred_sequence_from_prose",
+          "claimed_digest_without_tool_evidence",
+          "claimed_pcr_without_tool_evidence",
+          "claimed_orf_without_tool_evidence",
+          "claimed_export_without_file_evidence",
+          "claimed_structure_context_without_tool_evidence",
+          "updated_view_without_revision",
+          "annotated_ligand_without_list_ligands",
+          "copied_unreviewed_raw_artifact",
+          "called_live_service",
+          "claimed_live_state",
+          "ignored_replay_miss",
+          "invented_status",
+          "mutated_external_state",
+          "used_uncited_evidence"
+        ]
+      }
+    },
+    "family_output": {
+      "type": "object",
+      "description": "Family-specific structured payload validated by the task family's stricter schema or verifier.",
+      "minProperties": 1
+    }
+  }
+}

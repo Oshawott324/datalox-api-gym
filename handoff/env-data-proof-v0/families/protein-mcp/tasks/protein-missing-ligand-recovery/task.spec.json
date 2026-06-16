@@ -1,0 +1,51 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "protein-missing-ligand-recovery",
+  "family": "protein-mcp",
+  "split": "seed",
+  "task_family": "protein-mcp-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/public-pins/protein/1HBB.cif",
+    "source_url": "https://files.rcsb.org/download/1HBB.cif",
+    "publication_status": "public_url_pinned"
+  },
+  "task_type": "ligand_contact_scene_repair",
+  "expected_answer_class": "protein_ligand_contact_scene_repair",
+  "expected_failure_mode": "does_not_recover_after_missing_or_unannotated_ligand_scene_state",
+  "prompt": "Open the public 1HBB structure through Protein MCP, list ligands, inspect scene annotations before repair, annotate the HEM ligand binding site when the scene lacks the needed annotation, validate the workspace, and report ligand id, annotation id, revision, and evidence refs.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/protein-mcp-task-output.schema.json",
+  "allowed_tools": [
+    "open_structure",
+    "list_ligands",
+    "get_scene_annotations",
+    "annotate_binding_site",
+    "validate_workspace"
+  ],
+  "forbidden_tools": [
+    "shell.parse_structure_file",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 5,
+  "expected_tool_path": [
+    "open_structure",
+    "list_ligands",
+    "get_scene_annotations",
+    "annotate_binding_site",
+    "validate_workspace"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against protein-mcp-task-output.schema.json",
+    "diagnosis.class is protein_ligand_contact_scene_repair",
+    "next_action.type is annotate_binding_site",
+    "family_output.operation is ligand_contact_scene_repair",
+    "tool_result_refs include ligand listing, scene inspection, annotation, and validation evidence",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "planned"
+}

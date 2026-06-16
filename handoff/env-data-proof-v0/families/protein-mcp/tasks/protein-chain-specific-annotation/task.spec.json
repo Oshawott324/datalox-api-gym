@@ -1,0 +1,54 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "protein-chain-specific-annotation",
+  "family": "protein-mcp",
+  "split": "seed",
+  "task_family": "protein-mcp-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/public-pins/protein/1HBB.cif",
+    "source_url": "https://files.rcsb.org/download/1HBB.cif",
+    "publication_status": "public_url_pinned"
+  },
+  "task_type": "binding_site_annotation",
+  "expected_answer_class": "protein_binding_site_annotation",
+  "expected_failure_mode": "annotates_binding_site_without_chain_context_ligand_listing_or_scene_evidence",
+  "prompt": "Open the public 1HBB structure through Protein MCP, inspect structure context to identify chains, list ligands, annotate a chain-specific HEM binding site through annotate_binding_site, inspect scene annotations, validate the workspace, and report chain id, ligand id, annotation id, revision, and evidence refs.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/protein-mcp-task-output.schema.json",
+  "allowed_tools": [
+    "open_structure",
+    "get_structure_context",
+    "list_ligands",
+    "annotate_binding_site",
+    "get_scene_annotations",
+    "validate_workspace"
+  ],
+  "forbidden_tools": [
+    "shell.parse_structure_file",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 6,
+  "expected_tool_path": [
+    "open_structure",
+    "get_structure_context",
+    "list_ligands",
+    "annotate_binding_site",
+    "get_scene_annotations",
+    "validate_workspace"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against protein-mcp-task-output.schema.json",
+    "diagnosis.class is protein_binding_site_annotation",
+    "next_action.type is annotate_binding_site",
+    "family_output.operation is binding_site_annotation",
+    "family_output.chain_ids includes the chain used for annotation",
+    "tool_result_refs include structure context, ligand listing, annotation, scene, and validation evidence",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "planned"
+}

@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/protein-mcp-task-output.schema.json",
+  "title": "Datalox Env Data Proof Protein MCP Task Output Payload",
+  "description": "Family-specific payload for protein MCP workspace tasks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "workspace_path",
+    "workspace_revision",
+    "structure_id",
+    "operation",
+    "tool_result_refs"
+  ],
+  "properties": {
+    "workspace_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "structure_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "binding_site_annotation",
+        "view_revision_safe_style",
+        "ligand_contact_scene_repair",
+        "scene_export_validation",
+        "insufficient_evidence"
+      ]
+    },
+    "tool_result_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(tool_io|structure|ligand|chain|workspace|annotation|scene|view|measurement|export)[:/][A-Za-z0-9._:@#/?=-]+$"
+      }
+    },
+    "ligand_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "chain_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "annotation_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "measurement_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "view_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "export_path": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

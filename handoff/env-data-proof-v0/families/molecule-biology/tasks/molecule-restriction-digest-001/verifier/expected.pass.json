@@ -1,0 +1,33 @@
+{
+  "task_id": "molecule-restriction-digest-001",
+  "family": "molecule-biology",
+  "diagnosis": {
+    "class": "molecule_digest_decision",
+    "summary": "Verifier-passing structured decision for molecule-restriction-digest-001."
+  },
+  "evidence_ids": [
+    "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
+    "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
+    "tool_io:molecule-restriction-digest-001/simulate_digest/3"
+  ],
+  "next_action": {
+    "type": "simulate_digest",
+    "summary": "Use the digest simulation output as the decision source."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "patched_workspace_json_directly",
+    "claimed_digest_without_tool_evidence"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-restriction-digest-001/capture-workspace/molecule.workspace.json",
+    "workspace_revision": 0,
+    "molecule_id": "lambda_nc001416",
+    "operation": "restriction_digest",
+    "tool_result_refs": [
+      "tool_io:molecule-restriction-digest-001/get_sequence_context/1",
+      "tool_io:molecule-restriction-digest-001/find_restriction_sites/2",
+      "tool_io:molecule-restriction-digest-001/simulate_digest/3"
+    ]
+  }
+}

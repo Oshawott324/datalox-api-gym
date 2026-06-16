@@ -1,0 +1,137 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "flowcyto-existing-gate-edit-revision",
+  "family": "flowcyto",
+  "answer_path": "handoff/env-data-proof-v0/families/flowcyto/tasks/flowcyto-existing-gate-edit-revision/verifier/expected.fail.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "flowcyto-existing-gate-edit-revision",
+      "actual": "flowcyto-existing-gate-edit-revision"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "flowcyto",
+      "actual": "flowcyto"
+    },
+    {
+      "name": "required evidence id",
+      "passed": false,
+      "message": "required evidence id missing tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/2",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/2",
+      "actual": [
+        "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+        "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+        "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+        "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/2",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/2"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+      "actual": [
+        "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+        "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+        "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+        "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+      "actual": [
+        "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+        "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+        "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+        "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+      "actual": [
+        "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+        "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+        "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+        "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:flowcyto-existing-gate-edit-revision/submit_report/6",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6",
+      "actual": [
+        "tool_io:flowcyto-existing-gate-edit-revision/upsert_gate/3",
+        "tool_io:flowcyto-existing-gate-edit-revision/compute_gate_stats/4",
+        "tool_io:flowcyto-existing-gate-edit-revision/validate_gate_qc/5",
+        "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:flowcyto-existing-gate-edit-revision/submit_report/6",
+      "expected": "tool_io:flowcyto-existing-gate-edit-revision/submit_report/6"
+    },
+    {
+      "name": "family_output.report_status",
+      "passed": true,
+      "message": "family_output.report_status matched",
+      "expected": "submitted",
+      "actual": "submitted"
+    },
+    {
+      "name": "family_output.validation_error_code",
+      "passed": true,
+      "message": "family_output.validation_error_code matched",
+      "expected": "none",
+      "actual": "none"
+    }
+  ]
+}

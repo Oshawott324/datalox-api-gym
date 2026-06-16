@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/verifier-spec.schema.json",
+  "title": "Datalox Env Data Proof Verifier Spec",
+  "description": "Deterministic verifier contract for one agent-native science seed task.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "family",
+    "output_schema",
+    "family_output_schema",
+    "required",
+    "family_output_checks"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agent_native_seed_verifier_spec.v0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "flowcyto",
+        "molecule-biology",
+        "protein-mcp"
+      ]
+    },
+    "output_schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family_output_schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "required": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_ids",
+        "captured_evidence_only"
+      ],
+      "properties": {
+        "evidence_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "captured_evidence_only": {
+          "type": "boolean"
+        },
+        "diagnosis_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "missing_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_actions_avoided": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "family_output_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "equals": {},
+          "contains_all": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "equals"
+            ]
+          },
+          {
+            "required": [
+              "contains_all"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

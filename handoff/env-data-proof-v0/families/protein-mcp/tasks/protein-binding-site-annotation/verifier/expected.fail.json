@@ -1,0 +1,49 @@
+{
+  "task_id": "protein-binding-site-annotation",
+  "family": "protein-mcp",
+  "diagnosis": {
+    "class": "protein_binding_site_annotation",
+    "summary": "Verifier-negative fixture: one required evidence id is intentionally missing."
+  },
+  "evidence_ids": [
+    "tool_io:protein-binding-site-annotation/list_ligands/1",
+    "tool_io:protein-binding-site-annotation/annotate_binding_site/2",
+    "tool_io:protein-binding-site-annotation/get_scene_annotations/3",
+    "tool_io:protein-binding-site-annotation/validate_workspace/4"
+  ],
+  "next_action": {
+    "type": "annotate_binding_site",
+    "summary": "Annotate the ligand binding site through Protein MCP."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "claimed_structure_context_without_tool_evidence",
+    "annotated_ligand_without_list_ligands"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/protein-mcp/tasks/protein-binding-site-annotation/capture-workspace/protein.workspace.json",
+    "workspace_revision": 1,
+    "structure_id": "target",
+    "operation": "binding_site_annotation",
+    "tool_result_refs": [
+      "tool_io:protein-binding-site-annotation/open_structure/0",
+      "tool_io:protein-binding-site-annotation/list_ligands/1",
+      "tool_io:protein-binding-site-annotation/annotate_binding_site/2",
+      "tool_io:protein-binding-site-annotation/get_scene_annotations/3",
+      "tool_io:protein-binding-site-annotation/validate_workspace/4"
+    ],
+    "ligand_ids": [
+      "HEM:A:142"
+    ],
+    "annotation_ids": [
+      "label_hem_a_142_ligand",
+      "label_hem_a_142_thr_a_39_1",
+      "label_hem_a_142_met_a_32_1"
+    ],
+    "measurement_ids": [
+      "dist_hem_a_142_thr_a_39_1",
+      "dist_hem_a_142_met_a_32_1"
+    ],
+    "view_id": "annotated_hem_a_142"
+  }
+}

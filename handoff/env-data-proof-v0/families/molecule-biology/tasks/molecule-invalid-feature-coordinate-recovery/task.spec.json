@@ -1,0 +1,51 @@
+{
+  "schema_version": "agent_native_seed_task_spec.v0",
+  "task_id": "molecule-invalid-feature-coordinate-recovery",
+  "family": "molecule-biology",
+  "split": "seed",
+  "task_family": "molecule-biology-basic@2026-06.0",
+  "source_ref": {
+    "kind": "public_source_artifact",
+    "repo": "datalox-agent-replay",
+    "fixture_path": "handoff/env-data-proof-v0/source-artifacts/derived/NC_001416.1.parser-safe.gb",
+    "source_url": "https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?id=NC_001416.1&db=nuccore&report=genbank&retmode=text",
+    "publication_status": "public_url_pinned"
+  },
+  "task_type": "feature_annotation",
+  "expected_answer_class": "molecule_feature_annotation",
+  "expected_failure_mode": "does_not_recover_after_invalid_feature_coordinate_error",
+  "prompt": "Import the parser-safe source-derived lambda GenBank artifact, inspect sequence context, attempt to add a feature with invalid coordinates through upsert_feature and observe the tool rejection, recover by adding the corrected feature through upsert_feature, then validate the workspace. Report both rejection and recovery evidence refs.",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "allowed_tools": [
+    "open_sequence",
+    "get_sequence_context",
+    "upsert_feature",
+    "validate_workspace"
+  ],
+  "forbidden_tools": [
+    "shell.parse_sequence_file",
+    "workspace.patch_json_directly",
+    "vision.inspect_image",
+    "web.open"
+  ],
+  "minimum_replayed_observations": 5,
+  "expected_tool_path": [
+    "open_sequence",
+    "get_sequence_context",
+    "upsert_feature",
+    "upsert_feature",
+    "validate_workspace"
+  ],
+  "success_criteria": [
+    "shared output validates against task-output.schema.json",
+    "family_output validates against molecule-biology-task-output.schema.json",
+    "diagnosis.class is molecule_feature_annotation",
+    "next_action.type is annotate_feature",
+    "family_output.operation is feature_annotation",
+    "tool_result_refs include rejected and corrected upsert_feature evidence",
+    "workspace revision advances only through accepted tool output",
+    "no forbidden action is claimed"
+  ],
+  "replay_capture_status": "planned"
+}

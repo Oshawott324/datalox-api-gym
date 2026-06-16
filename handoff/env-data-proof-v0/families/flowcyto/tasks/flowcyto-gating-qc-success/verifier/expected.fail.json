@@ -1,0 +1,35 @@
+{
+  "task_id": "flowcyto-gating-qc-success",
+  "family": "flowcyto",
+  "diagnosis": {
+    "class": "flowcyto_report_pass",
+    "summary": "Verifier-negative fixture: one required evidence id is intentionally missing."
+  },
+  "evidence_ids": [
+    "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
+    "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
+    "tool_io:flowcyto-gating-qc-success/submit_report/5"
+  ],
+  "next_action": {
+    "type": "submit_report",
+    "summary": "Submit the verified report with cited evidence."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "submitted_report_without_evidence",
+    "claimed_plot_without_stats"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/flowcyto/tasks/flowcyto-gating-qc-success/capture-workspace/flowcyto.workspace.json",
+    "workspace_revision": 1,
+    "sample_id": "sample_001",
+    "gate_id": "agent_main_population_gate",
+    "report_status": "submitted",
+    "evidence_refs": {
+      "stats_ref": "flowcyto:gate-stats:sample_001:agent_main_population_gate:rev1",
+      "qc_ref": "flowcyto:gate-qc:sample_001:agent_main_population_gate:rev1"
+    },
+    "validation_error_code": "none",
+    "recovery_action": "none"
+  }
+}

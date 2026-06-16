@@ -1,0 +1,114 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "molecule-genbank-feature-annotation-001",
+  "family": "molecule-biology",
+  "answer_path": "handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-genbank-feature-annotation-001/verifier/expected.pass.json",
+  "passed": true,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "molecule-genbank-feature-annotation-001",
+      "actual": "molecule-genbank-feature-annotation-001"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "molecule-biology",
+      "actual": "molecule-biology"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+      "expected": "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+      "actual": [
+        "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+        "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+      "expected": "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+      "expected": "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+      "actual": [
+        "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+        "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+      "expected": "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
+      "expected": "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
+      "actual": [
+        "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+        "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+        "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3",
+      "expected": "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
+    },
+    {
+      "name": "family_output.operation",
+      "passed": true,
+      "message": "family_output.operation matched",
+      "expected": "feature_annotation",
+      "actual": "feature_annotation"
+    },
+    {
+      "name": "family_output.molecule_id",
+      "passed": true,
+      "message": "family_output.molecule_id matched",
+      "expected": "lambda_nc001416",
+      "actual": "lambda_nc001416"
+    },
+    {
+      "name": "family_output.workspace_revision",
+      "passed": true,
+      "message": "family_output.workspace_revision matched",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "family_output.feature_ids",
+      "passed": true,
+      "message": "family_output.feature_ids contains feat_agent_promoter_review",
+      "expected": "feat_agent_promoter_review",
+      "actual": [
+        "feat_agent_promoter_review"
+      ]
+    }
+  ]
+}

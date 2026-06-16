@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/tool-evidence-sft-row.schema.json",
+  "title": "Datalox Env Data Proof Tool Evidence SFT Row",
+  "description": "One train-split SFT row for tool-use evidence learning, derived from captured tool observations and a verifier-passing final answer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "family",
+    "split",
+    "training_mode",
+    "source_kind",
+    "runtime_kind",
+    "messages",
+    "tool_steps",
+    "source_answer_path",
+    "verifier_spec_path",
+    "observation_path",
+    "split_metadata_path",
+    "evidence_ids",
+    "export_gate"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agent_native_seed_tool_evidence_sft_row.v0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "flowcyto",
+        "molecule-biology",
+        "protein-mcp"
+      ]
+    },
+    "split": {
+      "const": "train"
+    },
+    "training_mode": {
+      "const": "tool_env_evidence_sft_handoff"
+    },
+    "source_kind": {
+      "type": "string",
+      "enum": [
+        "live_domain_tool_rollout"
+      ]
+    },
+    "runtime_kind": {
+      "type": "string",
+      "enum": [
+        "sibling_domain_tool_runtime"
+      ]
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "system",
+              "user"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "tool_steps": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "assistant_action",
+              "tool_observation",
+              "assistant_final"
+            ]
+          },
+          "sequence_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "arguments": {
+            "type": "object"
+          },
+          "observation": {
+            "type": "object"
+          },
+          "workspace_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "answer": {
+            "type": "object"
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "source_answer_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verifier_spec_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observation_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "split_metadata_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "export_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed",
+        "redaction"
+      ],
+      "properties": {
+        "allowed": {
+          "const": true
+        },
+        "redaction": {
+          "const": "none_needed"
+        }
+      }
+    }
+  }
+}

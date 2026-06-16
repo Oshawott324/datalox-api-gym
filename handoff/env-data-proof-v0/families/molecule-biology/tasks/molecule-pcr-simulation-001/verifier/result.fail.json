@@ -1,0 +1,164 @@
+{
+  "schema_version": "agent_native_seed_verifier_result.v0",
+  "task_id": "molecule-pcr-simulation-001",
+  "family": "molecule-biology",
+  "answer_path": "handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-pcr-simulation-001/verifier/expected.fail.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "shared_output_schema",
+      "passed": true,
+      "message": "shared_output_schema passed"
+    },
+    {
+      "name": "family_output_schema",
+      "passed": true,
+      "message": "family_output_schema passed"
+    },
+    {
+      "name": "task_id",
+      "passed": true,
+      "message": "task_id matched",
+      "expected": "molecule-pcr-simulation-001",
+      "actual": "molecule-pcr-simulation-001"
+    },
+    {
+      "name": "family",
+      "passed": true,
+      "message": "family matched",
+      "expected": "molecule-biology",
+      "actual": "molecule-biology"
+    },
+    {
+      "name": "required evidence id",
+      "passed": false,
+      "message": "required evidence id missing tool_io:molecule-pcr-simulation-001/get_sequence_context/1",
+      "expected": "tool_io:molecule-pcr-simulation-001/get_sequence_context/1",
+      "actual": [
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+        "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+        "tool_io:molecule-pcr-simulation-001/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-pcr-simulation-001/get_sequence_context/1",
+      "expected": "tool_io:molecule-pcr-simulation-001/get_sequence_context/1"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+      "expected": "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+      "actual": [
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+        "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+        "tool_io:molecule-pcr-simulation-001/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+      "expected": "tool_io:molecule-pcr-simulation-001/upsert_primer/2"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+      "expected": "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+      "actual": [
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+        "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+        "tool_io:molecule-pcr-simulation-001/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+      "expected": "tool_io:molecule-pcr-simulation-001/upsert_primer/3"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+      "expected": "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+      "actual": [
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+        "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+        "tool_io:molecule-pcr-simulation-001/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+      "expected": "tool_io:molecule-pcr-simulation-001/simulate_pcr/4"
+    },
+    {
+      "name": "required evidence id",
+      "passed": true,
+      "message": "required evidence id contains tool_io:molecule-pcr-simulation-001/validate_workspace/5",
+      "expected": "tool_io:molecule-pcr-simulation-001/validate_workspace/5",
+      "actual": [
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/2",
+        "tool_io:molecule-pcr-simulation-001/upsert_primer/3",
+        "tool_io:molecule-pcr-simulation-001/simulate_pcr/4",
+        "tool_io:molecule-pcr-simulation-001/validate_workspace/5"
+      ]
+    },
+    {
+      "name": "captured evidence id",
+      "passed": true,
+      "message": "captured evidence contains tool_io:molecule-pcr-simulation-001/validate_workspace/5",
+      "expected": "tool_io:molecule-pcr-simulation-001/validate_workspace/5"
+    },
+    {
+      "name": "family_output.operation",
+      "passed": true,
+      "message": "family_output.operation matched",
+      "expected": "pcr_simulation",
+      "actual": "pcr_simulation"
+    },
+    {
+      "name": "family_output.molecule_id",
+      "passed": true,
+      "message": "family_output.molecule_id matched",
+      "expected": "lambda_nc001416",
+      "actual": "lambda_nc001416"
+    },
+    {
+      "name": "family_output.workspace_revision",
+      "passed": true,
+      "message": "family_output.workspace_revision matched",
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "family_output.primer_ids",
+      "passed": true,
+      "message": "family_output.primer_ids contains primer_seed_forward",
+      "expected": "primer_seed_forward",
+      "actual": [
+        "primer_seed_forward",
+        "primer_seed_reverse"
+      ]
+    },
+    {
+      "name": "family_output.primer_ids",
+      "passed": true,
+      "message": "family_output.primer_ids contains primer_seed_reverse",
+      "expected": "primer_seed_reverse",
+      "actual": [
+        "primer_seed_forward",
+        "primer_seed_reverse"
+      ]
+    }
+  ]
+}

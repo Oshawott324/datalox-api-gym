@@ -1,0 +1,49 @@
+{
+  "schema_version": "agent_native_seed_verifier_spec.v0",
+  "task_id": "molecule-orf-translation-annotation",
+  "family": "molecule-biology",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "required": {
+    "evidence_ids": [
+      "tool_io:molecule-orf-translation-annotation/get_sequence_context/1",
+      "tool_io:molecule-orf-translation-annotation/find_orfs/2",
+      "tool_io:molecule-orf-translation-annotation/translate_region/3",
+      "tool_io:molecule-orf-translation-annotation/upsert_feature/4",
+      "tool_io:molecule-orf-translation-annotation/validate_workspace/5"
+    ],
+    "captured_evidence_only": true
+  },
+  "family_output_checks": [
+    {
+      "path": "family_output.operation",
+      "equals": "orf_translation_annotation"
+    },
+    {
+      "path": "family_output.molecule_id",
+      "equals": "lambda_nc001416"
+    },
+    {
+      "path": "family_output.workspace_revision",
+      "equals": 1
+    },
+    {
+      "path": "family_output.feature_ids",
+      "contains_all": [
+        "feat_agent_orf_191_736"
+      ]
+    },
+    {
+      "path": "family_output.orf_ids",
+      "contains_all": [
+        "orf_191_736_plus"
+      ]
+    },
+    {
+      "path": "family_output.translation_refs",
+      "contains_all": [
+        "translation:lambda_nc001416:191-736:+"
+      ]
+    }
+  ]
+}

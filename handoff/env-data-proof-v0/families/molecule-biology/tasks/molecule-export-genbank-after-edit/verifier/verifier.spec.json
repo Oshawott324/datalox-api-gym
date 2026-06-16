@@ -1,0 +1,41 @@
+{
+  "schema_version": "agent_native_seed_verifier_spec.v0",
+  "task_id": "molecule-export-genbank-after-edit",
+  "family": "molecule-biology",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/molecule-biology-task-output.schema.json",
+  "required": {
+    "evidence_ids": [
+      "tool_io:molecule-export-genbank-after-edit/get_sequence_context/1",
+      "tool_io:molecule-export-genbank-after-edit/upsert_feature/2",
+      "tool_io:molecule-export-genbank-after-edit/validate_workspace/3",
+      "tool_io:molecule-export-genbank-after-edit/export_genbank/4",
+      "tool_io:molecule-export-genbank-after-edit/validate_workspace/5"
+    ],
+    "captured_evidence_only": true
+  },
+  "family_output_checks": [
+    {
+      "path": "family_output.operation",
+      "equals": "genbank_export"
+    },
+    {
+      "path": "family_output.molecule_id",
+      "equals": "lambda_nc001416"
+    },
+    {
+      "path": "family_output.workspace_revision",
+      "equals": 1
+    },
+    {
+      "path": "family_output.feature_ids",
+      "contains_all": [
+        "feat_agent_export_marker"
+      ]
+    },
+    {
+      "path": "family_output.export_path",
+      "equals": "capture-workspace/lambda.agent-export.gb"
+    }
+  ]
+}

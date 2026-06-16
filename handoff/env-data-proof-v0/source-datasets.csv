@@ -1,0 +1,6 @@
+"source_id","family","path_or_url","role","status"
+"ncbi-nc001416-raw","molecule-biology","handoff/env-data-proof-v0/source-artifacts/ncbi/NC_001416.1.gb","raw public GenBank source","downloaded from NCBI on 2026-06-08"
+"ncbi-nc001416-parser-safe","molecule-biology","handoff/env-data-proof-v0/source-artifacts/derived/NC_001416.1.parser-safe.gb","derived parser-safe GenBank source","removes < and > coordinate fuzz markers only"
+"flowcyto-cfp-well-a4","flowcyto","../datalox-flow-cyto-mcp/testdata/fixtures/CFP_Well_A4.fcs","active FlowCyto fixture","repo fixture; public pin pending"
+"protein-hemoglobin-cif","protein-mcp","../datalox-protein-mcp/testing/data/1hbb_entity_poly_seq.cif","active Protein MCP ligand fixture","repo fixture; public pin pending"
+"protein-1tii-pdb","protein-mcp","../datalox-protein-mcp/data/demo/1tii.pdb","active Protein MCP view fixture","repo fixture; public pin pending"

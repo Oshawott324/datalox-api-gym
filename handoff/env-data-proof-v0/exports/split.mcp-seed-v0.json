@@ -1,0 +1,76 @@
+{
+  "schema_version": "agent_native_seed_split.v0",
+  "split_name": "mcp-seed-v0",
+  "split_kind": "handoff_validation_not_lift_proof",
+  "created_at": "2026-06-02",
+  "intended_use": "Validate a MCP-backed handoff with real domain tools, leakage controls, tool-message SFT row shape, and held-out eval commands before collecting a lift-grade 80/20/20 dataset.",
+  "not_for": "Do not claim reliable SFT lift from this split; it is too small and exists to make the handoff executable.",
+  "policy": "Deterministic stratified split over active MCP-backed families only: FlowCyto, Molecule Biology, and Protein MCP. SFT rows are exported for train tasks only.",
+  "counts": {
+    "train": 8,
+    "dev": 2,
+    "test": 2
+  },
+  "tasks": [
+    {
+      "task_id": "flowcyto-existing-gate-edit-revision",
+      "family": "flowcyto",
+      "split": "train"
+    },
+    {
+      "task_id": "flowcyto-gating-qc-report-validation-failure",
+      "family": "flowcyto",
+      "split": "test"
+    },
+    {
+      "task_id": "flowcyto-gating-qc-stale-revision-failure",
+      "family": "flowcyto",
+      "split": "dev"
+    },
+    {
+      "task_id": "flowcyto-gating-qc-success",
+      "family": "flowcyto",
+      "split": "train"
+    },
+    {
+      "task_id": "molecule-export-genbank-after-edit",
+      "family": "molecule-biology",
+      "split": "dev"
+    },
+    {
+      "task_id": "molecule-genbank-feature-annotation-001",
+      "family": "molecule-biology",
+      "split": "train"
+    },
+    {
+      "task_id": "molecule-orf-translation-annotation",
+      "family": "molecule-biology",
+      "split": "train"
+    },
+    {
+      "task_id": "molecule-pcr-simulation-001",
+      "family": "molecule-biology",
+      "split": "train"
+    },
+    {
+      "task_id": "molecule-restriction-digest-001",
+      "family": "molecule-biology",
+      "split": "train"
+    },
+    {
+      "task_id": "protein-binding-site-annotation",
+      "family": "protein-mcp",
+      "split": "train"
+    },
+    {
+      "task_id": "protein-ligand-contact-scene-repair",
+      "family": "protein-mcp",
+      "split": "test"
+    },
+    {
+      "task_id": "protein-view-revision-safe-style",
+      "family": "protein-mcp",
+      "split": "train"
+    }
+  ]
+}

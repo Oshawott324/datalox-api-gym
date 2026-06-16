@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://datalox.local/schemas/env-data-proof-v0/flowcyto-task-output.schema.json",
+  "title": "Datalox Env Data Proof FlowCyto Task Output Payload",
+  "description": "Family-specific payload for FlowCyto gating, QC, report, and revision-recovery tasks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "workspace_path",
+    "workspace_revision",
+    "sample_id",
+    "gate_id",
+    "report_status",
+    "evidence_refs"
+  ],
+  "properties": {
+    "workspace_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sample_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_status": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "recovered_after_validation_error",
+        "rejected_as_expected",
+        "insufficient_evidence"
+      ]
+    },
+    "evidence_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stats_ref",
+        "qc_ref"
+      ],
+      "properties": {
+        "stats_ref": {
+          "type": "string",
+          "pattern": "^(flowcyto|stats|tool_io|run|qc)[:/][A-Za-z0-9._:@#/?=-]+$"
+        },
+        "qc_ref": {
+          "type": "string",
+          "pattern": "^(flowcyto|qc|tool_io|run|stats)[:/][A-Za-z0-9._:@#/?=-]+$"
+        }
+      }
+    },
+    "validation_error_code": {
+      "type": "string",
+      "enum": [
+        "missing_report_field",
+        "stale_revision",
+        "missing_evidence_record",
+        "invalid_evidence_ref",
+        "invalid_axis",
+        "failed_qc_evidence",
+        "none"
+      ]
+    },
+    "recovery_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

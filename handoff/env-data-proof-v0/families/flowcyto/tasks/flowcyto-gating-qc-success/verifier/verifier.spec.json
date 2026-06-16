@@ -1,0 +1,26 @@
+{
+  "schema_version": "agent_native_seed_verifier_spec.v0",
+  "task_id": "flowcyto-gating-qc-success",
+  "family": "flowcyto",
+  "output_schema": "../../../../schema/task-output.schema.json",
+  "family_output_schema": "../../../../schema/flowcyto-task-output.schema.json",
+  "required": {
+    "evidence_ids": [
+      "tool_io:flowcyto-gating-qc-success/upsert_gate/2",
+      "tool_io:flowcyto-gating-qc-success/compute_gate_stats/3",
+      "tool_io:flowcyto-gating-qc-success/validate_gate_qc/4",
+      "tool_io:flowcyto-gating-qc-success/submit_report/5"
+    ],
+    "captured_evidence_only": true
+  },
+  "family_output_checks": [
+    {
+      "path": "family_output.report_status",
+      "equals": "submitted"
+    },
+    {
+      "path": "family_output.validation_error_code",
+      "equals": "none"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "collaborator_packet_manifest.v0",
+  "updated": "2026-06-08",
+  "active_task_count": 12,
+  "train_dev_test": {
+    "train": 8,
+    "dev": 2,
+    "test": 2
+  },
+  "primary_files": [
+    "one-page-context.md",
+    "task-cards.md",
+    "trajectory-guide.md",
+    "review-questions.md",
+    "appendix/task-source-gate.csv",
+    "appendix/source-datasets.manifest.json"
+  ],
+  "removed": [
+    "preview lifecycle wrappers",
+    "parser/report-only tasks",
+    "toy sequence task"
+  ]
+}

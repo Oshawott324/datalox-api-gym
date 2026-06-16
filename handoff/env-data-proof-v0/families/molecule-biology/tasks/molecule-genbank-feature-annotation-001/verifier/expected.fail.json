@@ -1,0 +1,35 @@
+{
+  "task_id": "molecule-genbank-feature-annotation-001",
+  "family": "molecule-biology",
+  "diagnosis": {
+    "class": "molecule_feature_annotation",
+    "summary": "Verifier-negative fixture: one required evidence id is intentionally missing."
+  },
+  "evidence_ids": [
+    "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+    "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
+  ],
+  "next_action": {
+    "type": "annotate_feature",
+    "summary": "Persist the feature annotation through the domain tool."
+  },
+  "missing_fields": [],
+  "forbidden_actions_avoided": [
+    "patched_workspace_json_directly",
+    "inferred_sequence_from_prose"
+  ],
+  "family_output": {
+    "workspace_path": "${DATALOX_AGENT_REPLAY}/handoff/env-data-proof-v0/families/molecule-biology/tasks/molecule-genbank-feature-annotation-001/capture-workspace/molecule.workspace.json",
+    "workspace_revision": 1,
+    "molecule_id": "lambda_nc001416",
+    "operation": "feature_annotation",
+    "tool_result_refs": [
+      "tool_io:molecule-genbank-feature-annotation-001/get_sequence_context/1",
+      "tool_io:molecule-genbank-feature-annotation-001/upsert_feature/2",
+      "tool_io:molecule-genbank-feature-annotation-001/validate_workspace/3"
+    ],
+    "feature_ids": [
+      "feat_agent_promoter_review"
+    ]
+  }
+}

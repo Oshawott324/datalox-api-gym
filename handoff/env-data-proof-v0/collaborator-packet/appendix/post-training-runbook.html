@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datalox Env Data Proof v0 Handoff</title>
+  <style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:0;color:#1f2933;background:#f7f8fa}main{max-width:980px;margin:0 auto;padding:40px 20px 72px}section{margin:28px 0;padding:24px;background:white;border:1px solid #d9dee7;border-radius:8px}h1{font-size:34px;margin:0 0 12px}h2{font-size:20px;margin:0 0 14px}p,li{line-height:1.55}code{background:#eef2f7;padding:2px 5px;border-radius:4px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #d9dee7;padding:8px;text-align:left;vertical-align:top}th{background:#eef2f7}.note{color:#52606d}</style>
+</head>
+<body><main>
+<h1>Datalox Env Data Proof v0 Handoff</h1>
+<p class="note">Public-facing summary for collaborator review. Updated 2026-06-08.</p>
+<section><h2>What This Is</h2><p>A 12-task MCP-backed domain-world seed for FlowCyto, Molecule Biology, and Protein MCP. It is designed to let a post-training collaborator inspect real tool trajectories and loader/eval shape before scaling data collection.</p></section>
+<section><h2>What Was Removed</h2><p>Parser/report-only tasks, the toy sequence task, and preview lifecycle wrappers were removed from the active handoff.</p></section>
+<section><h2>Active Split</h2><table><tr><th>Split</th><th>Count</th><th>Purpose</th></tr><tr><td>train</td><td>8</td><td>SFT loader and tool-message inspection</td></tr><tr><td>dev</td><td>2</td><td>Early harness iteration</td></tr><tr><td>test</td><td>2</td><td>Held-out sanity check</td></tr></table></section>
+<section><h2>Files</h2><ul><li><code>exports/sft.tool_messages.seed.jsonl</code>: standard tool-message SFT rows.</li><li><code>exports/eval.tool_env.seed.jsonl</code>: tool-env eval rows.</li><li><code>exports/split.mcp-seed-v0.json</code>: split metadata.</li><li><code>collaborator-packet/</code>: human-readable review packet.</li></ul></section>
+<section><h2>Boundary</h2><p>The verifier is a mechanical evidence gate, not a reward model. It checks captured <code>tool_io:*</code> evidence and simple workspace metadata. Zheng should decide the training objective, reward design, and rollout harness boundary.</p></section>
+</main></body></html>
