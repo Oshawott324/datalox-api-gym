@@ -32,5 +32,5 @@ transfer QC.
 - [Quickstart](./guide/quickstart.md)
 - [Agentic World Contract](./concepts/agentic-world-contract.md)
 - [Billing Support v0](./worlds/billing-support-v0.md)
-- [UniteLabs Chat Demo](./demos/unitelabs-chat-demo.md)
+- [UniteLabs Plate QC v0](./worlds/unitelabs-plate-qc-v0.md)
 - [Benchmarks](./benchmarks.md)

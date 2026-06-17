@@ -1,14 +1,64 @@
 # Billing Support v0
 
-Billing Support v0 is the first concrete Datalox API Gym world.
+`billing_support_v0` is a deterministic business workflow world for billing
+support tasks.
 
-It uses one SQLite state database per sampled run and exposes minimal fake
-service operations for:
+## World Contract
 
-- `fake_billing_api`
-- `fake_support_api`
-- `fake_crm_api`
-- `fake_email_api`
+Source substrate:
+
+- public Stripe refund and invoice retry documentation
+- public Zendesk ticket and ticket comment documentation
+- optional provider probes under `worlds/billing_support_v0/evidence/`
+
+Episode state:
+
+- one `state.sqlite` per sampled run
+- customers, accounts, subscriptions, invoices, payments, refunds
+- tickets, messages, emails, events, policies, and audit log rows
+
+Actions:
+
+- inspect customer, invoice, payment, and ticket state
+- create refunds
+- retry invoices
+- reply, tag, close, or escalate tickets
+
+Dynamics:
+
+- deterministic service functions
+- SQLite mutations
+- auditable event rows
+
+Verifier:
+
+- reads final SQLite state
+- checks the scenario-specific expected resolution
+- does not use transcript text as proof
+
+Evidence:
+
+- task package
+- MCP tool trace
+- verifier result
+- run export
+
+## Session Flow
+
+```bash
+api-gym session create \
+  --world billing_support_v0 \
+  --scenario duplicate_payment_refund \
+  --seed 1 \
+  --out runs/billing-demo \
+  --json
+
+api-gym session check-tools --run runs/billing-demo
+api-gym session finalize --run runs/billing-demo --json
+```
+
+The session manifest gives an external agent host the task package, MCP config,
+expected tools, commands, and artifact paths.
 
 ## Scenarios
 
@@ -16,16 +66,7 @@ service operations for:
 - `failed_invoice_retryable`
 - `refund_not_allowed_policy`
 
-## Flow
-
-```bash
-api-gym sample --world billing_support_v0 --scenario failed_invoice_retryable --seed 7 --out /tmp/billing-run
-api-gym verify --run /tmp/billing-run
-```
-
-`state.sqlite` stores customers, accounts, subscriptions, invoices, payments,
-refunds, tickets, ticket messages, emails, events, policies, and audit log
-records.
+## Provider Grounding
 
 The billing behavior is inspired by Stripe refund and invoice retry patterns:
 

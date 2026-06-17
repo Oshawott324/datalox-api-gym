@@ -1,7 +1,0 @@
-{
-  "prompt": "Resolve ticket tkt_df2b8cc057 for Sam Rivera. The customer reports duplicate charges for invoice in_df2b8cc057_01. Use the billing and support APIs to identify the extra payment, refund only the duplicate payment if eligible, then reply to the customer and close the ticket when done.",
-  "scenario": "duplicate_payment_refund",
-  "seed": 7,
-  "ticket_id": "tkt_df2b8cc057",
-  "world": "billing_support_v0"
-}

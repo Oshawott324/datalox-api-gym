@@ -1,12 +1,27 @@
 # Benchmarks
 
-Benchmarks will be derived from verified world runs.
+Benchmarks are downstream from verified world sessions.
 
 The primary loop is:
 
 ```text
-API world -> task scenario -> agent run -> verifier/replay evidence -> training/eval exports
+world package
+  -> task scenario
+  -> agent rollout through tools
+  -> verifier outcome
+  -> run_export evidence
+  -> rollout collector dataset package
 ```
 
-Phase 0 does not define benchmark rows yet. Future exports should stay
-downstream from verified run evidence.
+API Gym should not define train/dev/test splits, quality labels, or dataset
+manifests. Those belong to `datalox-rollout-collector`.
+
+API Gym benchmark artifacts should contain enough upstream evidence for a
+collector to package later:
+
+- world id and world version
+- scenario and seed
+- task package
+- tool trace
+- verifier result
+- run export

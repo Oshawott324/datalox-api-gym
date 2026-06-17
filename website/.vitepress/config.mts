@@ -2,12 +2,11 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
   title: "Datalox API Gym",
-  description: "Resettable fake APIs for training and evaluating tool-using agents.",
+  description: "Agentic worlds for training and evaluating tool-using agents.",
   themeConfig: {
     nav: [
       { text: "Guide", link: "/guide/quickstart" },
       { text: "Worlds", link: "/worlds/billing-support-v0" },
-      { text: "Demos", link: "/demos/unitelabs-chat-demo" },
       { text: "Benchmarks", link: "/benchmarks" }
     ],
     sidebar: [
@@ -20,19 +19,14 @@ export default defineConfig({
       {
         text: "Concepts",
         items: [
-          { text: "Stateful Fake APIs", link: "/concepts/stateful-fake-apis" }
+          { text: "Agentic World Contract", link: "/concepts/agentic-world-contract" }
         ]
       },
       {
         text: "Worlds",
         items: [
-          { text: "Billing Support v0", link: "/worlds/billing-support-v0" }
-        ]
-      },
-      {
-        text: "Demos",
-        items: [
-          { text: "UniteLabs Chat Demo", link: "/demos/unitelabs-chat-demo" }
+          { text: "Billing Support v0", link: "/worlds/billing-support-v0" },
+          { text: "UniteLabs Plate QC v0", link: "/worlds/unitelabs-plate-qc-v0" }
         ]
       },
       {
