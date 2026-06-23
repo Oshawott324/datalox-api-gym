@@ -10,6 +10,9 @@ from api_gym.agent_harness import AGENT_TOOL_TRACE_NAME
 from api_gym.worlds.registry import get_runtime_for_run, read_run_metadata
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
 def build_run_export(run_dir: Path) -> dict[str, Any]:
     """Build a compact evidence export for one sampled run."""
     run_dir = run_dir.resolve()
@@ -22,6 +25,9 @@ def build_run_export(run_dir: Path) -> dict[str, Any]:
     task = _read_json(task_path)
     tool_trace_path = run_dir / AGENT_TOOL_TRACE_NAME
     tool_trace = _read_jsonl(tool_trace_path) if tool_trace_path.exists() else []
+    http_trace_path = run_dir / "traces" / "http_requests.jsonl"
+    http_trace = _read_jsonl(http_trace_path) if http_trace_path.exists() else []
+    source_refs = _read_world_source_refs(str(metadata["world"]))
     verifier_result = runtime.verify_run(run_dir).to_dict()
     return {
         "schema_version": "api_gym.run_export.v0",
@@ -32,11 +38,14 @@ def build_run_export(run_dir: Path) -> dict[str, Any]:
         "run_dir": str(run_dir),
         "task": task,
         "tool_trace": tool_trace,
+        "source_refs": source_refs,
+        "http_trace": http_trace,
         "verifier_result": verifier_result,
         "artifacts": {
             "run_metadata": str(run_dir / runtime.run_metadata_name),
             "task": str(task_path),
             "tool_trace": str(tool_trace_path) if tool_trace_path.exists() else None,
+            "http_trace": str(http_trace_path) if http_trace_path.exists() else None,
         },
     }
 
@@ -55,6 +64,15 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{path.name} must contain a JSON object.")
     return data
+
+
+def _read_world_source_refs(world: str) -> dict[str, Any] | None:
+    path = PROJECT_ROOT / "worlds" / world / "source_refs.json"
+    if not path.exists():
+        return None
+    payload = _read_json(path)
+    payload["path"] = str(path)
+    return payload
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:

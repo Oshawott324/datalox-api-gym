@@ -286,7 +286,8 @@ def test_unitelabs_rejects_billing_only_cli_surfaces_explicitly(tmp_path: Path) 
 
     serve = runner.invoke(app, ["serve", "--run", str(episode.run_dir)])
     assert serve.exit_code == 2
-    assert "unsupported_world_surface" in serve.output
+    assert "invalid_run" in serve.output
+    assert "does not expose an HTTP app" in serve.output
     assert "unitelabs_plate_qc_v0" in serve.output
 
     resolve = runner.invoke(app, ["resolve", "--run", str(episode.run_dir)])
@@ -404,7 +405,10 @@ def test_unitelabs_session_create_manifest_and_check_tools(tmp_path: Path) -> No
     assert manifest["task_path"] == str(run_dir.resolve() / "task.json")
     assert Path(manifest["task_package"]).exists()
     assert manifest["artifacts"]["state_db"] == str(run_dir.resolve() / "state.sqlite")
-    assert "Run the Datalox tool catalog check" in manifest["integration_instructions"][2]
+    assert any(
+        "Run the Datalox tool catalog check" in instruction
+        for instruction in manifest["integration_instructions"]
+    )
     assert manifest["preflight"] == {
         "required": True,
         "datalox_tool_catalog_command": ["api-gym", "session", "check-tools", "--run", str(run_dir.resolve())],

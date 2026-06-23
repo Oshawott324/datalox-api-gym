@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
+from api_gym.worlds.state_backends import ensure_run_subdirs
 from api_gym.worlds.billing_support_v0.state import (
     RUN_METADATA_NAME,
     STATE_DB_NAME,
@@ -53,6 +54,7 @@ def sample_episode(*, scenario: str, seed: int, out_dir: Path) -> SampledEpisode
     if db_path.exists() or task_path.exists() or run_metadata_path.exists():
         raise FileExistsError(f"Run directory already contains API Gym state files: {out_dir}")
 
+    ensure_run_subdirs(out_dir)
     initialize_db(db_path)
     task = SCENARIOS[scenario](db_path, seed)
 

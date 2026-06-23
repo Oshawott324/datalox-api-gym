@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -15,9 +14,15 @@ from api_gym.source_pack_gate import (
     choose_response_case,
     find_operation,
 )
+from api_gym.worlds.http import (
+    COMMON_HTTP_METHODS,
+    append_jsonl,
+    query_params,
+    request_json_or_none,
+    structured_error_response,
+)
 
 
-COMMON_HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
 GATED_API_CALL_SCHEMA_VERSION = "api_gym.gated_api_call.v0"
 
 
@@ -34,13 +39,13 @@ def create_gate_app(
     async def gate_request(path: str, request: Request) -> JSONResponse:
         requested_case = request.headers.get("x-api-gym-case", default_case)
         provider_path = "/" + path.lstrip("/")
-        request_json = await _request_json_or_none(request)
+        request_json = await request_json_or_none(request)
         evidence_row = _base_evidence_row(
             provider=provider,
             version=version,
             method=request.method,
             path=provider_path,
-            query_params=_query_params(request),
+            query_params=query_params(request),
             request_json=request_json,
             selected_case=requested_case,
         )
@@ -86,21 +91,6 @@ def create_gate_app(
     return app
 
 
-async def _request_json_or_none(request: Request) -> object:
-    try:
-        return await request.json()
-    except json.JSONDecodeError:
-        return None
-
-
-def _query_params(request: Request) -> dict[str, object]:
-    return {
-        key: values[0] if len(values) == 1 else values
-        for key in sorted(set(request.query_params.keys()))
-        if (values := request.query_params.getlist(key))
-    }
-
-
 def _base_evidence_row(
     *,
     provider: str,
@@ -128,9 +118,7 @@ def _base_evidence_row(
 def _record_evidence(evidence_path: Path | None, row: dict[str, object]) -> None:
     if evidence_path is None:
         return
-    evidence_path.parent.mkdir(parents=True, exist_ok=True)
-    with evidence_path.open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+    append_jsonl(evidence_path, row)
 
 
 def _response_content(gate_response: dict[str, Any]) -> object:
@@ -153,14 +141,9 @@ def _status_code(status: object, response_case: dict[str, Any]) -> int:
 
 def _source_pack_error_response(exc: SourcePackGateError) -> JSONResponse:
     status_code = 404 if "not_found" in exc.code else 400
-    return JSONResponse(
-        content={
-            "ok": False,
-            "error": {
-                "code": exc.code,
-                "message": exc.message,
-                "details": exc.details,
-            },
-        },
+    return structured_error_response(
         status_code=status_code,
+        code=exc.code,
+        message=exc.message,
+        details=exc.details,
     )

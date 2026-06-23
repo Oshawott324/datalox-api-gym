@@ -1,47 +1,60 @@
 # Datalox API Gym
 
-Datalox API Gym packages source-backed dry-run worlds for testing, evaluating,
-training, and auditing tool-using agents before they touch real systems.
+Resettable, verifiable environments for tool-using agents: the high-stakes tool
+use you cannot safely rehearse on real systems, such as lab instruments, billing
+and financial ops, and anything costly or irreversible to run for real.
 
-An API Gym world is a resettable, stateful action system:
+A "world" is a resettable stateful system the agent acts on through MCP tools,
+with a hidden state-based verifier that grades the final world state and
+workflow invariants, not the transcript. The agent passes because the world
+ended up correct, not because it wrote a plausible answer.
 
 ```text
 World = source substrate
       + mutable episode state
-      + actions
+      + actions (MCP tools)
       + dynamics
       + observations
-      + verifier
-      + evidence
+      + hidden verifier
+      + exported evidence
 ```
 
-The product object is not a connector catalog and not just a fake API. It is a
-world package that an agent runtime can attach to, dry-run inside, verify, and
-export as audit/eval/training evidence.
-
-```text
-source substrate
-  -> world package
-  -> world session
-  -> MCP/action interface
-  -> agent rollout
-  -> verifier outcome
-  -> run_export evidence
-```
-
-API Gym owns world/session/runtime behavior. `datalox-rollout-collector` owns
-dataset packaging downstream from exported evidence.
-
-API source packs are first-class source substrate. Validate a pack before using
-it to design or update a world:
+## Try It In 60 Seconds
 
 ```bash
-api-gym source-pack validate source_packs/apis/<provider>/<version>
+pip install -e '.[dev]'
+python -m pytest -q
+api-gym session create \
+  --world unitelabs_plate_qc_v0 \
+  --scenario plate_transfer_qc --seed 1 \
+  --out runs/demo --json
+api-gym session finalize --run runs/demo --json
 ```
 
-Source packs include response cases for dry-run gating. An agent can call an
-original-shaped API surface, while Datalox returns a grounded sampled response
-case instead of calling the live provider.
+## What's Real Today
+
+- Two complete worlds: a dry-run lab plate-QC world and a billing/support-ops
+  world with HTTP serving, an oracle resolver, and an OpenAI-compatible eval
+  runner.
+- A dry-run API gate over 31 source-grounded providers, 134 operations, and 179
+  sourced response cases. An agent can call an original-shaped API and get a
+  sourced response back instead of hitting the live service.
+- A session lifecycle that plugs into an agent host, with run exports that
+  produce SFT/eval rows, plus a seed post-training packet across three lab/bio
+  task families.
+
+## What's Early
+
+- The lab world's API semantics are not yet grounded in a real vendor contract.
+- Two worlds and a seed dataset: early, with no model-lift claims.
+- Verifiers check workflow invariants and tool evidence, not scientific
+  correctness.
+
+## Closest Neighbors
+
+tau-bench, WebArena, SWE-bench, and AppWorld. API Gym's bet is high-stakes,
+costly-to-run domains those do not cover, with state-based verification and
+source-grounded APIs.
 
 ## Current Worlds
 
@@ -129,14 +142,19 @@ type DataloxWorldSessionAdapter = {
     out: string;
   }): Promise<SessionManifest>;
 
-  attachTools(manifest: SessionManifest): Promise<void>;
+  attachAdapters(manifest: SessionManifest): Promise<void>;
   assertToolsVisible(expectedTools: string[]): Promise<void>;
   runAgent(taskPackagePath: string): Promise<unknown>;
   finalizeSession(runDir: string): Promise<SessionFinalization>;
 };
 ```
 
-MCP is the action channel. The session manifest is the lifecycle contract.
+MCP is one action channel. For provider-shaped environments, the session
+manifest may also include an `http` surface. Use
+`api-gym serve --run <run_dir>` when the agent or SDK needs original-shaped
+HTTP calls. MCP remains available for hosts that prefer tool calls; both
+adapters must share the same world state and verifier. The session manifest is
+the lifecycle contract.
 
 ## Evidence Output
 

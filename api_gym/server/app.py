@@ -6,9 +6,12 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from api_gym.worlds.billing_support_v0.http import create_app as create_billing_support_app
+from api_gym.worlds.registry import get_runtime_for_run
 
 
 def create_app(run_dir: Path) -> FastAPI:
     """Create the FastAPI app for the run's world."""
-    return create_billing_support_app(run_dir)
+    runtime = get_runtime_for_run(run_dir)
+    if runtime.create_http_app is None:
+        raise ValueError(f"World '{runtime.world}' does not expose an HTTP app.")
+    return runtime.create_http_app(run_dir)

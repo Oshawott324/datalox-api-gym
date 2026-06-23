@@ -324,6 +324,7 @@ def test_lab_physical_action_source_packs_are_checked_in_and_validate() -> None:
         "unitelabs",
         "opentrons",
         "emerald_cloud_lab",
+        "pylabrobot",
     }
 
     for provider in sorted(required_providers):

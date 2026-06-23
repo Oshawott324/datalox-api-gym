@@ -1,0 +1,23 @@
+{
+  "schema_version": "api_gym.api_source_pack.v0",
+  "source_pack_id": "api.automata_linq.2026-06-22",
+  "provider": "automata_linq",
+  "version": "2026-06-22",
+  "status": "normalized",
+  "source_types": [
+    "docs",
+    "sdk"
+  ],
+  "records": {
+    "docs_index": "docs_index.jsonl",
+    "operations": "operations.jsonl",
+    "schemas": "schemas.jsonl",
+    "response_cases": "response_cases.jsonl",
+    "observed_errors": "observed_errors.jsonl",
+    "world_candidates": "world_candidates.jsonl"
+  },
+  "live_execution": {
+    "allowed": false,
+    "reason": "Source substrate only; this pack must not call live Automata LINQ APIs, deploy or publish workflows, start/pause/resume/stop/reset devices, respond to hardware errors, restart hubs, rotate credentials, or control workcells."
+  }
+}

@@ -1,0 +1,349 @@
+{
+  "schema_version": "api_gym.research_world_blueprint.v0",
+  "id": "dose-response-assay-env-v0",
+  "world": "dose_response_assay_env_v0",
+  "title": "Dose Response Assay Environment v0",
+  "version": "0.1.0",
+  "summary": "A dry-run research environment where an agent designs, executes, QC-checks, repairs, and reports a 96-well dose-response assay with traceable evidence.",
+  "research_value": {
+    "target_users": [
+      "lab automation researchers",
+      "AI-for-biology agent builders",
+      "automation-core teams validating agent-written workflows",
+      "model teams seeking stateful scientific environments"
+    ],
+    "practical_value": "The environment packages a real research workflow shape: plate-map design, dilution planning, dry-run transfer execution, plate-reader output, QC, curve fitting, repair, and evidence export. A lab can use the same shape to preflight agent-operated assays before live instruments.",
+    "community_artifact": "A reusable open reference environment for agent-operated dose-response assays over PyLabRobot-like or scheduler-backed substrates.",
+    "non_toy_signals": [
+      "The task has a scientific endpoint, not only device commands.",
+      "The verifier checks assay-level outcomes: controls, replicates, dose ordering, readout QC, and IC50 evidence.",
+      "The environment contains repairable failures that mirror real lab mistakes: stale deck state, insufficient reagent volume, overwritten controls, invalid dilution series, and failed plate-reader QC.",
+      "Run exports include state diffs, command logs, readout artifacts, QC tables, curve-fit outputs, and verifier results."
+    ]
+  },
+  "boundaries": {
+    "live_execution_allowed": false,
+    "dry_run_required": true,
+    "agent_receives_hidden_verifier_state": false
+  },
+  "substrates": [
+    {
+      "name": "pylabrobot_reference_backend",
+      "kind": "python_device_substrate",
+      "role": "Open reference backend for deck resources, tips, well volumes, and dry-run liquid handling.",
+      "boundary": "Use simulation, Chatterbox, or serialized state only. Do not connect to live robots or hardware backends.",
+      "source_refs": [
+        "source_packs/apis/pylabrobot/2026-06-18",
+        "https://docs.pylabrobot.org/stable/user_guide/machine-agnostic-features/using-the-visualizer.html",
+        "https://docs.pylabrobot.org/0.2.1/user_guide/machine-agnostic-features/using-trackers.html"
+      ]
+    },
+    {
+      "name": "plate_reader_readout_fixture",
+      "kind": "dry_run_measurement_fixture",
+      "role": "Deterministic absorbance or viability readout table for final assay analysis.",
+      "boundary": "Fixture-generated readouts only; no live plate reader calls.",
+      "source_refs": [
+        "world-local fixture generated during sampling"
+      ]
+    },
+    {
+      "name": "assay_analysis_backend",
+      "kind": "deterministic_analysis",
+      "role": "Computes QC summaries and a dose-response result from accepted readout wells.",
+      "boundary": "Use deterministic local analysis with explicit inputs and no hidden model calls.",
+      "source_refs": [
+        "world-local deterministic curve-fit contract"
+      ]
+    }
+  ],
+  "state_model": [
+    {
+      "name": "deck_revision",
+      "owner": "environment",
+      "agent_visible": true,
+      "description": "Revision token for deck, labware, sample, and reagent state. Mutating actions must cite the current revision."
+    },
+    {
+      "name": "plate_map",
+      "owner": "environment",
+      "agent_visible": true,
+      "description": "Agent-visible assay plate role assignments: compound doses, replicates, positive controls, negative controls, blank wells, and excluded wells."
+    },
+    {
+      "name": "sample_and_reagent_ledger",
+      "owner": "environment",
+      "agent_visible": true,
+      "description": "Current source volumes, reagent identities, compound stock concentration, and destination well volumes."
+    },
+    {
+      "name": "tip_and_contamination_ledger",
+      "owner": "environment",
+      "agent_visible": true,
+      "description": "Tip inventory, mounted tip state, and sample-to-tip contamination lineage."
+    },
+    {
+      "name": "readout_artifacts",
+      "owner": "environment",
+      "agent_visible": true,
+      "description": "Plate-reader output files, parsed well values, excluded wells, and QC result ids."
+    },
+    {
+      "name": "hidden_expected_resolution",
+      "owner": "hidden_verifier",
+      "agent_visible": false,
+      "description": "Seeded expected assay invariants used only by the verifier."
+    }
+  ],
+  "action_surface": [
+    {
+      "name": "inspect_assay_state",
+      "description": "Inspect deck revision, labware, available samples, reagents, tips, and current plate-map state.",
+      "inputs": {},
+      "effects": "Read-only observation.",
+      "failure_modes": [
+        "state_unavailable"
+      ]
+    },
+    {
+      "name": "propose_plate_map",
+      "description": "Submit a candidate dose-response plate map with doses, replicates, controls, and blanks.",
+      "inputs": {
+        "plate_map": "object",
+        "deck_revision": "string"
+      },
+      "effects": "Stores the proposed plate map if it is structurally valid.",
+      "failure_modes": [
+        "stale_deck_revision",
+        "invalid_plate_map",
+        "missing_controls"
+      ]
+    },
+    {
+      "name": "run_transfer_dry",
+      "description": "Execute a dry-run transfer plan against the current sample, reagent, tip, and plate state.",
+      "inputs": {
+        "transfer_plan": "array",
+        "deck_revision": "string"
+      },
+      "effects": "Mutates dry-run volumes, tip state, contamination lineage, and action log.",
+      "failure_modes": [
+        "stale_deck_revision",
+        "source_volume_underrun",
+        "destination_overfill",
+        "tip_unavailable",
+        "forbidden_tip_reuse"
+      ]
+    },
+    {
+      "name": "read_plate_dry",
+      "description": "Generate a deterministic dry-run readout artifact for the current assay plate.",
+      "inputs": {
+        "plate_id": "string",
+        "mode": "string",
+        "deck_revision": "string"
+      },
+      "effects": "Writes a readout artifact and parsed values for downstream QC.",
+      "failure_modes": [
+        "plate_not_ready",
+        "stale_deck_revision",
+        "missing_required_wells"
+      ]
+    },
+    {
+      "name": "run_assay_qc",
+      "description": "Evaluate controls, replicate consistency, dose ordering, missing data, and excluded wells.",
+      "inputs": {
+        "readout_id": "string"
+      },
+      "effects": "Writes a QC artifact and machine-readable pass/fail reasons.",
+      "failure_modes": [
+        "readout_not_found",
+        "control_qc_failed",
+        "replicate_qc_failed",
+        "dose_order_invalid"
+      ]
+    },
+    {
+      "name": "fit_dose_response",
+      "description": "Compute the final dose-response result from QC-accepted wells only.",
+      "inputs": {
+        "qc_id": "string"
+      },
+      "effects": "Writes curve-fit output and summary metrics.",
+      "failure_modes": [
+        "qc_not_passed",
+        "insufficient_accepted_points",
+        "curve_fit_unstable"
+      ]
+    },
+    {
+      "name": "submit_assay_report",
+      "description": "Submit the final assay decision with plate map, transfer, readout, QC, and curve-fit evidence ids.",
+      "inputs": {
+        "plate_map_id": "string",
+        "readout_id": "string",
+        "qc_id": "string",
+        "curve_fit_id": "string",
+        "decision": "string",
+        "rationale": "string"
+      },
+      "effects": "Stores the final report for hidden verification.",
+      "failure_modes": [
+        "missing_evidence",
+        "unaccepted_qc",
+        "report_inconsistent_with_state"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "name": "assay_state_observation",
+      "description": "Agent-visible summary of deck revision, labware, source volumes, tip inventory, controls, and current artifacts.",
+      "agent_visible": true
+    },
+    {
+      "name": "repairable_error_observation",
+      "description": "Stable error code, state references, and repair instruction returned after invalid environment actions.",
+      "agent_visible": true
+    },
+    {
+      "name": "qc_summary_observation",
+      "description": "Agent-visible QC pass/fail summary with evidence ids and rejected wells.",
+      "agent_visible": true
+    },
+    {
+      "name": "hidden_resolution_observation",
+      "description": "Seed-specific expected final invariants used only by the verifier.",
+      "agent_visible": false
+    }
+  ],
+  "verifier_checks": [
+    {
+      "name": "dry_run_no_live_action",
+      "description": "No live hardware backend, scheduler run, device endpoint, or plate reader call occurred.",
+      "hidden_from_agent": true,
+      "repairable": false
+    },
+    {
+      "name": "current_revision_used",
+      "description": "Every mutating action cited the current deck revision and stale evidence was not accepted.",
+      "hidden_from_agent": true,
+      "repairable": true
+    },
+    {
+      "name": "plate_map_satisfies_assay_design",
+      "description": "The final plate map includes required doses, replicates, blanks, positive controls, and negative controls.",
+      "hidden_from_agent": true,
+      "repairable": true
+    },
+    {
+      "name": "liquid_state_feasible",
+      "description": "Source volumes, destination capacities, transfer volumes, and final well volumes are feasible.",
+      "hidden_from_agent": true,
+      "repairable": true
+    },
+    {
+      "name": "tip_policy_and_contamination_clean",
+      "description": "Fresh-tip and no-cross-contamination policies were followed for all sample and compound transfers.",
+      "hidden_from_agent": true,
+      "repairable": true
+    },
+    {
+      "name": "readout_after_valid_execution",
+      "description": "Readout was generated only after a valid dry-run transfer plan produced a ready assay plate.",
+      "hidden_from_agent": true,
+      "repairable": true
+    },
+    {
+      "name": "qc_accepts_required_controls",
+      "description": "Control wells and replicate statistics passed the seeded QC thresholds.",
+      "hidden_from_agent": true,
+      "repairable": true
+    },
+    {
+      "name": "curve_fit_uses_accepted_wells_only",
+      "description": "Dose-response result was computed from QC-accepted wells and cites the correct QC artifact.",
+      "hidden_from_agent": true,
+      "repairable": true
+    },
+    {
+      "name": "final_report_cites_traceable_evidence",
+      "description": "Final report cites plate map, dry-run transfer log, readout, QC, curve-fit artifact, and decision rationale.",
+      "hidden_from_agent": true,
+      "repairable": true
+    }
+  ],
+  "evidence_exports": [
+    {
+      "name": "state_diff_trace",
+      "description": "Per-action state revisions and diffs for deck, volumes, tips, artifacts, and report state.",
+      "consumer": "agent evaluation and audit"
+    },
+    {
+      "name": "transfer_log",
+      "description": "Dry-run transfer commands, source/destination wells, volumes, tips, and failure records.",
+      "consumer": "researcher review"
+    },
+    {
+      "name": "readout_artifact",
+      "description": "Machine-readable plate-reader-style output and parsed well values.",
+      "consumer": "assay analysis"
+    },
+    {
+      "name": "qc_artifact",
+      "description": "Control, replicate, dose ordering, exclusion, and pass/fail QC results.",
+      "consumer": "verifier and researcher review"
+    },
+    {
+      "name": "curve_fit_artifact",
+      "description": "Dose-response fit inputs, accepted wells, fitted parameters, and result summary.",
+      "consumer": "scientific report"
+    },
+    {
+      "name": "run_export",
+      "description": "API Gym evidence export containing task, tool trace, verifier result, and artifact paths.",
+      "consumer": "eval/training/audit pipeline"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "eight_point_viability_ic50",
+      "objective": "Prepare and analyze an 8-point viability dose-response assay and submit an IC50 report with evidence.",
+      "agent_task": "Design the plate map, execute the dry-run transfer plan, generate a plate readout, run QC, fit the dose-response curve, repair any environment rejections, and submit a final evidence-backed report.",
+      "practical_use": "A researcher can test whether an agent can operate a full assay workflow before trusting it with a scheduler or live automation platform.",
+      "workflow_stages": [
+        "inspect current assay state",
+        "propose dose-response plate map",
+        "execute dry-run transfer plan",
+        "generate deterministic plate readout",
+        "run assay QC",
+        "fit dose-response curve",
+        "submit evidence-backed assay report"
+      ],
+      "required_state": [
+        "compound stock concentration and available volume",
+        "cell plate or assay plate layout",
+        "positive, negative, and blank controls",
+        "tip inventory and contamination ledger",
+        "plate-reader readout artifact",
+        "QC and curve-fit artifacts"
+      ],
+      "success_criteria": [
+        "8-point dose series with required replicates is present",
+        "positive, negative, and blank controls are preserved",
+        "all liquid transfers are feasible and respect tip policy",
+        "readout occurs after valid dry-run execution",
+        "QC passes for required controls and accepted wells",
+        "IC50 result is computed from QC-accepted wells only",
+        "final report cites traceable evidence artifacts"
+      ],
+      "expected_repairs": [
+        "recompute transfer plan after stale deck revision",
+        "change plate map when controls would be overwritten",
+        "reduce or redistribute transfers when source volume is insufficient",
+        "rerun QC after replacing invalid readout evidence"
+      ]
+    }
+  ]
+}

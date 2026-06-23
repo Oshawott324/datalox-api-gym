@@ -7,6 +7,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from api_gym.worlds.state_backends import connect_sqlite, resolve_state_db_path_from_metadata
+
 STATE_DB_NAME = "state.sqlite"
 RUN_METADATA_NAME = "run.json"
 TASK_NAME = "task.json"
@@ -14,28 +16,12 @@ TASK_NAME = "task.json"
 
 def connect(db_path: Path) -> sqlite3.Connection:
     """Open an episode SQLite database with API Gym defaults."""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return connect_sqlite(db_path)
 
 
 def resolve_state_db_path(run_dir: Path) -> Path:
     """Resolve the SQLite state database for a sampled run directory."""
-    run_dir = run_dir.resolve()
-    metadata_path = run_dir / RUN_METADATA_NAME
-    if not metadata_path.exists():
-        raise FileNotFoundError(f"Missing {RUN_METADATA_NAME} in run directory: {run_dir}")
-
-    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    state_db = metadata.get("state_db")
-    if not isinstance(state_db, str) or not state_db:
-        raise ValueError(f"{RUN_METADATA_NAME} must contain a non-empty state_db string.")
-
-    db_path = run_dir / state_db
-    if not db_path.exists():
-        raise FileNotFoundError(f"Missing state database at {db_path}")
-    return db_path
+    return resolve_state_db_path_from_metadata(run_dir, metadata_name=RUN_METADATA_NAME)
 
 
 def initialize_db(db_path: Path) -> None:

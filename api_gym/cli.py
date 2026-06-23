@@ -27,9 +27,15 @@ from api_gym.source_pack_gate import (
     find_operation,
 )
 from api_gym.source_packs import SourcePackValidationError, validate_source_pack
+from api_gym.world_blueprints import (
+    WorldBlueprintError,
+    scaffold_research_world_from_blueprint,
+    validate_research_world_blueprint,
+)
 from api_gym.worlds.billing_support_v0.sampler import SCENARIOS as BILLING_SCENARIOS
 from api_gym.worlds.billing_support_v0.oracle import resolve_run
 from api_gym.worlds.registry import SUPPORTED_WORLDS, get_runtime_for_run, get_world_runtime
+from api_gym.worlds.source_refs import validate_world_source_refs
 from api_gym.worlds.unitelabs_plate_qc_v0.api_contract_sampler import (
     UnitelabsApiContractSamplingError,
     write_openapi_contract_sample,
@@ -40,10 +46,14 @@ session_app = typer.Typer(help="World session lifecycle commands.")
 gate_app = typer.Typer(help="API source-pack HTTP gate commands.")
 source_pack_app = typer.Typer(help="API source-pack commands.")
 unitelabs_app = typer.Typer(help="Unitelabs-specific grounding commands.")
+world_blueprint_app = typer.Typer(help="Research world blueprint commands.")
+world_source_refs_app = typer.Typer(help="World source reference commands.")
 app.add_typer(session_app, name="session")
 app.add_typer(gate_app, name="gate")
 app.add_typer(source_pack_app, name="source-pack")
 app.add_typer(unitelabs_app, name="unitelabs")
+app.add_typer(world_blueprint_app, name="world-blueprint")
+app.add_typer(world_source_refs_app, name="world-source-refs")
 
 
 @app.command()
@@ -100,10 +110,9 @@ def serve(
     port: Annotated[int, typer.Option(help="Port for the HTTP server.")] = 8080,
 ) -> None:
     """Serve one sampled run through the FastAPI HTTP surface."""
-    _ensure_billing_run_surface(run, "serve")
     try:
         fastapi_app = create_app(run)
-    except (FileNotFoundError, ValueError) as exc:
+    except (FileNotFoundError, ValueError, json.JSONDecodeError) as exc:
         _exit_error("invalid_run", str(exc), {"run": str(run)})
 
     import uvicorn
@@ -330,6 +339,44 @@ def unitelabs_sample_api_contract(
     except UnitelabsApiContractSamplingError as exc:
         _exit_error(exc.code, str(exc), exc.details)
     _echo_json({"ok": True, "out": str(out), "sample": sample_payload})
+
+
+@world_blueprint_app.command("validate")
+def world_blueprint_validate(path: Annotated[Path, typer.Argument(help="Research world blueprint JSON path.")]) -> None:
+    """Validate a research task-to-environment blueprint."""
+    try:
+        result = validate_research_world_blueprint(path)
+    except WorldBlueprintError as exc:
+        _exit_error(exc.code, str(exc), exc.details)
+    _echo_json(result)
+
+
+@world_blueprint_app.command("scaffold")
+def world_blueprint_scaffold(
+    path: Annotated[Path, typer.Argument(help="Research world blueprint JSON path.")],
+    out_root: Annotated[Path, typer.Option(help="Repository root to write worlds/ and api_gym/worlds/ under.")] = Path("."),
+    overwrite: Annotated[bool, typer.Option("--overwrite", help="Overwrite existing scaffold files.")] = False,
+) -> None:
+    """Scaffold a non-registered world package from a research blueprint."""
+    try:
+        result = scaffold_research_world_from_blueprint(path, out_root=out_root, overwrite=overwrite)
+    except WorldBlueprintError as exc:
+        _exit_error(exc.code, str(exc), exc.details)
+    _echo_json(result)
+
+
+@world_source_refs_app.command("validate")
+def world_source_refs_validate(
+    world: Annotated[str, typer.Option(help="World directory id.")],
+) -> None:
+    """Validate a world's selected source-pack and evidence references."""
+    try:
+        result = validate_world_source_refs(world)
+    except (FileNotFoundError, json.JSONDecodeError, ValueError) as exc:
+        _exit_error("world_source_refs_validate_failed", str(exc), {"world": world})
+    _echo_json(result)
+    if not result["ok"]:
+        raise typer.Exit(1)
 
 
 @session_app.command("create")

@@ -269,24 +269,33 @@ Finance approval caveats:
 
 ## Lab/Physical-Action Coverage
 
-Checked on 2026-06-16 with:
+Checked on 2026-06-22 with:
 
 ```bash
 for p in unitelabs opentrons emerald_cloud_lab; do
   api-gym source-pack validate "source_packs/apis/$p/2026-06-16"
 done
+api-gym source-pack validate source_packs/apis/pylabrobot/2026-06-18
+api-gym source-pack validate source_packs/apis/benchling/2026-06-22
+api-gym source-pack validate source_packs/apis/sila2_reference/2026-06-22
+api-gym source-pack validate source_packs/apis/automata_linq/2026-06-22
 ```
 
-All checked-in lab/physical-action packs validate structurally. They are
-dry-run/source-substrate packs only. No source pack authorizes live workflow
-execution, robot control, instrument control, experiment submission, device
-actuation, sample shipment, or physical-action execution.
+All checked-in lab/physical-action and lab-scheduler public-lane packs validate
+structurally. They are dry-run/source-substrate packs only. No source pack
+authorizes live workflow execution, robot control, instrument control,
+experiment submission, device actuation, sample shipment, scheduler run
+creation, or physical-action execution.
 
 | Provider | Lane | Ops | Response cases | Concrete cases | Shape cases | Response error cases | Observed/boundary errors | World status | Quality status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | UniteLabs | lab workflow run/log/artifact grounding | 4 | 5 | 0 | 4 | 1 | 2 | candidate; `unitelabs_plate_qc_v0` still cites world-local grounding | shape-grounded from public docs and repo grounding; no checked-in OpenAPI sample |
-| Opentrons | protocol analysis and run inspection candidate | 4 | 5 | 0 | 4 | 1 | 2 | candidate; not runtime-world-ready | shape-grounded from official HTTP API and app docs; hardware execution boundary documented |
+| Opentrons | protocol analysis and run inspection candidate | 4 | 6 | 1 | 4 | 1 | 2 | candidate; not runtime-world-ready | one concrete docs-derived upload excerpt plus shape-grounded analysis/run inspection rows; hardware execution boundary documented |
 | Emerald Cloud Lab | documentation/API-index discovery candidate | 4 | 5 | 0 | 4 | 1 | 2 | candidate; not runtime-world-ready | boundary-gated; public docs are insufficient for lab-operation runtime modeling |
+| PyLabRobot | dry-run liquid-handling action semantics candidate | 6 | 9 | 6 | 0 | 3 | 5 | candidate; not runtime-world-ready | concrete Chatterbox/OT-2 simulator excerpts plus tracker error boundaries; no live hardware |
+| Benchling | automation handoff-side API candidate | 8 | 14 | 0 | 8 | 6 | 3 | candidate; not runtime-world-ready | source-packable from public API/SDK docs; explicitly boundary-gates Cellario execution |
+| SiLA 2 Reference | standard/reference feature API candidate | 6 | 7 | 0 | 6 | 1 | 3 | candidate; not vendor scheduler-ready | reference gRPC/FDL semantics for discovery, feature definitions, properties, commands, status, and validation boundaries |
+| Automata LINQ | lab orchestration SDK/API candidate | 15 | 18 | 0 | 15 | 3 | 5 | candidate; not runtime-world-ready | shape-grounded from public docs plus pinned SDK static wire/model inspection; no live tenant, run, workcell, or hardware execution |
 
 Lab/physical-action caveats:
 
@@ -297,19 +306,61 @@ Lab/physical-action caveats:
   `worlds/unitelabs_plate_qc_v0/source_refs.json`. This does not expose
   verifier state or mutable session state.
 - Opentrons covers protocol upload, protocol analysis creation, protocol
-  analysis reads, and run-command inspection as source substrate. Robot run
-  start, command execution, maintenance movement, module commands, pipetting,
-  lights, homing, and other hardware-control surfaces are explicitly outside
-  this dry-run pack.
+  analysis reads, and run-command inspection as source substrate. It now has
+  one concrete docs-derived upload response excerpt for required equipment and
+  metadata. Robot run start, command execution, maintenance movement, module
+  commands, pipetting, lights, homing, and other hardware-control surfaces are
+  explicitly outside this dry-run pack.
 - Emerald Cloud Lab covers the public documentation center categories and the
   Constellation API documentation index as a boundary-gated candidate. It does
   not model experiment submission, lab scheduling, instrument operation, sample
   logistics, or result generation because public endpoint contracts and
   concrete response examples were not captured in this task.
-- All three packs are structurally valid but shape-grounded. Do not claim
-  runtime-world-ready lab/physical-action coverage until selected records have
-  concrete official examples, approved recorded evidence, or a declared
-  synthetic-dynamics boundary that passes the runtime-world acceptance gate.
+- PyLabRobot covers software-only `LiquidHandlerChatterboxBackend`, tracker
+  enablement, tip pickup, aspirate, dispense, and offline
+  `OpentronsOT2Simulator` setup. It is stronger than Emerald Cloud Lab for
+  dry-run action semantics because official PyLabRobot docs provide concrete
+  Chatterbox/OT-2 simulator output and documented tracker failures, but it is
+  still not runtime-world-ready until a world selects a deck/resource state
+  schema, dynamics rules, and verifier invariants.
+- Benchling covers the ELN/LIMS-side handoff substrate: plates, workflow
+  tasks, workflow outputs, blobs, automation input generation, automation
+  output processing, and events. It does not cover Cellario endpoint shape,
+  scheduler run creation, workcell execution, robot motion, or instrument
+  control.
+- SiLA 2 Reference covers generic standard semantics only: discovery,
+  implemented features, feature definitions, properties, commands, observable
+  command status, typed data, and validation errors. Vendor-specific features,
+  instruments, and scheduler processes still need their own FDL/protobuf/docs
+  or safe captures before source-pack promotion.
+- Automata LINQ covers source-grounded SDK/API routes for workflow creation,
+  workflow listing and retrieval, validation, planning, plan polling/result
+  retrieval, scheduler versions, drivers, workcells, device status, run
+  histories, and log-export URL shape. The pack is grounded by public Automata
+  docs plus static inspection of `automata-linq-sdk==1.18.0`; it does not
+  contain live captures or concrete tenant bodies, and it boundary-gates
+  publish, deploy, start/pause/resume/stop/reset, error response, hub restart,
+  credential management, and any hardware/workcell execution.
+- The lab packs are structurally valid but only PyLabRobot has concrete
+  dry-run action excerpts. Do not claim runtime-world-ready
+  lab/physical-action coverage until selected records have concrete official
+  examples, approved recorded evidence, or a declared synthetic-dynamics
+  boundary that passes the runtime-world acceptance gate.
+
+## Lab Scheduler Commercial Intake
+
+Sprint 1 commercial scheduler intake is complete at dossier level. Cellario,
+Green Button Go, and Genera remain `needs_docs_or_probe`; do not create
+operation records from public marketing claims alone. Automata LINQ has been
+promoted from intake to a shape-grounded source pack through public SDK static
+inspection, not through marketing claims.
+
+| Provider | Dossier | Public evidence level | Decision | Promotion trigger |
+| --- | --- | --- | --- | --- |
+| HighRes Cellario | `docs/research/lab-scheduler-intake/cellario.md` | L0/L1 with a private Swagger/API-docs pointer | `needs_docs_or_probe` | OpenAPI/Swagger, SDK/protobuf/plugin docs, sandbox validate/simulate probe, or approved captures |
+| Biosero Green Button Go | `docs/research/lab-scheduler-intake/green_button_go.md` | L0/L1 REST/API/database-hook and simulation-mode claims | `needs_docs_or_probe` | REST/database hook docs, workflow export schema, simulation responses, event logs, or approved captures |
+| Retisoft Genera | `docs/research/lab-scheduler-intake/genera.md` | L0/L1 scheduler/simulation/error-recovery claims plus Remote API existence signal | `needs_docs_or_probe` | Remote API docs, simulator/export/log schemas, sandbox simulation, or approved captures |
+| Automata LINQ | `docs/research/lab-scheduler-intake/automata_linq.md` plus `source_packs/apis/automata_linq/2026-06-22` | L2 pinned SDK route/model inspection plus public docs; no concrete sampled bodies | `source_pack_now` for shape-grounded source substrate | Sandbox validation/planning captures, concrete run/log examples, OpenAPI/MCP schemas, or recorded logs for world promotion |
 
 ## What Is Sampled Well Today
 

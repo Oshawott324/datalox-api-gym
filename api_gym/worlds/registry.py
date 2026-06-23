@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from importlib import import_module
+from importlib import import_module, util
 from pathlib import Path
 from typing import Any, Callable
 
@@ -23,6 +23,8 @@ class WorldRuntime:
     task_name: str
     mcp_server_name: str
     mcp_server_title: str
+    create_http_app: Callable[[Path], Any] | None
+    http_surface: str
 
 
 SUPPORTED_WORLDS = ("billing_support_v0", "unitelabs_plate_qc_v0")
@@ -71,6 +73,11 @@ def _runtime_from_package(*, world: str, package: str, mcp_server_title: str) ->
     verifier = import_module(f"{package}.verifier")
     tools = import_module(f"{package}.tools")
     state = import_module(f"{package}.state")
+    http_spec = util.find_spec(f"{package}.http")
+    http_module = import_module(f"{package}.http") if http_spec is not None else None
+    create_http_app = getattr(http_module, "create_app", None) if http_module is not None else None
+    if create_http_app is not None and not callable(create_http_app):
+        raise ValueError(f"{package}.http.create_app must be callable when defined.")
 
     world_id = str(sampler.WORLD_ID)
     return WorldRuntime(
@@ -86,4 +93,6 @@ def _runtime_from_package(*, world: str, package: str, mcp_server_title: str) ->
         task_name=str(state.TASK_NAME),
         mcp_server_name=f"api-gym-{world_id}",
         mcp_server_title=mcp_server_title,
+        create_http_app=create_http_app,
+        http_surface="available" if create_http_app is not None else "not_available",
     )

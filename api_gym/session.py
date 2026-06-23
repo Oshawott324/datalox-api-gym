@@ -59,10 +59,12 @@ def build_session_manifest(run_dir: Path) -> dict[str, Any]:
         "task_instructions": task_package["agent_facing_instructions"],
         "task_package": str(task_package_path),
         "mcp": task_package["recommended_mcp_config"],
+        "http": _http_manifest(runtime, run_dir),
         "expected_tools": expected_tools,
         "integration_instructions": [
             "Load the task_package and MCP config from this manifest.",
             "Attach the MCP server before running the agent.",
+            "Start the HTTP server only when the task or host needs provider-shaped HTTP.",
             "Run the Datalox tool catalog check, then prove the host agent-visible tool layer contains expected_tools before rollout.",
             "Do not expose state.sqlite or hidden verifier state to the agent.",
             "After the agent stops, call the finalize command and consume verifier_result plus run_export.",
@@ -141,6 +143,20 @@ def finalize_world_session(run_dir: Path) -> dict[str, Any]:
 
 def _tool_names(tool_definitions: list[dict[str, Any]]) -> list[str]:
     return sorted(str(tool["function"]["name"]) for tool in tool_definitions)
+
+
+def _http_manifest(runtime: Any, run_dir: Path) -> dict[str, Any]:
+    if runtime.create_http_app is None:
+        return {
+            "available": False,
+            "reason": f"World '{runtime.world}' does not expose an HTTP app.",
+        }
+    return {
+        "available": True,
+        "recommended_command": ["api-gym", "serve", "--run", str(run_dir)],
+        "recommended_base_url": "http://127.0.0.1:8080",
+        "trace_path": str(run_dir / "traces" / "http_requests.jsonl"),
+    }
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
