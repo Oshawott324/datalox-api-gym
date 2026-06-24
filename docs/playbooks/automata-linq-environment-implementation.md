@@ -15,7 +15,8 @@ Source substrate:
 
 Build a first Automata LINQ dry-run environment where an agent can author,
 validate, plan, poll, and inspect workflow-planning evidence through
-original-shaped API calls, with optional MCP tools over the same service.
+original-shaped API calls, with optional CLI and MCP tools over the same
+service.
 
 Implemented world id:
 
@@ -248,6 +249,28 @@ It should route Automata-shaped paths to service methods and write
 Do not use the existing stateless `api-gym gate serve` as the runtime world.
 That gate is useful for source-pack response lookup, but it cannot mutate
 episode state or support verifier checks.
+
+### CLI Adapter Later
+
+A provider-shaped CLI would make this world more naturally usable by both
+humans and agents:
+
+```text
+api-gym automata-linq workflow validate --json workflow.json
+api-gym automata-linq workflow plan --workflow-id workflow_agent_0002
+api-gym automata-linq workflow plan-status --workflow-id ... --plan-id ...
+```
+
+The CLI should follow the generic framework distinction:
+
+- `--dry-run` previews the request/policy outcome and does not mutate episode
+  state.
+- normal execution calls the same service layer as HTTP and MCP, mutates the
+  resettable world state, and records evidence for the verifier/export path.
+- all success and error output is structured JSON by default.
+
+Do not implement a CLI-specific planner, validator, or verifier. The CLI is an
+agent-native adapter, not a second environment.
 
 ### MCP Second
 

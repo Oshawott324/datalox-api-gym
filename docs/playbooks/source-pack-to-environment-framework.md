@@ -36,10 +36,33 @@ api-gym session create
 
 - Do not make API Gym a live API aggregator.
 - Do not make MCP the source of truth.
+- Do not treat request-preview `--dry-run` as equivalent to an environment
+  dry-run.
 - Do not invent provider semantics that are not in a source pack, explicit
   world contract, approved sandbox probe, or recorded capture.
 - Do not require every world to use the same storage engine.
 - Do not force a universal lab automation JSON shape across vendors.
+
+## Dry-Run Taxonomy
+
+Agent-native API tools increasingly expose request-preview modes. A CLI can
+build and display the HTTP request it would send without executing it. That is
+useful for safety and agent planning, but it is not the same primitive as an
+API Gym environment.
+
+Use these terms precisely:
+
+| Term | Meaning | Mutates episode state? | Verifier-backed? |
+| --- | --- | --- | --- |
+| request preview | build and display the provider request that would be sent | no | no |
+| live provider test mode | call a provider sandbox or test tenant | provider-owned | only if captured into a world |
+| stateless source-pack gate | return a sourced response case for an operation | no | no |
+| environment dry-run | execute against resettable world state with synthetic or recorded dynamics | yes | yes |
+
+Request preview is an adapter safety feature. Environment dry-run is the
+training/evaluation primitive. A production-quality agent workflow can use
+both: preview the intended provider request, then execute it against a
+resettable dry-run world whose verifier checks final state and evidence.
 
 ## Layer Model
 
@@ -164,7 +187,42 @@ Implementation direction:
 - preserve provider status codes and error envelopes when source-backed
 - emit evidence rows for every request
 
-### 5. MCP Adapter
+### 5. Agent-Native CLI Adapter
+
+CLI adapters should be first-class when a provider API can be exposed as a
+discoverable command surface.
+
+The useful pattern is:
+
+```text
+source pack or provider discovery schema
+  -> generated command tree
+  -> --help/schema for each operation
+  -> --dry-run request preview
+  -> structured JSON output for success and error cases
+  -> optional pagination helpers
+  -> same world service layer
+```
+
+Rules:
+
+- CLI commands must call the same service methods as HTTP and MCP.
+- CLI output should default to structured JSON for agents.
+- `--dry-run` on the CLI should preview the request and policy outcome without
+  mutating state.
+- A separate execution mode should mutate the resettable episode state and
+  record trace/audit evidence.
+- Pagination helpers should preserve provider-shaped cursor semantics when
+  those semantics are source-backed.
+- Do not hide unsafe operations behind a CLI convenience command. Dangerous
+  live actions still need stable boundary errors and verifier-visible audit
+  rows.
+
+This makes the CLI useful for both humans and agents, while keeping API Gym's
+core value in the environment, verifier, and export layer rather than in the
+transport.
+
+### 6. MCP Adapter
 
 MCP is a transport adapter over the same service layer. It is not the
 environment.
@@ -184,7 +242,7 @@ Use MCP when an agent host needs a native tool surface. Do not put unique
 business logic in MCP handlers. If HTTP and MCP disagree, the service layer is
 wrongly split.
 
-### 6. SDK Shim Adapter
+### 7. SDK Shim Adapter
 
 SDK shims are useful when a provider has a public SDK and the agent or tests
 can point that SDK at a local base URL.
@@ -193,7 +251,7 @@ Use this only when the SDK supports configurable domains or can be cleanly
 wrapped without monkeypatching private internals. The SDK shim should still hit
 the same original-shaped HTTP adapter and state backend.
 
-### 7. Verifier And Export
+### 8. Verifier And Export
 
 Existing code:
 
@@ -224,6 +282,10 @@ Add or evolve:
 ```text
 api_gym/worlds/http.py
   generic stateful HTTP adapter helpers for world runtimes
+
+api_gym/worlds/cli.py
+  optional adapter helpers for generated/discoverable provider-shaped CLIs
+  when two worlds need the same command-building pattern
 
 api_gym/worlds/state_backends.py
   shared SQLite helpers or protocols only if duplication appears across worlds
@@ -257,7 +319,7 @@ Acceptance:
 
 - `api-gym session create --world <world> ...` writes a run directory
 - original-shaped HTTP server can serve that run
-- optional MCP tools call the same service
+- optional CLI and MCP tools call the same service
 - verifier checks state and evidence
 - source refs cite selected source-pack records
 - live side-effecting provider operations are boundary-gated
@@ -279,6 +341,8 @@ api-gym session finalize --run runs/<run_id> --json
 
 `api-gym gate serve` remains the stateless source-pack response-case gate.
 `api-gym serve` is the stateful world HTTP surface.
+Provider-shaped CLI adapters are a next framework surface, not a replacement
+for session lifecycle commands.
 
 ## Design Rule
 
