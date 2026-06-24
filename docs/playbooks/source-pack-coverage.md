@@ -295,7 +295,7 @@ creation, or physical-action execution.
 | PyLabRobot | dry-run liquid-handling action semantics candidate | 6 | 9 | 6 | 0 | 3 | 5 | candidate; not runtime-world-ready | concrete Chatterbox/OT-2 simulator excerpts plus tracker error boundaries; no live hardware |
 | Benchling | automation handoff-side API candidate | 8 | 14 | 0 | 8 | 6 | 3 | candidate; not runtime-world-ready | source-packable from public API/SDK docs; explicitly boundary-gates Cellario execution |
 | SiLA 2 Reference | standard/reference feature API candidate | 6 | 7 | 0 | 6 | 1 | 3 | candidate; not vendor scheduler-ready | reference gRPC/FDL semantics for discovery, feature definitions, properties, commands, status, and validation boundaries |
-| Automata LINQ | lab orchestration SDK/API candidate | 15 | 18 | 0 | 15 | 3 | 5 | candidate; not runtime-world-ready | shape-grounded from public docs plus pinned SDK static wire/model inspection; no live tenant, run, workcell, or hardware execution |
+| Automata LINQ | lab orchestration SDK/API candidate | 15 | 18 | 0 | 15 | 3 | 5 | selected by `automata_linq_workflow_planning_v0` with declared synthetic dry-run dynamics | shape-grounded from public docs plus pinned SDK static wire/model inspection; no live tenant, run, workcell, or hardware execution |
 
 Lab/physical-action caveats:
 
@@ -338,14 +338,16 @@ Lab/physical-action caveats:
   retrieval, scheduler versions, drivers, workcells, device status, run
   histories, and log-export URL shape. The pack is grounded by public Automata
   docs plus static inspection of `automata-linq-sdk==1.18.0`; it does not
-  contain live captures or concrete tenant bodies, and it boundary-gates
-  publish, deploy, start/pause/resume/stop/reset, error response, hub restart,
-  credential management, and any hardware/workcell execution.
+  contain live captures or concrete tenant bodies. The selected records are now
+  used by `automata_linq_workflow_planning_v0`, which declares modest
+  synthetic dry-run dynamics and boundary-gates publish, deploy,
+  start/pause/resume/stop/reset, error response, hub restart, credential
+  management, and any hardware/workcell execution.
 - The lab packs are structurally valid but only PyLabRobot has concrete
-  dry-run action excerpts. Do not claim runtime-world-ready
-  lab/physical-action coverage until selected records have concrete official
-  examples, approved recorded evidence, or a declared synthetic-dynamics
-  boundary that passes the runtime-world acceptance gate.
+  dry-run action excerpts. Do not claim high-fidelity lab/physical-action
+  coverage until selected records have concrete official examples, approved
+  recorded evidence, or a declared synthetic-dynamics boundary that passes the
+  runtime-world acceptance gate.
 
 ## Lab Scheduler Commercial Intake
 
@@ -360,7 +362,7 @@ inspection, not through marketing claims.
 | HighRes Cellario | `docs/research/lab-scheduler-intake/cellario.md` | L0/L1 with a private Swagger/API-docs pointer | `needs_docs_or_probe` | OpenAPI/Swagger, SDK/protobuf/plugin docs, sandbox validate/simulate probe, or approved captures |
 | Biosero Green Button Go | `docs/research/lab-scheduler-intake/green_button_go.md` | L0/L1 REST/API/database-hook and simulation-mode claims | `needs_docs_or_probe` | REST/database hook docs, workflow export schema, simulation responses, event logs, or approved captures |
 | Retisoft Genera | `docs/research/lab-scheduler-intake/genera.md` | L0/L1 scheduler/simulation/error-recovery claims plus Remote API existence signal | `needs_docs_or_probe` | Remote API docs, simulator/export/log schemas, sandbox simulation, or approved captures |
-| Automata LINQ | `docs/research/lab-scheduler-intake/automata_linq.md` plus `source_packs/apis/automata_linq/2026-06-22` | L2 pinned SDK route/model inspection plus public docs; no concrete sampled bodies | `source_pack_now` for shape-grounded source substrate | Sandbox validation/planning captures, concrete run/log examples, OpenAPI/MCP schemas, or recorded logs for world promotion |
+| Automata LINQ | `docs/research/lab-scheduler-intake/automata_linq.md` plus `source_packs/apis/automata_linq/2026-06-22` | L2 pinned SDK route/model inspection plus public docs; no concrete sampled bodies | selected into dry-run world v0 with explicit synthetic dynamics | Sandbox validation/planning captures, concrete run/log examples, OpenAPI/MCP schemas, or recorded logs for high-fidelity promotion |
 
 ## What Is Sampled Well Today
 

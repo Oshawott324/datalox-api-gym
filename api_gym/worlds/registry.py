@@ -27,11 +27,21 @@ class WorldRuntime:
     http_surface: str
 
 
-SUPPORTED_WORLDS = ("billing_support_v0", "unitelabs_plate_qc_v0")
+SUPPORTED_WORLDS = (
+    "automata_linq_workflow_planning_v0",
+    "billing_support_v0",
+    "unitelabs_plate_qc_v0",
+)
 
 
 def get_world_runtime(world: str) -> WorldRuntime:
     """Return the runtime adapter for a world id."""
+    if world == "automata_linq_workflow_planning_v0":
+        return _runtime_from_package(
+            world=world,
+            package="api_gym.worlds.automata_linq_workflow_planning_v0",
+            mcp_server_title="API Gym Automata LINQ Workflow Planning",
+        )
     if world == "billing_support_v0":
         return _runtime_from_package(
             world=world,

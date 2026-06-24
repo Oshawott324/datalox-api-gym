@@ -17,7 +17,7 @@ Build a first Automata LINQ dry-run environment where an agent can author,
 validate, plan, poll, and inspect workflow-planning evidence through
 original-shaped API calls, with optional MCP tools over the same service.
 
-Recommended world id:
+Implemented world id:
 
 ```text
 automata_linq_workflow_planning_v0
@@ -43,6 +43,12 @@ It is not:
 The environment must therefore be labeled as a source-backed dry-run world with
 explicit synthetic dynamics. It must not claim high-fidelity Automata runtime
 behavior until sandbox captures or recorded provider observations are added.
+
+Current implementation status: `automata_linq_workflow_planning_v0` is
+implemented as a dry-run runtime world with original-shaped HTTP routes, MCP
+tools over the same service layer, SQLite episode state, source refs, and a
+hidden verifier. It remains shape-grounded, not high-fidelity Automata runtime
+behavior.
 
 ## First World Scope
 
@@ -184,6 +190,8 @@ Agent goal:
 Verifier checks:
 
 - final workflow is stored
+- final workflow is the seeded workflow or a replacement carrying
+  `metadata.repaired_from_workflow_id`
 - last validation is `is_valid=true`
 - a plan exists for that workflow
 - plan status is `COMPLETED`
@@ -204,6 +212,8 @@ Agent goal:
 Verifier checks:
 
 - stale plan id is not used as final evidence
+- final workflow is the seeded workflow or a replacement carrying
+  `metadata.recomputed_from_workflow_id`
 - new validation happened after the scenario mutation marker
 - new plan id is linked to the current workflow checksum
 - final result cites the new plan
@@ -365,4 +375,3 @@ Until then, describe it as:
 ```text
 shape-grounded Automata LINQ workflow-planning dry-run environment
 ```
-

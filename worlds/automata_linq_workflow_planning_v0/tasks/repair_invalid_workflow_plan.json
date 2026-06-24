@@ -1,0 +1,14 @@
+{
+  "schema_version": "api_gym.task_template.v0",
+  "scenario": "repair_invalid_workflow_plan",
+  "objective": "Repair an invalid Automata LINQ workflow plan in dry-run state.",
+  "prompt": "Inspect the sampled Automata LINQ workflow context, use structured validation information to repair the invalid workflow definition, and create a repaired replacement workflow. Preserve traceability by setting metadata.repaired_from_workflow_id to the invalid workflow id you repaired. Validate the repaired workflow, plan it, poll plan status, and retrieve the plan result. Stay within dry-run state and do not call live Automata LINQ services.",
+  "source_records": [
+    "operation:validateWorkflow",
+    "operation:planWorkflow",
+    "operation:getPlanStatus",
+    "operation:getPlanResult",
+    "response_case:validateWorkflow:workflow_api_error",
+    "observed_error:workflow_api_detail"
+  ]
+}

@@ -33,9 +33,9 @@ api-gym session finalize --run runs/demo --json
 
 ## What's Real Today
 
-- Two complete worlds: a dry-run lab plate-QC world and a billing/support-ops
-  world with HTTP serving, an oracle resolver, and an OpenAI-compatible eval
-  runner.
+- Three complete worlds: a dry-run lab plate-QC world, a billing/support-ops
+  world with HTTP serving, and a shape-grounded Automata LINQ workflow-planning
+  dry-run world.
 - A dry-run API gate over 31 source-grounded providers, 134 operations, and 179
   sourced response cases. An agent can call an original-shaped API and get a
   sourced response back instead of hitting the live service.
@@ -46,7 +46,7 @@ api-gym session finalize --run runs/demo --json
 ## What's Early
 
 - The lab world's API semantics are not yet grounded in a real vendor contract.
-- Two worlds and a seed dataset: early, with no model-lift claims.
+- Three worlds and a seed dataset: early, with no model-lift claims.
 - Verifiers check workflow invariants and tool evidence, not scientific
   correctness.
 
@@ -73,6 +73,17 @@ source-grounded APIs.
   tools
 - hidden verifier checks dry-run workflow invariants
 - API semantics should be grounded from an explicit UniteLabs OpenAPI contract
+
+`automata_linq_workflow_planning_v0`
+
+- shape-grounded dry-run lab-orchestration workflow-planning world
+- SQLite episode state shared by original-shaped HTTP routes and MCP tools
+- workflow authoring, validation, planning, plan polling/result, read-only
+  scheduler, driver, workcell, device, run-history, and log-export surfaces
+- hidden verifier checks final workflow state, planning evidence, stale-plan
+  repair, and live-action boundary enforcement
+- not high-fidelity Automata runtime behavior; no live tenant, workcell, or
+  hardware execution
 
 ## Quickstart
 

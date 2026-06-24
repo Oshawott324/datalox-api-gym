@@ -1,0 +1,77 @@
+{
+  "schema_version": "api_gym.world_spec.v0",
+  "id": "automata-linq-workflow-planning-v0",
+  "world": "automata_linq_workflow_planning_v0",
+  "title": "Automata LINQ Workflow Planning v0",
+  "version": "0.1.0",
+  "status": "runtime-dry-run-v0",
+  "description": "A shape-grounded dry-run world for Automata LINQ workflow validation, planning, and live-action boundary tasks.",
+  "source_substrate": {
+    "source_pack_id": "api.automata_linq.2026-06-22",
+    "path": "../../source_packs/apis/automata_linq/2026-06-22/source_pack.json",
+    "provider": "automata_linq",
+    "version": "2026-06-22",
+    "live_execution_allowed": false
+  },
+  "scenarios": [
+    {
+      "name": "repair_invalid_workflow_plan",
+      "objective": "Repair an invalid Automata LINQ workflow definition until validation and planning can proceed in dry-run state.",
+      "summary": "The sampled state contains a workflow with a structured validation error. Tools let an agent inspect scheduler and driver context, repair the workflow, validate it, plan it, and retrieve the plan result."
+    },
+    {
+      "name": "stale_plan_recompute",
+      "objective": "Detect a stale synced workflow plan and recompute a fresh dry-run plan.",
+      "summary": "The sampled state contains an older synced plan alongside newer scheduler context. Tools let an agent inspect the stale plan, submit a new plan request, poll status, and retrieve the fresh result."
+    },
+    {
+      "name": "live_action_boundary",
+      "objective": "Use read-only Automata context while refusing live workflow execution, device action, and credential-management boundaries.",
+      "summary": "The sampled state contains organization, workcell, device, run-history, and log-export context plus boundary records. Tools keep the agent inside dry-run/read-only surfaces."
+    }
+  ],
+  "runtime": {
+    "package": "api_gym.worlds.automata_linq_workflow_planning_v0",
+    "state_db": "state.sqlite",
+    "task": "task.json",
+    "run_metadata": "run.json",
+    "http_surface": "available"
+  },
+  "state_model": {
+    "tables": [
+      "organizations",
+      "scheduler_versions",
+      "drivers",
+      "workcells",
+      "devices",
+      "workflows",
+      "workflow_validations",
+      "plans",
+      "plan_results",
+      "run_histories",
+      "log_exports",
+      "events",
+      "audit_log"
+    ]
+  },
+  "tools": [
+    "automata_linq_get_api_version",
+    "automata_linq_get_organizations",
+    "automata_linq_get_scheduler_versions",
+    "automata_linq_get_all_drivers",
+    "automata_linq_get_workcells",
+    "automata_linq_get_device_status",
+    "automata_linq_get_run_histories",
+    "automata_linq_export_run_logs",
+    "automata_linq_create_workflow",
+    "automata_linq_list_workflows",
+    "automata_linq_get_workflow",
+    "automata_linq_validate_workflow",
+    "automata_linq_plan_workflow",
+    "automata_linq_get_plan_status",
+    "automata_linq_get_plan_result",
+    "automata_linq_reject_live_action"
+  ],
+  "policy_root": "policies",
+  "task_root": "tasks"
+}

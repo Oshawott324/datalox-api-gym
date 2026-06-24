@@ -1,0 +1,16 @@
+{
+  "schema_version": "api_gym.task_template.v0",
+  "scenario": "stale_plan_recompute",
+  "objective": "Recompute a stale Automata LINQ workflow plan in dry-run state.",
+  "prompt": "Inspect the workflow, scheduler versions, drivers, and existing synced plan. Determine why the current plan is stale, then create a recomputed replacement workflow using current scheduler and driver context. Preserve traceability by setting metadata.recomputed_from_workflow_id to the stale workflow id. Submit a fresh dry-run plan request, poll plan status until a result is available, and retrieve the new plan result without touching live Automata LINQ services.",
+  "source_records": [
+    "operation:getWorkflow",
+    "operation:getSupportedSchedulerVersions",
+    "operation:getAllDrivers",
+    "operation:planWorkflow",
+    "operation:getPlanStatus",
+    "operation:getPlanResult",
+    "response_case:getPlanResult:unavailable",
+    "observed_error:plan_result_unavailable"
+  ]
+}

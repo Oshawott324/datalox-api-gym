@@ -1,0 +1,83 @@
+{
+  "schema_version": "api_gym.world_source_refs.v0",
+  "world": "automata_linq_workflow_planning_v0",
+  "source_packs": [
+    {
+      "source_pack_id": "api.automata_linq.2026-06-22",
+      "path": "../../source_packs/apis/automata_linq/2026-06-22/source_pack.json",
+      "records": [
+        "docs:linq_client",
+        "docs:planning_validation",
+        "docs:workflow_execution",
+        "docs:access_logs",
+        "docs:workflow_examples",
+        "sdk:pypi_1_18_0",
+        "sdk:linq_client_py",
+        "sdk:generated_schemas",
+        "operation:getApiVersion",
+        "operation:getOrganizations",
+        "operation:createWorkflow",
+        "operation:listWorkflowsPaginated",
+        "operation:getWorkflow",
+        "operation:validateWorkflow",
+        "operation:planWorkflow",
+        "operation:getPlanStatus",
+        "operation:getPlanResult",
+        "operation:getSupportedSchedulerVersions",
+        "operation:getAllDrivers",
+        "operation:getWorkcells",
+        "operation:getDeviceStatus",
+        "operation:getRunHistories",
+        "operation:exportRunLogs",
+        "response_case:getApiVersion:success",
+        "response_case:getOrganizations:success",
+        "response_case:createWorkflow:success",
+        "response_case:listWorkflowsPaginated:success",
+        "response_case:getWorkflow:success",
+        "response_case:validateWorkflow:success",
+        "response_case:planWorkflow:success",
+        "response_case:getPlanStatus:success",
+        "response_case:getPlanResult:success",
+        "response_case:getPlanResult:unavailable",
+        "response_case:getSupportedSchedulerVersions:success",
+        "response_case:getAllDrivers:success",
+        "response_case:getWorkcells:success",
+        "response_case:getDeviceStatus:success",
+        "response_case:getRunHistories:success",
+        "response_case:exportRunLogs:success",
+        "response_case:validateWorkflow:workflow_api_error",
+        "response_case:getDeviceStatus:backend_error",
+        "observed_error:workflow_api_detail",
+        "observed_error:backend_message",
+        "observed_error:plan_result_unavailable",
+        "observed_error:live_execution_boundary",
+        "observed_error:credential_rotation_boundary",
+        "schema:WorkflowInfo",
+        "schema:ListWorkflowsResult",
+        "schema:WorkflowConfigInput",
+        "schema:WorkflowConfigInputWithParameters",
+        "schema:WorkflowConfig",
+        "schema:WorkflowValidationResult",
+        "schema:WorkflowPlanStatus",
+        "schema:WorkflowPlanResult",
+        "schema:Driver",
+        "schema:Workcell",
+        "schema:DeviceStateAndError",
+        "schema:RunHistory",
+        "schema:ErrorResponses",
+        "world_candidate:automata_linq_workflow_planning_v0"
+      ],
+      "role": "automata_linq_workflow_planning_grounding"
+    }
+  ],
+  "world_evidence": [
+    {
+      "path": "spec.json",
+      "role": "world_contract"
+    },
+    {
+      "path": "policies/environment-contract.md",
+      "role": "dry_run_boundary_policy"
+    }
+  ]
+}
