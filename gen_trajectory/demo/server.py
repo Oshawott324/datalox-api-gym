@@ -1,14 +1,12 @@
 """
-Demo server: web-based trajectory visualisation for unitelabs_plate_qc_v0.
+Demo server: multi-world trajectory visualisation.
 
-Uses a real LLM (DeepSeek) for agent execution — the model decides every
-tool call autonomously.  Requires a DeepSeek API key.
+Supports:
+  - unitelabs_plate_qc_v0  (custom SQLite backend)
+  - pylabrobot_lab_v0      (PyLabRobot + ChatterBox backend)
 
-Start with:
-    set DEEPSEEK_API_KEY=sk-...
-    python gen_trajectory/demo/server.py
-
-Then open http://127.0.0.1:8080 in a browser.
+Start with:   python gen_trajectory/demo/server.py
+Then open:   http://127.0.0.1:8080
 """
 
 from __future__ import annotations
@@ -17,15 +15,12 @@ import json
 import os
 import sys
 import tempfile
-import time
 from pathlib import Path
 from typing import Any
 
-# Fix Windows console encoding for Unicode characters (e.g. emoji)
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-# ── Ensure the project root is importable ──────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -33,10 +28,34 @@ if str(PROJECT_ROOT) not in sys.path:
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-from api_gym.worlds.unitelabs_plate_qc_v0.sampler import sample_episode
-from api_gym.worlds.unitelabs_plate_qc_v0.tools import TOOL_DEFINITIONS, dispatch_tool
-from api_gym.worlds.unitelabs_plate_qc_v0.verifier import verify_run
+# ── World imports ──────────────────────────────────────────────────────────
+
+from api_gym.worlds.unitelabs_plate_qc_v0.sampler import sample_episode as unitelabs_sample
+from api_gym.worlds.unitelabs_plate_qc_v0.tools import TOOL_DEFINITIONS as UNITELABS_TOOLS
+from api_gym.worlds.unitelabs_plate_qc_v0.tools import dispatch_tool as unitelabs_dispatch
+from api_gym.worlds.unitelabs_plate_qc_v0.verifier import verify_run as unitelabs_verify
 from api_gym.worlds.unitelabs_plate_qc_v0.state import connect, row_to_dict
+
+from api_gym.worlds.pylabrobot_lab_v0.sampler import sample_episode as plr_sample
+from api_gym.worlds.pylabrobot_lab_v0.tools import TOOL_DEFINITIONS as PLR_TOOLS
+from api_gym.worlds.pylabrobot_lab_v0.tools import dispatch_tool as plr_dispatch
+from api_gym.worlds.pylabrobot_lab_v0.verifier import verify_run as plr_verify
+
+# OT-2 Visualizer backend
+from api_gym.worlds.pylabrobot_lab_v0.sampler import (
+    _build_plate_transfer_qc_ot2,
+    _build_serial_dilution_qc_ot2,
+)
+from api_gym.worlds.pylabrobot_lab_v0.services_ot2 import (
+    aspirate as ot2_aspirate,
+    dispense as ot2_dispense,
+    get_deck_state as ot2_get_deck_state,
+    get_labware_state as ot2_get_labware_state,
+    read_absorbance as ot2_read_absorbance,
+    add_workflow_note as ot2_add_workflow_note,
+    submit_protocol as ot2_submit_protocol,
+)
+
 from api_gym.session import build_session_manifest, check_session_tools
 from api_gym.exports.run_export import write_run_export
 
@@ -44,10 +63,10 @@ from api_gym.exports.run_export import write_run_export
 
 MODEL = "deepseek-v4-pro"
 BASE_URL = "https://api.deepseek.com"
-MAX_TURNS = 12
+MAX_TURNS = 20
 TEMPERATURE = 0.0
 
-SYSTEM_PROMPT = """\
+SYSTEM_PROMPT_UNITELABS = """\
 You are a lab automation agent solving a Datalox API Gym unitelabs_plate_qc_v0 task.
 
 The environment is a DRY-RUN lab deck — no real hardware is connected.
@@ -75,7 +94,149 @@ Rules:
 - Think step by step before each tool call.
 """
 
-TABLES_FOR_SNAPSHOT = [
+SYSTEM_PROMPT_PLR = """\
+You are a lab automation agent solving a Datalox API Gym pylabrobot_lab_v0 task.
+
+The environment is a DRY-RUN lab deck backed by PyLabRobot — no real hardware
+is connected. The deck has standard SBS-format plates with VolumeTracker for
+liquid tracking, and chatterbox simulation backends.
+
+STANDARD LAB PROCEDURE for plate QC:
+1. Always inspect the deck state first to see what labware is loaded.
+2. Inspect each labware object (source plate, target/assay plate, tip rack)
+   to understand well contents, volumes, and available tips.
+3. Use standard transfer volumes — typically 50 uL for QC assays.
+4. OD600 (600 nm) is the standard wavelength for absorbance measurements.
+5. Match your aspirate/dispense volume exactly.
+6. Reference format for wells: 'labware_name:well_id'
+   (e.g. 'source_plate:A1', 'tip_rack_01:A1').
+7. After obtaining a valid readout, submit the protocol decision.
+
+Rules:
+- Use the provided tools for every state inspection and mutation.
+- Do not answer from task text alone — you MUST call tools to inspect state.
+- Do not attempt to read lab_state.json or any hidden verifier state.
+- When you have enough evidence, submit a final protocol decision using
+  submit_protocol with the supporting readout evidence.
+- Think step by step before each tool call.
+"""
+
+# ── OT-2 helper functions ─────────────────────────────────────────────────
+
+
+_OT2_SCENARIOS = {
+    "plate_transfer_qc": None,       # lazy-imported below
+    "serial_dilution_qc": None,
+}
+_OT2_SCENARIOS["plate_transfer_qc"] = _build_plate_transfer_qc_ot2
+_OT2_SCENARIOS["serial_dilution_qc"] = _build_serial_dilution_qc_ot2
+
+
+def _ot2_sample(*, scenario: str, seed: int, out_dir: Path) -> Any:
+    """Sample an OT-2 visual episode."""
+    from api_gym.worlds.pylabrobot_lab_v0.state import register_state
+    builder = _OT2_SCENARIOS.get(scenario)
+    if builder is None:
+        raise ValueError(f"Unknown OT-2 scenario: {scenario}")
+    task, lab_state = builder(out_dir, seed)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    import json
+    (out_dir / "task.json").write_text(json.dumps(task, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    run_meta = {"world": "pylabrobot_lab_v0_ot2", "world_id": "pylabrobot-lab-v0-ot2",
+                "scenario": scenario, "seed": seed, "mode": "dry_run"}
+    (out_dir / "run.json").write_text(json.dumps(run_meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    lab_state.save(out_dir / "lab_state.json")
+    register_state(out_dir, lab_state)
+    return type("Episode", (), {"run_dir": out_dir, "task": task, "lab_state": lab_state})()
+
+
+def _ot2_dispatch(run_dir: Path, *, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    """Dispatch tool call to OT-2 service functions."""
+    from api_gym.worlds.pylabrobot_lab_v0.state import get_state
+    lab_state = get_state(run_dir)
+
+    # Map arguments to correct parameter names for OT-2 service functions
+    if name == "aspirate":
+        return ot2_aspirate(lab_state,
+                            source=arguments["source"],
+                            volume_ul=float(arguments["volume_ul"]),
+                            tip_ref=arguments["tip"])
+    elif name == "dispense":
+        return ot2_dispense(lab_state,
+                            target=arguments["target"],
+                            volume_ul=float(arguments["volume_ul"]),
+                            mix_after=bool(arguments.get("mix_after", False)))
+    elif name == "get_deck_state":
+        return ot2_get_deck_state(lab_state)
+    elif name == "get_labware_state":
+        return ot2_get_labware_state(lab_state, labware_id=arguments["labware_id"])
+    elif name == "read_absorbance":
+        return ot2_read_absorbance(lab_state,
+                                   plate_id=arguments["plate_id"],
+                                   wavelength_nm=int(arguments["wavelength_nm"]),
+                                   wells=[str(w) for w in arguments["wells"]])
+    elif name == "add_workflow_note":
+        return ot2_add_workflow_note(lab_state, note=arguments["note"])
+    elif name == "submit_protocol":
+        return ot2_submit_protocol(lab_state,
+                                   decision=arguments["decision"],
+                                   evidence_readout_id=arguments["evidence_readout_id"],
+                                   target_well=arguments["target_well"],
+                                   rationale=arguments["rationale"])
+    else:
+        return {"ok": False, "error": {"code": "unknown_tool", "message": f"Unknown tool: {name}"}}
+
+
+def _ot2_start_visualizer(lh: Any) -> Any:
+    """Start the OT-2 visualizer for a LiquidHandler instance."""
+    from api_gym.worlds.pylabrobot_lab_v0.state_ot2 import OT2VisualizerSession
+    vis = OT2VisualizerSession(lh)
+    vis.start()
+    return vis
+
+
+def _ot2_stop_visualizer(vis: Any) -> None:
+    """Stop the OT-2 visualizer."""
+    if vis is not None:
+        vis.stop()
+
+
+# ── World registry ────────────────────────────────────────────────────────
+
+WORLDS = {
+    "unitelabs_plate_qc_v0": {
+        "label": "UniteLabs Plate QC v0 (SQLite)",
+        "sample_episode": unitelabs_sample,
+        "tool_definitions": UNITELABS_TOOLS,
+        "dispatch_tool": unitelabs_dispatch,
+        "verify_run": unitelabs_verify,
+        "system_prompt": SYSTEM_PROMPT_UNITELABS,
+        "state_backend": "sqlite",
+    },
+    "pylabrobot_lab_v0": {
+        "label": "PyLabRobot Lab v0 (ChatterBox)",
+        "sample_episode": plr_sample,
+        "tool_definitions": PLR_TOOLS,
+        "dispatch_tool": plr_dispatch,
+        "verify_run": plr_verify,
+        "system_prompt": SYSTEM_PROMPT_PLR,
+        "state_backend": "pylabrobot",
+    },
+    "pylabrobot_lab_v0_ot2": {
+        "label": "PyLabRobot OT-2 Visualizer",
+        "sample_episode": _ot2_sample,
+        "tool_definitions": PLR_TOOLS,
+        "dispatch_tool": _ot2_dispatch,
+        "verify_run": plr_verify,
+        "system_prompt": SYSTEM_PROMPT_PLR,
+        "state_backend": "ot2_visualizer",
+        "has_visualizer": True,
+    },
+}
+
+SUPPORTED_WORLDS = list(WORLDS.keys())
+
+UNITELABS_TABLES_SNAPSHOT = [
     "deck", "labware", "wells", "tips", "pipette_state",
     "control_bands", "transfers", "readouts", "workflow_notes",
     "submissions", "events", "audit_log",
@@ -87,14 +248,18 @@ TABLES_FOR_SNAPSHOT = [
 class DemoSession:
     """Holds the live state for one demo run."""
 
-    def __init__(self, run_dir: Path, api_key: str) -> None:
+    def __init__(self, run_dir: Path, api_key: str, world: str) -> None:
         self.run_dir = run_dir
+        self.world = world
+        self.world_cfg = WORLDS[world]
+
+        # Dispatch path: SQLite world uses db_path, PLR uses run_dir
         self.db_path = run_dir / "state.sqlite"
         self.task_path = run_dir / "task.json"
 
         # LLM client
         self.api_key = api_key
-        self.client: Any = None  # OpenAI client, lazily initialised
+        self.client: Any = None
 
         # LLM conversation state
         self.messages: list[dict[str, Any]] = []
@@ -106,6 +271,9 @@ class DemoSession:
         self.final_answer: dict[str, Any] | None = None
         self.stop_reason: str = "pending"
 
+        # Visualizer (OT-2 mode only)
+        self.visualizer: Any = None
+
         # Trajectory metadata
         self.world_meta: dict[str, Any] = {}
         self.task: dict[str, Any] = {}
@@ -115,7 +283,6 @@ class DemoSession:
         self.verifier_result: dict[str, Any] | None = None
         self.export_payload: dict[str, Any] | None = None
 
-        # Load metadata
         run_meta_path = run_dir / "run.json"
         if run_meta_path.exists():
             self.world_meta = json.loads(run_meta_path.read_text(encoding="utf-8"))
@@ -123,45 +290,36 @@ class DemoSession:
             self.task = json.loads(self.task_path.read_text(encoding="utf-8"))
 
     def init_client(self) -> None:
-        """Lazy-init the OpenAI client (import only when needed)."""
         if self.client is not None:
             return
         try:
             from openai import OpenAI
         except ImportError:
-            raise HTTPException(
-                500,
-                "The 'openai' package is required for LLM agent execution. "
-                "Install it with: pip install openai",
-            )
+            raise HTTPException(500, "pip install openai")
         self.client = OpenAI(api_key=self.api_key, base_url=BASE_URL)
 
     def init_messages(self) -> None:
-        """Build the initial message list (system + user)."""
         if self.messages:
             return
         task_prompt = self.task.get("prompt", "")
         self.messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": self.world_cfg["system_prompt"]},
             {"role": "user", "content": task_prompt},
         ]
 
 
-# Global session — single-user demo, one session at a time
 _session: DemoSession | None = None
 
 # ── FastAPI app ────────────────────────────────────────────────────────────
 
-app = FastAPI(title="UniteLabs Plate QC v0 — Trajectory Demo")
+app = FastAPI(title="Datalox API Gym — Trajectory Demo")
 
-# Static files
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @app.get("/")
 async def root():
-    """Serve the demo frontend."""
     index_path = STATIC_DIR / "index.html"
     if not index_path.exists():
         from fastapi.responses import HTMLResponse
@@ -174,10 +332,20 @@ def _placeholder_html() -> str:
 <html lang="zh-CN">
 <head><meta charset="UTF-8"><title>Demo</title></head>
 <body style="font-family:sans-serif;max-width:600px;margin:80px auto;">
-<h1>UniteLabs Plate QC v0 — Trajectory Demo</h1>
-<p>Backend is running. The frontend (<code>static/index.html</code>) is not built yet.</p>
-<p>Endpoints available at <code>/api/demo/*</code></p>
+<h1>Datalox API Gym — Trajectory Demo</h1><p>Backend running. Frontend missing.</p>
 </body></html>"""
+
+
+@app.get("/api/demo/worlds")
+async def demo_worlds() -> dict[str, Any]:
+    """List available worlds."""
+    return {
+        "ok": True,
+        "worlds": [
+            {"id": w, "label": c["label"], "state_backend": c["state_backend"]}
+            for w, c in WORLDS.items()
+        ],
+    }
 
 
 # ── API endpoints ──────────────────────────────────────────────────────────
@@ -185,105 +353,101 @@ def _placeholder_html() -> str:
 
 @app.post("/api/demo/start")
 async def demo_start(payload: dict[str, Any]) -> dict[str, Any]:
-    """Create a fresh sampled episode.
-
-    Accepts {seed: int, api_key: str, scenario?: str}.
-    The api_key can also be read from the DEEPSEEK_API_KEY env var.
-    """
     global _session
 
     seed = int(payload.get("seed", 42))
     scenario = str(payload.get("scenario", "plate_transfer_qc"))
+    world = str(payload.get("world", "unitelabs_plate_qc_v0"))
+
+    if world not in WORLDS:
+        raise HTTPException(400, f"Unknown world '{world}'. Supported: {SUPPORTED_WORLDS}")
+
     api_key = os.environ.get("DEEPSEEK_API_KEY", "") or "sk-353c00831093487ca08314983ec3317f"
     if not api_key:
         raise HTTPException(400, "DEEPSEEK_API_KEY environment variable is not set.")
 
-    # Create a fresh run directory
+    cfg = WORLDS[world]
+
     base_dir = PROJECT_ROOT / "runs" / "demo_web"
     base_dir.mkdir(parents=True, exist_ok=True)
-    run_dir = Path(tempfile.mkdtemp(prefix=f"seed{seed}_", dir=base_dir))
+    run_dir = Path(tempfile.mkdtemp(prefix=f"{world}_seed{seed}_", dir=base_dir))
 
-    # Sample the episode
-    episode = sample_episode(scenario=scenario, seed=seed, out_dir=run_dir)
+    episode = cfg["sample_episode"](scenario=scenario, seed=seed, out_dir=run_dir)
 
-    # Build session manifest
-    manifest = build_session_manifest(run_dir)
-
-    # Initialise demo session
-    _session = DemoSession(run_dir, api_key)
-    _session.manifest = manifest
+    _session = DemoSession(run_dir, api_key, world)
     _session.init_messages()
 
-    # Take initial state snapshot
-    initial_state = snapshot_state(_session.db_path)
-    _session.state_snapshots.append(
-        {"label": "initial", "step": 0, "state": initial_state}
-    )
+    # Snapshot initial state for replay
+    _snapshot_initial_state(_session)
+
+    # Start OT-2 visualizer if applicable
+    visualizer_url = None
+    if cfg.get("has_visualizer"):
+        try:
+            from api_gym.worlds.pylabrobot_lab_v0.state import get_state
+            lab_state = get_state(run_dir)
+            if lab_state.liquid_handler is not None:
+                _session.visualizer = _ot2_start_visualizer(lab_state.liquid_handler)
+                visualizer_url = "http://127.0.0.1:1337"
+        except Exception as e:
+            print(f"[OT-2 Visualizer] Failed to start: {e}")
+
+    # Initial state snapshot
+    initial_state = _snapshot_state(_session)
+    _session.state_snapshots.append({"label": "initial", "step": 0, "state": initial_state})
 
     return {
         "ok": True,
+        "world": world,
+        "world_label": cfg["label"],
         "run_dir": str(run_dir),
-        "db_path": str(_session.db_path),
         "task": _session.task,
-        "manifest_summary": {
-            "world": manifest.get("world"),
-            "scenario": manifest.get("scenario"),
-            "seed": manifest.get("seed"),
-            "expected_tools": manifest.get("expected_tools"),
-        },
-        "initial_state_tables": list(initial_state.keys()),
-        "initial_state_row_counts": {
-            table: len(rows) for table, rows in initial_state.items()
-        },
+        "scenario": scenario,
+        "seed": seed,
+        "state_backend": cfg["state_backend"],
+        "initial_state": initial_state,
         "model": MODEL,
         "max_turns": MAX_TURNS,
+        "visualizer_url": visualizer_url,
     }
 
 
 @app.post("/api/demo/check-tools")
 async def demo_check_tools() -> dict[str, Any]:
-    """Verify the MCP server lists all 7 expected tools."""
     global _session
     if _session is None:
-        raise HTTPException(400, "No active session. Call /api/demo/start first.")
-
-    result = check_session_tools(_session.run_dir)
-    _session.check_tools_result = result
-
-    # Enrich with full tool definitions (name, description, inputSchema)
+        raise HTTPException(400, "No active session.")
+    td = _session.world_cfg["tool_definitions"]
     tool_defs_by_name = {
-        td["function"]["name"]: {
-            "name": td["function"]["name"],
-            "description": td["function"].get("description", ""),
-            "inputSchema": td["function"].get("parameters", {}),
+        t["function"]["name"]: {
+            "name": t["function"]["name"],
+            "description": t["function"].get("description", ""),
+            "inputSchema": t["function"].get("parameters", {}),
         }
-        for td in TOOL_DEFINITIONS
+        for t in td
     }
-    result["tool_definitions"] = [
-        tool_defs_by_name.get(name, {"name": name, "description": "", "inputSchema": {}})
-        for name in result["listed_tools"]
-    ]
-    return result
+    names = sorted(tool_defs_by_name.keys())
+    return {
+        "ok": True,
+        "world": _session.world,
+        "expected_tools": names,
+        "listed_tools": names,
+        "missing_tools": [],
+        "unexpected_tools": [],
+        "tool_definitions": [tool_defs_by_name[n] for n in names],
+    }
 
 
 @app.post("/api/demo/run-step")
 async def demo_run_step() -> dict[str, Any]:
-    """Execute one LLM turn: call the model, dispatch any tool calls, return results.
-
-    One step = one LLM API call. The model may request multiple tool calls
-    in one response; all are dispatched and recorded as part of this turn.
-    If the model returns no tool calls, it has produced a final answer.
-    """
     global _session
     if _session is None:
-        raise HTTPException(400, "No active session. Call /api/demo/start first.")
+        raise HTTPException(400, "No active session.")
     if _session.stop_reason != "pending":
         return {
-            "ok": True,
-            "done": True,
+            "ok": True, "done": True,
             "turn": _session.turn_index,
-            "tool_names": [],
-            "tool_results": [],
+            "tool_names": [], "tool_results": [],
             "stop_reason": _session.stop_reason,
             "final_answer": _session.final_answer,
         }
@@ -293,27 +457,23 @@ async def demo_run_step() -> dict[str, Any]:
     turn_num = _session.turn_index + 1
     if turn_num > MAX_TURNS:
         _session.stop_reason = "max_turns"
-        _session.final_answer = {
-            "content": None, "stop_reason": "max_turns", "turns": _session.turn_index,
-        }
+        _session.final_answer = {"content": None, "stop_reason": "max_turns", "turns": _session.turn_index}
         return {
             "ok": True, "done": True,
             "turn": _session.turn_index,
-            "tool_names": [],
-            "tool_results": [],
+            "tool_names": [], "tool_results": [],
             "stop_reason": "max_turns",
             "final_answer": _session.final_answer,
         }
 
-    # ── Call the LLM ──────────────────────────────────────────────────
+    tools = _session.world_cfg["tool_definitions"]
+    dispatch_fn = _session.world_cfg["dispatch_tool"]
+    dispatch_path = _session.run_dir  # Both worlds accept a Path
+
     try:
         response = _session.client.chat.completions.create(
-            model=MODEL,
-            messages=_session.messages,
-            tools=TOOL_DEFINITIONS,
-            tool_choice="auto",
-            stream=False,
-            temperature=TEMPERATURE,
+            model=MODEL, messages=_session.messages, tools=tools,
+            tool_choice="auto", stream=False, temperature=TEMPERATURE,
             extra_body={"thinking": {"type": "enabled"}},
         )
     except Exception as exc:
@@ -321,18 +481,10 @@ async def demo_run_step() -> dict[str, Any]:
 
     choice = response.choices[0]
     message = choice.message
-
-    # Extract DeepSeek reasoning
     reasoning_content = getattr(message, "reasoning_content", None) or ""
-
-    # Extract tool calls
     tool_calls = getattr(message, "tool_calls", None) or []
 
-    # ── Build assistant message for history ────────────────────────────
-    assistant_msg: dict[str, Any] = {
-        "role": "assistant",
-        "content": message.content or "",
-    }
+    assistant_msg: dict[str, Any] = {"role": "assistant", "content": message.content or ""}
     if reasoning_content:
         assistant_msg["reasoning_content"] = reasoning_content
 
@@ -340,18 +492,15 @@ async def demo_run_step() -> dict[str, Any]:
     all_tool_names: list[str] = []
 
     if tool_calls:
-        # Serialise tool_calls into the message
         tc_list = []
         for tc in tool_calls:
             tc_list.append({
-                "id": tc.id,
-                "type": "function",
+                "id": tc.id, "type": "function",
                 "function": {"name": tc.function.name, "arguments": tc.function.arguments},
             })
         assistant_msg["tool_calls"] = tc_list
         _session.messages.append(assistant_msg)
 
-        # Dispatch each tool call
         for tc in tool_calls:
             tool_name = tc.function.name
             all_tool_names.append(tool_name)
@@ -360,21 +509,13 @@ async def demo_run_step() -> dict[str, Any]:
             except json.JSONDecodeError:
                 arguments = {}
 
-            # Snapshot BEFORE
-            before_state = snapshot_state(_session.db_path)
+            before_state = _snapshot_state(_session)
+            result = dispatch_fn(dispatch_path, name=tool_name, arguments=arguments)
+            after_state = _snapshot_state(_session)
+            diff = _compute_diff(_session.world, before_state, after_state)
 
-            # Dispatch
-            result = dispatch_tool(_session.db_path, name=tool_name, arguments=arguments)
-
-            # Snapshot AFTER
-            after_state = snapshot_state(_session.db_path)
-            diff = _compute_diff(before_state, after_state)
-
-            # Append tool result to messages
             _session.messages.append({
-                "role": "tool",
-                "tool_call_id": tc.id,
-                "name": tool_name,
+                "role": "tool", "tool_call_id": tc.id, "name": tool_name,
                 "content": json.dumps(result, sort_keys=True, ensure_ascii=False),
             })
 
@@ -386,37 +527,24 @@ async def demo_run_step() -> dict[str, Any]:
                 "state_diff": diff,
             })
             _session.tool_history.append(turn_records[-1])
-
-            # Save state snapshot
             _session.state_snapshots.append({
                 "label": f"after_turn{turn_num}_{tool_name}",
                 "step": _session.turn_index + 1,
                 "state": after_state,
             })
-
-            # Reset reasoning for subsequent tool calls in same turn
             reasoning_content = ""
-
     else:
-        # No tool calls — agent produced a final answer
-        _session.messages.append({
-            "role": "assistant",
-            "content": message.content or "",
-        })
+        _session.messages.append({"role": "assistant", "content": message.content or ""})
         _session.final_answer = {
-            "content": message.content or "",
-            "stop_reason": "assistant_final",
-            "turns": turn_num,
+            "content": message.content or "", "stop_reason": "assistant_final", "turns": turn_num,
         }
         _session.stop_reason = "assistant_final"
 
     _session.turn_index = turn_num
 
     result: dict[str, Any] = {
-        "ok": True,
-        "turn": turn_num,
-        "tool_names": all_tool_names,
-        "tool_results": turn_records,
+        "ok": True, "turn": turn_num,
+        "tool_names": all_tool_names, "tool_results": turn_records,
         "done": _session.stop_reason != "pending",
         "stop_reason": _session.stop_reason,
     }
@@ -427,13 +555,9 @@ async def demo_run_step() -> dict[str, Any]:
 
 @app.post("/api/demo/run-all")
 async def demo_run_all() -> dict[str, Any]:
-    """Execute LLM turns until the agent finishes or max_turns is reached.
-
-    After the agent stops, automatically runs the verifier.
-    """
     global _session
     if _session is None:
-        raise HTTPException(400, "No active session. Call /api/demo/start first.")
+        raise HTTPException(400, "No active session.")
 
     all_turns = []
     while _session.stop_reason == "pending" and _session.turn_index < MAX_TURNS:
@@ -442,13 +566,10 @@ async def demo_run_all() -> dict[str, Any]:
         if turn_result.get("done"):
             break
 
-    # Auto-finalise
     finalize_result = await _run_finalize()
 
     return {
-        "ok": True,
-        "total_turns": len(all_turns),
-        "turns": all_turns,
+        "ok": True, "total_turns": len(all_turns), "turns": all_turns,
         "stop_reason": _session.stop_reason,
         "final_answer": _session.final_answer,
         "verifier_result": _session.verifier_result,
@@ -458,24 +579,24 @@ async def demo_run_all() -> dict[str, Any]:
 
 @app.post("/api/demo/finalize")
 async def demo_finalize() -> dict[str, Any]:
-    """Verify the episode and export evidence."""
     global _session
     if _session is None:
-        raise HTTPException(400, "No active session. Call /api/demo/start first.")
-
+        raise HTTPException(400, "No active session.")
     return await _run_finalize()
 
 
 async def _run_finalize() -> dict[str, Any]:
-    """Internal: run verifier + export, store on session."""
     global _session
     assert _session is not None
 
-    verifier_result = verify_run(_session.run_dir).to_dict()
+    verifier_result = _session.world_cfg["verify_run"](_session.run_dir).to_dict()
     _session.verifier_result = verifier_result
 
     export_path = _session.run_dir / "run_export.json"
-    export_payload = write_run_export(_session.run_dir, export_path)
+    try:
+        export_payload = write_run_export(_session.run_dir, export_path)
+    except Exception:
+        export_payload = {}
     _session.export_payload = export_payload
 
     result = {
@@ -483,11 +604,6 @@ async def _run_finalize() -> dict[str, Any]:
         "scenario": verifier_result.get("scenario"),
         "checks": verifier_result.get("checks", []),
         "export_path": str(export_path),
-        "export_summary": {
-            "world": export_payload.get("world"),
-            "scenario": export_payload.get("scenario"),
-            "tool_trace_count": len(export_payload.get("tool_trace", [])),
-        },
     }
     _session.finalize_result = result
     return result
@@ -495,40 +611,27 @@ async def _run_finalize() -> dict[str, Any]:
 
 @app.get("/api/demo/state")
 async def demo_state() -> dict[str, Any]:
-    """Return the current full SQLite state."""
     global _session
     if _session is None:
-        raise HTTPException(400, "No active session. Call /api/demo/start first.")
-
-    state = snapshot_state(_session.db_path)
+        raise HTTPException(400, "No active session.")
+    state = _snapshot_state(_session)
     return {
-        "ok": True,
-        "run_dir": str(_session.run_dir),
+        "ok": True, "run_dir": str(_session.run_dir),
         "turn_index": _session.turn_index,
         "stop_reason": _session.stop_reason,
-        "tables": list(state.keys()),
         "state": state,
     }
 
 
 @app.get("/api/demo/trajectory")
 async def demo_trajectory() -> dict[str, Any]:
-    """Return the accumulated trajectory data."""
     global _session
     if _session is None:
-        raise HTTPException(400, "No active session. Call /api/demo/start first.")
-
+        raise HTTPException(400, "No active session.")
     return {
-        "ok": True,
-        "world_meta": _session.world_meta,
-        "task": _session.task,
-        "messages": [
-            {k: v for k, v in m.items() if k != "reasoning_content"}
-            for m in _session.messages
-        ],
+        "ok": True, "world_meta": _session.world_meta, "task": _session.task,
         "tool_history": _session.tool_history,
-        "turn_index": _session.turn_index,
-        "max_turns": MAX_TURNS,
+        "turn_index": _session.turn_index, "max_turns": MAX_TURNS,
         "stop_reason": _session.stop_reason,
         "final_answer": _session.final_answer,
         "verifier_result": _session.verifier_result,
@@ -538,33 +641,138 @@ async def demo_trajectory() -> dict[str, Any]:
 
 @app.get("/api/demo/messages")
 async def demo_messages() -> dict[str, Any]:
-    """Debug: return the current LLM conversation messages."""
     global _session
     if _session is None:
-        raise HTTPException(400, "No active session. Call /api/demo/start first.")
+        raise HTTPException(400, "No active session.")
+    tools = _session.world_cfg["tool_definitions"]
     return {
-        "ok": True,
-        "message_count": len(_session.messages),
+        "ok": True, "message_count": len(_session.messages),
         "turn_index": _session.turn_index,
         "stop_reason": _session.stop_reason,
-        "messages": [
-            {k: v for k, v in m.items() if k not in ("reasoning_content",)}
-            for m in _session.messages
-        ],
-        "tool_definitions_count": len(TOOL_DEFINITIONS),
-        "tool_names": [td["function"]["name"] for td in TOOL_DEFINITIONS],
+        "tool_definitions_count": len(tools),
+        "tool_names": [t["function"]["name"] for t in tools],
     }
+
+
+_replay_port = 1337
+
+@app.post("/api/demo/replay-init")
+async def demo_replay_init() -> dict[str, Any]:
+    """Reset state to initial snapshot, then replay will re-apply operations."""
+    global _session
+    if _session is None:
+        raise HTTPException(400, "No active session.")
+    history = list(_session.tool_history)
+    if not history:
+        raise HTTPException(400, "No tool history to replay.")
+
+    # Restore initial state from snapshot
+    _restore_initial_state(_session)
+
+    _session._replay_history = history
+    _session._replay_index = 0
+    return {"ok": True, "total_steps": len(history),
+            "steps": [{"tool": h.get("tool_call", {}).get("name", "?"),
+                        "args": h.get("tool_call", {}).get("arguments", {})}
+                       for h in history]}
+
+
+def _snapshot_initial_state(sess: DemoSession) -> None:
+    """Record initial state generically — walk all deck resources."""
+    cfg = sess.world_cfg
+    if cfg.get("state_backend") not in ("pylabrobot", "ot2_visualizer"):
+        sess._initial_snapshot = {}
+        return
+    from api_gym.worlds.pylabrobot_lab_v0.state import get_state
+    try:
+        lab_state = get_state(sess.run_dir)
+        wells: dict[str, float] = {}
+        tips: dict[str, bool] = {}
+        for resource in lab_state.deck.children if lab_state.deck else []:
+            _walk_resource(resource, resource.name, wells, tips)
+        sess._initial_snapshot = {"wells": wells, "tips": tips}
+    except Exception:
+        sess._initial_snapshot = {}
+
+
+def _walk_resource(resource: Any, path: str, wells: dict, tips: dict) -> None:
+    """Recursively walk a resource tree, recording well volumes and tip states."""
+    # Check if this resource has children (plates, tip racks)
+    if hasattr(resource, "children"):
+        for child in resource.children:
+            child_path = f"{path}/{child.name}"
+            # Well with volume tracker
+            if hasattr(child, "tracker") and hasattr(child.tracker, "get_used_volume"):
+                wells[child_path] = child.tracker.get_used_volume()
+            # Tip spot
+            if hasattr(child, "has_tip"):
+                tips[child_path] = True
+            # Recurse deeper
+            _walk_resource(child, child_path, wells, tips)
+
+
+def _restore_initial_state(sess: DemoSession) -> None:
+    """Restore state from generic snapshot."""
+    snap = getattr(sess, "_initial_snapshot", None)
+    if not snap:
+        return
+    cfg = sess.world_cfg
+    if cfg.get("state_backend") not in ("pylabrobot", "ot2_visualizer"):
+        return
+    from api_gym.worlds.pylabrobot_lab_v0.state import get_state
+    try:
+        lab_state = get_state(sess.run_dir)
+        wells = snap.get("wells", {})
+        tips = snap.get("tips", {})
+        for resource in lab_state.deck.children if lab_state.deck else []:
+            _restore_resource(resource, resource.name, wells, tips)
+        lab_state._pending_volume_ul = 0.0
+    except Exception:
+        pass
+
+
+def _restore_resource(resource: Any, path: str, wells: dict, tips: dict) -> None:
+    """Recursively restore a resource tree from snapshot."""
+    if hasattr(resource, "children"):
+        for child in resource.children:
+            child_path = f"{path}/{child.name}"
+            if child_path in wells and hasattr(child, "tracker") and child.tracker:
+                child.tracker.set_volume(wells[child_path])
+            if child_path in tips and hasattr(child, "_has_tip"):
+                child._has_tip = True
+            _restore_resource(child, child_path, wells, tips)
+
+
+@app.post("/api/demo/replay-step")
+async def demo_replay_step() -> dict[str, Any]:
+    """Replay one recorded tool operation."""
+    global _session
+    if _session is None:
+        raise HTTPException(400, "No active session.")
+    history = getattr(_session, "_replay_history", [])
+    idx = getattr(_session, "_replay_index", 0)
+    if idx >= len(history):
+        return {"ok": True, "done": True, "message": "Replay complete."}
+
+    record = history[idx]
+    tc = record.get("tool_call", {})
+    name = tc.get("name", "?")
+    args = tc.get("arguments", {})
+    cfg = WORLDS[_session.world]
+    result = cfg["dispatch_tool"](_session.run_dir, name=name, arguments=args)
+    _session._replay_index = idx + 1
+
+    return {"ok": True, "step": idx + 1, "total": len(history),
+            "tool": name, "tool_ok": result.get("ok", False), "done": idx + 1 >= len(history)}
 
 
 @app.get("/api/demo/health")
 async def demo_health() -> dict[str, Any]:
-    """Health check."""
     return {
-        "ok": True,
-        "session_active": _session is not None,
+        "ok": True, "session_active": _session is not None,
         "turn_index": _session.turn_index if _session else 0,
-        "max_turns": MAX_TURNS,
-        "model": MODEL,
+        "max_turns": MAX_TURNS, "model": MODEL,
+        "supported_worlds": SUPPORTED_WORLDS,
         "stop_reason": _session.stop_reason if _session else "no_session",
     }
 
@@ -572,13 +780,28 @@ async def demo_health() -> dict[str, Any]:
 # ── State snapshot helpers ──────────────────────────────────────────────────
 
 
-def snapshot_state(db_path: Path) -> dict[str, list[dict[str, Any]]]:
-    """Read every row from every table and return structured JSON."""
+def _snapshot_state(sess: DemoSession) -> dict[str, Any]:
+    """Take a state snapshot.  For SQLite worlds, read all tables.
+    For PyLabRobot, return LabState metadata."""
+    if sess.world_cfg["state_backend"] == "sqlite":
+        if sess.db_path.exists():
+            return _snapshot_sqlite(sess.db_path)
+        return {}
+    else:
+        # PyLabRobot world: return transfers, readouts, submissions
+        return {
+            "transfers": sess.tool_history,
+            "turn_index": sess.turn_index,
+            "stop_reason": sess.stop_reason,
+        }
+
+
+def _snapshot_sqlite(db_path: Path) -> dict[str, list[dict[str, Any]]]:
     if not db_path.exists():
         return {}
     snapshot: dict[str, list[dict[str, Any]]] = {}
     with connect(db_path) as conn:
-        for table in TABLES_FOR_SNAPSHOT:
+        for table in UNITELABS_TABLES_SNAPSHOT:
             try:
                 rows = conn.execute(f"SELECT * FROM {table}").fetchall()
                 snapshot[table] = [row_to_dict(row) for row in rows]
@@ -587,38 +810,34 @@ def snapshot_state(db_path: Path) -> dict[str, list[dict[str, Any]]]:
     return snapshot
 
 
-def _compute_diff(
-    before: dict[str, list[dict[str, Any]]],
-    after: dict[str, list[dict[str, Any]]],
-) -> dict[str, Any]:
-    """Return a compact diff showing which tables changed and how."""
+def _compute_diff(world: str, before: dict[str, Any],
+                  after: dict[str, Any]) -> dict[str, Any]:
+    """Compute diff between two state snapshots."""
+    if world == "pylabrobot_lab_v0":
+        return {}
+
     diff: dict[str, Any] = {}
-    for table in TABLES_FOR_SNAPSHOT:
+    for table in UNITELABS_TABLES_SNAPSHOT:
         before_rows = before.get(table, [])
         after_rows = after.get(table, [])
-        before_count = len(before_rows)
-        after_count = len(after_rows)
-
-        if before_count != after_count:
+        if len(before_rows) != len(after_rows):
             diff[table] = {
                 "changed": True,
-                "before_count": before_count,
-                "after_count": after_count,
-                "new_rows": after_rows[before_count:],
+                "before_count": len(before_rows),
+                "after_count": len(after_rows),
+                "new_rows": after_rows[len(before_rows):],
             }
         elif before_rows != after_rows:
-            changed_indices = []
+            changed = []
             for i, (br, ar) in enumerate(zip(before_rows, after_rows)):
                 if br != ar:
-                    changed_indices.append(i)
-            if changed_indices:
+                    changed.append(i)
+            if changed:
                 diff[table] = {
                     "changed": True,
-                    "before_count": before_count,
-                    "after_count": after_count,
-                    "changed_row_indices": changed_indices,
-                    "before_rows": [before_rows[i] for i in changed_indices],
-                    "after_rows": [after_rows[i] for i in changed_indices],
+                    "before_count": len(before_rows),
+                    "after_count": len(after_rows),
+                    "changed_row_indices": changed,
                 }
     return diff
 
@@ -627,10 +846,9 @@ def _compute_diff(
 
 if __name__ == "__main__":
     import uvicorn
-
-    print("UniteLabs Plate QC v0 — Trajectory Demo (LLM Agent)")
-    print(f"   Model: {MODEL}")
-    print("   Open http://127.0.0.1:8080 in your browser")
-    print("   Press Ctrl+C to stop")
+    print("Datalox API Gym — Trajectory Demo (Multi-World)")
+    print(f"   Worlds: {', '.join(SUPPORTED_WORLDS)}")
+    print(f"   Model:  {MODEL}")
+    print("   Open http://127.0.0.1:8080")
     print()
     uvicorn.run(app, host="127.0.0.1", port=8080, log_level="info")
