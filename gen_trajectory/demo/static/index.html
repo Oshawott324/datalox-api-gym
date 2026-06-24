@@ -237,6 +237,17 @@ pre, code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, m
 
   <!-- ── Controls ────────────────────────────────────────────────── -->
   <div class="controls">
+    <label for="world-select">World:</label>
+    <select id="world-select" style="background:var(--bg);color:var(--text-bright);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:0.85rem;">
+      <option value="unitelabs_plate_qc_v0">UniteLabs Plate QC v0 (SQLite)</option>
+      <option value="pylabrobot_lab_v0">PyLabRobot Lab v0 (ChatterBox)</option>
+      <option value="pylabrobot_lab_v0_ot2">PyLabRobot OT-2 Visualizer</option>
+    </select>
+    <label for="scenario-select">Scenario:</label>
+    <select id="scenario-select" style="background:var(--bg);color:var(--text-bright);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:0.85rem;">
+      <option value="plate_transfer_qc">Plate Transfer QC</option>
+      <option value="serial_dilution_qc">Serial Dilution QC</option>
+    </select>
     <label for="seed-input">Seed:</label>
     <input id="seed-input" type="number" value="42" min="0" max="9999" style="width:65px">
     <button class="btn btn-primary" id="btn-start" onclick="startSession()">▶ Start</button>
@@ -244,6 +255,7 @@ pre, code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, m
     <button class="btn" id="btn-next" onclick="runNextStep()" disabled>⏭ Run Next</button>
     <button class="btn btn-accent" id="btn-all" onclick="runAllSteps()" disabled>⏩ Run All</button>
     <button class="btn btn-success" id="btn-finalize" onclick="finalizeSession()" disabled>✅ Finalize</button>
+    <button class="btn btn-accent" id="btn-replay" onclick="startReplay()" disabled>🔄 Replay</button>
     <button class="btn" id="btn-reset" onclick="resetAll()">↺ Reset</button>
   </div>
 
@@ -311,6 +323,32 @@ pre, code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, m
     </div>
     <div class="section-body">
       <div id="s3-summary" class="mb-12" style="color:var(--text-muted);font-size:0.85rem;"></div>
+      <div id="s3-viz-container" style="display:none;margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#000;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--border);gap:10px;">
+          <span style="font-weight:600;color:var(--cyan);font-size:0.85rem;white-space:nowrap;">🔬 OT-2 Deck Visualizer</span>
+          <span id="s3-replay-step-label" style="font-size:0.85rem;color:var(--orange);font-weight:700;font-family:monospace;flex:1;text-align:center;"></span>
+          <span id="s3-replay-controls" style="display:none;gap:6px;align-items:center;">
+            <button class="btn" id="s3-replay-btn-step" onclick="_replayNextStep()" style="font-size:0.78rem;padding:4px 10px;">⏭ Step</button>
+            <button class="btn btn-accent" id="s3-replay-btn-auto" onclick="_replayAutoPlay()" style="font-size:0.78rem;padding:4px 10px;">⏩ Auto</button>
+            <select id="s3-replay-speed" style="background:var(--bg);color:var(--text-bright);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px 6px;font-size:0.72rem;">
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+            </select>
+            <button class="btn" id="s3-replay-btn-stop" onclick="_replayStop()" style="font-size:0.78rem;padding:4px 10px;color:var(--red);">⏹ Stop</button>
+          </span>
+        </div>
+        <div id="s3-attention-guide" style="display:none;padding:10px 14px;background:rgba(0,229,255,0.08);border-bottom:1px solid rgba(0,229,255,0.3);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="s3-attention-icon" style="font-size:1.3rem;">👁️</span>
+            <div style="flex:1;">
+              <div id="s3-attention-title" style="font-weight:700;color:var(--cyan);font-size:0.85rem;margin-bottom:2px;">Attention Guide</div>
+              <div id="s3-attention-text" style="color:var(--text-bright);font-size:0.82rem;line-height:1.5;">—</div>
+            </div>
+          </div>
+        </div>
+        <iframe id="s3-viz-iframe" src="" style="width:100%;height:420px;border:none;" allow="camera;microphone"></iframe>
+      </div>
       <div class="timeline" id="s3-timeline"></div>
     </div>
   </div>
@@ -402,12 +440,15 @@ function setStatus(stage, steps) {
 /* ── Start Session ───────────────────────────────────────────────────── */
 async function startSession() {
   const seed = parseInt(document.getElementById("seed-input").value) || 42;
+  const world = document.getElementById("world-select").value;
+  const scenario = document.getElementById("scenario-select").value;
   setButtons(false, false, false, false);
   updateProgress(1); setStatus("creating...", "0/?");
 
   try {
-    const data = await apiCall("/start", "POST", { seed });
+    const data = await apiCall("/start", "POST", { seed, world, scenario });
     sessionInfo = data;
+    if (data.visualizer_url) sessionInfo.visualizer_url = data.visualizer_url;
     maxTurns = data.max_turns || 12;
     currentTurn = 0; toolHistory = []; agentDone = false;
     allStateSnapshots = [{ label: "initial", step: 0, state: null }];
@@ -488,12 +529,12 @@ async function runNextStep() {
     renderStage3();
     document.getElementById("sec-3").classList.remove("hidden");
     document.getElementById("sec-3").classList.add("expanded");
+    _showOt2VizIfNeeded();
 
     if (agentDone) {
       updateProgress(4);
       setStatus("agent finished", `${currentTurn}/${maxTurns}`);
       setButtons(false, false, false, false, true);
-      // Update stage 3 badge
       document.getElementById("badge-3").textContent =
         data.stop_reason === "assistant_final" ? "done" : "max_turns";
     } else {
@@ -545,6 +586,7 @@ async function runAllSteps() {
     renderStage3();
     document.getElementById("sec-3").classList.remove("hidden");
     document.getElementById("sec-3").classList.add("expanded");
+    _showOt2VizIfNeeded();
 
     if (verifierResult) {
       renderStage4(data.finalize_result || { ok: verifierResult.ok, checks: verifierResult.checks || [] });
@@ -554,6 +596,10 @@ async function runAllSteps() {
 
     updateProgress(4); setStatus("done", `${currentTurn}/${maxTurns}`);
     setButtons(false, false, false, false, false);
+    if (sessionInfo && sessionInfo.visualizer_url) {
+      var rb2 = document.getElementById("btn-replay");
+      rb2.style.display = "inline-block"; rb2.disabled = false;
+    }
   } catch (e) {
     alert("Run all failed: " + e.message);
     setButtons(false, false, true, true, false);
@@ -583,6 +629,8 @@ async function finalizeSession() {
 
 /* ── Reset ────────────────────────────────────────────────────────────── */
 function resetAll() {
+  _replayStop();
+  _replay = { initData: null, index: 0, total: 0, timer: null, active: false };
   sessionInfo = null; toolDefs = []; toolHistory = [];
   currentTurn = 0; agentDone = false; verifierResult = null; allStateSnapshots = [];
   document.getElementById("status-session").textContent = "none";
@@ -598,18 +646,36 @@ function resetAll() {
     document.getElementById(id).classList.remove("done");
   });
   setButtons(true, false, false, false);
+  var rb3 = document.getElementById("btn-replay");
+  if (rb3) { rb3.style.display = "none"; rb3.disabled = true; }
 }
 
 /* ── Render: Stage 1 ──────────────────────────────────────────────────── */
 function renderStage1(startData, stateData) {
   const task = startData.task || {};
-  document.getElementById("s1-rundir").textContent = startData.run_dir || "—";
+  const backend = startData.state_backend || 'sqlite';
+  document.getElementById("s1-rundir").textContent = `${startData.world_label || startData.world || '?'} | ${startData.run_dir || '—'}`;
   document.getElementById("s1-prompt").textContent = task.prompt || "—";
-  document.getElementById("s1-table-count").textContent =
-    stateData.tables ? stateData.tables.length : 0;
 
   const container = document.getElementById("s1-tables");
+
+  if (backend === 'pylabrobot' || backend === 'ot2_visualizer') {
+    // PyLabRobot: show metadata summary instead of SQL tables
+    document.getElementById("s1-table-count").textContent = 'metadata';
+    const init = stateData.state || {};
+    container.innerHTML = `
+      <div style="padding:12px;color:var(--text-muted);line-height:1.8;">
+        <div><strong style="color:var(--cyan)">Backend:</strong> PyLabRobot + ChatterBox (dry-run)</div>
+        <div><strong style="color:var(--cyan)">Transfers:</strong> ${(init.transfers||[]).length}</div>
+        <div><strong style="color:var(--cyan)">Turn:</strong> ${init.turn_index||0}</div>
+      </div>`;
+    return;
+  }
+
+  // SQLite backend: show table data
   if (!stateData.state) { container.innerHTML = "<p style='color:var(--text-muted)'>No state data.</p>"; return; }
+  const tables = Object.keys(stateData.state).filter(t => stateData.state[t].length > 0);
+  document.getElementById("s1-table-count").textContent = tables.length;
 
   container.innerHTML = Object.entries(stateData.state).map(([table, rows]) => {
     if (!rows || rows.length === 0) return "";
@@ -788,6 +854,251 @@ function syntaxJson(obj) {
     .replace(/: (\d+\.?\d*)/g, ': <span class="num">$1</span>')
     .replace(/: (true|false)/g, ': <span class="bool">$1</span>')
     .replace(/: (null)/g, ': <span class="bool">$1</span>');
+}
+
+/* ── Replay ─────────────────────────────────────────────────────────── */
+let _replay = {
+  initData: null,    // {total_steps, steps: [{tool, args}]}
+  index: 0,          // current step index (0-based, before execution)
+  total: 0,
+  timer: null,       // auto-play interval timer
+  active: false,
+};
+
+async function startReplay() {
+  const world = document.getElementById("world-select").value;
+  if (!world.includes("ot2")) { alert("Replay only available for OT-2 Visualizer world."); return; }
+  if (!sessionInfo) { alert("Start a session first."); return; }
+
+  const btn = document.getElementById("btn-replay");
+  const label = document.getElementById("s3-replay-step-label");
+  const controls = document.getElementById("s3-replay-controls");
+  const guide = document.getElementById("s3-attention-guide");
+  const stepBtn = document.getElementById("s3-replay-btn-step");
+  const autoBtn = document.getElementById("s3-replay-btn-auto");
+
+  btn.disabled = true; btn.textContent = "⟳ Init...";
+  if (controls) controls.style.display = "none";
+
+  // Init replay: snapshot state
+  const init = await apiCall("/replay-init", "POST");
+  const total = init.total_steps;
+  if (total === 0) { btn.textContent = "🔄 Replay"; btn.disabled = false; return; }
+
+  _replay.initData = init;
+  _replay.index = 0;
+  _replay.total = total;
+  _replay.active = true;
+  _replay.timer = null;
+
+  // Show controls
+  if (controls) controls.style.display = "flex";
+  if (guide) guide.style.display = "block";
+  if (label) label.textContent = `Ready — 0/${total}`;
+  if (stepBtn) stepBtn.disabled = false;
+  if (autoBtn) autoBtn.disabled = false;
+
+  btn.textContent = "⟳ 0/" + total;
+  btn.style.display = "none"; // hide main replay button during replay
+
+  // Show step 1 preview
+  _showAttention(init.steps[0], 0, total);
+}
+
+async function _replayNextStep() {
+  if (!_replay.active || _replay.index >= _replay.total) return;
+
+  const stepBtn = document.getElementById("s3-replay-btn-step");
+  const autoBtn = document.getElementById("s3-replay-btn-auto");
+  const label = document.getElementById("s3-replay-step-label");
+  if (stepBtn) stepBtn.disabled = true;
+  if (autoBtn) autoBtn.disabled = true;
+
+  const r = await apiCall("/replay-step", "POST");
+  _replay.index = r.step; // 1-based after execution
+  if (label) label.textContent = `▶ Step ${r.step}/${_replay.total}: ${r.tool}`;
+
+  const nextIdx = Math.min(r.step, _replay.total - 1);
+  const stepInfo = _replay.initData.steps[nextIdx];
+  _showAttention(stepInfo, r.step, _replay.total);
+
+  if (r.done) {
+    _replayFinish();
+  } else {
+    if (stepBtn) stepBtn.disabled = false;
+    if (autoBtn) autoBtn.disabled = false;
+  }
+}
+
+function _replayAutoPlay() {
+  if (!_replay.active) return;
+
+  // Stop any existing timer
+  if (_replay.timer) { clearInterval(_replay.timer); _replay.timer = null; }
+
+  const speedSel = document.getElementById("s3-replay-speed");
+  const multiplier = parseFloat(speedSel ? speedSel.value : "1");
+  const baseDelay = 800; // ms at 1x
+  const delay = Math.max(150, Math.round(baseDelay / multiplier));
+
+  const stepBtn = document.getElementById("s3-replay-btn-step");
+  const autoBtn = document.getElementById("s3-replay-btn-auto");
+  if (stepBtn) stepBtn.disabled = true;
+  if (autoBtn) { autoBtn.disabled = true; autoBtn.textContent = "⏸ Pause"; }
+
+  _replay.timer = setInterval(async () => {
+    if (!_replay.active || _replay.index >= _replay.total) {
+      _replayStop();
+      return;
+    }
+
+    const r = await apiCall("/replay-step", "POST");
+    _replay.index = r.step;
+    const label = document.getElementById("s3-replay-step-label");
+    if (label) label.textContent = `▶ Step ${r.step}/${_replay.total}: ${r.tool}`;
+
+    const nextIdx = Math.min(r.step, _replay.total - 1);
+    const stepInfo = _replay.initData.steps[nextIdx];
+    _showAttention(stepInfo, r.step, _replay.total);
+
+    if (r.done) {
+      _replayFinish();
+    }
+  }, delay);
+}
+
+function _replayStop() {
+  if (_replay.timer) { clearInterval(_replay.timer); _replay.timer = null; }
+  _replay.active = false;
+
+  const btn = document.getElementById("btn-replay");
+  const controls = document.getElementById("s3-replay-controls");
+  const label = document.getElementById("s3-replay-step-label");
+  const autoBtn = document.getElementById("s3-replay-btn-auto");
+  const stepBtn = document.getElementById("s3-replay-btn-step");
+
+  if (controls) controls.style.display = "none";
+  if (btn) { btn.style.display = "inline-block"; btn.textContent = "🔄 Replay"; btn.disabled = false; }
+  if (label) label.textContent = "";
+  if (autoBtn) autoBtn.textContent = "⏩ Auto";
+  if (stepBtn) stepBtn.disabled = false;
+  if (autoBtn) autoBtn.disabled = false;
+}
+
+function _replayFinish() {
+  if (_replay.timer) { clearInterval(_replay.timer); _replay.timer = null; }
+  _replay.active = false;
+
+  const btn = document.getElementById("btn-replay");
+  const controls = document.getElementById("s3-replay-controls");
+  const label = document.getElementById("s3-replay-step-label");
+  const autoBtn = document.getElementById("s3-replay-btn-auto");
+
+  if (label) label.textContent = "✅ Done";
+  _showAttentionDone();
+  if (controls) controls.style.display = "none";
+  if (btn) { btn.style.display = "inline-block"; btn.textContent = "🔄 Replay"; btn.disabled = false; }
+  if (autoBtn) autoBtn.textContent = "⏩ Auto";
+}
+
+function _showAttention(stepInfo, stepNum, total) {
+  if (!stepInfo) return;
+  const guide = document.getElementById("s3-attention-guide");
+  const icon = document.getElementById("s3-attention-icon");
+  const title = document.getElementById("s3-attention-title");
+  const text = document.getElementById("s3-attention-text");
+  if (!guide || !text) return;
+
+  guide.style.display = "block";
+  const {icon: ico, title: ttl, body} = _attentionGuideText(stepInfo.tool, stepInfo.args || {});
+  if (icon) icon.textContent = ico;
+  if (title) title.textContent = `${ttl} (Step ${stepNum}/${total})`;
+  text.innerHTML = body;
+
+  // Pulse animation
+  guide.style.transition = "none";
+  guide.style.background = "rgba(0,229,255,0.12)";
+  setTimeout(() => {
+    guide.style.transition = "background 0.4s";
+    guide.style.background = "rgba(0,229,255,0.06)";
+  }, 100);
+}
+
+function _showAttentionDone() {
+  const guide = document.getElementById("s3-attention-guide");
+  const icon = document.getElementById("s3-attention-icon");
+  const title = document.getElementById("s3-attention-title");
+  const text = document.getElementById("s3-attention-text");
+  if (!guide || !text) return;
+  guide.style.display = "block";
+  guide.style.background = "rgba(63,185,80,0.08)";
+  if (icon) icon.textContent = "✅";
+  if (title) title.textContent = "Replay Complete";
+  text.innerHTML = "All liquid handling operations have been replayed. The <span style=\"color:var(--cyan);font-weight:600;\">cyan dots</span> in wells show liquid volumes — brighter = more liquid.";
+}
+
+function _attentionGuideText(toolName, args) {
+  // Generate human-readable attention guidance for each tool call
+  const guides = {
+    get_deck_state: {
+      icon: "🔍", title: "Inspecting Deck Layout",
+      body: "Look at the <span style=\"color:var(--cyan);font-weight:600;\">deck slots</span>. The OT-2 deck has 12 slots. Plates are loaded in <b>slot 5</b> (source), <b>slot 6</b> (assay), and the tip rack in <b>slot 1</b>."
+    },
+    get_labware_state: {
+      icon: "📋", title: "Reading Labware State",
+      body: `Examining <b style="color:var(--cyan);">${args.labware_id || 'labware'}</b>. Watch for <span style="color:var(--cyan);font-weight:600;\">cyan-filled wells</span> — each dot's brightness shows how much liquid is present. Dark circles are empty wells.`
+    },
+    aspirate: {
+      icon: "⬆️", title: "Aspirating Liquid",
+      body: `👀 <b>Watch the pipette move!</b> It picks up a tip from <b>${args.tip || 'tip rack'}</b>, then goes to <b style="color:#FF6600;font-weight:600;">${args.source || 'source well'}</b> to draw <b>${args.volume_ul || '?'} µL</b>. The <span style="color:var(--cyan);font-weight:600;\">cyan color will fade</span> from the source well as liquid is removed.`
+    },
+    dispense: {
+      icon: "⬇️", title: "Dispensing Liquid",
+      body: `🎯 <b>Watch the target well!</b> Pipette moves to <b style="color:#00FF88;font-weight:600;">${args.target || 'target well'}</b> and dispenses <b>${args.volume_ul || '?'} µL</b>. The <span style="color:var(--cyan);font-weight:600;\">cyan dot will brighten</span> as the well fills up. The tip is then returned to the rack.`
+    },
+    read_absorbance: {
+      icon: "📊", title: "Reading OD600 Absorbance",
+      body: `Measuring optical density at ${args.wavelength_nm || 600}nm for <b>${(args.wells || []).join(', ')}</b>. This is a simulated read — the values are computed from well volumes.`
+    },
+    add_workflow_note: {
+      icon: "📝", title: "Adding Workflow Note",
+      body: `Agent notes: "${args.note || ''}" — no physical action on the deck.`
+    },
+    submit_protocol: {
+      icon: "📤", title: "Submitting Protocol Decision",
+      body: `Final decision: <b style="color:${(args.decision||'').toLowerCase()==='continue'?'var(--green)':'var(--red)'};">${(args.decision || '').toUpperCase()}</b>. Target well: <b>${args.target_well || '?'}</b>. This completes the protocol — no more physical actions.`
+    }
+  };
+
+  const g = guides[toolName] || {
+    icon: "🔧", title: `Executing: ${toolName}`,
+    body: `Running <b>${toolName}</b> with arguments: <code>${JSON.stringify(args)}</code>`
+  };
+  return g;
+}
+
+function _showOt2VizIfNeeded() {
+  const world = document.getElementById("world-select").value;
+  const isOt2 = world.includes("ot2");
+  const container = document.getElementById("s3-viz-container");
+  const iframe = document.getElementById("s3-viz-iframe");
+  const replayBtn = document.getElementById("btn-replay");
+
+  if (isOt2 && container && iframe) {
+    container.style.display = "block";
+    if (iframe.src.indexOf("1337") === -1) iframe.src = "http://127.0.0.1:1337";
+    if (replayBtn) replayBtn.disabled = agentDone ? false : true;
+
+    // Show latest tool call in attention guide during live execution
+    if (!agentDone && toolHistory.length > 0) {
+      const last = toolHistory[toolHistory.length - 1];
+      const tc = last.tool_call || {};
+      _showAttention({tool: tc.name || '?', args: tc.arguments || {}}, toolHistory.length, maxTurns);
+    }
+  } else {
+    if (container) container.style.display = "none";
+    if (replayBtn) replayBtn.disabled = true;
+  }
 }
 
 function esc(s) {

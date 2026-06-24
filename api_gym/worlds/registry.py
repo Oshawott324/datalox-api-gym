@@ -25,7 +25,7 @@ class WorldRuntime:
     mcp_server_title: str
 
 
-SUPPORTED_WORLDS = ("billing_support_v0", "unitelabs_plate_qc_v0")
+SUPPORTED_WORLDS = ("billing_support_v0", "unitelabs_plate_qc_v0", "pylabrobot_lab_v0")
 
 
 def get_world_runtime(world: str) -> WorldRuntime:
@@ -41,6 +41,12 @@ def get_world_runtime(world: str) -> WorldRuntime:
             world=world,
             package="api_gym.worlds.unitelabs_plate_qc_v0",
             mcp_server_title="API Gym UniteLabs Plate QC",
+        )
+    if world == "pylabrobot_lab_v0":
+        return _runtime_from_package(
+            world=world,
+            package="api_gym.worlds.pylabrobot_lab_v0",
+            mcp_server_title="API Gym PyLabRobot Lab",
         )
     supported = ", ".join(SUPPORTED_WORLDS)
     raise ValueError(f"Unsupported world '{world}'. Supported: {supported}")
