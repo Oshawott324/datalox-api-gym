@@ -1,0 +1,118 @@
+{
+  "schema_version": "source_refs.v1",
+  "world_id": "lablongrun_wet_v0",
+  "primary_source": "opentrons_python_protocol_api",
+  "sources": [
+    {
+      "id": "opentrons_python_protocol_api",
+      "provider": "opentrons",
+      "kind": "official_docs",
+      "version_label": "current docs retrieved 2026-06-29",
+      "base_url": "https://docs.opentrons.com/python-api/"
+    },
+    {
+      "id": "pylabrobot_stable_docs",
+      "provider": "pylabrobot",
+      "kind": "official_docs",
+      "version_label": "stable docs retrieved 2026-06-29",
+      "base_url": "https://docs.pylabrobot.org/stable/"
+    }
+  ],
+  "tools": {
+    "get_deck_state": {
+      "grounding_level": "source_analog",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "ProtocolContext.deck and loaded labware/modules",
+        "url": "https://docs.opentrons.com/python-api/reference/protocols/"
+      },
+      "benchmark_local_semantics": ["stable_json_observation_schema"]
+    },
+    "get_labware_state": {
+      "grounding_level": "source_analog",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "Labware and well accessors",
+        "url": "https://docs.opentrons.com/python-api/labware/"
+      },
+      "benchmark_local_semantics": ["well_volume_ledger", "cell_signal_ledger"]
+    },
+    "pick_up_tip": {
+      "grounding_level": "direct_name",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "InstrumentContext.pick_up_tip",
+        "url": "https://docs.opentrons.com/python-api/building-block-commands/pipette-tips/"
+      }
+    },
+    "drop_tip": {
+      "grounding_level": "direct_name",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "InstrumentContext.drop_tip",
+        "url": "https://docs.opentrons.com/python-api/building-block-commands/pipette-tips/"
+      }
+    },
+    "aspirate": {
+      "grounding_level": "direct_name",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "InstrumentContext.aspirate",
+        "url": "https://docs.opentrons.com/python-api/building-block-commands/liquids/"
+      }
+    },
+    "dispense": {
+      "grounding_level": "direct_name",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "InstrumentContext.dispense",
+        "url": "https://docs.opentrons.com/python-api/building-block-commands/liquids/"
+      }
+    },
+    "mix": {
+      "grounding_level": "direct_name",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "InstrumentContext.mix",
+        "url": "https://docs.opentrons.com/python-api/building-block-commands/liquids/"
+      }
+    },
+    "wait": {
+      "grounding_level": "direct_concept",
+      "primary_ref": {
+        "source_id": "opentrons_python_protocol_api",
+        "concept": "ProtocolContext.delay",
+        "url": "https://docs.opentrons.com/python-api/reference/protocols/"
+      },
+      "benchmark_local_semantics": ["logical_clock_state_diff"]
+    },
+    "read_absorbance": {
+      "grounding_level": "direct_name_secondary_source",
+      "primary_ref": {
+        "source_id": "pylabrobot_stable_docs",
+        "concept": "PlateReader.read_absorbance",
+        "url": "https://docs.pylabrobot.org/stable/api/_autosummary/pylabrobot.plate_reading.plate_reader.PlateReader.read_absorbance.html"
+      },
+      "secondary_refs": [
+        {
+          "source_id": "opentrons_python_protocol_api",
+          "concept": "AbsorbanceReaderContext.read",
+          "url": "https://docs.opentrons.com/python-api/reference/absorbance-plate-reader/"
+        }
+      ],
+      "benchmark_local_semantics": ["scenario_fixture_readout_value", "readout_id"]
+    },
+    "get_protocol_artifact": {
+      "grounding_level": "benchmark_local",
+      "benchmark_local_semantics": ["agent-visible task artifact inspection"]
+    },
+    "submit_protocol_decision": {
+      "grounding_level": "benchmark_local",
+      "benchmark_local_semantics": ["hidden verifier target", "dry-run protocol decision"]
+    },
+    "add_workflow_note": {
+      "grounding_level": "benchmark_local",
+      "benchmark_local_semantics": ["audit note for agent trajectory"]
+    }
+  }
+}

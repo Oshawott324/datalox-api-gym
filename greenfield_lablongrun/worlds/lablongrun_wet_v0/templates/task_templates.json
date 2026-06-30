@@ -1,0 +1,662 @@
+{
+  "schema_version": "greenfield_lablongrun.task_templates.v0",
+  "templates": [
+    {
+      "template_id": "od600_nominal",
+      "scenario": "od600_serial_dilution_qc_nominal",
+      "lab_failure_mode": "nominal_baseline",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "pylabrobot_stable_docs"
+      ],
+      "projection_contract_ref": "projection_contract.md",
+      "domain_source_status": "speculative_calibration_only",
+      "stochastic_source_status": "none",
+      "expected_failure_codes": {
+        "wrong_decision": {
+          "type": "verifier_check",
+          "code": "decision_matches_expected"
+        }
+      },
+      "attribution_labels": [
+        "opentrons_action_semantics",
+        "pylabrobot_read_absorbance_name",
+        "benchmark_local_od600_calibration"
+      ],
+      "fault_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "noise_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "difficulty_targets": {
+        "short": {
+          "min_tool_calls": 20,
+          "max_tool_calls": 40
+        }
+      },
+      "parameters": {
+        "source_volume_ul": 1000.0,
+        "diluent_start_volume_ul": 10000.0,
+        "diluent_volume_ul": 100.0,
+        "culture_volume_ul": 10.0,
+        "qc_transfer_volume_ul": 100.0,
+        "mix_repetitions": 5,
+        "mix_volume_ul": 80.0,
+        "wait_seconds": 60.0,
+        "wavelength_nm": 600,
+        "stock_corrected_od600": 1.18,
+        "acceptance_min": 1.0,
+        "acceptance_max": 1.3
+      },
+      "objective": "Prepare an OD600 working dilution, read the QC well, and submit the protocol decision.",
+      "agent_instructions": [
+        "Inspect the protocol note, plate map, reagent inventory, and prior run log before acting.",
+        "Use the dry-run lab tools to prepare the OD600 QC sample.",
+        "Read absorbance at $wavelength_nm nm from qc_plate:B1 using dilution factor $dilution_factor.",
+        "Submit a continue/hold decision and cite the readout id produced in this run."
+      ],
+      "visible_artifacts": {
+        "protocol_note.md": [
+          "# OD600 Serial Dilution QC",
+          "",
+          "Prepare an OD600 working dilution of the overnight culture before readout.",
+          "Acceptance band is corrected OD600 $acceptance_min to $acceptance_max.",
+          "If the corrected OD600 is inside the band, submit `continue`; otherwise submit `hold`.",
+          "",
+          "Required sample path:",
+          "- $diluent_volume_ul uL sterile diluent from diluent_reservoir:R1 into dilution_plate:A1",
+          "- $culture_volume_ul uL culture from culture_tube:S1 into dilution_plate:A1",
+          "- mix dilution_plate:A1",
+          "- transfer $qc_transfer_volume_ul uL from dilution_plate:A1 into qc_plate:B1",
+          "- wait $wait_seconds seconds before reading OD600 at $wavelength_nm nm with dilution factor $dilution_factor"
+        ],
+        "plate_map.csv": [
+          "role,labware_id,well_id",
+          "source_culture,culture_tube,S1",
+          "diluent,diluent_reservoir,R1",
+          "dilution,dilution_plate,A1",
+          "qc_readout,qc_plate,B1"
+        ],
+        "reagent_inventory.csv": [
+          "labware_id,well_id,contents,available_volume_ul",
+          "culture_tube,S1,overnight_culture,$source_volume_ul",
+          "diluent_reservoir,R1,sterile_diluent,$diluent_start_volume_ul"
+        ],
+        "prior_run_log.jsonl": [
+          "{\"event\":\"deck_prepared\",\"status\":\"ok\",\"note\":\"No prior OD600 readout exists for this QC plate.\"}"
+        ]
+      },
+      "oracle_strategy": "od600_serial_dilution_qc",
+      "known_bad_plan_strategy": [
+        "wrong_decision"
+      ],
+      "verifier_requirements": {},
+      "verifier_predicates": [
+        "required_artifacts_read",
+        "final_volumes_match",
+        "readout_in_band",
+        "decision_matches_expected",
+        "decision_cites_run_readout"
+      ]
+    },
+    {
+      "template_id": "od600_low_source_volume",
+      "scenario": "od600_serial_dilution_qc_low_source_volume",
+      "lab_failure_mode": "low_source_volume_replan",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "pylabrobot_stable_docs"
+      ],
+      "projection_contract_ref": "projection_contract.md",
+      "domain_source_status": "speculative_calibration_only",
+      "stochastic_source_status": "none",
+      "expected_failure_codes": {
+        "nominal_overdraws_low_source": {
+          "type": "tool_error",
+          "code": "OVERDRAW_SOURCE_WELL"
+        }
+      },
+      "attribution_labels": [
+        "opentrons_action_semantics",
+        "pylabrobot_read_absorbance_name",
+        "benchmark_local_od600_calibration"
+      ],
+      "fault_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "noise_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "difficulty_targets": {
+        "short": {
+          "min_tool_calls": 20,
+          "max_tool_calls": 40
+        }
+      },
+      "parameters": {
+        "source_volume_ul": 14.0,
+        "diluent_start_volume_ul": 10000.0,
+        "diluent_volume_ul": 50.0,
+        "culture_volume_ul": 5.0,
+        "qc_transfer_volume_ul": 50.0,
+        "mix_repetitions": 5,
+        "mix_volume_ul": 40.0,
+        "wait_seconds": 60.0,
+        "wavelength_nm": 600,
+        "stock_corrected_od600": 1.18,
+        "acceptance_min": 1.0,
+        "acceptance_max": 1.3,
+        "nominal_diluent_volume_ul": 100.0,
+        "nominal_culture_volume_ul": 10.0
+      },
+      "objective": "Prepare an OD600 working dilution from a low-volume source tube, read the QC well, and submit the protocol decision.",
+      "agent_instructions": [
+        "Inspect the protocol note, plate map, reagent inventory, and prior run log before acting.",
+        "Use the low-source-volume transfer recipe instead of the nominal recipe.",
+        "Read absorbance at $wavelength_nm nm from qc_plate:B1 using dilution factor $dilution_factor.",
+        "Submit a continue/hold decision and cite the readout id produced in this run."
+      ],
+      "visible_artifacts": {
+        "protocol_note.md": [
+          "# OD600 Low-Source-Volume QC",
+          "",
+          "The source culture tube is below the nominal volume for a 10 uL sample transfer.",
+          "Use the low-volume recipe in this note to preserve dead volume.",
+          "Acceptance band is corrected OD600 $acceptance_min to $acceptance_max.",
+          "If the corrected OD600 is inside the band, submit `continue`; otherwise submit `hold`.",
+          "",
+          "Required sample path:",
+          "- $diluent_volume_ul uL sterile diluent from diluent_reservoir:R1 into dilution_plate:A1",
+          "- $culture_volume_ul uL culture from culture_tube:S1 into dilution_plate:A1",
+          "- mix dilution_plate:A1",
+          "- transfer $qc_transfer_volume_ul uL from dilution_plate:A1 into qc_plate:B1",
+          "- wait $wait_seconds seconds before reading OD600 at $wavelength_nm nm with dilution factor $dilution_factor"
+        ],
+        "plate_map.csv": [
+          "role,labware_id,well_id",
+          "source_culture,culture_tube,S1",
+          "diluent,diluent_reservoir,R1",
+          "dilution,dilution_plate,A1",
+          "qc_readout,qc_plate,B1"
+        ],
+        "reagent_inventory.csv": [
+          "labware_id,well_id,contents,available_volume_ul",
+          "culture_tube,S1,overnight_culture,$source_volume_ul",
+          "diluent_reservoir,R1,sterile_diluent,$diluent_start_volume_ul"
+        ],
+        "prior_run_log.jsonl": [
+          "{\"event\":\"source_volume_check\",\"status\":\"limited\",\"note\":\"Use the reduced source transfer recipe for this QC plate.\"}"
+        ]
+      },
+      "oracle_strategy": "od600_serial_dilution_qc",
+      "known_bad_plan_strategy": [
+        "nominal_overdraws_low_source"
+      ],
+      "verifier_requirements": {},
+      "verifier_predicates": [
+        "required_artifacts_read",
+        "final_volumes_match",
+        "readout_in_band",
+        "decision_matches_expected",
+        "decision_cites_run_readout"
+      ]
+    },
+    {
+      "template_id": "od600_contaminated_tip",
+      "scenario": "od600_serial_dilution_qc_contaminated_tip",
+      "lab_failure_mode": "contaminated_tip_reuse",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "pylabrobot_stable_docs"
+      ],
+      "projection_contract_ref": "projection_contract.md",
+      "domain_source_status": "speculative_calibration_only",
+      "stochastic_source_status": "none",
+      "expected_failure_codes": {
+        "contaminate_diluent_with_sample_tip": {
+          "type": "verifier_check",
+          "code": "no_contamination_events"
+        }
+      },
+      "attribution_labels": [
+        "opentrons_action_semantics",
+        "pylabrobot_read_absorbance_name",
+        "benchmark_local_od600_calibration",
+        "benchmark_local_contamination_projection"
+      ],
+      "fault_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "noise_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "difficulty_targets": {
+        "short": {
+          "min_tool_calls": 20,
+          "max_tool_calls": 40
+        }
+      },
+      "parameters": {
+        "source_volume_ul": 1000.0,
+        "diluent_start_volume_ul": 10000.0,
+        "diluent_volume_ul": 100.0,
+        "culture_volume_ul": 10.0,
+        "qc_transfer_volume_ul": 100.0,
+        "mix_repetitions": 5,
+        "mix_volume_ul": 80.0,
+        "wait_seconds": 60.0,
+        "wavelength_nm": 600,
+        "stock_corrected_od600": 1.18,
+        "acceptance_min": 1.0,
+        "acceptance_max": 1.3
+      },
+      "objective": "Prepare an OD600 working dilution while preserving sterile diluent contact boundaries.",
+      "agent_instructions": [
+        "Inspect the protocol note, plate map, reagent inventory, and prior run log before acting.",
+        "Use a clean tip for sterile diluent before using a separate clean tip for culture.",
+        "Do not contact the sterile diluent reservoir with a tip that has touched sample or dilution liquid.",
+        "Submit a continue/hold decision and cite the readout id produced in this run."
+      ],
+      "visible_artifacts": {
+        "protocol_note.md": [
+          "# OD600 Contamination-Control QC",
+          "",
+          "Prepare the working dilution with protected reagent handling.",
+          "Use separate clean tips for sterile diluent and culture transfer.",
+          "Never return a sample-contacted tip to the sterile diluent reservoir.",
+          "Acceptance band is corrected OD600 $acceptance_min to $acceptance_max.",
+          "",
+          "Required sample path:",
+          "- $diluent_volume_ul uL sterile diluent from diluent_reservoir:R1 into dilution_plate:A1 using a clean tip",
+          "- $culture_volume_ul uL culture from culture_tube:S1 into dilution_plate:A1 using a new clean tip",
+          "- mix dilution_plate:A1",
+          "- transfer $qc_transfer_volume_ul uL from dilution_plate:A1 into qc_plate:B1",
+          "- wait $wait_seconds seconds before reading OD600 at $wavelength_nm nm with dilution factor $dilution_factor"
+        ],
+        "plate_map.csv": [
+          "role,labware_id,well_id",
+          "source_culture,culture_tube,S1",
+          "protected_diluent,diluent_reservoir,R1",
+          "dilution,dilution_plate,A1",
+          "qc_readout,qc_plate,B1"
+        ],
+        "reagent_inventory.csv": [
+          "labware_id,well_id,contents,available_volume_ul",
+          "culture_tube,S1,overnight_culture,$source_volume_ul",
+          "diluent_reservoir,R1,sterile_diluent,$diluent_start_volume_ul"
+        ],
+        "prior_run_log.jsonl": [
+          "{\"event\":\"protected_reagent_check\",\"status\":\"ok\",\"note\":\"Sterile diluent must remain untouched by sample-contacted tips.\"}"
+        ]
+      },
+      "oracle_strategy": "od600_serial_dilution_qc",
+      "known_bad_plan_strategy": [
+        "contaminate_diluent_with_sample_tip"
+      ],
+      "verifier_requirements": {
+        "forbid_contamination_events": true
+      },
+      "verifier_predicates": [
+        "required_artifacts_read",
+        "final_volumes_match",
+        "readout_in_band",
+        "decision_matches_expected",
+        "decision_cites_run_readout",
+        "no_contamination_events"
+      ]
+    },
+    {
+      "template_id": "od600_instrument_busy_wait",
+      "scenario": "od600_serial_dilution_qc_instrument_busy_wait",
+      "lab_failure_mode": "instrument_busy_wait",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "pylabrobot_stable_docs"
+      ],
+      "projection_contract_ref": "projection_contract.md",
+      "domain_source_status": "speculative_calibration_only",
+      "stochastic_source_status": "assumption_for_calibration",
+      "expected_failure_codes": {
+        "skip_reader_busy_wait": {
+          "type": "tool_error",
+          "code": "READER_BUSY"
+        }
+      },
+      "attribution_labels": [
+        "opentrons_action_semantics",
+        "pylabrobot_read_absorbance_name",
+        "benchmark_local_od600_calibration",
+        "benchmark_local_temporal_fault"
+      ],
+      "fault_schedule_policy": {
+        "mode": "template_events",
+        "source_status": "assumption_for_calibration",
+        "events": [
+          {
+            "event_type": "reader_busy_until_wait_seconds",
+            "wait_seconds": "$wait_seconds"
+          }
+        ]
+      },
+      "noise_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "difficulty_targets": {
+        "short": {
+          "min_tool_calls": 20,
+          "max_tool_calls": 40
+        }
+      },
+      "parameters": {
+        "source_volume_ul": 1000.0,
+        "diluent_start_volume_ul": 10000.0,
+        "diluent_volume_ul": 100.0,
+        "culture_volume_ul": 10.0,
+        "qc_transfer_volume_ul": 100.0,
+        "mix_repetitions": 5,
+        "mix_volume_ul": 80.0,
+        "wait_seconds": 120.0,
+        "reader_busy_bad_wait_seconds": 30.0,
+        "wavelength_nm": 600,
+        "stock_corrected_od600": 1.18,
+        "acceptance_min": 1.0,
+        "acceptance_max": 1.3
+      },
+      "objective": "Prepare an OD600 working dilution and wait for the plate reader ready gate before readout.",
+      "agent_instructions": [
+        "Inspect the protocol note, plate map, reagent inventory, and prior run log before acting.",
+        "The plate reader is busy at run start; wait for the full ready gate before reading.",
+        "Read absorbance at $wavelength_nm nm from qc_plate:B1 using dilution factor $dilution_factor.",
+        "Submit a continue/hold decision and cite the readout id produced in this run."
+      ],
+      "visible_artifacts": {
+        "protocol_note.md": [
+          "# OD600 Reader-Busy QC",
+          "",
+          "Prepare the OD600 working dilution, then wait for the plate reader ready gate.",
+          "Reader-ready wait requirement: $wait_seconds seconds.",
+          "Acceptance band is corrected OD600 $acceptance_min to $acceptance_max.",
+          "",
+          "Required sample path:",
+          "- $diluent_volume_ul uL sterile diluent from diluent_reservoir:R1 into dilution_plate:A1",
+          "- $culture_volume_ul uL culture from culture_tube:S1 into dilution_plate:A1",
+          "- mix dilution_plate:A1",
+          "- transfer $qc_transfer_volume_ul uL from dilution_plate:A1 into qc_plate:B1",
+          "- wait $wait_seconds seconds before reading OD600 at $wavelength_nm nm with dilution factor $dilution_factor"
+        ],
+        "plate_map.csv": [
+          "role,labware_id,well_id",
+          "source_culture,culture_tube,S1",
+          "diluent,diluent_reservoir,R1",
+          "dilution,dilution_plate,A1",
+          "qc_readout,qc_plate,B1"
+        ],
+        "reagent_inventory.csv": [
+          "labware_id,well_id,contents,available_volume_ul",
+          "culture_tube,S1,overnight_culture,$source_volume_ul",
+          "diluent_reservoir,R1,sterile_diluent,$diluent_start_volume_ul"
+        ],
+        "prior_run_log.jsonl": [
+          "{\"event\":\"plate_reader_status\",\"status\":\"busy\",\"note\":\"Wait for the configured ready gate before OD600 readout.\"}"
+        ]
+      },
+      "oracle_strategy": "od600_serial_dilution_qc",
+      "known_bad_plan_strategy": [
+        "skip_reader_busy_wait"
+      ],
+      "verifier_requirements": {
+        "required_wait_seconds": "$wait_seconds"
+      },
+      "verifier_predicates": [
+        "required_artifacts_read",
+        "final_volumes_match",
+        "readout_in_band",
+        "required_wait_satisfied",
+        "decision_matches_expected",
+        "decision_cites_run_readout"
+      ]
+    },
+    {
+      "template_id": "od600_stale_readout",
+      "scenario": "od600_serial_dilution_qc_stale_readout",
+      "lab_failure_mode": "stale_readout_rejected",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "pylabrobot_stable_docs"
+      ],
+      "projection_contract_ref": "projection_contract.md",
+      "domain_source_status": "speculative_calibration_only",
+      "stochastic_source_status": "assumption_for_calibration",
+      "expected_failure_codes": {
+        "cite_stale_readout": {
+          "type": "verifier_check",
+          "code": "submission_cites_fresh_readout"
+        }
+      },
+      "attribution_labels": [
+        "opentrons_action_semantics",
+        "pylabrobot_read_absorbance_name",
+        "benchmark_local_od600_calibration",
+        "benchmark_local_stale_evidence_projection"
+      ],
+      "fault_schedule_policy": {
+        "mode": "template_events",
+        "source_status": "assumption_for_calibration",
+        "events": [
+          {
+            "event_type": "stale_prior_readout",
+            "readout_id": "$stale_readout_id",
+            "well_ref": "qc_plate:B1",
+            "wavelength_nm": "$wavelength_nm",
+            "raw_od600": "$stale_raw_od600",
+            "corrected_od600": "$stale_corrected_od600",
+            "dilution_factor": "$dilution_factor",
+            "created_at": "2026-06-29T11:59:00Z"
+          }
+        ]
+      },
+      "noise_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "difficulty_targets": {
+        "short": {
+          "min_tool_calls": 20,
+          "max_tool_calls": 40
+        }
+      },
+      "parameters": {
+        "source_volume_ul": 1000.0,
+        "diluent_start_volume_ul": 10000.0,
+        "diluent_volume_ul": 100.0,
+        "culture_volume_ul": 10.0,
+        "qc_transfer_volume_ul": 100.0,
+        "mix_repetitions": 5,
+        "mix_volume_ul": 80.0,
+        "wait_seconds": 60.0,
+        "wavelength_nm": 600,
+        "stock_corrected_od600": 1.18,
+        "acceptance_min": 1.0,
+        "acceptance_max": 1.3,
+        "stale_readout_id": "stale_readout_001",
+        "stale_raw_od600": 0.107273,
+        "stale_corrected_od600": 1.18
+      },
+      "objective": "Prepare an OD600 working dilution and base the final decision on a fresh readout from this run.",
+      "agent_instructions": [
+        "Inspect the protocol note, plate map, reagent inventory, and prior run log before acting.",
+        "Ignore prior readouts as final evidence; produce a fresh OD600 readout after preparing this sample.",
+        "Read absorbance at $wavelength_nm nm from qc_plate:B1 using dilution factor $dilution_factor.",
+        "Submit a continue/hold decision and cite the readout id produced in this run."
+      ],
+      "visible_artifacts": {
+        "protocol_note.md": [
+          "# OD600 Fresh-Evidence QC",
+          "",
+          "A prior OD600 readout exists for this plate position, but it is not valid final evidence for this run.",
+          "Prepare the sample again and cite a fresh readout from the current run.",
+          "Acceptance band is corrected OD600 $acceptance_min to $acceptance_max.",
+          "",
+          "Required sample path:",
+          "- $diluent_volume_ul uL sterile diluent from diluent_reservoir:R1 into dilution_plate:A1",
+          "- $culture_volume_ul uL culture from culture_tube:S1 into dilution_plate:A1",
+          "- mix dilution_plate:A1",
+          "- transfer $qc_transfer_volume_ul uL from dilution_plate:A1 into qc_plate:B1",
+          "- wait $wait_seconds seconds before reading OD600 at $wavelength_nm nm with dilution factor $dilution_factor"
+        ],
+        "plate_map.csv": [
+          "role,labware_id,well_id",
+          "source_culture,culture_tube,S1",
+          "diluent,diluent_reservoir,R1",
+          "dilution,dilution_plate,A1",
+          "qc_readout,qc_plate,B1"
+        ],
+        "reagent_inventory.csv": [
+          "labware_id,well_id,contents,available_volume_ul",
+          "culture_tube,S1,overnight_culture,$source_volume_ul",
+          "diluent_reservoir,R1,sterile_diluent,$diluent_start_volume_ul"
+        ],
+        "prior_run_log.jsonl": [
+          "{\"event\":\"prior_readout\",\"status\":\"stale\",\"readout_id\":\"$stale_readout_id\",\"note\":\"Do not use this prior readout as final evidence for the current run.\"}"
+        ]
+      },
+      "oracle_strategy": "od600_serial_dilution_qc",
+      "known_bad_plan_strategy": [
+        "cite_stale_readout"
+      ],
+      "verifier_requirements": {
+        "require_fresh_readout": true
+      },
+      "verifier_predicates": [
+        "required_artifacts_read",
+        "final_volumes_match",
+        "readout_in_band",
+        "submission_cites_fresh_readout",
+        "decision_matches_expected"
+      ]
+    },
+    {
+      "template_id": "od600_partial_dispense_recovery",
+      "scenario": "od600_serial_dilution_qc_partial_dispense_recovery",
+      "lab_failure_mode": "partial_dispense_recovery",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "pylabrobot_stable_docs"
+      ],
+      "projection_contract_ref": "projection_contract.md",
+      "domain_source_status": "speculative_calibration_only",
+      "stochastic_source_status": "assumption_for_calibration",
+      "expected_failure_codes": {
+        "ignore_partial_dispense": {
+          "type": "verifier_check",
+          "code": "final_volume:qc_plate:B1"
+        }
+      },
+      "attribution_labels": [
+        "opentrons_action_semantics",
+        "pylabrobot_read_absorbance_name",
+        "benchmark_local_od600_calibration",
+        "benchmark_local_partial_dispense_projection"
+      ],
+      "fault_schedule_policy": {
+        "mode": "template_events",
+        "source_status": "assumption_for_calibration",
+        "events": [
+          {
+            "event_type": "partial_dispense_once",
+            "target_well_ref": "qc_plate:B1",
+            "requested_volume_ul": "$qc_transfer_volume_ul",
+            "delivered_volume_ul": "$partial_dispense_delivered_ul"
+          }
+        ]
+      },
+      "noise_schedule_policy": {
+        "mode": "empty_deterministic",
+        "source_status": "none"
+      },
+      "difficulty_targets": {
+        "short": {
+          "min_tool_calls": 22,
+          "max_tool_calls": 45
+        }
+      },
+      "parameters": {
+        "source_volume_ul": 1000.0,
+        "diluent_start_volume_ul": 10000.0,
+        "diluent_volume_ul": 100.0,
+        "culture_volume_ul": 10.0,
+        "qc_transfer_volume_ul": 100.0,
+        "partial_dispense_delivered_ul": 60.0,
+        "mix_repetitions": 5,
+        "mix_volume_ul": 80.0,
+        "wait_seconds": 60.0,
+        "wavelength_nm": 600,
+        "stock_corrected_od600": 1.18,
+        "acceptance_min": 1.0,
+        "acceptance_max": 1.3
+      },
+      "objective": "Prepare an OD600 working dilution, detect a partial QC dispense, recover the missing volume, and submit the protocol decision.",
+      "agent_instructions": [
+        "Inspect the protocol note, plate map, reagent inventory, and prior run log before acting.",
+        "If a dispense reports less delivered volume than requested, inspect the QC plate and complete the remaining dispense before readout.",
+        "Read absorbance at $wavelength_nm nm from qc_plate:B1 using dilution factor $dilution_factor.",
+        "Submit a continue/hold decision and cite the readout id produced in this run."
+      ],
+      "visible_artifacts": {
+        "protocol_note.md": [
+          "# OD600 Partial-Dispense Recovery QC",
+          "",
+          "Prepare the working dilution and transfer $qc_transfer_volume_ul uL into qc_plate:B1.",
+          "A dry-run dispense result may report delivered volume separately from requested volume.",
+          "If delivered volume is short, inspect qc_plate and finish the remaining transfer before readout.",
+          "Acceptance band is corrected OD600 $acceptance_min to $acceptance_max.",
+          "",
+          "Required sample path:",
+          "- $diluent_volume_ul uL sterile diluent from diluent_reservoir:R1 into dilution_plate:A1",
+          "- $culture_volume_ul uL culture from culture_tube:S1 into dilution_plate:A1",
+          "- mix dilution_plate:A1",
+          "- transfer $qc_transfer_volume_ul uL total from dilution_plate:A1 into qc_plate:B1",
+          "- wait $wait_seconds seconds before reading OD600 at $wavelength_nm nm with dilution factor $dilution_factor"
+        ],
+        "plate_map.csv": [
+          "role,labware_id,well_id",
+          "source_culture,culture_tube,S1",
+          "diluent,diluent_reservoir,R1",
+          "dilution,dilution_plate,A1",
+          "qc_readout,qc_plate,B1"
+        ],
+        "reagent_inventory.csv": [
+          "labware_id,well_id,contents,available_volume_ul",
+          "culture_tube,S1,overnight_culture,$source_volume_ul",
+          "diluent_reservoir,R1,sterile_diluent,$diluent_start_volume_ul"
+        ],
+        "prior_run_log.jsonl": [
+          "{\"event\":\"dispense_monitoring\",\"status\":\"enabled\",\"note\":\"Compare requested and delivered volumes in dry-run dispense results.\"}"
+        ]
+      },
+      "oracle_strategy": "od600_serial_dilution_qc",
+      "known_bad_plan_strategy": [
+        "ignore_partial_dispense"
+      ],
+      "verifier_requirements": {
+        "require_partial_dispense_recovery": true
+      },
+      "verifier_predicates": [
+        "required_artifacts_read",
+        "final_volumes_match",
+        "partial_dispense_fault_observed",
+        "partial_dispense_recovered",
+        "readout_in_band",
+        "decision_matches_expected"
+      ]
+    }
+  ]
+}
