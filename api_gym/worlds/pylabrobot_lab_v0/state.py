@@ -75,6 +75,31 @@ def resolve_state_path(run_dir: Path) -> Path:
 resolve_state_db_path = resolve_state_path
 
 
+# ── LabClock ─────────────────────────────────────────────────────────────
+
+
+@dataclass
+class LabClock:
+    """Discrete-event clock for the lab environment.
+
+    Tracks simulation time in seconds.  Each tool call advances the clock
+    by the operation's nominal duration.  The clock is used by temporal
+    verifier predicates (freshness, ordering) and recorded in event log
+    entries.
+    """
+
+    current_time: float = 0.0
+
+    def advance(self, seconds: float) -> float:
+        """Advance the clock by *seconds* and return the new time."""
+        self.current_time += seconds
+        return self.current_time
+
+    def now(self) -> float:
+        """Return the current simulation time in seconds."""
+        return self.current_time
+
+
 # ── LabState: in-memory wrapper around PyLabRobot objects ────────────────
 
 
@@ -93,6 +118,7 @@ class LabState:
     tip_rack: Any = None                 # tip rack
 
     # Tracking
+    clock: LabClock = field(default_factory=LabClock)
     setup_done: bool = False
     tips_used: int = 0
     transfers: list[dict[str, Any]] = field(default_factory=list)
@@ -109,6 +135,7 @@ class LabState:
         """Persist metadata to JSON.  PLR objects are serialised via their
         built-in serialize() method."""
         data: dict[str, Any] = {
+            "clock_time": self.clock.current_time,
             "setup_done": self.setup_done,
             "tips_used": self.tips_used,
             "transfers": self.transfers,
@@ -127,6 +154,7 @@ class LabState:
         """Load metadata from JSON and reconstruct PLR objects."""
         data = json.loads(path.read_text(encoding="utf-8"))
         state = cls()
+        state.clock.current_time = data.get("clock_time", 0.0)
         state.setup_done = data.get("setup_done", False)
         state.tips_used = data.get("tips_used", 0)
         state.transfers = data.get("transfers", [])
@@ -146,6 +174,7 @@ class LabState:
             "object_type": object_type,
             "object_id": object_id,
             "visible_to_agent": visible_to_agent,
+            "clock_time": self.clock.current_time,
             "payload": payload,
         })
 

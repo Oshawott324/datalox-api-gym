@@ -20,6 +20,71 @@ from api_gym.worlds.pylabrobot_lab_v0.state import (
 )
 from api_gym.worlds.pylabrobot_lab_v0.state_ot2 import _run_async
 
+# ── Lazy PLR exception imports (PyLabRobot may not be installed) ──────────
+_PLR_ERRORS_LOADED = False
+TooLittleLiquidError: Any = Exception
+TooLittleVolumeError: Any = Exception
+NoTipError: Any = Exception
+HasTipError: Any = Exception
+NoChannelError: Any = Exception
+ChannelizedError: Any = Exception
+
+
+def _ensure_plr_errors() -> None:
+    """Lazy-import PyLabRobot exception classes."""
+    global _PLR_ERRORS_LOADED, TooLittleLiquidError, TooLittleVolumeError
+    global NoTipError, HasTipError, NoChannelError, ChannelizedError
+    if _PLR_ERRORS_LOADED:
+        return
+    try:
+        from pylabrobot.resources.errors import (
+            TooLittleLiquidError as _TLLE,
+            TooLittleVolumeError as _TLVE,
+            NoTipError as _NTE,
+            HasTipError as _HTE,
+        )
+        TooLittleLiquidError = _TLLE
+        TooLittleVolumeError = _TLVE
+        NoTipError = _NTE
+        HasTipError = _HTE
+    except ImportError:
+        pass
+    try:
+        from pylabrobot.liquid_handling.errors import (
+            NoChannelError as _NCE,
+            ChannelizedError as _CE,
+        )
+        NoChannelError = _NCE
+        ChannelizedError = _CE
+    except ImportError:
+        pass
+    _PLR_ERRORS_LOADED = True
+
+
+def _translate_plr_error(exc: Exception) -> dict[str, Any]:
+    """Translate a PyLabRobot exception into an _error response dict."""
+    _ensure_plr_errors()
+    if isinstance(exc, TooLittleLiquidError):
+        return _error("too_little_liquid", "Source well has insufficient volume.",
+                      {"detail": str(exc)})
+    if isinstance(exc, TooLittleVolumeError):
+        return _error("well_overflow", "Dispense would exceed well maximum volume.",
+                      {"detail": str(exc)})
+    if isinstance(exc, NoTipError):
+        return _error("tip_not_available", "No tip available at the requested position or on channel.",
+                      {"detail": str(exc)})
+    if isinstance(exc, HasTipError):
+        return _error("tip_already_mounted", "Channel already has a tip mounted.",
+                      {"detail": str(exc)})
+    if isinstance(exc, NoChannelError):
+        return _error("no_channel_available", "No free pipette channel available.",
+                      {"detail": str(exc)})
+    if isinstance(exc, ChannelizedError):
+        err_detail = {str(ch): str(e) for ch, e in getattr(exc, "errors", {}).items()}
+        return _error("channelized_error", "Partial failure in multi-channel operation.",
+                      err_detail)
+    return _error("operation_failed", str(exc))
+
 
 AGENT_ACTOR = "agent@pylabrobot-lab.example"
 VALID_DECISIONS = {"continue", "hold"}
@@ -164,7 +229,7 @@ def aspirate(lab_state: LabState, source: str, volume_ul: float,
 
         _run_async(_op())
     except Exception as exc:
-        return _error("aspirate_failed", str(exc))
+        return _translate_plr_error(exc)
 
     new_src_vol = get_well_volume(src_well)
 
@@ -211,7 +276,7 @@ def dispense(lab_state: LabState, target: str, volume_ul: float,
 
         _run_async(_op())
     except Exception as exc:
-        return _error("dispense_failed", str(exc))
+        return _translate_plr_error(exc)
 
     after_vol = get_well_volume(tgt_well)
 
@@ -225,6 +290,29 @@ def dispense(lab_state: LabState, target: str, volume_ul: float,
     })
     lab_state.insert_event("transfer.dispensed", "well", target, response)
     return _ok(response)
+
+
+def discard_tips(lab_state: LabState) -> dict[str, Any]:
+    """Discard currently mounted tips to trash (OT-2 visual)."""
+    if lab_state.liquid_handler is None:
+        return _error("not_initialised", "Liquid handler not initialised.")
+
+    lh = lab_state.liquid_handler
+    try:
+        async def _op():
+            await lh.discard_tips()
+            await asyncio.sleep(1.5)
+
+        _run_async(_op())
+    except Exception as exc:
+        return _translate_plr_error(exc)
+
+    pending = getattr(lab_state, "_pending_volume_ul", 0.0)
+    lab_state._pending_volume_ul = 0.0
+    lab_state._pending_tip = None
+    lab_state.insert_event("tips.discarded", "pipette", "channel_0",
+                           {"pending_volume_discarded_ul": pending})
+    return _ok({"discarded": True, "pending_volume_discarded_ul": pending})
 
 
 # ── Plate reading / workflow (no hardware motion) ──────────────────────────

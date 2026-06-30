@@ -217,6 +217,20 @@ def dispense(lab_state: LabState, target: str, volume_ul: float,
     return _ok(response)
 
 
+def discard_tips(lab_state: LabState) -> dict[str, Any]:
+    """Discard currently mounted tips to trash (chatterbox dry-run).
+
+    Clears any pending aspirated volume and resets tip tracking.
+    """
+    pending = getattr(lab_state, "_pending_volume_ul", 0.0)
+    tip = getattr(lab_state, "_pending_tip", None)
+    lab_state._pending_volume_ul = 0.0
+    lab_state._pending_tip = None
+    lab_state.insert_event("tips.discarded", "pipette", "channel_0",
+                           {"pending_volume_discarded_ul": pending, "tip": tip})
+    return _ok({"discarded": True, "pending_volume_discarded_ul": pending, "tip": tip})
+
+
 # ── Plate reading ───────────────────────────────────────────────────────
 
 
