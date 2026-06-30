@@ -49,6 +49,7 @@ from api_gym.worlds.pylabrobot_lab_v0.sampler import (
 from api_gym.worlds.pylabrobot_lab_v0.services_ot2 import (
     aspirate as ot2_aspirate,
     dispense as ot2_dispense,
+    discard_tips as ot2_discard_tips,
     get_deck_state as ot2_get_deck_state,
     get_labware_state as ot2_get_labware_state,
     read_absorbance as ot2_read_absorbance,
@@ -125,11 +126,38 @@ Rules:
 
 
 _OT2_SCENARIOS = {
-    "plate_transfer_qc": None,       # lazy-imported below
+    "plate_transfer_qc": None,
     "serial_dilution_qc": None,
+    "multi_sample_qc": None,
+    "concentration_gradient_qc": None,
+    "limited_tips_qc": None,
+    "low_reagent_qc": None,
+    "instrument_busy_qc": None,
+    "stale_deck_qc": None,
+    "borderline_qc": None,
+    "cross_contamination_qc": None,
 }
 _OT2_SCENARIOS["plate_transfer_qc"] = _build_plate_transfer_qc_ot2
 _OT2_SCENARIOS["serial_dilution_qc"] = _build_serial_dilution_qc_ot2
+# New scenarios
+from api_gym.worlds.pylabrobot_lab_v0.sampler import (
+    _build_multi_sample_qc_ot2,
+    _build_concentration_gradient_qc_ot2,
+    _build_limited_tips_qc_ot2,
+    _build_low_reagent_qc_ot2,
+    _build_instrument_busy_qc_ot2,
+    _build_stale_deck_qc_ot2,
+    _build_borderline_qc_ot2,
+    _build_cross_contamination_qc_ot2,
+)
+_OT2_SCENARIOS["multi_sample_qc"] = _build_multi_sample_qc_ot2
+_OT2_SCENARIOS["concentration_gradient_qc"] = _build_concentration_gradient_qc_ot2
+_OT2_SCENARIOS["limited_tips_qc"] = _build_limited_tips_qc_ot2
+_OT2_SCENARIOS["low_reagent_qc"] = _build_low_reagent_qc_ot2
+_OT2_SCENARIOS["instrument_busy_qc"] = _build_instrument_busy_qc_ot2
+_OT2_SCENARIOS["stale_deck_qc"] = _build_stale_deck_qc_ot2
+_OT2_SCENARIOS["borderline_qc"] = _build_borderline_qc_ot2
+_OT2_SCENARIOS["cross_contamination_qc"] = _build_cross_contamination_qc_ot2
 
 
 def _ot2_sample(*, scenario: str, seed: int, out_dir: Path) -> Any:
@@ -175,6 +203,8 @@ def _ot2_dispatch(run_dir: Path, *, name: str, arguments: dict[str, Any]) -> dic
                                    plate_id=arguments["plate_id"],
                                    wavelength_nm=int(arguments["wavelength_nm"]),
                                    wells=[str(w) for w in arguments["wells"]])
+    elif name == "discard_tips":
+        return ot2_discard_tips(lab_state)
     elif name == "add_workflow_note":
         return ot2_add_workflow_note(lab_state, note=arguments["note"])
     elif name == "submit_protocol":
@@ -199,6 +229,42 @@ def _ot2_stop_visualizer(vis: Any) -> None:
     """Stop the OT-2 visualizer."""
     if vis is not None:
         vis.stop()
+
+
+# ── STAR dispatch helpers ──────────────────────────────────────────────────
+
+from api_gym.worlds.pylabrobot_star_v0.tools import dispatch_tool as star_dispatch
+from api_gym.worlds.pylabrobot_star_v0.tools import TOOL_DEFINITIONS as STAR_TOOLS
+from api_gym.worlds.pylabrobot_star_v0.sampler import sample_episode as star_sample
+from api_gym.worlds.pylabrobot_star_v0.verifier import verify_run as star_verify
+
+SYSTEM_PROMPT_STAR = """\
+You are a lab automation agent operating a Hamilton STAR liquid handler.
+
+The environment is a DRY-RUN STAR deck with STARChatterboxBackend — no real
+hardware is connected. The deck uses a carrier-based layout:
+- Plate carriers hold plates and troughs at numbered sites.
+- Tip carriers hold tip racks at numbered sites.
+- Optionally, a 96-channel head and an iSWAP robotic arm may be installed.
+
+Available tools include single-channel pipetting, 96-head parallel operations,
+and plate movement via the iSWAP arm.
+
+STANDARD PROCEDURE:
+1. Inspect the deck state first to see what carriers and labware are loaded.
+2. Inspect individual labware (plates, tip racks, troughs) for well volumes.
+3. Use reference format: 'labware_name:well_id' (e.g. 'source_plate:A1').
+4. OD600 (600 nm) is the standard absorbance wavelength.
+5. Match aspirate/dispense volumes exactly.
+6. Discard tips when they are potentially contaminated.
+7. After obtaining valid readouts, submit the protocol decision.
+
+Rules:
+- Use the provided tools for every state inspection and mutation.
+- Do not answer from task text alone — you MUST call tools.
+- When you have enough evidence, submit via submit_protocol.
+- Think step by step before each tool call.
+"""
 
 
 # ── World registry ────────────────────────────────────────────────────────
@@ -231,6 +297,15 @@ WORLDS = {
         "system_prompt": SYSTEM_PROMPT_PLR,
         "state_backend": "ot2_visualizer",
         "has_visualizer": True,
+    },
+    "pylabrobot_star_v0": {
+        "label": "PyLabRobot STAR (ChatterBox)",
+        "sample_episode": star_sample,
+        "tool_definitions": STAR_TOOLS,
+        "dispatch_tool": star_dispatch,
+        "verify_run": star_verify,
+        "system_prompt": SYSTEM_PROMPT_STAR,
+        "state_backend": "pylabrobot",
     },
 }
 

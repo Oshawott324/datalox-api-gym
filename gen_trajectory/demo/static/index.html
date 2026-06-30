@@ -239,14 +239,33 @@ pre, code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, m
   <div class="controls">
     <label for="world-select">World:</label>
     <select id="world-select" style="background:var(--bg);color:var(--text-bright);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:0.85rem;">
-      <option value="unitelabs_plate_qc_v0">UniteLabs Plate QC v0 (SQLite)</option>
-      <option value="pylabrobot_lab_v0">PyLabRobot Lab v0 (ChatterBox)</option>
-      <option value="pylabrobot_lab_v0_ot2">PyLabRobot OT-2 Visualizer</option>
+      <optgroup label="OT-2">
+        <option value="pylabrobot_lab_v0_ot2">PyLabRobot OT-2 Visualizer</option>
+        <option value="pylabrobot_lab_v0">PyLabRobot Lab v0 (ChatterBox)</option>
+      </optgroup>
+      <optgroup label="Hamilton STAR">
+        <option value="pylabrobot_star_v0">PyLabRobot STAR (ChatterBox)</option>
+      </optgroup>
+      <optgroup label="Legacy">
+        <option value="unitelabs_plate_qc_v0">UniteLabs Plate QC v0 (SQLite)</option>
+      </optgroup>
     </select>
     <label for="scenario-select">Scenario:</label>
     <select id="scenario-select" style="background:var(--bg);color:var(--text-bright);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:0.85rem;">
-      <option value="plate_transfer_qc">Plate Transfer QC</option>
-      <option value="serial_dilution_qc">Serial Dilution QC</option>
+      <optgroup label="Happy Path">
+        <option value="plate_transfer_qc">Plate Transfer QC</option>
+        <option value="serial_dilution_qc">Serial Dilution QC</option>
+        <option value="multi_sample_qc">Multi-Sample QC</option>
+        <option value="concentration_gradient_qc">Concentration Gradient QC</option>
+      </optgroup>
+      <optgroup label="Failure Mode">
+        <option value="limited_tips_qc">Limited Tips</option>
+        <option value="low_reagent_qc">Low Reagent</option>
+        <option value="instrument_busy_qc">Instrument Busy</option>
+        <option value="stale_deck_qc">Stale Deck State</option>
+        <option value="borderline_qc">Borderline Decision</option>
+        <option value="cross_contamination_qc">Cross-Contamination</option>
+      </optgroup>
     </select>
     <label for="seed-input">Seed:</label>
     <input id="seed-input" type="number" value="42" min="0" max="9999" style="width:65px">

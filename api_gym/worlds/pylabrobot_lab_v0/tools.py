@@ -103,6 +103,19 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
     {
         "type": "function",
         "function": {
+            "name": "discard_tips",
+            "description": (
+                "Discard the currently mounted tip(s) to the trash. Use this when you "
+                "need to dispose of a used tip without returning it to the rack (e.g. "
+                "after a potentially contaminating transfer, or when switching between "
+                "incompatible liquids)."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "submit_protocol",
             "description": "Submit the final plate QC protocol decision with readout evidence.",
             "parameters": _schema(
@@ -233,6 +246,10 @@ def _read_absorbance(lab_state: LabState, arguments: dict[str, Any]) -> dict[str
     )
 
 
+def _discard_tips(lab_state: LabState, arguments: dict[str, Any]) -> dict[str, Any]:
+    return services.discard_tips(lab_state)
+
+
 def _add_workflow_note(lab_state: LabState, arguments: dict[str, Any]) -> dict[str, Any]:
     return services.add_workflow_note(lab_state, note=str(arguments["note"]))
 
@@ -257,6 +274,7 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "get_labware_state": _get_labware_state,
     "aspirate": _aspirate,
     "dispense": _dispense,
+    "discard_tips": _discard_tips,
     "read_absorbance": _read_absorbance,
     "add_workflow_note": _add_workflow_note,
     "submit_protocol": _submit_protocol,
