@@ -1,0 +1,27 @@
+{
+  "fixture_status": "derived_from_source_example",
+  "source_url": "https://docs.benchling.com/docs/example-creating-results",
+  "assayResults": [
+    {
+      "fields": {
+        "sample_id": {
+          "value": "bfi_ELstHqON"
+        },
+        "ct": {
+          "value": 11.115
+        },
+        "ct_mean": {
+          "value": 11.142
+        },
+        "quantity": {
+          "value": 16.858
+        },
+        "quantity_mean": {
+          "value": 16.568
+        }
+      },
+      "projectId": "src_wMsnz0ru",
+      "schemaId": "assaysch_FL4k8H51"
+    }
+  ]
+}

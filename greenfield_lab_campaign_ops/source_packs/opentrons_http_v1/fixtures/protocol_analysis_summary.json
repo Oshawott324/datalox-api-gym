@@ -1,0 +1,30 @@
+{
+  "fixture_status": "speculative_fixture_for_schema_exercise",
+  "inspired_by": [
+    "https://docs.opentrons.com/http/api_reference.html",
+    "https://docs.opentrons.com/python-api/reference/execute-simulate/"
+  ],
+  "protocol_id": "protocol_001",
+  "analysis_id": "analysis_001",
+  "status": "completed",
+  "commands": [
+    {
+      "command_id": "cmd_001",
+      "command_type": "loadLabware",
+      "params": {
+        "location": "D1",
+        "load_name": "opentrons_96_tiprack_300ul"
+      }
+    },
+    {
+      "command_id": "cmd_002",
+      "command_type": "aspirate",
+      "params": {
+        "well": "A1",
+        "volume_ul": 100
+      }
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

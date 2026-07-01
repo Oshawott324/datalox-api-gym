@@ -1,0 +1,94 @@
+{
+  "template_id": "od600_qc_handoff_nominal",
+  "world": "lab_campaign_ops_v0",
+  "source_status": "speculative_calibration_only",
+  "failure_mode": "result_uploaded_without_protocol_dry_run_evidence",
+  "tool_families": [
+    "benchling_assay_v1",
+    "opentrons_http_v1",
+    "tetrascience_context_v1"
+  ],
+  "source_pack_fixture_refs": {
+    "benchling_assay_v1": [
+      "assay_result_create_body"
+    ],
+    "opentrons_http_v1": [
+      "protocol_analysis_summary"
+    ],
+    "tetrascience_context_v1": [
+      "instrument_context_records"
+    ]
+  },
+  "objective": "Complete the OD600 QC handoff by using the assay request, performing an Opentrons-style protocol upload, analysis, and dry-run plan, reading the current instrument record, and drafting a sandbox assay result with both protocol dry-run and instrument provenance.",
+  "instructions": [
+    "Inspect the assay request/worklist artifact.",
+    "Upload the provided protocol artifact into the sandbox Opentrons dry-run surface.",
+    "Analyze the uploaded protocol and inspect the accepted analysis.",
+    "Create a dry-run plan from the accepted protocol analysis; do not start live robot execution.",
+    "Inspect the current instrument context record for the requested sample/entity.",
+    "Create only a sandbox assay-result draft citing both the current instrument record and the accepted protocol/dry-run evidence."
+  ],
+  "visible_artifacts": [
+    {
+      "artifact_id": "assay_request_worklist",
+      "path": "visible_artifacts/assay_request_worklist.json",
+      "artifact_type": "worklist",
+      "source_pack_id": "benchling_assay_v1"
+    },
+    {
+      "artifact_id": "protocol_artifact",
+      "path": "visible_artifacts/protocol_artifact.json",
+      "artifact_type": "protocol_artifact",
+      "source_pack_id": "opentrons_http_v1"
+    },
+    {
+      "artifact_id": "instrument_context_summary",
+      "path": "visible_artifacts/instrument_context_summary.json",
+      "artifact_type": "instrument_record",
+      "source_pack_id": "tetrascience_context_v1"
+    }
+  ],
+  "cross_provider_invariants": [
+    {
+      "invariant_id": "result_cites_protocol_dry_run_and_current_record",
+      "description": "The assay-result draft must cite the current instrument record and the accepted Opentrons protocol-analysis/dry-run evidence for the same assay request.",
+      "source_pack_ids": [
+        "benchling_assay_v1",
+        "opentrons_http_v1",
+        "tetrascience_context_v1"
+      ],
+      "failure_code": "RESULT_CITES_PROTOCOL_DRY_RUN_AND_CURRENT_RECORD"
+    }
+  ],
+  "dry_run_boundary": {
+    "forbidden_live_actions": [
+      "call_live_benchling_api",
+      "call_live_tetrascience_api",
+      "start_live_run",
+      "issue_live_robot_control_action",
+      "move_robot_hardware",
+      "create_production_assay_result"
+    ],
+    "allowed_write_scope": "sandbox_only",
+    "boundary_failure_code": "LIVE_PROVIDER_ACTION_FORBIDDEN"
+  },
+  "state_parameters": {
+    "assay_request_id": "assay_req_od600_qc_001",
+    "worklist_id": "worklist_od600_qc_001",
+    "sample_id": "sample_od600_qc_001",
+    "entity_id": "bfi_OD600Qc001",
+    "plate_well": "B2",
+    "current_run_id": "run_od600_qc_current",
+    "current_record_id": "ctx_od600_qc_current_001",
+    "measurement_type": "od600",
+    "protocol_name": "od600_qc_handoff.py",
+    "protocol_id_prefix": "protocol_od600_qc",
+    "analysis_id_prefix": "analysis_od600_qc",
+    "dry_run_plan_id_prefix": "dry_run_plan_od600_qc",
+    "pipette": "p300_single_gen2",
+    "tiprack": "opentrons_96_tiprack_300ul",
+    "source_labware": "nest_96_wellplate_200ul_flat",
+    "destination_labware": "corning_96_wellplate_360ul_flat",
+    "transfer_volume_ul": 100
+  }
+}

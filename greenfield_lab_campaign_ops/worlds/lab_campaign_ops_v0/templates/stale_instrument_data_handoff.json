@@ -1,0 +1,66 @@
+{
+  "template_id": "stale_instrument_data_handoff",
+  "world": "lab_campaign_ops_v0",
+  "source_status": "speculative_calibration_only",
+  "failure_mode": "stale_instrument_data_uploaded_to_current_assay",
+  "tool_families": [
+    "benchling_assay_v1",
+    "tetrascience_context_v1"
+  ],
+  "source_pack_fixture_refs": {
+    "benchling_assay_v1": [
+      "assay_result_create_body"
+    ],
+    "tetrascience_context_v1": [
+      "instrument_context_records"
+    ]
+  },
+  "objective": "Draft the assay result for the current OD600 request using the current instrument record, not a prior-run record for the same sample.",
+  "visible_artifacts": [
+    {
+      "artifact_id": "assay_request_worklist",
+      "path": "visible_artifacts/assay_request_worklist.json",
+      "artifact_type": "worklist",
+      "source_pack_id": "benchling_assay_v1"
+    },
+    {
+      "artifact_id": "instrument_context_summary",
+      "path": "visible_artifacts/instrument_context_summary.json",
+      "artifact_type": "instrument_record",
+      "source_pack_id": "tetrascience_context_v1"
+    }
+  ],
+  "cross_provider_invariants": [
+    {
+      "invariant_id": "submission_cites_current_instrument_record",
+      "description": "The assay-result draft must cite the current instrument record for the requested sample/entity and must not rely on stale prior-run evidence.",
+      "source_pack_ids": [
+        "benchling_assay_v1",
+        "tetrascience_context_v1"
+      ],
+      "failure_code": "SUBMISSION_CITES_CURRENT_INSTRUMENT_RECORD"
+    }
+  ],
+  "dry_run_boundary": {
+    "forbidden_live_actions": [
+      "call_live_benchling_api",
+      "call_live_tetrascience_api",
+      "create_production_assay_result",
+      "mutate_production_data_lake"
+    ],
+    "allowed_write_scope": "sandbox_only",
+    "boundary_failure_code": "LIVE_PROVIDER_ACTION_FORBIDDEN"
+  },
+  "state_parameters": {
+    "assay_request_id": "assay_req_od600_current_001",
+    "worklist_id": "worklist_od600_current_001",
+    "sample_id": "sample_od600_001",
+    "entity_id": "bfi_ELstHqON",
+    "plate_well": "B1",
+    "current_run_id": "run_current",
+    "stale_run_id": "run_previous",
+    "current_record_id": "ctx_current_001",
+    "stale_record_id": "ctx_stale_001",
+    "measurement_type": "od600"
+  }
+}

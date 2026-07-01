@@ -1,0 +1,33 @@
+{
+  "fixture_status": "speculative_fixture_for_schema_exercise",
+  "inspired_by": [
+    "https://developers.tetrascience.com/docs/context-api",
+    "https://github.com/tetrascience/ts-scientific-data-and-ai-cloud-api-examples"
+  ],
+  "records": [
+    {
+      "record_id": "ctx_stale_001",
+      "run_id": "run_previous",
+      "sample_entity_id": "bfi_ELstHqON",
+      "plate_well": "B1",
+      "measurement": {
+        "type": "od600",
+        "value": 1.18
+      },
+      "status": "final",
+      "freshness": "stale"
+    },
+    {
+      "record_id": "ctx_current_001",
+      "run_id": "run_current",
+      "sample_entity_id": "bfi_ELstHqON",
+      "plate_well": "B1",
+      "measurement": {
+        "type": "od600",
+        "value": 1.21
+      },
+      "status": "final",
+      "freshness": "current"
+    }
+  ]
+}

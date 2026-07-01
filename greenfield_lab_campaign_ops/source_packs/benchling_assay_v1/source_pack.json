@@ -1,0 +1,101 @@
+{
+  "allowed_errors": [
+    {
+      "code": "UNKNOWN_SAMPLE_ENTITY",
+      "meaning": "The requested sample/entity id is not present in sandbox state."
+    },
+    {
+      "code": "RESULT_SCHEMA_MISMATCH",
+      "meaning": "The assay result payload does not match the expected result schema fields."
+    },
+    {
+      "code": "RESULT_PROVENANCE_MISSING",
+      "meaning": "The assay result write does not cite required dry-run or instrument evidence."
+    }
+  ],
+  "dry_run_semantics": [
+    "Sample, entity, assay request, and result records are sandbox records only.",
+    "Result creation tools write to sandbox state and never call a live Benchling tenant.",
+    "Result payloads must preserve entity id, project id, schema id, and evidence provenance required by the task verifier."
+  ],
+  "evidence_urls": [
+    {
+      "evidence_type": "api_reference",
+      "label": "benchling_api_reference",
+      "url": "https://benchling.com/api/reference"
+    },
+    {
+      "evidence_type": "developer_guide",
+      "label": "benchling_uploading_results_guide",
+      "url": "https://docs.benchling.com/docs/example-creating-results"
+    }
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "assay_result_create_body",
+      "fixture_status": "derived_from_source_example",
+      "path": "fixtures/assay_result_create_body.json",
+      "source_refs": [
+        "benchling_uploading_results_guide"
+      ]
+    }
+  ],
+  "live_boundary": {
+    "boundary_statement": "This source pack forbids production Benchling writes, live tenant mutation, and credentialed API calls.",
+    "forbidden_actions": [
+      "call_live_benchling_api",
+      "create_production_assay_result",
+      "archive_production_result",
+      "mutate_production_entity"
+    ]
+  },
+  "provider": "Benchling",
+  "role": "ELN/LIMS assay request, sample/entity metadata, and assay result handoff.",
+  "schema_version": "greenfield_lab_campaign_ops.source_pack.v0",
+  "source_gaps": [
+    "Step 1 does not yet capture a full OpenAPI endpoint document for the selected Benchling endpoints.",
+    "Only the assay-result creation shape is represented; worklist/request fixtures remain to be source-grounded."
+  ],
+  "source_pack_id": "benchling_assay_v1",
+  "source_status": "source_grounded",
+  "tools": [
+    {
+      "dry_run_behavior": "Reads an assay request from sandbox state.",
+      "fixture_refs": [
+        "assay_result_create_body"
+      ],
+      "operation": "Get assay request or worklist metadata.",
+      "source_refs": [
+        "benchling_api_reference",
+        "benchling_uploading_results_guide"
+      ],
+      "tool_id": "get_assay_request",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads sample/entity metadata from sandbox state.",
+      "fixture_refs": [
+        "assay_result_create_body"
+      ],
+      "operation": "Get sample or entity metadata used by an assay result.",
+      "source_refs": [
+        "benchling_uploading_results_guide"
+      ],
+      "tool_id": "get_sample_entity",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Creates an assay-result draft in sandbox state and requires verifier-visible provenance.",
+      "fixture_refs": [
+        "assay_result_create_body"
+      ],
+      "operation": "Create an assay result payload.",
+      "source_refs": [
+        "benchling_api_reference",
+        "benchling_uploading_results_guide"
+      ],
+      "tool_id": "create_assay_result_draft",
+      "writes_sandbox_state": true
+    }
+  ]
+}

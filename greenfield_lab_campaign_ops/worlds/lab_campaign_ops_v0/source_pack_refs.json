@@ -1,0 +1,22 @@
+{
+  "schema_version": "greenfield_lab_campaign_ops.world_source_refs.v0",
+  "world": "lab_campaign_ops_v0",
+  "source_packs": [
+    {
+      "source_pack_id": "benchling_assay_v1",
+      "path": "../../source_packs/benchling_assay_v1",
+      "role": "ELN/LIMS assay request, sample/entity metadata, and assay result handoff."
+    },
+    {
+      "source_pack_id": "opentrons_http_v1",
+      "path": "../../source_packs/opentrons_http_v1",
+      "role": "Physical lab automation protocol analysis and dry-run command planning."
+    },
+    {
+      "source_pack_id": "tetrascience_context_v1",
+      "path": "../../source_packs/tetrascience_context_v1",
+      "role": "Instrument-data context, run metadata, freshness, and partial/final data status."
+    }
+  ]
+}
+

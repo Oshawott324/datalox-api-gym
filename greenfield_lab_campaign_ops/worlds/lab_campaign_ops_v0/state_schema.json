@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Lab Campaign Ops v0 State",
+  "type": "object",
+  "required": [
+    "world",
+    "seed",
+    "worklist",
+    "samples_entities",
+    "plate_map",
+    "protocol_analysis_state",
+    "instrument_readout_records",
+    "result_upload_records",
+    "dry_run_boundary_events"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "world": {
+      "const": "lab_campaign_ops_v0"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "worklist": {
+      "type": "object",
+      "required": [
+        "worklist_id",
+        "assay_request_id",
+        "status",
+        "sample_ids"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "worklist_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assay_request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sample_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "samples_entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "sample_id",
+          "entity_id",
+          "source_pack_id"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "sample_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entity_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_pack_id": {
+            "const": "benchling_assay_v1"
+          }
+        }
+      }
+    },
+    "plate_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "well",
+          "sample_id",
+          "entity_id"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "well": {
+            "type": "string",
+            "pattern": "^[A-H][0-9]{1,2}$"
+          },
+          "sample_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entity_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "protocol_analysis_state": {
+      "type": "object",
+      "required": [
+        "protocol_id",
+        "analysis_id",
+        "status",
+        "is_current",
+        "source_pack_id"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "protocol_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analysis_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "is_current": {
+          "type": "boolean"
+        },
+        "source_pack_id": {
+          "const": "opentrons_http_v1"
+        }
+      }
+    },
+    "instrument_readout_records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "record_id",
+          "run_id",
+          "status",
+          "freshness",
+          "source_pack_id"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "record_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "run_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "freshness": {
+            "enum": [
+              "current",
+              "stale",
+              "partial"
+            ]
+          },
+          "source_pack_id": {
+            "const": "tetrascience_context_v1"
+          }
+        }
+      }
+    },
+    "result_upload_records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "result_id",
+          "assay_request_id",
+          "entity_id",
+          "evidence_record_ids",
+          "source_pack_id"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "result_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assay_request_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entity_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_record_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "source_pack_id": {
+            "const": "benchling_assay_v1"
+          }
+        }
+      }
+    },
+    "dry_run_boundary_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "event_id",
+          "source_pack_id",
+          "action",
+          "boundary_status"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_pack_id": {
+            "enum": [
+              "benchling_assay_v1",
+              "opentrons_http_v1",
+              "tetrascience_context_v1"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "boundary_status": {
+            "enum": [
+              "allowed_sandbox_write",
+              "blocked_live_action"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+

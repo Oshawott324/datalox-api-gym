@@ -1,0 +1,112 @@
+{
+  "allowed_errors": [
+    {
+      "code": "PROTOCOL_ANALYSIS_FAILED",
+      "meaning": "Protocol analysis completed with errors or missing required deck/labware/pipette information."
+    },
+    {
+      "code": "LIVE_RUN_FORBIDDEN",
+      "meaning": "The agent attempted to start or control a live robot run instead of staying in dry-run."
+    },
+    {
+      "code": "STALE_ANALYSIS",
+      "meaning": "The selected analysis no longer corresponds to the current protocol or task state."
+    }
+  ],
+  "dry_run_semantics": [
+    "Protocol upload and analysis are projected into sandbox state.",
+    "Run and command records are dry-run plans only unless a later live-gate policy explicitly allows hardware execution.",
+    "Robot control actions, hardware movement, and run-start actions are forbidden in this source pack."
+  ],
+  "evidence_urls": [
+    {
+      "evidence_type": "openapi_reference",
+      "label": "opentrons_http_api_reference",
+      "url": "https://docs.opentrons.com/http/api_reference.html"
+    },
+    {
+      "evidence_type": "simulation_docs",
+      "label": "opentrons_execute_simulate_docs",
+      "url": "https://docs.opentrons.com/python-api/reference/execute-simulate/"
+    }
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "protocol_analysis_summary",
+      "fixture_status": "speculative_fixture_for_schema_exercise",
+      "path": "fixtures/protocol_analysis_summary.json",
+      "source_refs": [
+        "opentrons_http_api_reference"
+      ]
+    }
+  ],
+  "live_boundary": {
+    "boundary_statement": "This source pack forbids live robot hardware movement, live run start, and control actions against production robot servers.",
+    "forbidden_actions": [
+      "start_live_run",
+      "issue_live_robot_control_action",
+      "move_robot_hardware",
+      "home_robot_hardware"
+    ]
+  },
+  "provider": "Opentrons",
+  "role": "Physical lab automation protocol analysis and dry-run command planning.",
+  "schema_version": "greenfield_lab_campaign_ops.source_pack.v0",
+  "source_gaps": [
+    "Step 1 has not captured a robot /openapi document from a concrete robot server.",
+    "Fixture is synthetic and should be replaced by an exact protocol analysis response or local simulation output before public release."
+  ],
+  "source_pack_id": "opentrons_http_v1",
+  "source_status": "source_grounded",
+  "tools": [
+    {
+      "dry_run_behavior": "Stores a protocol artifact in sandbox state and returns a synthetic protocol id.",
+      "fixture_refs": [
+        "protocol_analysis_summary"
+      ],
+      "operation": "Upload a protocol artifact for later analysis.",
+      "source_refs": [
+        "opentrons_http_api_reference"
+      ],
+      "tool_id": "upload_protocol",
+      "writes_sandbox_state": true
+    },
+    {
+      "dry_run_behavior": "Creates a sandbox protocol-analysis record with commands, warnings, and errors.",
+      "fixture_refs": [
+        "protocol_analysis_summary"
+      ],
+      "operation": "Analyze an uploaded protocol.",
+      "source_refs": [
+        "opentrons_http_api_reference",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "analyze_protocol",
+      "writes_sandbox_state": true
+    },
+    {
+      "dry_run_behavior": "Reads a protocol-analysis record from sandbox state.",
+      "fixture_refs": [
+        "protocol_analysis_summary"
+      ],
+      "operation": "Get one protocol analysis.",
+      "source_refs": [
+        "opentrons_http_api_reference"
+      ],
+      "tool_id": "get_protocol_analysis",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Builds a dry-run command plan from an accepted analysis without starting hardware execution.",
+      "fixture_refs": [
+        "protocol_analysis_summary"
+      ],
+      "operation": "Create a run plan from analyzed protocol state.",
+      "source_refs": [
+        "opentrons_http_api_reference"
+      ],
+      "tool_id": "create_dry_run_plan",
+      "writes_sandbox_state": true
+    }
+  ]
+}

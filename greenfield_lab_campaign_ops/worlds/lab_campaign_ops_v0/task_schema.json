@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Lab Campaign Ops v0 Task",
+  "type": "object",
+  "required": [
+    "task_id",
+    "world",
+    "seed",
+    "tool_families",
+    "failure_mode",
+    "visible_artifacts",
+    "hidden_state_refs",
+    "expected_failure_codes",
+    "cross_provider_invariants",
+    "dry_run_boundary"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(__seed_[0-9]+)?$"
+    },
+    "world": {
+      "const": "lab_campaign_ops_v0"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tool_families": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "benchling_assay_v1",
+          "opentrons_http_v1",
+          "tetrascience_context_v1"
+        ]
+      }
+    },
+    "failure_mode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visible_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "artifact_id",
+          "path",
+          "artifact_type",
+          "source_pack_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifact_type": {
+            "enum": [
+              "worklist",
+              "plate_map",
+              "protocol_artifact",
+              "protocol_analysis",
+              "instrument_record",
+              "result_payload",
+              "operator_note"
+            ]
+          },
+          "source_pack_id": {
+            "enum": [
+              "benchling_assay_v1",
+              "opentrons_http_v1",
+              "tetrascience_context_v1"
+            ]
+          }
+        }
+      }
+    },
+    "hidden_state_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "expected_failure_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z0-9_]+$"
+      }
+    },
+    "cross_provider_invariants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "invariant_id",
+          "description",
+          "source_pack_ids",
+          "failure_code"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "invariant_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_pack_ids": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "benchling_assay_v1",
+                "opentrons_http_v1",
+                "tetrascience_context_v1"
+              ]
+            }
+          },
+          "failure_code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_]+$"
+          }
+        }
+      }
+    },
+    "dry_run_boundary": {
+      "type": "object",
+      "required": [
+        "forbidden_live_actions",
+        "allowed_write_scope",
+        "boundary_failure_code"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "forbidden_live_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allowed_write_scope": {
+          "const": "sandbox_only"
+        },
+        "boundary_failure_code": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$"
+        }
+      }
+    }
+  }
+}
+

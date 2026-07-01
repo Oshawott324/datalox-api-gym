@@ -1,0 +1,107 @@
+{
+  "allowed_errors": [
+    {
+      "code": "UNKNOWN_CONTEXT_RECORD",
+      "meaning": "The requested context or instrument-data record is absent from sandbox state."
+    },
+    {
+      "code": "STALE_INSTRUMENT_RECORD",
+      "meaning": "The instrument record exists but belongs to a previous run or stale context."
+    },
+    {
+      "code": "PARTIAL_DATA_NOT_FINAL",
+      "meaning": "The selected data record is partial and cannot support a final assay result."
+    }
+  ],
+  "dry_run_semantics": [
+    "Context and instrument records are sandbox records only.",
+    "Record freshness, status, and provenance are verifier-visible state.",
+    "No live TetraScience API calls, pipeline executions, or data-lake mutations are allowed."
+  ],
+  "evidence_urls": [
+    {
+      "evidence_type": "api_reference",
+      "label": "tetrascience_api_reference",
+      "url": "https://developers.tetrascience.com/reference"
+    },
+    {
+      "evidence_type": "developer_guide",
+      "label": "tetrascience_context_api_docs",
+      "url": "https://developers.tetrascience.com/docs/context-api"
+    },
+    {
+      "evidence_type": "examples_repository",
+      "label": "tetrascience_examples_repo",
+      "url": "https://github.com/tetrascience/ts-scientific-data-and-ai-cloud-api-examples"
+    }
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "instrument_context_records",
+      "fixture_status": "speculative_fixture_for_schema_exercise",
+      "path": "fixtures/instrument_context_records.json",
+      "source_refs": [
+        "tetrascience_context_api_docs",
+        "tetrascience_examples_repo"
+      ]
+    }
+  ],
+  "live_boundary": {
+    "boundary_statement": "This source pack forbids live TetraScience API calls, production data-lake writes, and pipeline execution.",
+    "forbidden_actions": [
+      "call_live_tetrascience_api",
+      "mutate_production_data_lake",
+      "execute_production_pipeline",
+      "delete_or_modify_live_file"
+    ]
+  },
+  "provider": "TetraScience",
+  "role": "Instrument-data context, run metadata, freshness, and partial/final data status.",
+  "schema_version": "greenfield_lab_campaign_ops.source_pack.v0",
+  "source_gaps": [
+    "Step 1 has not selected exact Context API endpoints for the first task family.",
+    "Instrument record fixture is synthetic until replaced by source examples or partner-reviewed captures."
+  ],
+  "source_pack_id": "tetrascience_context_v1",
+  "source_status": "source_grounded",
+  "tools": [
+    {
+      "dry_run_behavior": "Reads an instrument-data context record from sandbox state.",
+      "fixture_refs": [
+        "instrument_context_records"
+      ],
+      "operation": "Get scientific context for a run or instrument record.",
+      "source_refs": [
+        "tetrascience_context_api_docs"
+      ],
+      "tool_id": "get_context_record",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Lists candidate instrument records in sandbox state, including stale and current records.",
+      "fixture_refs": [
+        "instrument_context_records"
+      ],
+      "operation": "List instrument records for a campaign/run context.",
+      "source_refs": [
+        "tetrascience_api_reference",
+        "tetrascience_examples_repo"
+      ],
+      "tool_id": "list_instrument_records",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads one instrument record and exposes status/freshness fields needed by the verifier.",
+      "fixture_refs": [
+        "instrument_context_records"
+      ],
+      "operation": "Get an instrument data record.",
+      "source_refs": [
+        "tetrascience_context_api_docs",
+        "tetrascience_examples_repo"
+      ],
+      "tool_id": "get_instrument_record",
+      "writes_sandbox_state": false
+    }
+  ]
+}
