@@ -207,6 +207,74 @@ def check_temporal_coverage() -> dict[str, Any]:
     return results
 
 
+# ── Check 5: Counterfactual attribution (Direction 2) ──────────────────
+
+
+def check_counterfactual_attribution() -> dict[str, Any]:
+    """Demonstrate that naive pass/fail can be misleading by showing a case
+    where terminal checks pass but temporal checks correctly fail.
+
+    Uses stale_deck_star_qc: inject a transfer done with stale inspection data.
+    Terminal checks (transfer completed, readout recorded) pass — but the
+    temporal predicate fresh(inspect, transfer) fails, with attribution
+    'agent_error'.
+    """
+    import tempfile
+    from pathlib import Path
+    from api_gym.worlds.pylabrobot_star_v0.state import get_state
+
+    results: dict[str, Any] = {"scenario": "stale_deck_star_qc", "seed": 42}
+
+    td = Path(tempfile.mkdtemp(prefix="cf_stale_"))
+    ep = sample_episode(scenario="stale_deck_star_qc", seed=42, out_dir=td)
+    ls = get_state(td)
+
+    # Simulate: agent inspects, waits too long, then transfers without re-inspect
+    ls.clock.advance(1.0)
+    ls.insert_event("state.inspected", "deck", "deck", {"note": "initial inspection"})
+    ls.clock.advance(30.0)  # 30s gap — exceeds max_staleness_s=10
+    ls.transfers.append({"type": "aspirate", "source": "A1", "volume_ul": 50, "tip": "A1"})
+    ls.transfers.append({"type": "dispense", "target_well": "assay_plate.B1", "volume_ul": 50})
+    ls.insert_event("transfer.aspirated", "well", "A1", {"clock_time": ls.clock.current_time})
+    ls.clock.advance(3.0)
+    ls.insert_event("transfer.dispensed", "well", "B1", {"clock_time": ls.clock.current_time})
+    ls.clock.advance(1.0)
+    ls.readouts.append({"plate": "assay_plate", "wavelength_nm": 600, "wells": ["B1"],
+                        "values": {"B1": 0.82}})
+    ls.insert_event("readout.created", "plate", "assay_plate", {"clock_time": ls.clock.current_time})
+    ls.submissions.append({"decision": "continue", "rationale": "OD600 is fine."})
+    ls.insert_event("protocol.submitted", "submission", "1", {"clock_time": ls.clock.current_time})
+
+    result = verify_run(td)
+
+    # Categorize checks
+    terminal_checks = [c for c in result.checks if c.get("predicate_type") == "terminal"]
+    temporal_checks = [c for c in result.checks if c.get("predicate_type") == "temporal"]
+    terminal_pass = all(c["ok"] for c in terminal_checks)
+    temporal_pass = all(c["ok"] for c in temporal_checks)
+
+    results["naive_pass_fail_would_be"] = "PASS" if terminal_pass else "FAIL"
+    results["temporal_actual"] = "PASS" if temporal_pass else "FAIL"
+    results["attribution_label"] = result.attribution_label
+    results["misleading"] = terminal_pass and not temporal_pass
+
+    if results["misleading"]:
+        results["ok"] = True
+        results["message"] = (
+            "Counterfactual confirmed: terminal checks pass (transfer done, readout recorded, "
+            "submitted) but temporal freshness check fails with attribution 'agent_error'. "
+            "A naive pass/fail benchmark would incorrectly mark this run as successful."
+        )
+        # Find the failing temporal check
+        failing = [c["name"] for c in temporal_checks if not c["ok"]]
+        results["failing_temporal_checks"] = failing
+    else:
+        results["ok"] = False
+        results["message"] = "Counterfactual did not trigger as expected."
+
+    return results
+
+
 # ── Run all checks ─────────────────────────────────────────────────────
 
 
@@ -217,9 +285,12 @@ def run_admission_checks() -> dict[str, Any]:
     """
     all_results: dict[str, Any] = {"overall_ok": True}
 
-    # 1. Determinism for stochastic scenarios
+    # 1. Counterfactual test (Direction 2)
+    all_results["counterfactual"] = check_counterfactual_attribution()
+
+    # 2. Determinism for stochastic scenarios
     determinism = {}
-    for s in ["borderline_star_qc", "noisy_readout_star_qc"]:
+    for s in ["borderline_star_qc", "noisy_readout_star_qc", "fault_and_noise_star_qc"]:
         determinism[s] = check_stochastic_determinism(s)
     all_results["stochastic_determinism"] = determinism
 

@@ -252,20 +252,7 @@ pre, code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, m
     </select>
     <label for="scenario-select">Scenario:</label>
     <select id="scenario-select" style="background:var(--bg);color:var(--text-bright);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:0.85rem;">
-      <optgroup label="Happy Path">
-        <option value="plate_transfer_qc">Plate Transfer QC</option>
-        <option value="serial_dilution_qc">Serial Dilution QC</option>
-        <option value="multi_sample_qc">Multi-Sample QC</option>
-        <option value="concentration_gradient_qc">Concentration Gradient QC</option>
-      </optgroup>
-      <optgroup label="Failure Mode">
-        <option value="limited_tips_qc">Limited Tips</option>
-        <option value="low_reagent_qc">Low Reagent</option>
-        <option value="instrument_busy_qc">Instrument Busy</option>
-        <option value="stale_deck_qc">Stale Deck State</option>
-        <option value="borderline_qc">Borderline Decision</option>
-        <option value="cross_contamination_qc">Cross-Contamination</option>
-      </optgroup>
+      <option value="">— Select a world first —</option>
     </select>
     <label for="seed-input">Seed:</label>
     <input id="seed-input" type="number" value="42" min="0" max="9999" style="width:65px">
@@ -408,6 +395,30 @@ let maxTurns = 12;               // from /start response
 let agentDone = false;           // true when LLM stops
 let verifierResult = null;
 let allStateSnapshots = [];
+
+/* ── Dynamic scenarios ───────────────────────────────────────────────── */
+async function loadScenarios() {
+  const world = document.getElementById("world-select").value;
+  const sel = document.getElementById("scenario-select");
+  if (!world) { sel.innerHTML = '<option value="">— Select a world first —</option>'; return; }
+  sel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const data = await apiCall('/scenarios?world=' + encodeURIComponent(world));
+    const names = data.scenarios || [];
+    // Separate happy path vs failure mode by naming convention
+    const failure = names.filter(n => n.includes('fault') || n.includes('stale') ||
+      n.includes('limited') || n.includes('low_reagent') || n.includes('borderline') ||
+      n.includes('liquid') || n.includes('exhaustion') || n.includes('cross_contam'));
+    const happy = names.filter(n => !failure.includes(n));
+    let html = '';
+    if (happy.length) html += '<optgroup label="Happy Path">' + happy.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>';
+    if (failure.length) html += '<optgroup label="Failure Mode">' + failure.map(n => `<option value="${n}">${n}</option>`).join('') + '</optgroup>';
+    if (!names.length) html = '<option value="">No scenarios found</option>';
+    sel.innerHTML = html;
+  } catch(e) { sel.innerHTML = '<option value="">Error loading</option>'; }
+}
+document.getElementById("world-select").addEventListener("change", loadScenarios);
+window.addEventListener("load", () => { loadScenarios(); });
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 async function apiCall(path, method="GET", body=null) {

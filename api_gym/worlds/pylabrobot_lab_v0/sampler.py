@@ -79,6 +79,7 @@ class TaskSpec:
     protocol: list[ProtocolStep] = field(default_factory=list)
     expected: dict[str, Any] = field(default_factory=dict)
     stochastic_config: dict[str, Any] | None = None  # {"od600_noise": True, "fault_prob": 0.15}
+    workspace_files: dict[str, str] = field(default_factory=dict)  # filename -> content
 
 
 def _stable_prefix(scenario: str, seed: int) -> str:

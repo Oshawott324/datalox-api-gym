@@ -16,7 +16,7 @@ from typing import Any
 from api_gym.worlds.pylabrobot_lab_v0.verifier import (
     VerificationResult,
     _check, _fail,
-    after, fresh, never, resource_available,
+    after, fresh, never, resource_available, provenance,
 )
 from api_gym.worlds.pylabrobot_star_v0.state import (
     RUN_METADATA_NAME, STATE_JSON_NAME, LabState,
@@ -63,6 +63,16 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "full_workflow_qc": _verify_full_workflow_qc,
         "borderline_star_qc": _verify_borderline_star_qc,
         "noisy_readout_star_qc": _verify_noisy_readout_star_qc,
+        "instrument_fault_star_qc": _verify_instrument_fault_star_qc,
+        "stale_deck_star_qc": _verify_stale_deck_star_qc,
+        "liquid_switch_star_qc": _verify_liquid_switch_star_qc,
+        "iswap_lid_star_qc": _verify_iswap_lid_star_qc,
+        "tip_exhaustion_96_star_qc": _verify_tip_exhaustion_96_star_qc,
+        "low_reagent_well_star_qc": _verify_low_reagent_well_star_qc,
+        "fault_and_noise_star_qc": _verify_fault_and_noise_star_qc,
+        "stale_after_move_star_qc": _verify_stale_after_move_star_qc,
+        "three_liquid_star_qc": _verify_three_liquid_star_qc,
+        "workspace_protocol_star_qc": _verify_workspace_protocol_star_qc,
     }
     vfn = verifiers.get(scenario)
     if vfn is None:
@@ -138,6 +148,12 @@ def _verify_plate_transfer_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     if read_ok and sub_ok:
         f_ok, f_msg = fresh(events, ("readout.", ""), ("protocol.", ""), max_age_s=60.0)
         _add_temporal(checks, f_ok, "fresh(readout, submit)", f_msg)
+
+    # Provenance: readout for target_well must trace back to a transfer to that well
+    p_ok, p_msg = provenance(events,
+                             ("readout.", target_well),
+                             ("transfer.dispensed", target_well))
+    _add_temporal(checks, p_ok, "provenance(readout, transfer)", p_msg)
 
     # Decision check (terminal)
     if ls.submissions:
@@ -412,6 +428,12 @@ def _verify_full_workflow_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     f_ok, f_msg = fresh(events, ("readout.", ""), ("protocol.", ""), max_age_s=120.0)
     _add_temporal(checks, f_ok, "fresh(readout, submit)", f_msg)
 
+    # Provenance: each readout well must trace back to a transfer
+    target_wells = ["B1", "B2", "B3"]
+    for tw in target_wells:
+        p_ok, p_msg = provenance(events, ("readout.", tw), ("transfer.dispensed", tw))
+        _add_temporal(checks, p_ok, f"provenance(readout_{tw}, transfer_{tw})", p_msg)
+
     return checks, {}
 
 
@@ -460,12 +482,282 @@ def _verify_noisy_readout_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
     attrs = {}
     if len(ls.readouts) >= 2:
-        # Agent took multiple readings — good practice with noise
         attrs = {"label": "success_despite_fault",
                  "detail": "Agent obtained multiple readouts to mitigate measurement noise."}
-        # Temporal: first readout before last readout before submit
-        a_ok, a_msg = after(events, ("readout.", ""), ("readout.", ""))
         _add_temporal(checks, True, "multiple_reads_ordered",
                       "Agent performed multiple sequential readouts.")
+
+    return checks, attrs
+
+
+def _verify_instrument_fault_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Instrument fault scenario — Direction 2: agent must retry after fault."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox + fault injection.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+
+    fault_events = [e for e in events if e.get("event_type") == "error.instrument_busy"]
+    has_valid_readout = len(ls.readouts) > 0
+    _add_terminal(checks, has_valid_readout, "valid_readout",
+                  "Valid readout obtained." if has_valid_readout
+                  else "No valid readout after faults.")
+
+    has_submission = len(ls.submissions) > 0
+    _add_terminal(checks, has_submission, "submitted", "Submitted.")
+
+    attrs: dict = {}
+    if fault_events:
+        max_retries = exp.get("max_retries", 2)
+        if has_valid_readout:
+            # Agent retried and succeeded
+            attrs = {"label": "success_despite_fault",
+                     "detail": f"Agent retried after {len(fault_events)} fault(s) and obtained a valid reading."}
+            # Temporal: retry after fault
+            r_ok, r_msg = after(events, ("error.instrument_busy", ""), ("readout.", ""))
+            _add_temporal(checks, r_ok, "after(fault, readout)", r_msg)
+        else:
+            # Agent didn't retry enough
+            attrs = {"label": "agent_recovery_failure",
+                     "detail": f"Agent encountered {len(fault_events)} fault(s) but did not obtain a valid readout."}
+
+    # Temporal: transfer before read
+    if disp and has_valid_readout:
+        a_ok, a_msg = after(events, ("transfer.dispensed", ""), ("readout.", ""))
+        _add_temporal(checks, a_ok, "after(transfer, readout)", a_msg)
+
+    return checks, attrs
+
+
+def _verify_stale_deck_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Stale deck scenario — Direction 3: agent must re-inspect before acting."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox — deck may change externally.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    max_staleness = exp.get("max_staleness_s", 10)
+    attrs: dict = {}
+
+    # Check freshness: last inspection before first transfer
+    inspect_events = [e for e in events if e.get("event_type", "").startswith("state.")
+                      or "deck_state" in e.get("event_type", "")
+                      or "labware_state" in e.get("event_type", "")]
+    if not inspect_events and disp:
+        _add_temporal(checks, False, "fresh_inspection",
+                      "No inspection events found — agent never checked deck state.")
+        attrs = {"label": "agent_error",
+                 "detail": "Agent performed transfer without any deck inspection."}
+    elif inspect_events and disp:
+        # Find the last inspection before the first transfer
+        first_tx_time = min(
+            (e.get("clock_time", 0) for e in events
+             if e.get("event_type", "").startswith("transfer.")),
+            default=0)
+        last_inspect_time = max(
+            (e.get("clock_time", 0) for e in inspect_events
+             if e.get("clock_time", 0) <= first_tx_time),
+            default=0)
+
+        staleness = first_tx_time - last_inspect_time if last_inspect_time > 0 else 999
+        fresh_ok = 0 <= staleness <= max_staleness
+        _add_temporal(checks, fresh_ok, "fresh(inspect, transfer)",
+                      f"Inspection {staleness:.1f}s before transfer (max {max_staleness}s)." if fresh_ok
+                      else f"Stale: {staleness:.1f}s gap between inspection and transfer.")
+        if not fresh_ok:
+            attrs = {"label": "agent_error",
+                     "detail": f"Agent used stale inspection data ({staleness:.1f}s old)."}
+
+    return checks, attrs
+
+
+def _verify_liquid_switch_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Liquid switch scenario — agent must discard tips between incompatible liquids."""
+    checks = []
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= exp.get("expected_transfers", 2),
+                  "transfers", f"{len(disp)} transfers.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Check tip discard between different liquid types
+    discard_events = [e for e in ls.events if e.get("event_type") == "tips.discarded"]
+    target_wells = [w.split(".")[-1] for w in exp.get("target_wells", [])]
+    well_read_map = set()
+    for ro in ls.readouts:
+        well_read_map.update(ro.get("wells", []))
+    for tw in target_wells:
+        _add_temporal(checks, tw in well_read_map, f"{tw}_read", f"Well {tw} was read.")
+
+    attrs: dict = {}
+    if exp.get("require_tip_change_between_liquids"):
+        if len(discard_events) >= 1:
+            _add_temporal(checks, True, "tip_discarded_between_liquids",
+                          f"{len(discard_events)} tip discard(s) — cross-contamination avoided.")
+        elif len(disp) >= 2:
+            # Transfers happened but no tip discard — actual error
+            _add_temporal(checks, False, "tip_discarded_between_liquids",
+                          "No tip discard between incompatible liquids.")
+            attrs = {"label": "agent_error",
+                     "detail": "Agent did not discard tip between DMSO and WATER transfers."}
+        else:
+            _add_temporal(checks, True, "tip_discarded_between_liquids",
+                          "No transfers yet — tip discard check deferred.")
+
+    return checks, attrs
+
+
+# ── Gap-filling verifiers (dimension count >= 2) ────────────────────────
+
+
+def _verify_iswap_lid_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    moved = [e for e in ls.events if e.get("event_type") == "plate.moved"]
+    attrs: dict = {}
+    if exp.get("require_lid_handling"):
+        ok = len(moved) >= 1
+        _add_temporal(checks, ok, "lid_handled", f"{len(moved)} iSWAP move(s)." if ok else "No iSWAP moves.")
+        if not ok:
+            attrs = {"label": "agent_error", "detail": "Agent did not use iSWAP to handle the lid."}
+    return checks, attrs
+
+
+def _verify_tip_exhaustion_96_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
+    a96 = [t for t in ls.transfers if t.get("type") == "aspirate96"]
+    available = exp.get("available_tips", 10)
+    ok = len(a96) == 0
+    _add_temporal(checks, ok, "no_stamp_insufficient_tips",
+                  "Agent correctly refused 96-head stamp." if ok
+                  else f"Agent attempted 96-head stamp with only {available} tips.")
+    attrs = {"label": "agent_error",
+             "detail": f"Agent attempted 96-head stamp with only {available} tips."} if not ok else {}
+    return checks, attrs
+
+
+def _verify_low_reagent_well_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    checks = [_check(True, "dry_run", "STAR chatterbox.")]
+    available = exp.get("available_volume_ul", 30)
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    total = sum(t.get("volume_ul", 0) for t in disp)
+    ok = total <= available
+    _add_terminal(checks, ok, "no_overdrawn",
+                  f"{total}uL <= {available}uL." if ok else f"{total}uL > {available}uL — overdrawn.")
+    attrs = {"label": "agent_error",
+             "detail": f"Agent overdrew {total}uL from {available}uL well."} if not ok else {}
+    return checks, attrs
+
+
+def _verify_fault_and_noise_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    checks = [{"ok": True, "name": "dry_run", "message": "STAR + fault + noise.", "predicate_type": "terminal"}]
+    events = ls.events
+    _add_terminal(checks, len(ls.readouts) >= 2, "multiple_readouts",
+                  f"{len(ls.readouts)} readouts (need >=2).")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    fault_events = [e for e in events if e.get("event_type") == "error.instrument_busy"]
+    has_valid = len(ls.readouts) > 0
+    attrs: dict = {}
+    if fault_events and has_valid:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Agent retried after {len(fault_events)} fault(s) and took {len(ls.readouts)} valid readings."}
+    elif fault_events and not has_valid:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": f"Agent encountered {len(fault_events)} fault(s) but obtained no valid reading."}
+    return checks, attrs
+
+
+def _verify_stale_after_move_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
+    events = ls.events
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    moved = [e for e in events if e.get("event_type") == "plate.moved"]
+    attrs: dict = {}
+    if moved:
+        move_time = moved[-1].get("clock_time", 0)
+        post_insp = [e for e in events
+                     if e.get("clock_time", 0) > move_time
+                     and ("state." in e.get("event_type", "")
+                          or "deck_state" in e.get("event_type", "")
+                          or "labware_state" in e.get("event_type", ""))]
+        ok = len(post_insp) >= 1
+        _add_temporal(checks, ok, "fresh_inspection_after_move",
+                      "Re-inspected after plate move." if ok
+                      else "No re-inspection after iSWAP relocation.")
+        if not ok:
+            attrs = {"label": "agent_error",
+                     "detail": "Agent did not re-inspect assay plate after iSWAP relocation."}
+    return checks, attrs
+
+
+def _verify_three_liquid_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= exp.get("expected_transfers", 3),
+                  "transfers", f"{len(disp)} transfers.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    discard_events = [e for e in ls.events if e.get("event_type") == "tips.discarded"]
+    expected = exp.get("expected_discards", 2)
+    attrs: dict = {}
+    if len(discard_events) >= expected:
+        _add_temporal(checks, True, "tip_discards", f"{len(discard_events)}/{expected} discards — OK.")
+    elif len(disp) >= 3:
+        _add_temporal(checks, False, "tip_discards", f"{len(discard_events)}/{expected} discards — risk.")
+        attrs = {"label": "agent_error",
+                 "detail": f"Only {len(discard_events)} tip discards for 3 incompatible transfers."}
+    else:
+        _add_temporal(checks, True, "tip_discards", "No transfers yet — check deferred.")
+    return checks, attrs
+
+
+def _verify_workspace_protocol_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Workspace scenario — Direction 5: agent must consult workspace files."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox + workspace files.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Check workspace files were consulted
+    attrs: dict = {}
+    required = exp.get("required_files", [])
+    files_read = set()
+    for e in events:
+        if e.get("event_type") == "workspace.read":
+            files_read.add(e.get("object_id", ""))
+
+    for rf in required:
+        ok = rf in files_read
+        _add_temporal(checks, ok, f"workspace_read_{rf.replace('.','_')}",
+                      f"File '{rf}' was read." if ok
+                      else f"File '{rf}' was NOT read — agent may have skipped protocol review.")
+    if any(rf not in files_read for rf in required):
+        missing = [rf for rf in required if rf not in files_read]
+        attrs = {"label": "agent_error",
+                 "detail": f"Agent did not read required workspace files: {missing}."}
+
+    # Also check workspace was listed
+    listed = any(e.get("event_type") == "workspace.listed" for e in events)
+    _add_temporal(checks, listed, "workspace_listed",
+                  "Agent listed workspace files." if listed
+                  else "Agent did not list workspace files.")
 
     return checks, attrs
