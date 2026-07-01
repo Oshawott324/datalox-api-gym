@@ -119,6 +119,23 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             }, ["plate_id", "to_position"]),
         },
     },
+    # ── Workspace files ──
+    {
+        "type": "function",
+        "function": {
+            "name": "list_workspace_files",
+            "description": "List available workspace files (protocol, plate map, reagent inventory, prior run log). Always check this first to understand the task context.",
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_workspace_file",
+            "description": "Read the content of a specific workspace file.",
+            "parameters": _schema({"filename": {"type": "string"}}, ["filename"]),
+        },
+    },
     # ── Reading ──
     {
         "type": "function",
@@ -263,6 +280,14 @@ def _move_plate(ls: LabState, a: dict) -> dict:
                                to_position=str(a["to_position"]))
 
 
+def _list_workspace_files(ls: LabState, _a: dict) -> dict:
+    return services.list_workspace_files(ls)
+
+
+def _get_workspace_file(ls: LabState, a: dict) -> dict:
+    return services.get_workspace_file(ls, filename=str(a["filename"]))
+
+
 def _read_absorbance(ls: LabState, a: dict) -> dict:
     wells = a["wells"]
     if not isinstance(wells, list):
@@ -298,6 +323,8 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "dispense96": _dispense96,
     "discard_tips96": _discard_tips96,
     "move_plate": _move_plate,
+    "list_workspace_files": _list_workspace_files,
+    "get_workspace_file": _get_workspace_file,
     "read_absorbance": _read_absorbance,
     "add_workflow_note": _add_workflow_note,
     "submit_protocol": _submit_protocol,

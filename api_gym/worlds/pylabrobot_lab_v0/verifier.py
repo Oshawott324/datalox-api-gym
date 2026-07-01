@@ -620,17 +620,49 @@ def resource_available(events: list[dict[str, Any]],
     return True, f"No {resource_type} exhaustion events detected."
 
 
+def provenance(events: list[dict[str, Any]],
+               observation_pattern: tuple[str, str],
+               source_pattern: tuple[str, str]) -> tuple[bool, str]:
+    """Check that an observation can be traced back to a source event.
+
+    An observation (e.g. readout for well B1) is "provenanced" if there
+    exists a source event (e.g. transfer to B1) that occurs before it
+    in the event log.  This prevents "orphaned" observations that reference
+    wells that were never acted upon.
+
+    Each pattern is (event_type_prefix, keyword).  The keyword is matched
+    against the stringified payload to identify the specific well/plate.
+    """
+    obs_idx = _find_event_index(events, observation_pattern)
+    src_idx = _find_event_index(events, source_pattern)
+    if obs_idx is None:
+        return False, f"Observation event {observation_pattern} not found."
+    if src_idx is None:
+        return False, f"Source event {source_pattern} not found — observation has no provenance."
+    if src_idx < obs_idx:
+        return True, (f"Observation '{observation_pattern[0]}' (idx {obs_idx}) "
+                      f"traces back to source '{source_pattern[0]}' (idx {src_idx}).")
+    return False, (f"Observation '{observation_pattern[0]}' (idx {obs_idx}) "
+                   f"occurred BEFORE source '{source_pattern[0]}' (idx {src_idx}) — "
+                   f"observation references data that was never created.")
+
+
 def _find_event_index(events: list[dict[str, Any]],
                       pattern: tuple[str, str]) -> int | None:
-    """Find the index of the first event matching (event_type_prefix, keyword)."""
+    """Find the index of the first event matching (event_type_prefix, keyword).
+
+    Searches event_type, object_id, and stringified payload for *keyword*.
+    """
     prefix, keyword = pattern
     for i, event in enumerate(events):
         event_type = event.get("event_type", "")
         if not event_type.startswith(prefix):
             continue
         if keyword:
+            # Search in object_id and payload
+            object_id = str(event.get("object_id", ""))
             payload_str = str(event.get("payload", {}))
-            if keyword not in payload_str:
+            if keyword not in object_id and keyword not in payload_str:
                 continue
         return i
     return None

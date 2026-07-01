@@ -423,6 +423,25 @@ async def demo_worlds() -> dict[str, Any]:
     }
 
 
+@app.get("/api/demo/scenarios")
+async def demo_scenarios(world: str = "pylabrobot_lab_v0") -> dict[str, Any]:
+    """List available scenarios for a given world."""
+    if world not in WORLDS:
+        raise HTTPException(400, f"Unknown world '{world}'.")
+    try:
+        cfg = WORLDS[world]
+        # Try to get scenarios from the sample_episode function's module
+        import inspect
+        mod = inspect.getmodule(cfg["sample_episode"])
+        if mod and hasattr(mod, "SCENARIOS"):
+            scenarios = sorted(mod.SCENARIOS.keys())
+        else:
+            scenarios = []
+    except Exception:
+        scenarios = []
+    return {"ok": True, "world": world, "scenarios": scenarios}
+
+
 # ── API endpoints ──────────────────────────────────────────────────────────
 
 

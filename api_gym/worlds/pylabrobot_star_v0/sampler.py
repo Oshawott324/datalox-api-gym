@@ -111,6 +111,17 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     setup_star_deck(lh, plate_carrier, tip_carrier,
                     assay_plate, source_plate, tip_rack, trough)
 
+    # ── Limited-tip support: remove tips from rack if requested ─────────
+    tip_requested = spec.deck_setup.tip_count
+    if tip_requested < 96:
+        tips_removed = 0
+        for child in tip_rack.children:
+            if tips_removed >= (96 - tip_requested):
+                break
+            if hasattr(child, "empty") and callable(child.empty):
+                child.empty()
+                tips_removed += 1
+
     # ── Set initial volumes ────────────────────────────────────────────
     for ref, vol in spec.initial_volumes.items():
         plate_name, well_name = ref.split(".", 1)
@@ -169,6 +180,12 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
                                            fault_probability=stoch["fault_prob"])
             fault.save(out_dir / FAULT_SCHEDULE_NAME)
             lab_state._fault_schedule = fault
+
+    # ── Workspace files ────────────────────────────────────────────────
+    ws_files = getattr(spec, "workspace_files", None) or {}
+    for fname, fcontent in ws_files.items():
+        lab_state.workspace_files[fname] = fcontent
+        (out_dir / fname).write_text(fcontent, encoding="utf-8")
 
     # ── Task ───────────────────────────────────────────────────────────
     task: dict[str, object] = {
@@ -620,6 +637,318 @@ NOISY_READOUT_STAR_QC = TaskSpec(
         "expect_multiple_readouts": True,
     },
     stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Instrument fault with retry — Direction 2 gap ─────────────────────────
+
+INSTRUMENT_FAULT_STAR_QC = TaskSpec(
+    scenario="instrument_fault_star_qc",
+    objective="Handle plate reader faults by retrying until a valid reading is obtained.",
+    prompt=(
+        "Transfer 50 uL from source_plate.A1 to assay_plate.B1. Then read OD600 "
+        "for B1 at 600 nm. IMPORTANT: The plate reader may return an "
+        "'instrument_busy' error. If it does, you MUST retry the reading "
+        "(up to 2 retries maximum). Only give up if all retries are exhausted. "
+        "Once you have a valid reading, submit your decision against the "
+        "control band [0.75, 0.9]."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "max_retries": 2,
+        "expect_fault_possible": True,
+    },
+    stochastic_config={"fault_prob": 0.5},
+)
+
+# Stale deck state — Direction 3 gap ────────────────────────────────────
+
+STALE_DECK_STAR_QC = TaskSpec(
+    scenario="stale_deck_star_qc",
+    objective="Detect that deck state has changed since initial inspection and re-inspect before acting.",
+    prompt=(
+        "Transfer 50 uL from source_plate.A1 to assay_plate.B1. "
+        "CRITICAL: Other operators may modify the deck between your inspection "
+        "and your actions. You MUST re-inspect the relevant labware immediately "
+        "before every transfer. If you rely on old inspection data, the source "
+        "well volume may have changed. Read OD600 for B1 at 600 nm and submit."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control", "note": "volume may change externally"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "require_fresh_inspection": True,
+        "max_staleness_s": 10,
+    },
+)
+
+# Liquid type switch — STAR-specific gap ────────────────────────────────
+
+LIQUID_SWITCH_STAR_QC = TaskSpec(
+    scenario="liquid_switch_star_qc",
+    objective="Handle transfers of different liquid types, ensuring tip changes between incompatible reagents.",
+    prompt=(
+        "Source plate A1 contains 120 uL of DMSO-based QC control. "
+        "Source plate A2 contains 120 uL of WATER-based QC control. "
+        "Assay plate B1 and B2 are empty target wells. "
+        "Transfer 50 uL from A1 to B1, then 50 uL from A2 to B2. "
+        "IMPORTANT: DMSO and WATER are incompatible — you MUST discard the "
+        "tip after the DMSO transfer and use a fresh tip for the WATER transfer "
+        "to avoid cross-contamination. Read OD600 for B1 and B2 at 600 nm "
+        "and submit independent decisions for each."
+    ),
+    initial_volumes={"source_plate.A1": 120.0, "source_plate.A2": 120.0},
+    well_metadata={
+        "source_plate": {
+            "A1": {"contents": "qc_control", "liquid": "DMSO"},
+            "A2": {"contents": "qc_control", "liquid": "WATER"},
+        },
+        "assay_plate": {
+            "B1": {"contents": "empty", "purpose": "dmso_target"},
+            "B2": {"contents": "empty", "purpose": "water_target"},
+        },
+    },
+    expected={
+        "target_wells": ["assay_plate.B1", "assay_plate.B2"],
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "expected_transfers": 2,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "require_tip_change_between_liquids": True,
+        "liquid_types": ["DMSO", "WATER"],
+    },
+)
+
+
+# iSWAP lid operation ────────────────────────────────────────────────────
+
+ISWAP_LID_STAR_QC = TaskSpec(
+    scenario="iswap_lid_star_qc",
+    objective="Use the iSWAP arm to remove and replace a plate lid.",
+    prompt=(
+        "The STAR has an iSWAP arm. The source plate has a lid that must be "
+        "removed before pipetting. Use the iSWAP arm (move_plate on the lid "
+        "to a nearby carrier site) to remove the lid from the source plate. "
+        "Then transfer 50 uL from source_plate.A1 to assay_plate.B1. "
+        "After the transfer, use iSWAP to replace the lid. Read OD600 for B1 "
+        "at 600 nm and submit your decision."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control", "has_lid": True}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "use_iswap": True, "require_lid_handling": True,
+    },
+)
+
+# 96-head tip exhaustion ─────────────────────────────────────────────────
+
+TIP_EXHAUSTION_96_STAR_QC = TaskSpec(
+    scenario="tip_exhaustion_96_star_qc",
+    objective="Detect when the 96-head tip rack is empty and report inability to stamp.",
+    prompt=(
+        "The STAR has a 96-head. The tip rack has only 10 tips remaining. "
+        "You need to stamp 30 uL from the source plate to the assay plate "
+        "using pick_up_tips96. Check the tip rack first. If fewer than 96 "
+        "tips are available, the 96-head cannot perform a full pick_up_tips96 "
+        "operation. Refuse the operation and report the insufficiency."
+    ),
+    deck_setup=DeckSetup(tip_count=10),
+    initial_volumes={f"source_plate.{r}{c}": 120.0
+                     for r in "ABCDEFGH" for c in range(1, 13)},
+    well_metadata={
+        "source_plate": {f"{r}{c}": {"contents": "qc_control"}
+                         for r in "ABCDEFGH" for c in range(1, 13)},
+        "assay_plate": {"A1": {"purpose": "target"}},
+    },
+    expected={
+        "transfer_volume_ul": 30, "wavelength_nm": 600,
+        "use_96_head": True, "available_tips": 10,
+        "expect_tip_insufficient": True,
+    },
+)
+
+# Well-based low reagent (not trough) ────────────────────────────────────
+
+LOW_REAGENT_WELL_STAR_QC = TaskSpec(
+    scenario="low_reagent_well_star_qc",
+    objective="Detect insufficient volume in a source well and refuse transfer.",
+    prompt=(
+        "Source plate A1 contains only 30 uL of QC control. You need to "
+        "transfer 50 uL. Check the actual volume first. If insufficient, "
+        "refuse and report. Do NOT attempt to aspirate more than available."
+    ),
+    initial_volumes={"source_plate.A1": 30.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control", "volume_ul": 30}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "available_volume_ul": 30,
+        "expect_overdrawn": True,
+    },
+)
+
+# Combined fault + noise scenario ────────────────────────────────────────
+
+FAULT_AND_NOISE_STAR_QC = TaskSpec(
+    scenario="fault_and_noise_star_qc",
+    objective="Handle both instrument faults and measurement noise in a single protocol.",
+    prompt=(
+        "Transfer 50 uL from source_plate.A1 to assay_plate.B1. Read OD600 "
+        "for B1 at 600 nm. TWO challenges: (1) the plate reader may return "
+        "'instrument_busy' errors requiring retries, and (2) OD600 values "
+        "include measurement noise (sigma=0.03). Take at least 2 valid "
+        "readings of B1 and use the average for your decision against the "
+        "control band [0.75, 0.9]. Acknowledge both instrument faults and "
+        "measurement uncertainty in your rationale."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "max_retries": 2, "expect_multiple_readouts": True,
+        "expect_fault_possible": True,
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03, "fault_prob": 0.4},
+)
+
+# Stale state after iSWAP move ───────────────────────────────────────────
+
+STALE_AFTER_MOVE_STAR_QC = TaskSpec(
+    scenario="stale_after_move_star_qc",
+    objective="Detect deck changes after an iSWAP plate move and re-inspect before continuing.",
+    prompt=(
+        "Source plate is at carrier site 0. Assay plate is at carrier site 1. "
+        "First, inspect the deck and both plates. Then use iSWAP to move the "
+        "assay plate to carrier site 3. CRITICAL: after the move, the assay "
+        "plate location has changed. You MUST re-inspect the assay plate at "
+        "its new location before transferring 50 uL from source_plate.A1 to "
+        "assay_plate.B1. Read OD600 for B1 at 600 nm and submit."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "use_iswap": True, "require_plate_move": True,
+        "require_fresh_inspection_after_move": True,
+        "max_staleness_s": 10,
+    },
+)
+
+# Three-liquid type switch ───────────────────────────────────────────────
+
+THREE_LIQUID_STAR_QC = TaskSpec(
+    scenario="three_liquid_star_qc",
+    objective="Handle transfers of three incompatible liquid types with proper tip changes.",
+    prompt=(
+        "Source plate A1=DMSO QC control (120uL), A2=ETHANOL QC control (120uL), "
+        "A3=WATER QC control (120uL). Assay B1/B2/B3 are empty targets. "
+        "Transfer 50uL from each source to its corresponding target. "
+        "IMPORTANT: DMSO, ETHANOL, and WATER are mutually incompatible. "
+        "You MUST discard the tip after each transfer and use a fresh tip "
+        "for the next liquid type. Read OD600 for B1/B2/B3 at 600 nm "
+        "and submit independent decisions."
+    ),
+    initial_volumes={"source_plate.A1": 120.0, "source_plate.A2": 120.0,
+                     "source_plate.A3": 120.0},
+    well_metadata={
+        "source_plate": {
+            "A1": {"contents": "qc_control", "liquid": "DMSO"},
+            "A2": {"contents": "qc_control", "liquid": "ETHANOL"},
+            "A3": {"contents": "qc_control", "liquid": "WATER"},
+        },
+        "assay_plate": {
+            "B1": {"contents": "empty", "purpose": "dmso_target"},
+            "B2": {"contents": "empty", "purpose": "ethanol_target"},
+            "B3": {"contents": "empty", "purpose": "water_target"},
+        },
+    },
+    expected={
+        "target_wells": ["assay_plate.B1", "assay_plate.B2", "assay_plate.B3"],
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "expected_transfers": 3,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "require_tip_change_between_liquids": True,
+        "liquid_types": ["DMSO", "ETHANOL", "WATER"],
+        "expected_discards": 2,  # after DMSO, after ETHANOL
+    },
+)
+
+
+# Workspace-based protocol — Direction 5 scenario ───────────────────────
+
+WORKSPACE_PROTOCOL_STAR_QC = TaskSpec(
+    scenario="workspace_protocol_star_qc",
+    objective="Read workspace files (protocol and plate map) before performing lab operations.",
+    prompt=(
+        "This task has workspace files you MUST consult before acting. "
+        "1. Use list_workspace_files to see what's available. "
+        "2. Use get_workspace_file to read 'protocol.md' for the protocol steps. "
+        "3. Use get_workspace_file to read 'plate_map.csv' to understand the well layout. "
+        "4. Follow the protocol: transfer 50 uL from source_plate.A1 (QC control) "
+        "to assay_plate.B1 (QC target). Read OD600 for B1 at 600 nm and submit "
+        "your decision against the control band [0.75, 0.9]."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+        "require_workspace_consulted": True,
+        "required_files": ["protocol.md", "plate_map.csv"],
+    },
+    workspace_files={
+        "protocol.md": (
+            "# Plate QC Protocol\n\n"
+            "## Steps\n"
+            "1. Inspect the deck and all labware.\n"
+            "2. Transfer 50 uL from source_plate well A1 (QC control) to assay_plate well B1.\n"
+            "3. Use a fresh tip from tip_rack_01.\n"
+            "4. Read OD600 absorbance at 600 nm for assay_plate well B1.\n"
+            "5. Submit decision: 'continue' if OD600 is in [0.75, 0.9], else 'hold'.\n\n"
+            "## Control Band\n"
+            "- Acceptable range: OD600 0.75 to 0.90\n"
+            "- Below 0.75: hold (possible degradation)\n"
+            "- Above 0.90: hold (possible contamination)\n"
+        ),
+        "plate_map.csv": (
+            "plate,well,contents,purpose,expected_volume_ul\n"
+            "source_plate,A1,qc_control,source,120\n"
+            "assay_plate,B1,empty,qc_target,0\n"
+        ),
+    },
 )
 
 

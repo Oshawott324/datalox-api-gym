@@ -64,6 +64,9 @@ class LabState:
     has_96_head: bool = False
     has_iswap: bool = False
 
+    # Workspace files (Direction 5: lab scaffold realism)
+    workspace_files: dict[str, str] = field(default_factory=dict)
+
     def save(self, path: Path) -> None:
         data: dict[str, Any] = {
             "clock_time": self.clock.current_time,
@@ -78,6 +81,7 @@ class LabState:
             "well_metadata": self.well_metadata,
             "has_96_head": self.has_96_head,
             "has_iswap": self.has_iswap,
+            "workspace_files": self.workspace_files,
         }
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
@@ -98,6 +102,7 @@ class LabState:
         state.well_metadata = data.get("well_metadata", {})
         state.has_96_head = data.get("has_96_head", False)
         state.has_iswap = data.get("has_iswap", False)
+        state.workspace_files = data.get("workspace_files", {})
         return state
 
     def insert_event(self, event_type: str, object_type: str,

@@ -346,7 +346,12 @@ def move_plate(lab_state: LabState, plate_id: str,
 
 def read_absorbance(lab_state: LabState, plate_id: str,
                     wavelength_nm: int, wells: list[str]) -> dict[str, Any]:
-    """Simulated absorbance read.  (PlateReader simulation — see projection contract.)"""
+    """Simulated absorbance read.  (PlateReader simulation — see projection contract.)
+
+    Supports fault injection via FaultSchedule: if a fault is scheduled for
+    this readout attempt, returns an 'instrument_busy' error instead of a
+    valid reading.  The agent must retry.
+    """
     if lab_state.deck is None:
         return _error("not_initialised", "Deck not initialised.")
     plate = _find_resource(lab_state.deck, plate_id)
@@ -355,7 +360,31 @@ def read_absorbance(lab_state: LabState, plate_id: str,
     if not wells:
         return _error("empty_well_list", "At least one well required.")
 
-    # Apply noise schedule if available
+    # ── Fault injection ──────────────────────────────────────────────
+    fault_schedule = getattr(lab_state, "_fault_schedule", None)
+    if fault_schedule is not None:
+        # Count attempts for this (plate, wavelength) key
+        fkey = f"{plate_id}:{wavelength_nm}"
+        attempts = getattr(lab_state, "_fault_attempts", {})
+        attempt = attempts.get(fkey, 0) + 1
+        attempts[fkey] = attempt
+        lab_state._fault_attempts = attempts
+
+        max_retries = fault_schedule.max_retries
+        if fault_schedule.should_fault(plate_id, wavelength_nm, attempt):
+            lab_state.insert_event("error.instrument_busy", "plate_reader", plate_id,
+                                   {"attempt": attempt, "max_retries": max_retries})
+            lab_state.clock.advance(3.0)
+            if attempt <= max_retries:
+                return _error("instrument_busy",
+                              f"Plate reader busy on attempt {attempt}/{max_retries}. Retry available.",
+                              {"attempt": attempt, "max_retries": max_retries, "retry_available": True})
+            else:
+                return _error("instrument_busy_max_retries",
+                              f"Plate reader failed after {max_retries} retries.",
+                              {"attempt": attempt, "max_retries": max_retries, "retry_available": False})
+
+    # ── Normal readout ───────────────────────────────────────────────
     noise_schedule = getattr(lab_state, "_noise_schedule", None)
     readout_index = len(lab_state.readouts) + 1
 
@@ -377,6 +406,27 @@ def read_absorbance(lab_state: LabState, plate_id: str,
     lab_state.insert_event("readout.created", "plate", plate_id, readout)
     lab_state.clock.advance(5.0)
     return _ok(readout)
+
+
+# ── Workspace files ────────────────────────────────────────────────────
+
+
+def list_workspace_files(lab_state: LabState) -> dict[str, Any]:
+    """List available workspace files (protocol, plate map, inventory, etc.)."""
+    files = list(lab_state.workspace_files.keys())
+    lab_state.insert_event("workspace.listed", "workspace", "", {"files": files})
+    return _ok({"files": files})
+
+
+def get_workspace_file(lab_state: LabState, filename: str) -> dict[str, Any]:
+    """Read the content of a workspace file."""
+    content = lab_state.workspace_files.get(filename)
+    if content is None:
+        return _error("file_not_found",
+                      f"Workspace file '{filename}' not found.",
+                      {"available": list(lab_state.workspace_files.keys())})
+    lab_state.insert_event("workspace.read", "workspace", filename, {"filename": filename})
+    return _ok({"filename": filename, "content": content})
 
 
 # ── Workflow ────────────────────────────────────────────────────────────
