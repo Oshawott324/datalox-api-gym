@@ -1,0 +1,24 @@
+{
+  "schema_version": "api_gym.api_source_pack.v0",
+  "source_pack_id": "api.adaptyv_foundry.2026-07-01",
+  "provider": "adaptyv_foundry",
+  "version": "2026-07-01",
+  "status": "normalized",
+  "source_types": [
+    "openapi",
+    "docs"
+  ],
+  "records": {
+    "docs_index": "docs_index.jsonl",
+    "operations": "operations.jsonl",
+    "schemas": "schemas.jsonl",
+    "examples": "examples.jsonl",
+    "observed_errors": "observed_errors.jsonl",
+    "response_cases": "response_cases.jsonl",
+    "world_candidates": "world_candidates.jsonl"
+  },
+  "live_execution": {
+    "allowed": false,
+    "reason": "Source substrate only; API Gym must not call live Adaptyv Foundry endpoints, use credentials, submit experiments, confirm quotes, revoke tokens, or otherwise mutate provider state from this pack."
+  }
+}

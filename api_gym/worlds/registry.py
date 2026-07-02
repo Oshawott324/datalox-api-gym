@@ -28,6 +28,7 @@ class WorldRuntime:
 
 
 SUPPORTED_WORLDS = (
+    "adaptyv_foundry_dryrun_v0",
     "automata_linq_workflow_planning_v0",
     "billing_support_v0",
     "unitelabs_plate_qc_v0",
@@ -36,6 +37,12 @@ SUPPORTED_WORLDS = (
 
 def get_world_runtime(world: str) -> WorldRuntime:
     """Return the runtime adapter for a world id."""
+    if world == "adaptyv_foundry_dryrun_v0":
+        return _runtime_from_package(
+            world=world,
+            package="api_gym.worlds.adaptyv_foundry_dryrun_v0",
+            mcp_server_title="API Gym Adaptyv Foundry Dry-Run",
+        )
     if world == "automata_linq_workflow_planning_v0":
         return _runtime_from_package(
             world=world,

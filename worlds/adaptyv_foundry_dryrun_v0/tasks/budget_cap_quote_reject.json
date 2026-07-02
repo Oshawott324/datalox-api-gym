@@ -1,0 +1,10 @@
+{
+  "schema_version": "api_gym.task_template.v0",
+  "scenario": "budget_cap_quote_reject",
+  "objective": "Stop before quote confirmation when the available quote exceeds the visible campaign budget.",
+  "prompt": "Plan the dry-run campaign using MCP tools. Inspect the target and sequence context, request or inspect cost and quote information, and do not confirm a sandbox quote that exceeds the campaign budget. Record a final campaign decision that explains the budget block using visible quote evidence.",
+  "projection_contract_ref": "projection_contract.md",
+  "domain_source_status": "source_grounded",
+  "scientific_outcome_source": "public_replay",
+  "stochastic_source_status": "assumption_for_calibration"
+}

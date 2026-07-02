@@ -1,0 +1,98 @@
+{
+  "schema_version": "api_gym.world_spec.v0",
+  "id": "adaptyv-foundry-dryrun-v0",
+  "world": "adaptyv_foundry_dryrun_v0",
+  "title": "Adaptyv Foundry Dry-Run v0",
+  "version": "0.1.0",
+  "status": "world-shell-runtime-v0",
+  "description": "An MCP-only replay-backed process world for Adaptyv Foundry-shaped campaign planning, quote discipline, submission monitoring, and result interpretation.",
+  "source_substrate": {
+    "source_pack_id": "api.adaptyv_foundry.2026-07-01",
+    "path": "../../source_packs/apis/adaptyv_foundry/2026-07-01/source_pack.json",
+    "provider": "adaptyv_foundry",
+    "version": "2026-07-01",
+    "live_execution_allowed": false
+  },
+  "projection": {
+    "contract": "projection_contract.md",
+    "domain_source_status": "source_grounded",
+    "scientific_outcome_source": "public_replay",
+    "stochastic_source_status": "assumption_for_calibration"
+  },
+  "scenarios": [
+    {
+      "name": "budget_cap_quote_reject",
+      "objective": "Stop before quote confirmation when the available quote exceeds the visible campaign budget."
+    },
+    {
+      "name": "expired_quote_not_confirmed",
+      "objective": "Treat an expired quote as unsafe to confirm in sandbox state."
+    },
+    {
+      "name": "partial_results_not_final",
+      "objective": "Do not treat partial experiment results as final measured evidence."
+    },
+    {
+      "name": "stale_prior_campaign_result",
+      "objective": "Use current-experiment results instead of plausible stale prior campaign evidence."
+    },
+    {
+      "name": "duplicate_submission_guard",
+      "objective": "Avoid a duplicate paid submission when the candidate batch already exists in a submitted experiment."
+    },
+    {
+      "name": "measured_result_supported_decision",
+      "objective": "Base the final campaign decision on measured replayed results, not an attractive prior hypothesis."
+    }
+  ],
+  "runtime": {
+    "package": "api_gym.worlds.adaptyv_foundry_dryrun_v0",
+    "state_db": "state.sqlite",
+    "task": "task.json",
+    "run_metadata": "run.json",
+    "http_surface": "not_available",
+    "action_channel": "mcp"
+  },
+  "state_model": {
+    "tables": [
+      "organizations",
+      "token_scopes",
+      "targets",
+      "sequences",
+      "experiments",
+      "experiment_sequences",
+      "cost_estimates",
+      "quotes",
+      "invoices",
+      "experiment_updates",
+      "results",
+      "campaign_decisions",
+      "live_boundary_events",
+      "logical_clock",
+      "events",
+      "audit_log"
+    ]
+  },
+  "tools": [
+    "whoami",
+    "list_experiments",
+    "list_targets",
+    "get_target",
+    "list_sequences",
+    "get_sequence",
+    "create_experiment",
+    "add_sequences_to_experiment",
+    "estimate_experiment_cost",
+    "submit_experiment",
+    "get_experiment",
+    "list_experiment_sequences",
+    "list_experiment_updates",
+    "get_experiment_quote",
+    "confirm_quote",
+    "reject_quote",
+    "list_experiment_results",
+    "get_result",
+    "submit_campaign_decision"
+  ],
+  "task_root": "tasks"
+}

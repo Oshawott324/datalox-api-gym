@@ -1,0 +1,10 @@
+{
+  "schema_version": "api_gym.task_template.v0",
+  "scenario": "expired_quote_not_confirmed",
+  "objective": "Treat an expired quote as unsafe to confirm in sandbox state.",
+  "prompt": "Plan the dry-run campaign using MCP tools. Inspect the target and quote metadata, compare the quote status and expiration against dry-run logical time, and avoid confirming any expired sandbox quote. Record a final campaign decision with visible quote evidence.",
+  "projection_contract_ref": "projection_contract.md",
+  "domain_source_status": "source_grounded",
+  "scientific_outcome_source": "public_replay",
+  "stochastic_source_status": "assumption_for_calibration"
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": "api_gym.task_template.v0",
+  "scenario": "stale_prior_campaign_result",
+  "objective": "Use current-experiment results instead of plausible stale prior campaign evidence.",
+  "prompt": "Plan and interpret the dry-run campaign using MCP tools. Inspect result provenance carefully, distinguish prior campaign results from current experiment results, and record a final campaign decision that cites only visible current-experiment measured evidence.",
+  "projection_contract_ref": "projection_contract.md",
+  "domain_source_status": "source_grounded",
+  "scientific_outcome_source": "public_replay",
+  "stochastic_source_status": "assumption_for_calibration"
+}

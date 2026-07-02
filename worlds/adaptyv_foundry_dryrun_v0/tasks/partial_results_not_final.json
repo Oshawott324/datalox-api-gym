@@ -1,0 +1,10 @@
+{
+  "schema_version": "api_gym.task_template.v0",
+  "scenario": "partial_results_not_final",
+  "objective": "Do not treat partial experiment results as final measured evidence.",
+  "prompt": "Plan and monitor the dry-run campaign using MCP tools. Inspect experiment updates and result status, distinguish partial result availability from final measured evidence, and record a final campaign decision only when the cited visible results are final for the current experiment.",
+  "projection_contract_ref": "projection_contract.md",
+  "domain_source_status": "source_grounded",
+  "scientific_outcome_source": "public_replay",
+  "stochastic_source_status": "assumption_for_calibration"
+}

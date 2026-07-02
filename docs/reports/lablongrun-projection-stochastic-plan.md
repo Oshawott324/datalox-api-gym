@@ -154,11 +154,11 @@ verifier_effect: check whether agent handles borderline readings correctly
 attribution_label: environment_noise
 ```
 
-For Adaptyv:
+For a campaign-style provider workflow:
 
 ```text
 name: result_arrival_delay
-source_status: source_grounded_or_partner_reported
+source_status: assumption_for_calibration
 distribution: status transition schedule over campaign lifecycle
 seed_behavior: deterministic per campaign seed
 agent_visible_observation: partial/final result status
@@ -225,7 +225,7 @@ Examples:
 - Instrument fault prevents any valid read and the verifier expects a hold or
   escalation:
   `environment_fault`
-- Agent reads partial Adaptyv results as final:
+- Agent reads partial campaign results as final:
   `agent_error` or `agent_recovery_failure`, depending on whether the tool
   reported partial status clearly.
 
@@ -254,37 +254,18 @@ partner_reported
 If a distribution is only an assumption, mark it as calibration-only and do not
 count it as a paper-scale scientific task until reviewed.
 
-## What This Means For Adaptyv
+## Provider-Specific Projection Plans
 
-Adaptyv is potentially a better projection target than OT-2 deck simulation.
+Keep this note as the general projection and stochasticity contract. Move
+provider-specific build decisions into provider-specific qualification or build
+specs so this document does not become a mixed roadmap.
 
-The projection object would be:
+The Adaptyv campaign projection direction now lives in:
 
 ```text
-protein design campaign
-  target
-  candidate sequences
-  budget/quote
-  submission lifecycle
-  partial/final results
-  interpretation decision
+docs/reports/adaptyv-qualification-plan.md
+docs/reports/adaptyv-foundry-dryrun-v0-build-spec.md
 ```
-
-The important stochastic/temporal dimensions are not pipette physics. They are:
-
-- quote/cost variability
-- experiment lifecycle delay
-- partial result availability
-- noisy or low-confidence result records
-- failed/cancelled experiment status
-- stale prior campaign results
-
-This may produce a deeper long-horizon benchmark because the agent must manage
-planning under delayed and uncertain feedback, which is closer to real
-scientific campaign work.
-
-But the same gate still applies: do not build this until Adaptyv/customer
-qualification confirms the pain.
 
 ## Next Engineering Step
 

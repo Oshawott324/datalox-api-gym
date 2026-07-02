@@ -1,0 +1,97 @@
+{
+  "schema_version": "api_gym.world_source_refs.v0",
+  "world": "adaptyv_foundry_dryrun_v0",
+  "source_packs": [
+    {
+      "source_pack_id": "api.adaptyv_foundry.2026-07-01",
+      "path": "../../source_packs/apis/adaptyv_foundry/2026-07-01/source_pack.json",
+      "records": [
+        "operation:whoami",
+        "operation:list_experiments",
+        "operation:list_targets",
+        "operation:get_target_info",
+        "operation:list_sequences",
+        "operation:get_sequence_info",
+        "operation:get_experiment_sequences",
+        "operation:create_exp",
+        "operation:add_sequences",
+        "operation:cost_estimate",
+        "operation:submit_experiment",
+        "operation:get_exp_info",
+        "operation:get_experiment_updates",
+        "operation:get_quote_metadata",
+        "operation:confirm_quote",
+        "operation:reject_quote",
+        "operation:get_experiment_results",
+        "operation:get_result_info",
+        "response_case:list_targets:target_available",
+        "response_case:list_experiments:success",
+        "response_case:list_sequences:success",
+        "response_case:get_experiment_sequences:success",
+        "response_case:create_exp:draft_experiment",
+        "response_case:add_sequences:success",
+        "response_case:cost_estimate:within_budget",
+        "response_case:cost_estimate:over_budget",
+        "response_case:submit_experiment:submitted_experiment",
+        "response_case:get_experiment_updates:success",
+        "response_case:get_quote_metadata:ready_quote",
+        "response_case:get_quote_metadata:expired_quote",
+        "response_case:confirm_quote:success",
+        "response_case:reject_quote:success",
+        "response_case:get_experiment_results:partial_results",
+        "response_case:get_experiment_results:final_results",
+        "response_case:get_result_info:stale_prior_result",
+        "response_case:confirm_quote:authorization_scope_denial",
+        "world_candidate:adaptyv_foundry_dryrun_v0"
+      ],
+      "role": "adaptyv_foundry_dryrun_world_grounding"
+    }
+  ],
+  "world_evidence": [
+    {
+      "path": "README.md",
+      "role": "world_summary"
+    },
+    {
+      "path": "spec.json",
+      "role": "world_contract"
+    },
+    {
+      "path": "projection_contract.md",
+      "role": "projection_boundary"
+    },
+    {
+      "path": "public_replay_sources.json",
+      "role": "public_replay_subset",
+      "records": [
+        "public_replay_sources:egfr_competition_2_result_summary_round1zeroshot_k5q_n70s_k71r_n73t_s87t_n88d_r179k_k183r_e213d_s214p",
+        "public_replay_sources:egfr_competition_2_result_summary_chrisxushaoyong_hu_nano2_4_85252b",
+        "public_replay_sources:egfr_competition_2_result_summary_cetuximab_scfv"
+      ]
+    },
+    {
+      "path": "tasks/budget_cap_quote_reject.json",
+      "role": "public_task_template"
+    },
+    {
+      "path": "tasks/expired_quote_not_confirmed.json",
+      "role": "public_task_template"
+    },
+    {
+      "path": "tasks/partial_results_not_final.json",
+      "role": "public_task_template"
+    },
+    {
+      "path": "tasks/stale_prior_campaign_result.json",
+      "role": "public_task_template"
+    },
+    {
+      "path": "tasks/duplicate_submission_guard.json",
+      "role": "public_task_template"
+    },
+    {
+      "path": "tasks/measured_result_supported_decision.json",
+      "role": "public_task_template"
+    }
+  ]
+}

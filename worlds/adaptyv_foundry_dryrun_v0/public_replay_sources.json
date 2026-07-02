@@ -1,0 +1,53 @@
+{
+  "schema_version": "api_gym.public_replay_sources.v0",
+  "source_set_id": "adaptyv_egfr_competition_2_result_summary_subset_v0",
+  "source_urls": {
+    "repo": "https://github.com/adaptyvbio/egfr_competition_2",
+    "repo_readme": "https://github.com/adaptyvbio/egfr_competition_2/README.md",
+    "raw_readme": "https://raw.githubusercontent.com/adaptyvbio/egfr_competition_2/main/README.md",
+    "raw_result_summary_csv": "https://raw.githubusercontent.com/adaptyvbio/egfr_competition_2/main/results/result_summary.csv"
+  },
+  "license_note": "The repository README states that code is licensed under Apache 2 and data is licensed under ODbL.",
+  "selection_note": "Small fixed subset selected only for verifier-hidden measured replay fixtures in adaptyv_foundry_dryrun_v0.",
+  "selected_rows": [
+    {
+      "id": "egfr_competition_2_result_summary_round1zeroshot_k5q_n70s_k71r_n73t_s87t_n88d_r179k_k183r_e213d_s214p",
+      "row_name": "round1zeroshot.K5Q_N70S_K71R_N73T_S87T_N88D_R179K_K183R_E213D_S214P",
+      "username": "Cradle",
+      "source_file": "results/result_summary.csv",
+      "sequence": "QVQLQQSGPGLVQPSQSLSITCTVSGFSLTNYGVHWVRQSPGKGLEWLGVIWSGGNTDYNTPFTSRLSISRDTSKSQVFFKMNSLQTDDTAIYYCARALTYYDYEFAYWGQGTLVTVSAGGGGSGGGGSGGGGSDILLTQSPVILSVSPGERVSFSCRASQSIGTNIHWYQQRTNGSPKLLIRYASESISGIPSRFSGSGSGTDFTLSINSVDPEDIADYYCQQNNNWPTTFGAGTKLELK",
+      "measured_fields": {
+        "kd_m": 1.2071528940932701e-09,
+        "binding_strength": "strong",
+        "binding": true,
+        "expression": "high"
+      }
+    },
+    {
+      "id": "egfr_competition_2_result_summary_chrisxushaoyong_hu_nano2_4_85252b",
+      "row_name": "chrisxushaoyong.hu_nano2_4_85252b",
+      "username": "Tihumab",
+      "source_file": "results/result_summary.csv",
+      "sequence": "EVQLLESGGGVVKPGGSLRLSCAASGRTFSSYAMGWFRQAPGKGLEWVSAINWSSGSTYYADSVKGRFTISRDDAKNSLYLQMNSLRAEDTAVYYCAAGYQINSGNYNFKDYEYDYWGQGTLVTVSS",
+      "measured_fields": {
+        "kd_m": 5.18304085902218e-09,
+        "binding_strength": "strong",
+        "binding": true,
+        "expression": "high"
+      }
+    },
+    {
+      "id": "egfr_competition_2_result_summary_cetuximab_scfv",
+      "row_name": "Cetuximab_scFv",
+      "username": "",
+      "source_file": "results/result_summary.csv",
+      "sequence": "QVQLKQSGPGLVQPSQSLSITCTVSGFSLTNYGVHWVRQSPGKGLEWLGVIWSGGNTDYNTPFTSRLSINKDNSKSQVFFKMNSLQSNDTAIYYCARALTYYDYEFAYWGQGTLVTVSAGGGGSGGGGSGGGGSDILLTQSPVILSVSPGERVSFSCRASQSIGTNIHWYQQRTNGSPRLLIKYASESISGIPSRFSGSGSGTDFTLSINSVESEDIADYYCQQNNNWPTTFGAGTKLELK",
+      "measured_fields": {
+        "kd_m": 6.6383453503563e-09,
+        "binding_strength": "strong",
+        "binding": true,
+        "expression": "low"
+      }
+    }
+  ]
+}
