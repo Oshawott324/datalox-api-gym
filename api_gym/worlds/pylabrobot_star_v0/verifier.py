@@ -73,6 +73,12 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "stale_after_move_star_qc": _verify_stale_after_move_star_qc,
         "three_liquid_star_qc": _verify_three_liquid_star_qc,
         "workspace_protocol_star_qc": _verify_workspace_protocol_star_qc,
+        # Phase 3.2 — new PLR-grounded scenarios
+        "tip_return_reuse_qc": _verify_tip_return_reuse_qc,
+        "multi_dispense_transfer_qc": _verify_multi_dispense_transfer_qc,
+        "lid_handling_qc": _verify_lid_handling_qc,
+        "plate_stamp_qc": _verify_plate_stamp_qc,
+        "mounted_tips_query_qc": _verify_mounted_tips_query_qc,
     }
     vfn = verifiers.get(scenario)
     if vfn is None:
@@ -761,3 +767,147 @@ def _verify_workspace_protocol_star_qc(ls: LabState, exp: dict) -> tuple[list, d
                   else "Agent did not list workspace files.")
 
     return checks, attrs
+
+
+# ── Phase 3.2: New PLR-grounded scenario verifiers ──────────────────────
+
+
+def _verify_tip_return_reuse_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Tip return/reuse: agent must return clean tips, discard contaminated ones."""
+    checks = []
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= exp.get("expected_transfers", 3),
+                  "transfers", f"{len(disp)} transfers.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Check tip management: should see some return events AND some discard events
+    returned = [e for e in ls.events if e.get("event_type") == "tips.returned"]
+    discarded = [e for e in ls.events if e.get("event_type") == "tips.discarded"]
+    attrs: dict = {}
+    if returned and discarded:
+        _add_temporal(checks, True, "tip_management",
+                      f"Correct: {len(returned)} return(s) + {len(discarded)} discard(s).")
+    elif not returned and discarded:
+        _add_temporal(checks, False, "tip_management",
+                      "All tips discarded — should have returned clean tips.")
+        attrs = {"label": "agent_error",
+                 "detail": "Agent discarded all tips instead of returning clean ones."}
+    elif returned and not discarded:
+        _add_temporal(checks, False, "tip_management",
+                      "No tips discarded — should have discarded contaminated tips.")
+        attrs = {"label": "agent_error",
+                 "detail": "Agent returned all tips including contaminated ones."}
+    else:
+        _add_temporal(checks, False, "tip_management",
+                      "No tip return or discard events — agent may not be managing tips.")
+        attrs = {"label": "ambiguous", "detail": "No tip management events found."}
+    return checks, attrs
+
+
+def _verify_multi_dispense_transfer_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Multi-dispense transfer: agent should use the transfer tool for efficiency."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+
+    # Check for transfer.completed events (the efficient transfer tool)
+    transfers = [e for e in events if e.get("event_type") == "transfer.completed"]
+    dispenses = [t for t in ls.transfers if t.get("type") == "dispense"]
+
+    if transfers:
+        _add_terminal(checks, True, "used_transfer_tool",
+                      f"Agent used the transfer tool ({len(transfers)} call(s)).")
+    elif len(dispenses) >= 5:
+        _add_terminal(checks, True, "manual_transfers",
+                      "Agent used individual aspirate/dispense (acceptable).")
+    else:
+        _add_terminal(checks, False, "insufficient_transfers",
+                      f"Only {len(dispenses)} dispenses for 5 targets.")
+
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_lid_handling_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Lid handling: agent must remove lid before transfer and replace after."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+
+    lid_moves = [e for e in events if e.get("event_type") == "lid.moved"]
+    _add_terminal(checks, len(lid_moves) >= 2,
+                  "lid_operations",
+                  f"{len(lid_moves)} lid move(s)." if len(lid_moves) >= 2
+                  else "Lid not removed and replaced.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal: lid removed before transfer, replaced after
+    aspirates = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if lid_moves and aspirates:
+        lid_open_t = lid_moves[0].get("clock_time", 0)
+        asp_t = aspirates[0].get("clock_time", 0)
+        _add_temporal(checks, lid_open_t <= asp_t,
+                      "lid_removed_before_aspirate",
+                      f"Lid opened@{lid_open_t:.1f}s before aspirate@{asp_t:.1f}s.")
+    return checks, {}
+
+
+def _verify_plate_stamp_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Plate stamp: full 96-well replication using 96-head."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR 96-head stamp.")
+
+    # Check stamp event
+    stamps = [e for e in events if e.get("event_type") == "stamp.completed"]
+    _add_terminal(checks, len(stamps) >= 1,
+                  "stamp_executed",
+                  "Stamp completed." if stamps else "No stamp event found.")
+
+    # Check tips were picked up and discarded
+    tip_pickup = any(e.get("event_type") == "tips96.picked_up" for e in events)
+    _add_terminal(checks, tip_pickup, "tips_picked_up", "96 tips picked up.")
+
+    read_wells = set()
+    for ro in ls.readouts:
+        read_wells.update(ro.get("wells", []))
+    expected_corners = {"A1", "H1", "A12", "H12"}
+    rw_ok = expected_corners.issubset(read_wells)
+    _add_terminal(checks, rw_ok, "corner_readouts",
+                  "All 4 corners read." if rw_ok
+                  else f"Missing: {expected_corners - read_wells}")
+
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_mounted_tips_query_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Mounted tips query: agent must verify tip state at key points."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+
+    # Check that get_mounted_tips was called
+    head_checks = [e for e in events if e.get("event_type") == "inspection.mounted_tips"]
+    _add_terminal(checks, len(head_checks) >= 2,
+                  "head_state_checks",
+                  f"{len(head_checks)} head state inspection(s)." if len(head_checks) >= 2
+                  else "Agent did not verify head state at key points.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Check tip was returned (not discarded)
+    returned = any(e.get("event_type") == "tips.returned" for e in events)
+    _add_temporal(checks, returned, "tip_returned",
+                  "Tip returned to rack." if returned else "Tip not returned.")
+    return checks, {}

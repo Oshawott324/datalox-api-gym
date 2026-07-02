@@ -150,15 +150,21 @@ def create_star_deck() -> Any:
 def create_liquid_handler(deck: Any, num_channels: int = 8,
                           with_96_head: bool = False,
                           with_iswap: bool = False) -> Any:
-    """Create a LiquidHandler with STARChatterboxBackend."""
+    """Create a LiquidHandler with STARDryRunBackend.
+
+    STARDryRunBackend extends LiquidHandlerChatterboxBackend (the
+    brand-agnostic dry-run backend) with configurable 96-head and iSWAP
+    support.  All backend methods are print-only no-ops; VolumeTracker
+    and TipTracker are updated automatically by LiquidHandler's
+    high-level API methods.
+    """
     from pylabrobot.liquid_handling import LiquidHandler
-    from pylabrobot.liquid_handling.backends.hamilton.STAR_chatterbox import (
-        STARChatterboxBackend,
-    )
-    backend = STARChatterboxBackend(
+    from api_gym.worlds.pylabrobot_star_v0.backend import STARDryRunBackend
+
+    backend = STARDryRunBackend(
         num_channels=num_channels,
-        core96_head_installed=with_96_head,
-        iswap_installed=with_iswap,
+        with_96_head=with_96_head,
+        with_iswap=with_iswap,
     )
     return LiquidHandler(backend=backend, deck=deck)
 
@@ -261,3 +267,46 @@ def _run_async(coro: Any) -> Any:
         return asyncio.run(coro)
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         return executor.submit(asyncio.run, coro).result()
+
+
+class STARVisualizerSession:
+    """Manages the STAR Visualizer lifecycle for one demo session.
+
+    Uses PyLabRobot's Visualizer with the STAR LiquidHandler as the root
+    resource.  The visualizer renders the STAR deck with rail layout,
+    carriers, plates, troughs, and tip racks.  State changes (volume,
+    tip) are propagated via the resource's state-update callbacks.
+    """
+
+    def __init__(self, lh: Any, port: int = 1338):
+        self._lh = lh
+        self._port = port
+        self._vis: Any = None
+
+    def start(self) -> None:
+        """Start the visualizer on http://127.0.0.1:<port>."""
+        import webbrowser
+        from pylabrobot.visualizer import Visualizer
+
+        webbrowser.open = lambda *a, **kw: None
+
+        async def _start():
+            self._vis = Visualizer(
+                resource=self._lh,
+                fs_port=self._port,
+                open_browser=False,
+                liquid_color="00E5FF",
+                name="STAR Visualizer",
+            )
+            await self._vis.setup()
+
+        _run_async(_start())
+        print(f"[STAR Visualizer] Ready at http://127.0.0.1:{self._port}")
+
+    def stop(self) -> None:
+        if self._vis is None:
+            return
+        async def _stop():
+            await self._vis.stop()
+        _run_async(_stop())
+        self._vis = None

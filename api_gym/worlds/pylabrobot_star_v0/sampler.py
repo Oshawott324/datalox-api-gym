@@ -952,6 +952,166 @@ WORKSPACE_PROTOCOL_STAR_QC = TaskSpec(
 )
 
 
+# ── NEW: PLR-grounded scenarios for Phase 3.2 ──────────────────────────
+
+# Tip return/reuse — tests return_tips decision
+TIP_RETURN_REUSE_QC = TaskSpec(
+    scenario="tip_return_reuse_qc",
+    objective="Demonstrate correct tip management: return clean tips, discard contaminated ones.",
+    prompt=(
+        "You have a STAR with 8 channels but only 3 tips available in tip_rack_01 "
+        "(positions A1, A2, A3). You must transfer 50 uL from source_plate.A1 "
+        "to assay_plate wells B1, B2, B3 using three different liquids. "
+        "Read OD600 for B1-B3 at 600 nm and submit.\n\n"
+        "LIQUID INFO (from workspace files):\n"
+        "- A1: aqueous buffer (non-contaminating)\n"
+        "- A2: DMSO solution (contaminating — discard after use)\n"
+        "- A3: ethanol (contaminating — discard after use)\n\n"
+        "IMPORTANT: You only have 3 tips. Reuse tips for compatible liquids "
+        "(return tip after non-contaminating use; discard after contaminating use). "
+        "You can use get_mounted_tips to check what's on the head."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "multi_liquid"}},
+        "assay_plate": {"B1": {"contents": "empty"}, "B2": {"contents": "empty"},
+                        "B3": {"contents": "empty"}},
+    },
+    deck_setup=DeckSetup(tip_count=3),
+    expected={
+        "target_wells": ["assay_plate.B1", "assay_plate.B2", "assay_plate.B3"],
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "expected_transfers": 3, "expected_min_tips_used": 2,
+    },
+    workspace_files={
+        "liquid_info.md": (
+            "# Liquid Compatibility\n"
+            "- A1: aqueous buffer — non-contaminating, tips can be returned\n"
+            "- A2: DMSO solution — CONTAMINATING, discard tips after use\n"
+            "- A3: ethanol — CONTAMINATING, discard tips after use\n"
+        ),
+    },
+)
+
+
+# Multi-dispense transfer — tests the transfer tool (PLR: LiquidHandler.transfer)
+MULTI_DISPENSE_TRANSFER_QC = TaskSpec(
+    scenario="multi_dispense_transfer_qc",
+    objective="Use the transfer tool for efficient multi-dispense operations.",
+    prompt=(
+        "You have a Hamilton STAR with 8 single channels. Source plate A1 "
+        "contains 200 uL of stock. Assay plate wells B1 through B5 need 50 uL "
+        "each from the source. Use the 'transfer' tool to aspirate once from "
+        "A1 and dispense to all 5 targets efficiently. Read OD600 for B1-B5 "
+        "at 600 nm. Submit your decision. The control band is [0.75, 0.9]."
+    ),
+    initial_volumes={
+        "source_plate.A1": 200.0,
+    },
+    well_metadata={
+        "source_plate": {"A1": {"contents": "stock", "volume_ul": 200}},
+        "assay_plate": {f"B{i}": {"contents": "empty"} for i in range(1, 6)},
+    },
+    expected={
+        "target_wells": [f"assay_plate.B{i}" for i in range(1, 6)],
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "expected_tips_used": 1,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# Lid handling — tests move_lid (PLR: LiquidHandler.move_lid)
+LID_HANDLING_QC = TaskSpec(
+    scenario="lid_handling_qc",
+    objective="Perform operations requiring lid removal and replacement using iSWAP.",
+    prompt=(
+        "A Hamilton STAR with iSWAP arm is loaded with a lidded source plate. "
+        "You must:\n"
+        "1. Use move_lid to remove the lid from source_plate to plate_carrier site 3.\n"
+        "2. Pick up a tip and aspirate 50 uL from source_plate.C1.\n"
+        "3. Dispense 50 uL into assay_plate.B1.\n"
+        "4. Return the tip and replace the lid using move_lid.\n"
+        "5. Read OD600 for B1 at 600 nm and submit."
+    ),
+    initial_volumes={"source_plate.C1": 120.0},
+    well_metadata={
+        "source_plate": {"C1": {"contents": "qc_control", "has_lid": True}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.C1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "use_iswap": True, "require_lid_operation": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# Plate stamp — tests stamp (PLR: LiquidHandler.stamp)
+PLATE_STAMP_QC = TaskSpec(
+    scenario="plate_stamp_qc",
+    objective="Perform a full 96-well plate-to-plate replication using the 96-head.",
+    prompt=(
+        "A Hamilton STAR with 96-head is loaded with a source plate (all wells "
+        "containing 100 uL each) and an empty assay plate. Use the 96-head to:\n"
+        "1. pick_up_tips96 from tip_rack_01.\n"
+        "2. Use 'stamp' to transfer 50 uL from source_plate to assay_plate "
+        "(all 96 wells).\n"
+        "3. discard_tips96.\n"
+        "4. Read OD600 for assay_plate wells A1, H1, A12, H12 (corner checks) "
+        "at 600 nm. Submit your decision. The control band is [0.75, 0.9]."
+    ),
+    initial_volumes={
+        "source_plate.A1": 100.0, "source_plate.H1": 100.0,
+        "source_plate.A12": 100.0, "source_plate.H12": 100.0,
+    },
+    well_metadata={
+        "source_plate": {f"{r}{c}": {"contents": "stock"}
+                         for r in "ABCDEFGH" for c in range(1, 13)},
+        "assay_plate": {f"{r}{c}": {"contents": "empty"}
+                        for r in "ABCDEFGH" for c in range(1, 13)},
+    },
+    expected={
+        "use_96_head": True, "stamp_volume_ul": 50,
+        "readout_wells": ["assay_plate.A1", "assay_plate.H1",
+                          "assay_plate.A12", "assay_plate.H12"],
+        "wavelength_nm": 600, "expected_tips_used": 96,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# Mounted tips query — tests get_mounted_tips
+MOUNTED_TIPS_QUERY_QC = TaskSpec(
+    scenario="mounted_tips_query_qc",
+    objective="Use get_mounted_tips to verify tip state during a protocol.",
+    prompt=(
+        "You are operating a STAR with 8 channels. Before starting a transfer "
+        "protocol, you must verify the pipetting head state.\n"
+        "1. Use get_mounted_tips to confirm no tips are on the head.\n"
+        "2. Pick up a tip from tip_rack_01.A1.\n"
+        "3. Use get_mounted_tips to confirm the tip is on channel 0.\n"
+        "4. Aspirate 50 uL from source_plate.A1.\n"
+        "5. Dispense 50 uL into assay_plate.B1.\n"
+        "6. Return the tip.\n"
+        "7. Use get_mounted_tips to confirm the head is empty again.\n"
+        "8. Read OD600 for B1 at 600 nm. Submit your decision against [0.75, 0.9]."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_head_state_checks": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
 # ── Scenario registry ──────────────────────────────────────────────────
 
 SCENARIOS: dict[str, ScenarioBuilder] = {}
