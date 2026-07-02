@@ -241,29 +241,63 @@ from api_gym.worlds.pylabrobot_star_v0.verifier import verify_run as star_verify
 SYSTEM_PROMPT_STAR = """\
 You are a lab automation agent operating a Hamilton STAR liquid handler.
 
-The environment is a DRY-RUN STAR deck with STARChatterboxBackend — no real
+The environment is a DRY-RUN STAR deck with STARDryRunBackend — no real
 hardware is connected. The deck uses a carrier-based layout:
 - Plate carriers hold plates and troughs at numbered sites.
 - Tip carriers hold tip racks at numbered sites.
 - Optionally, a 96-channel head and an iSWAP robotic arm may be installed.
 
-Available tools include single-channel pipetting, 96-head parallel operations,
-and plate movement via the iSWAP arm.
+You have access to PyLabRobot's LiquidHandler API through tool calls. Every
+tool corresponds to a real PLR method.
+
+CRITICAL — Pipetting workflow (single-channel):
+  1. pick_up_tips  — pick up tip(s) from a tip rack onto channel(s)
+  2. aspirate      — aspirate liquid from a source well
+  3. dispense      — dispense liquid into a target well
+  4. return_tips   — return clean tips to their original rack, OR
+     discard_tips  — discard contaminated tips to trash, OR
+     drop_tips     — drop tips to a specific spot
+
+96-head workflow:
+  1. pick_up_tips96 → aspirate96 → dispense96 → discard_tips96 (or drop_tips96)
+
+iSWAP arm:
+  - move_plate   — move a plate between deck positions
+  - move_lid     — move a plate's lid
+  - move_resource — move any deck resource
+
+Convenience:
+  - transfer — aspirate once, dispense to multiple targets (efficient for
+    serial dilutions and multi-point distributions)
+  - stamp    — full 96-well plate-to-plate replication (requires 96-head)
+
+Inspection:
+  - get_deck_state    — overview of carriers, labware, instruments
+  - get_labware_state — per-well volumes, max capacities, tip presence
+  - get_mounted_tips  — what tips are currently on the pipetting channels
+
+Reading & workflow:
+  - read_absorbance   — OD600 plate reader (may need retry on instrument_busy)
+  - list_workspace_files / get_workspace_file — protocol docs, plate maps
+  - add_workflow_note — record a note for audit trail
+  - submit_protocol   — final QC decision (continue/hold) with evidence
 
 STANDARD PROCEDURE:
-1. Inspect the deck state first to see what carriers and labware are loaded.
-2. Inspect individual labware (plates, tip racks, troughs) for well volumes.
-3. Use reference format: 'labware_name:well_id' (e.g. 'source_plate:A1').
-4. OD600 (600 nm) is the standard absorbance wavelength.
-5. Match aspirate/dispense volumes exactly.
-6. Discard tips when they are potentially contaminated.
-7. After obtaining valid readouts, submit the protocol decision.
+1. (Optional) Check workspace files for protocol context.
+2. Inspect the deck state to see what carriers and labware are loaded.
+3. Inspect individual labware for well volumes and tip availability.
+4. Use reference format: 'labware_name:well_id' (e.g. 'source_plate:A1').
+5. OD600 (600 nm) is the standard absorbance wavelength.
+6. Pick up tips BEFORE aspirating; return or discard tips after dispensing.
+7. Match aspirate/dispense volumes exactly.
+8. When you have valid readouts, submit the protocol decision.
 
 Rules:
 - Use the provided tools for every state inspection and mutation.
 - Do not answer from task text alone — you MUST call tools.
-- When you have enough evidence, submit via submit_protocol.
+- You MUST pick up tips before aspirating.
 - Think step by step before each tool call.
+- When you have enough evidence, submit via submit_protocol.
 """
 
 
@@ -306,6 +340,17 @@ WORLDS = {
         "verify_run": star_verify,
         "system_prompt": SYSTEM_PROMPT_STAR,
         "state_backend": "pylabrobot",
+    },
+    "pylabrobot_star_v0_viz": {
+        "label": "PyLabRobot STAR Visualizer",
+        "sample_episode": star_sample,
+        "tool_definitions": STAR_TOOLS,
+        "dispatch_tool": star_dispatch,
+        "verify_run": star_verify,
+        "system_prompt": SYSTEM_PROMPT_STAR,
+        "state_backend": "pylabrobot",
+        "has_visualizer": True,
+        "visualizer_port": 1338,
     },
 }
 
@@ -474,17 +519,29 @@ async def demo_start(payload: dict[str, Any]) -> dict[str, Any]:
     # Snapshot initial state for replay
     _snapshot_initial_state(_session)
 
-    # Start OT-2 visualizer if applicable
+    # Start visualizer if applicable (OT-2 or STAR)
     visualizer_url = None
     if cfg.get("has_visualizer"):
         try:
-            from api_gym.worlds.pylabrobot_lab_v0.state import get_state
-            lab_state = get_state(run_dir)
-            if lab_state.liquid_handler is not None:
-                _session.visualizer = _ot2_start_visualizer(lab_state.liquid_handler)
-                visualizer_url = "http://127.0.0.1:1337"
+            if world == "pylabrobot_star_v0_viz":
+                from api_gym.worlds.pylabrobot_star_v0.state import (
+                    get_state as star_get_state,
+                    STARVisualizerSession,
+                )
+                lab_state = star_get_state(run_dir)
+                if lab_state.liquid_handler is not None:
+                    port = cfg.get("visualizer_port", 1338)
+                    _session.visualizer = STARVisualizerSession(lab_state.liquid_handler, port=port)
+                    _session.visualizer.start()
+                    visualizer_url = f"http://127.0.0.1:{port}"
+            else:
+                from api_gym.worlds.pylabrobot_lab_v0.state import get_state
+                lab_state = get_state(run_dir)
+                if lab_state.liquid_handler is not None:
+                    _session.visualizer = _ot2_start_visualizer(lab_state.liquid_handler)
+                    visualizer_url = "http://127.0.0.1:1337"
         except Exception as e:
-            print(f"[OT-2 Visualizer] Failed to start: {e}")
+            print(f"[Visualizer] Failed to start: {e}")
 
     # Initial state snapshot
     initial_state = _snapshot_state(_session)
@@ -777,7 +834,11 @@ def _snapshot_initial_state(sess: DemoSession) -> None:
     if cfg.get("state_backend") not in ("pylabrobot", "ot2_visualizer"):
         sess._initial_snapshot = {}
         return
-    from api_gym.worlds.pylabrobot_lab_v0.state import get_state
+    # Use the correct state module for the world
+    if sess.world.startswith("pylabrobot_star"):
+        from api_gym.worlds.pylabrobot_star_v0.state import get_state
+    else:
+        from api_gym.worlds.pylabrobot_lab_v0.state import get_state
     try:
         lab_state = get_state(sess.run_dir)
         wells: dict[str, float] = {}
@@ -813,7 +874,10 @@ def _restore_initial_state(sess: DemoSession) -> None:
     cfg = sess.world_cfg
     if cfg.get("state_backend") not in ("pylabrobot", "ot2_visualizer"):
         return
-    from api_gym.worlds.pylabrobot_lab_v0.state import get_state
+    if sess.world.startswith("pylabrobot_star"):
+        from api_gym.worlds.pylabrobot_star_v0.state import get_state
+    else:
+        from api_gym.worlds.pylabrobot_lab_v0.state import get_state
     try:
         lab_state = get_state(sess.run_dir)
         wells = snap.get("wells", {})
