@@ -79,6 +79,11 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "lid_handling_qc": _verify_lid_handling_qc,
         "plate_stamp_qc": _verify_plate_stamp_qc,
         "mounted_tips_query_qc": _verify_mounted_tips_query_qc,
+        # Pump scenarios
+        "pump_fill_trough_qc": _verify_pump_fill_trough_qc,
+        "pump_calibrated_dispense_qc": _verify_pump_calibrated_dispense_qc,
+        "pump_halt_recovery_qc": _verify_pump_halt_recovery_qc,
+        "pump_multi_step_qc": _verify_pump_multi_step_qc,
     }
     vfn = verifiers.get(scenario)
     if vfn is None:
@@ -910,4 +915,134 @@ def _verify_mounted_tips_query_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     returned = any(e.get("event_type") == "tips.returned" for e in events)
     _add_temporal(checks, returned, "tip_returned",
                   "Tip returned to rack." if returned else "Tip not returned.")
+    return checks, {}
+
+
+# ── Pump scenario verifiers ─────────────────────────────────────────────
+
+
+def _verify_pump_fill_trough_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Pump fill trough: pump must run before liquid transfer."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + pump (dry-run).")
+
+    # Check pump ran
+    pump_events = [e for e in events if e.get("event_type", "").startswith("pump.")]
+    _add_terminal(checks, len(pump_events) >= 1,
+                  "pump_operated", f"{len(pump_events)} pump event(s)." if pump_events
+                  else "Pump was never used.")
+
+    # Check transfer happened after pump
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal: pump before transfer
+    if pump_events and disp:
+        p_t = pump_events[0].get("clock_time", 0)
+        a_t = events[[e.get("event_type") for e in events].index("transfer.aspirated")
+                     if "transfer.aspirated" in [e.get("event_type") for e in events] else 0].get("clock_time", 0) if "transfer.aspirated" in [e.get("event_type") for e in events] else 0
+        _add_temporal(checks, p_t <= a_t if a_t else True,
+                      "pump_before_transfer",
+                      f"Pump@{p_t:.1f}s before aspirate@{a_t:.1f}s.")
+    return checks, {}
+
+
+def _verify_pump_calibrated_dispense_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Calibrated pump dispense with workspace file lookup."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + calibrated pump.")
+
+    # Check calibration file was read
+    cal_read = any("pump_calibration" in e.get("object_id", "") for e in events
+                   if e.get("event_type") == "workspace.read")
+    _add_temporal(checks, cal_read, "calibration_checked",
+                  "Calibration file consulted." if cal_read
+                  else "Calibration file NOT read.")
+
+    # Check pump_volume used (not just duration)
+    vol_events = [e for e in events if e.get("event_type") == "pump.run_volume"]
+    _add_terminal(checks, len(vol_events) >= 1,
+                  "pump_volume_used",
+                  f"pump_run_volume called." if vol_events
+                  else "pump_run_volume NOT used.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_pump_halt_recovery_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Pump halt + recovery: agent must halt then restart correctly."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + pump halt/recovery.")
+
+    # Must have halt event
+    halts = [e for e in events if e.get("event_type") == "pump.halted"]
+    _add_terminal(checks, len(halts) >= 1,
+                  "pump_halted",
+                  "Pump halted." if halts else "Pump was NOT halted.")
+
+    # Must have at least 2 pump events (halt + restart)
+    pump_events = [e for e in events if e.get("event_type", "").startswith("pump.")]
+    _add_terminal(checks, len(pump_events) >= 2,
+                  "pump_restarted",
+                  f"{len(pump_events)} pump event(s)." if len(pump_events) >= 2
+                  else f"Only {len(pump_events)} pump event(s) — expected halt + restart.")
+
+    # Temporal: halt before restart
+    run_events = [e for e in events if e.get("event_type") == "pump.run_duration"]
+    if halts and run_events:
+        h_t = halts[0].get("clock_time", 0)
+        r_t = run_events[0].get("clock_time", 0)
+        _add_temporal(checks, h_t < r_t,
+                      "halt_before_restart",
+                      f"Halt@{h_t:.1f}s before restart@{r_t:.1f}s.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_pump_multi_step_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Multi-step pump + liquid handler workflow."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + pump multi-step.")
+
+    # Check 2 pump operations (prime + flush)
+    pump_runs = [e for e in events if e.get("event_type") == "pump.run_duration"]
+    _add_terminal(checks, len(pump_runs) >= exp.get("pump_operations", 2),
+                  "pump_operations",
+                  f"{len(pump_runs)} pump runs." if len(pump_runs) >= 2
+                  else f"Only {len(pump_runs)} pump run(s).")
+
+    # Check transfers between pump runs
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 3, "transfers",
+                  f"{len(disp)} transfers." if len(disp) >= 3
+                  else f"Only {len(disp)}/3 transfers.")
+
+    # Temporal: prime → transfers → flush
+    if len(pump_runs) >= 2 and disp:
+        prime_t = pump_runs[0].get("clock_time", 0)
+        flush_t = pump_runs[-1].get("clock_time", 0)
+        transfer_ts = [e.get("clock_time", 0) for e in events
+                       if e.get("event_type") == "transfer.dispensed"]
+        if transfer_ts:
+            _add_temporal(checks, prime_t <= transfer_ts[0],
+                          "prime_before_transfer", "Prime before first transfer.")
+            _add_temporal(checks, transfer_ts[-1] <= flush_t,
+                          "flush_after_transfer", "Flush after last transfer.")
+
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
     return checks, {}

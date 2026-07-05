@@ -2,6 +2,7 @@
 
 - ``STARDryRunBackend`` — liquid handling (extends ``LiquidHandlerChatterboxBackend``).
 - ``PlateReaderDryRunBackend`` — absorbance/fluorescence/luminescence reading.
+- ``PumpDryRunBackend`` — peristaltic/syringe pump operations.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from pylabrobot.liquid_handling.backends.chatterbox import (
     LiquidHandlerChatterboxBackend,
 )
 from pylabrobot.plate_reading.backend import PlateReaderBackend
+from pylabrobot.pumps.backend import PumpBackend
 from pylabrobot.resources import Plate, Well
 
 
@@ -91,4 +93,35 @@ class PlateReaderDryRunBackend(PlateReaderBackend):
 
     @classmethod
     def deserialize(cls, data: dict[str, Any]) -> "PlateReaderDryRunBackend":
+        return cls()
+
+
+class PumpDryRunBackend(PumpBackend):
+    """Dry-run pump backend.
+
+    All operations are no-ops.  ``pump_volume``, ``run_for_duration``,
+    and ``run_revolutions`` succeed silently.  The service layer records
+    events and advances the clock.
+    """
+
+    async def setup(self) -> None:
+        pass
+
+    async def stop(self) -> None:
+        pass
+
+    async def halt(self) -> None:
+        pass
+
+    async def run_continuously(self, speed: float) -> None:
+        pass
+
+    async def run_revolutions(self, num_revolutions: float) -> None:
+        pass
+
+    def serialize(self) -> dict[str, Any]:
+        return {}
+
+    @classmethod
+    def deserialize(cls, data: dict[str, Any]) -> "PumpDryRunBackend":
         return cls()

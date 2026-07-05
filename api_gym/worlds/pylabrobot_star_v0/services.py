@@ -73,11 +73,25 @@ def _translate_plr_error(exc: Exception) -> dict[str, Any]:
 
 
 def _resolve_well(lab_state: LabState, ref: str) -> Any:
-    """Resolve 'labware:well' → PLR Well/Container object."""
-    labware_name, well_name = _parse_ref(ref)
+    """Resolve 'labware:well' → PLR Well/Container object.
+
+    For troughs and other containers without sub-wells, the ref can be
+    just the labware name (e.g. ``\"reagent_trough\"``) — the container
+    itself is returned as the aspirate/dispense target.
+    """
+    if ":" in ref:
+        labware_name, well_name = _parse_ref(ref)
+    else:
+        labware_name, well_name = ref, None
+
     resource = _find_resource(lab_state.deck, labware_name)
     if resource is None:
         raise KeyError(f"Labware '{labware_name}' not found on deck.")
+
+    if well_name is None:
+        # Trough or other container without sub-wells
+        return resource
+
     wells = resource[well_name]
     return wells[0] if isinstance(wells, list) else wells
 
@@ -130,9 +144,20 @@ def get_labware_state(lab_state: LabState, labware_id: str) -> dict[str, Any]:
                  "z": resource.get_size_z()},
     }
 
-    # Wells
+    # Wells (for plates) or volume (for troughs/containers)
     wells: dict[str, dict[str, Any]] = {}
     labware_meta = lab_state.well_metadata.get(labware_id, {})
+
+    # Trough / single container: report volume at top level
+    if hasattr(resource, "tracker") and resource.tracker is not None:
+        if hasattr(resource, "max_volume"):
+            mx = resource.max_volume if isinstance(resource.max_volume, (int, float)) else 0
+        else:
+            mx = 0
+        data["volume_ul"] = get_well_volume(resource)
+        data["max_volume_ul"] = mx
+
+    # Plate wells
     for child in resource.children if hasattr(resource, "children") else []:
         if hasattr(child, "tracker") and hasattr(child, "max_volume"):
             mx = child.max_volume if isinstance(child.max_volume, (int, float)) else 0
@@ -693,6 +718,100 @@ def stamp(lab_state: LabState, source_plate: str, target_plate: str,
     lab_state.insert_event("stamp.completed", "plate", source_plate, resp)
     lab_state.clock.advance(5.0)
     return _ok(resp)
+
+
+# ── Pump operations ──────────────────────────────────────────────────────
+
+
+def pump_run_for_duration(lab_state: LabState, speed_rpm: float,
+                          duration_s: float) -> dict[str, Any]:
+    """Run the pump at a fixed speed for a specified duration.
+
+    PLR: ``Pump.run_for_duration(speed, duration)``.
+
+    In dry-run mode, adds an estimated volume to the trough (if present)
+    to simulate filling.  Rough estimate: 100 uL/s at 500 RPM.
+    """
+    if lab_state.pump is None:
+        return _error("no_pump", "No pump configured for this scenario.")
+
+    try:
+        async def _op():
+            await lab_state.pump.run_for_duration(speed=speed_rpm, duration=duration_s)
+        _run_async(_op())
+    except Exception as exc:
+        return _error("pump_failed", f"Pump error: {exc}")
+
+    # Simulate volume dispensed into trough
+    est_volume_ul = (speed_rpm / 500.0) * 100.0 * duration_s
+    if lab_state.trough is not None and hasattr(lab_state.trough, "tracker"):
+        current = lab_state.trough.tracker.get_used_volume() if lab_state.trough.tracker else 0
+        if lab_state.trough.tracker is not None:
+            lab_state.trough.tracker.set_volume(current + est_volume_ul)
+
+    resp = {"speed_rpm": speed_rpm, "duration_s": duration_s,
+            "estimated_volume_ul": round(est_volume_ul, 1)}
+    lab_state.insert_event("pump.run_duration", "pump",
+                           lab_state.pump.name if hasattr(lab_state.pump, "name") else "pump",
+                           resp)
+    lab_state.clock.advance(duration_s)
+    return _ok(resp)
+
+
+def pump_run_volume(lab_state: LabState, speed_rpm: float,
+                    volume_ul: float) -> dict[str, Any]:
+    """Pump a calibrated volume.
+
+    PLR: ``Pump.pump_volume(speed, volume)``.  Requires pump calibration.
+    """
+    if lab_state.pump is None:
+        return _error("no_pump", "No pump configured for this scenario.")
+
+    try:
+        async def _op():
+            await lab_state.pump.pump_volume(speed=speed_rpm, volume=volume_ul)
+        _run_async(_op())
+    except TypeError as exc:
+        return _error("pump_not_calibrated",
+                      f"Pump is not calibrated for volume-based pumping: {exc}")
+    except Exception as exc:
+        return _error("pump_failed", f"Pump error: {exc}")
+
+    # Add pumped volume to trough
+    if lab_state.trough is not None and hasattr(lab_state.trough, "tracker"):
+        current = lab_state.trough.tracker.get_used_volume() if lab_state.trough.tracker else 0
+        if lab_state.trough.tracker is not None:
+            lab_state.trough.tracker.set_volume(current + volume_ul)
+
+    duration = max(1.0, volume_ul / 1000.0)
+    resp = {"speed_rpm": speed_rpm, "volume_ul": volume_ul}
+    lab_state.insert_event("pump.run_volume", "pump",
+                           lab_state.pump.name if hasattr(lab_state.pump, "name") else "pump",
+                           resp)
+    lab_state.clock.advance(duration)
+    return _ok(resp)
+
+
+def pump_halt(lab_state: LabState) -> dict[str, Any]:
+    """Emergency-stop the pump.
+
+    PLR: ``Pump.halt()``.
+    """
+    if lab_state.pump is None:
+        return _error("no_pump", "No pump configured for this scenario.")
+
+    try:
+        async def _op():
+            await lab_state.pump.halt()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("pump_failed", f"Pump halt error: {exc}")
+
+    lab_state.insert_event("pump.halted", "pump",
+                           lab_state.pump.name if hasattr(lab_state.pump, "name") else "pump",
+                           {})
+    lab_state.clock.advance(0.5)
+    return _ok({"halted": True})
 
 
 # ── Plate reading ───────────────────────────────────────────────────────
