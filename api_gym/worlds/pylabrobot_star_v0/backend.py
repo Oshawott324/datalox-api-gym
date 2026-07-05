@@ -1,20 +1,18 @@
-"""Dry-run STAR backend for LabLongRun-Bench.
+"""Dry-run STAR backends for LabLongRun-Bench.
 
-Extends ``LiquidHandlerChatterboxBackend`` (the brand-agnostic dry-run
-backend) with configurable STAR-specific features: 96-head and iSWAP arm.
-
-All liquid-handling, tip, and resource-movement backend methods are
-inherited as no-op print statements from the chatterbox base.
-``LiquidHandler``'s high-level VolumeTracker and TipTracker updates
-execute independently of the backend, so full state tracking works
-correctly in dry-run mode.
+- ``STARDryRunBackend`` — liquid handling (extends ``LiquidHandlerChatterboxBackend``).
+- ``PlateReaderDryRunBackend`` — absorbance/fluorescence/luminescence reading.
 """
 
 from __future__ import annotations
 
+from typing import Any, Optional
+
 from pylabrobot.liquid_handling.backends.chatterbox import (
     LiquidHandlerChatterboxBackend,
 )
+from pylabrobot.plate_reading.backend import PlateReaderBackend
+from pylabrobot.resources import Plate, Well
 
 
 class STARDryRunBackend(LiquidHandlerChatterboxBackend):
@@ -33,3 +31,64 @@ class STARDryRunBackend(LiquidHandlerChatterboxBackend):
         super().__init__(num_channels=num_channels)
         self._head96_installed = with_96_head
         self._num_arms = 1 if with_iswap else 0
+
+
+class PlateReaderDryRunBackend(PlateReaderBackend):
+    """Dry-run plate reader backend.
+
+    Returns zero-valued data matrices in the standard PLR format.
+    Actual OD values, noise, and fault injection are applied by the
+    service layer (``services.read_absorbance``), which wraps the
+    PLR ``PlateReader.read_absorbance`` call.
+    """
+
+    async def setup(self) -> None:
+        pass
+
+    async def stop(self) -> None:
+        pass
+
+    async def open(self) -> None:
+        pass
+
+    async def close(self, plate: Optional[Plate] = None) -> None:
+        pass
+
+    async def read_absorbance(
+        self, plate: Plate, wells: list[Well], wavelength: int,
+    ) -> list[dict[str, Any]]:
+        return [{
+            "wavelength": wavelength,
+            "time": 0.0,
+            "temperature": 25.0,
+            "data": [[0.0 for _ in wells]],
+        }]
+
+    async def read_fluorescence(
+        self, plate: Plate, wells: list[Well],
+        excitation_wavelength: int, emission_wavelength: int,
+        focal_height: float,
+    ) -> list[dict[str, Any]]:
+        return [{
+            "excitation_wavelength": excitation_wavelength,
+            "emission_wavelength": emission_wavelength,
+            "time": 0.0,
+            "temperature": 25.0,
+            "data": [[0.0 for _ in wells]],
+        }]
+
+    async def read_luminescence(
+        self, plate: Plate, wells: list[Well], focal_height: float,
+    ) -> list[dict[str, Any]]:
+        return [{
+            "time": 0.0,
+            "temperature": 25.0,
+            "data": [[0.0 for _ in wells]],
+        }]
+
+    def serialize(self) -> dict[str, Any]:
+        return {}
+
+    @classmethod
+    def deserialize(cls, data: dict[str, Any]) -> "PlateReaderDryRunBackend":
+        return cls()

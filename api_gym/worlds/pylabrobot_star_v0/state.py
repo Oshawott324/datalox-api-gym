@@ -40,6 +40,7 @@ class LabState:
 
     deck: Any = None
     liquid_handler: Any = None       # LiquidHandler with STAR backend
+    plate_reader: Any = None         # PlateReader (dry-run backend)
     plate: Any = None                # assay plate
     source_plate: Any = None         # source plate
     tip_rack: Any = None             # tip rack (96)
@@ -216,6 +217,24 @@ def create_tip_carrier(name: str) -> Any:
     """Create a tip carrier (96 positions, standard)."""
     from pylabrobot.resources.hamilton.tip_carriers import TIP_CAR_480_A00
     return TIP_CAR_480_A00(name=name)
+
+
+def create_plate_reader(name: str = "plate_reader") -> Any:
+    """Create a dry-run plate reader (absorbance/fluorescence/luminescence).
+
+    Uses ``PlateReaderDryRunBackend`` so all reads are simulated.
+    The reader is a ``PlateReader`` resource that can be placed on the deck
+    and accepts a plate as a child resource for reading.
+    """
+    from pylabrobot.plate_reading import PlateReader
+    from api_gym.worlds.pylabrobot_star_v0.backend import PlateReaderDryRunBackend
+
+    backend = PlateReaderDryRunBackend()
+    return PlateReader(
+        name=name,
+        size_x=400, size_y=300, size_z=200,
+        backend=backend,
+    )
 
 
 def setup_star_deck(lh: Any, plate_carrier: Any, tip_carrier: Any,
