@@ -925,6 +925,191 @@ def read_absorbance(lab_state: LabState, plate_id: str,
     return _ok(readout)
 
 
+def read_fluorescence(lab_state: LabState, plate_id: str,
+                      excitation_nm: int, emission_nm: int,
+                      focal_height_mm: float,
+                      wells: list[str]) -> dict[str, Any]:
+    """Read fluorescence via PLR PlateReader API.
+
+    PLR: ``PlateReader.read_fluorescence(excitation, emission, focal_height, wells)``.
+    """
+    return _read_with_reader(lab_state, plate_id, wells,
+                             mode="fluorescence",
+                             excitation_nm=excitation_nm,
+                             emission_nm=emission_nm,
+                             focal_height_mm=focal_height_mm)
+
+
+def read_luminescence(lab_state: LabState, plate_id: str,
+                      focal_height_mm: float,
+                      wells: list[str]) -> dict[str, Any]:
+    """Read luminescence via PLR PlateReader API.
+
+    PLR: ``PlateReader.read_luminescence(focal_height, wells)``.
+    """
+    return _read_with_reader(lab_state, plate_id, wells,
+                             mode="luminescence",
+                             focal_height_mm=focal_height_mm)
+
+
+def plate_reader_open(lab_state: LabState) -> dict[str, Any]:
+    """Open the plate reader door.
+
+    PLR: ``PlateReader.open()``.
+    """
+    if lab_state.plate_reader is None:
+        return _error("no_plate_reader", "No plate reader configured.")
+    try:
+        async def _op():
+            await lab_state.plate_reader.open()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("reader_open_failed", f"Plate reader open error: {exc}")
+    lab_state.insert_event("reader.opened", "plate_reader", "plate_reader", {})
+    lab_state.clock.advance(2.0)
+    return _ok({"opened": True})
+
+
+def plate_reader_close(lab_state: LabState) -> dict[str, Any]:
+    """Close the plate reader door.
+
+    PLR: ``PlateReader.close()``.
+    """
+    if lab_state.plate_reader is None:
+        return _error("no_plate_reader", "No plate reader configured.")
+    try:
+        async def _op():
+            await lab_state.plate_reader.close()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("reader_close_failed", f"Plate reader close error: {exc}")
+    lab_state.insert_event("reader.closed", "plate_reader", "plate_reader", {})
+    lab_state.clock.advance(2.0)
+    return _ok({"closed": True})
+
+
+def _read_with_reader(lab_state: LabState, plate_id: str,
+                      wells: list[str], mode: str,
+                      **kwargs: Any) -> dict[str, Any]:
+    """Shared reader logic for absorbance / fluorescence / luminescence."""
+    if lab_state.deck is None:
+        return _error("not_initialised", "Deck not initialised.")
+    if lab_state.plate_reader is None:
+        return _error("no_plate_reader", "No plate reader on deck.")
+
+    plate_resource = _find_resource(lab_state.deck, plate_id)
+    if plate_resource is None:
+        return _error("plate_not_found", f"Plate '{plate_id}' not loaded.")
+    if not wells:
+        return _error("empty_well_list", "At least one well required.")
+
+    # Resolve well objects
+    well_objects = []
+    for well_name in wells:
+        w = plate_resource[well_name]
+        well_objects.append(w[0] if isinstance(w, list) else w)
+
+    # Fault injection (absorbance only for now)
+    if mode == "absorbance":
+        fault_schedule = getattr(lab_state, "_fault_schedule", None)
+        wavelength_nm = kwargs.get("wavelength_nm", 600)
+        if fault_schedule is not None:
+            fkey = f"{plate_id}:{wavelength_nm}"
+            attempts = getattr(lab_state, "_fault_attempts", {})
+            attempt = attempts.get(fkey, 0) + 1
+            attempts[fkey] = attempt
+            lab_state._fault_attempts = attempts
+            max_retries = fault_schedule.max_retries
+            if fault_schedule.should_fault(plate_id, wavelength_nm, attempt):
+                lab_state.insert_event("error.instrument_busy", "plate_reader", plate_id,
+                                       {"attempt": attempt, "max_retries": max_retries})
+                lab_state.clock.advance(3.0)
+                if attempt <= max_retries:
+                    return _error("instrument_busy",
+                                  f"Plate reader busy on attempt {attempt}/{max_retries}.",
+                                  {"attempt": attempt, "max_retries": max_retries,
+                                   "retry_available": True})
+                else:
+                    return _error("instrument_busy_max_retries",
+                                  f"Plate reader failed after {max_retries} retries.",
+                                  {"attempt": attempt, "max_retries": max_retries,
+                                   "retry_available": False})
+
+    # Temporarily assign plate to reader
+    reader = lab_state.plate_reader
+    parent = plate_resource.parent if hasattr(plate_resource, "parent") else None
+
+    try:
+        plate_resource.unassign()
+        reader.assign_child_resource(plate_resource)
+        try:
+            async def _op():
+                if mode == "absorbance":
+                    return await reader.read_absorbance(
+                        wavelength=kwargs["wavelength_nm"],
+                        wells=well_objects, use_new_return_type=True,
+                    )
+                elif mode == "fluorescence":
+                    return await reader.read_fluorescence(
+                        excitation_wavelength=kwargs["excitation_nm"],
+                        emission_wavelength=kwargs["emission_nm"],
+                        focal_height=kwargs["focal_height_mm"],
+                        wells=well_objects, use_new_return_type=True,
+                    )
+                elif mode == "luminescence":
+                    return await reader.read_luminescence(
+                        focal_height=kwargs["focal_height_mm"],
+                        wells=well_objects, use_new_return_type=True,
+                    )
+                else:
+                    raise ValueError(f"Unknown read mode: {mode}")
+            _run_async(_op())
+        finally:
+            plate_resource.unassign()
+            if parent is not None:
+                parent.assign_child_resource(plate_resource)
+    except Exception as exc:
+        if plate_resource.parent is not None:
+            plate_resource.unassign()
+        if parent is not None:
+            try:
+                parent.assign_child_resource(plate_resource)
+            except Exception:
+                pass
+        return _error("plate_read_failed", f"Plate reader error: {exc}")
+
+    # Apply benchmark-specific OD/fluorescence/luminescence calculation
+    noise_schedule = getattr(lab_state, "_noise_schedule", None)
+    readout_index = len(lab_state.readouts) + 1
+    wavelength_nm = kwargs.get("wavelength_nm", kwargs.get("excitation_nm", 0))
+
+    values: dict[str, float] = {}
+    for well_obj in well_objects:
+        well_name = _short_name(well_obj.name)
+        vol = get_well_volume(well_obj)
+        base = 0.82 if vol >= 50.0 else (round(0.82 * vol / 50.0, 4) if vol > 0 else 0.0)
+        # Fluorescence: higher base signal; luminescence: lower
+        if mode == "fluorescence":
+            base = base * 10.0  # RFU scale
+        elif mode == "luminescence":
+            base = base * 100.0  # RLU scale
+        noise = 0.0
+        if noise_schedule is not None:
+            noise = noise_schedule.get_noise(plate_id, wavelength_nm, well_name, readout_index)
+        values[well_name] = round(max(0.0, base + noise), 4)
+
+    readout_id = f"ro_{plate_id}_{mode}_{readout_index}"
+    readout = {"readout_id": readout_id, "plate": plate_id,
+               "mode": mode, "wells": wells, "values": values}
+    if "wavelength_nm" in kwargs:
+        readout["wavelength_nm"] = kwargs["wavelength_nm"]
+
+    lab_state.readouts.append(readout)
+    lab_state.insert_event("readout.created", "plate", plate_id, readout)
+    lab_state.clock.advance(5.0)
+    return _ok(readout)
+
+
 # ── Workspace files (Direction 5) ────────────────────────────────────────
 
 

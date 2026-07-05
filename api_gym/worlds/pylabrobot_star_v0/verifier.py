@@ -84,6 +84,11 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "pump_calibrated_dispense_qc": _verify_pump_calibrated_dispense_qc,
         "pump_halt_recovery_qc": _verify_pump_halt_recovery_qc,
         "pump_multi_step_qc": _verify_pump_multi_step_qc,
+        # PlateReader extended scenarios
+        "fluorescence_qc": _verify_fluorescence_qc,
+        "luminescence_qc": _verify_luminescence_qc,
+        "reader_door_qc": _verify_reader_door_qc,
+        "multi_mode_qc": _verify_multi_mode_qc,
     }
     vfn = verifiers.get(scenario)
     if vfn is None:
@@ -1044,5 +1049,88 @@ def _verify_pump_multi_step_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
                           "flush_after_transfer", "Flush after last transfer.")
 
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+# ── PlateReader extended verifiers ────────────────────────────────────
+
+
+def _verify_fluorescence_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Fluorescence measurement: correct read mode must be used."""
+    checks = []
+    _add_terminal(checks, True, "dry_run", "STAR + fluorescence reader.")
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    fluor_reads = [r for r in ls.readouts if r.get("mode") == "fluorescence"]
+    _add_terminal(checks, len(fluor_reads) >= 1,
+                  "fluorescence_read",
+                  f"Fluorescence readout." if fluor_reads
+                  else "No fluorescence readout found.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_luminescence_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Luminescence measurement: correct read mode, no excitation needed."""
+    checks = []
+    _add_terminal(checks, True, "dry_run", "STAR + luminescence reader.")
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    lum_reads = [r for r in ls.readouts if r.get("mode") == "luminescence"]
+    _add_terminal(checks, len(lum_reads) >= 1,
+                  "luminescence_read",
+                  f"Luminescence readout." if lum_reads
+                  else "No luminescence readout.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_reader_door_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Reader door: must close before read, open after."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + reader door control.")
+
+    closed = [e for e in events if e.get("event_type") == "reader.closed"]
+    opened = [e for e in events if e.get("event_type") == "reader.opened"]
+    reads = [e for e in events if e.get("event_type") == "readout.created"]
+
+    _add_terminal(checks, len(closed) >= 1,
+                  "door_closed", "Reader door closed." if closed else "Door never closed.")
+    _add_terminal(checks, len(opened) >= 1,
+                  "door_opened", "Reader door opened." if opened else "Door never opened.")
+    _add_terminal(checks, len(reads) >= 1, "readout", "Readout recorded.")
+
+    # Temporal: close → read → open
+    if closed and reads and opened:
+        c_t = closed[0].get("clock_time", 0)
+        r_t = reads[0].get("clock_time", 0)
+        o_t = opened[-1].get("clock_time", 0)
+        _add_temporal(checks, c_t <= r_t <= o_t,
+                      "close_read_open",
+                      f"Close@{c_t:.0f}s → read@{r_t:.0f}s → open@{o_t:.0f}s.")
+
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_multi_mode_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Multi-mode read: both absorbance and fluorescence on same plate."""
+    checks = []
+    _add_terminal(checks, True, "dry_run", "STAR + multi-mode reader.")
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+
+    modes = {r.get("mode", "absorbance") for r in ls.readouts}
+    expected_modes = set(exp.get("read_modes", ["absorbance", "fluorescence"]))
+    modes_ok = expected_modes.issubset(modes)
+    _add_terminal(checks, modes_ok,
+                  "multi_mode_read",
+                  f"Modes used: {sorted(modes)}." if modes_ok
+                  else f"Missing modes: {sorted(expected_modes - modes)}.")
+
+    _add_terminal(checks, len(ls.readouts) >= 2,
+                  "multiple_readouts", f"{len(ls.readouts)} readouts.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
     return checks, {}

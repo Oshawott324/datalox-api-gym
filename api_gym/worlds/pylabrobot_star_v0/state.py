@@ -233,7 +233,7 @@ def create_plate_reader(name: str = "plate_reader") -> Any:
     backend = PlateReaderDryRunBackend()
     return PlateReader(
         name=name,
-        size_x=400, size_y=300, size_z=200,
+        size_x=200, size_y=300, size_z=200,
         backend=backend,
     )
 
