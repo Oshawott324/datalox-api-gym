@@ -482,7 +482,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
     },
 
     # ══════════════════════════════════════════════════════════════════════
-    # Plate reading (benchmark-specific — not PLR LiquidHandler)
+    # Plate reading (PLR: PlateReader)
     # ══════════════════════════════════════════════════════════════════════
 
     {
@@ -490,10 +490,9 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "function": {
             "name": "read_absorbance",
             "description": (
-                "Read OD absorbance for specified wells at a given wavelength "
-                "(simulated plate reader).  May return 'instrument_busy' errors "
-                "requiring retry.\n\n"
-                "Source: benchmark-specific (plate reader simulation)."
+                "Read OD absorbance for specified wells at a given wavelength. "
+                "May return 'instrument_busy' errors requiring retry.\n\n"
+                "PLR: PlateReader.read_absorbance(wavelength, wells)."
             ),
             "parameters": _schema(
                 {

@@ -21,9 +21,10 @@ from api_gym.worlds.pylabrobot_star_v0.state import (
     LabState,
     create_star_deck, create_liquid_handler,
     create_plate, create_tip_rack, create_trough,
-    create_plate_carrier, create_tip_carrier,
+    create_plate_carrier, create_tip_carrier, create_plate_reader,
     setup_star_deck,
     register_state, get_well, set_well_volume,
+    _run_async,
 )
 
 # ── Reuse TaskSpec infrastructure from OT-2 world ───────────────────────
@@ -111,6 +112,12 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     setup_star_deck(lh, plate_carrier, tip_carrier,
                     assay_plate, source_plate, tip_rack, trough)
 
+    # ── Plate reader (PLR PlateReader, standalone instrument) ──────────
+    # Not placed on the STAR deck — in real labs the reader is a separate
+    # instrument accessed via iSWAP.  Stored in LabState for agent access.
+    plate_reader = create_plate_reader("plate_reader")
+    _run_async(plate_reader.setup())
+
     # ── Limited-tip support: remove tips from rack if requested ─────────
     tip_requested = spec.deck_setup.tip_count
     if tip_requested < 96:
@@ -137,7 +144,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     tip_count = len([t for t in tip_rack.children
                      if hasattr(t, "has_tip") and callable(t.has_tip) and t.has_tip()])
     lab_state = LabState(
-        deck=deck, liquid_handler=lh,
+        deck=deck, liquid_handler=lh, plate_reader=plate_reader,
         plate=assay_plate, source_plate=source_plate, tip_rack=tip_rack,
         trough=trough,
         setup_done=True,

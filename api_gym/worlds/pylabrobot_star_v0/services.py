@@ -700,14 +700,20 @@ def stamp(lab_state: LabState, source_plate: str, target_plate: str,
 
 def read_absorbance(lab_state: LabState, plate_id: str,
                     wavelength_nm: int, wells: list[str]) -> dict[str, Any]:
-    """Simulated absorbance read (plate reader simulation).
+    """Read OD absorbance via PLR PlateReader API.
 
-    Supports fault injection via ``FaultSchedule``: if a fault is scheduled
-    for this readout attempt, returns an 'instrument_busy' error instead of
-    a valid reading.  The agent must retry.
+    PLR: ``PlateReader.read_absorbance(wavelength, wells)``.
+
+    The PlateReader uses ``PlateReaderDryRunBackend`` which returns
+    zero-valued data; actual OD values are derived from well volumes
+    (benchmark-specific calculation).  Fault and noise schedules are
+    applied as before.
     """
     if lab_state.deck is None:
         return _error("not_initialised", "Deck not initialised.")
+    if lab_state.plate_reader is None:
+        return _error("no_plate_reader", "No plate reader on deck.")
+
     plate_resource = _find_resource(lab_state.deck, plate_id)
     if plate_resource is None:
         return _error("plate_not_found", f"Plate '{plate_id}' not loaded.")
@@ -739,15 +745,52 @@ def read_absorbance(lab_state: LabState, plate_id: str,
                               {"attempt": attempt, "max_retries": max_retries,
                                "retry_available": False})
 
-    # ── Normal readout ───────────────────────────────────────────────
+    # ── Resolve wells → PLR Well objects ─────────────────────────────
+    well_objects = []
+    for well_name in wells:
+        w = plate_resource[well_name]
+        well_obj = w[0] if isinstance(w, list) else w
+        well_objects.append(well_obj)
+
+    # ── Call PLR PlateReader API ─────────────────────────────────────
+    # Save plate's current parent so we can restore it after reading.
+    reader = lab_state.plate_reader
+    parent = plate_resource.parent if hasattr(plate_resource, "parent") else None
+
+    try:
+        plate_resource.unassign()
+        reader.assign_child_resource(plate_resource)
+        try:
+            async def _op():
+                return await reader.read_absorbance(
+                    wavelength=wavelength_nm, wells=well_objects,
+                    use_new_return_type=True,
+                )
+            _run_async(_op())
+        finally:
+            # Restore plate to its original position
+            plate_resource.unassign()
+            if parent is not None:
+                parent.assign_child_resource(plate_resource)
+    except Exception as exc:
+        # Best-effort restore
+        if plate_resource.parent is not None:
+            plate_resource.unassign()
+        if parent is not None:
+            try:
+                parent.assign_child_resource(plate_resource)
+            except Exception:
+                pass
+        return _error("plate_read_failed", f"Plate reader error: {exc}")
+
+    # ── Apply volume-based OD + noise (benchmark-specific) ───────────
     noise_schedule = getattr(lab_state, "_noise_schedule", None)
     readout_index = len(lab_state.readouts) + 1
 
     values: dict[str, float] = {}
-    for well_name in wells:
-        w = plate_resource[well_name]
-        well = w[0] if isinstance(w, list) else w
-        vol = get_well_volume(well)
+    for well_obj in well_objects:
+        well_name = _short_name(well_obj.name)
+        vol = get_well_volume(well_obj)
         base = 0.82 if vol >= 50.0 else (round(0.82 * vol / 50.0, 4) if vol > 0 else 0.0)
         noise = 0.0
         if noise_schedule is not None:
