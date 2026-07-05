@@ -571,6 +571,76 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             ),
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_fluorescence",
+            "description": (
+                "Read fluorescence for specified wells.  Requires excitation "
+                "and emission wavelengths and a focal height.\n\n"
+                "PLR: PlateReader.read_fluorescence(excitation, emission, "
+                "focal_height, wells)."
+            ),
+            "parameters": _schema(
+                {
+                    "plate_id": {"type": "string"},
+                    "excitation_nm": {"type": "integer",
+                                      "description": "Excitation wavelength in nm."},
+                    "emission_nm": {"type": "integer",
+                                    "description": "Emission wavelength in nm."},
+                    "focal_height_mm": {"type": "number",
+                                        "description": "Focal height in mm."},
+                    "wells": {"type": "array", "items": {"type": "string"}},
+                },
+                ["plate_id", "excitation_nm", "emission_nm",
+                 "focal_height_mm", "wells"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_luminescence",
+            "description": (
+                "Read luminescence for specified wells.  No excitation needed — "
+                "only focal height.  Common for ATP / reporter gene assays.\n\n"
+                "PLR: PlateReader.read_luminescence(focal_height, wells)."
+            ),
+            "parameters": _schema(
+                {
+                    "plate_id": {"type": "string"},
+                    "focal_height_mm": {"type": "number",
+                                        "description": "Focal height in mm."},
+                    "wells": {"type": "array", "items": {"type": "string"}},
+                },
+                ["plate_id", "focal_height_mm", "wells"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "plate_reader_open",
+            "description": (
+                "Open the plate reader door.  Call BEFORE inserting a plate "
+                "into the reader.\n\n"
+                "PLR: PlateReader.open()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "plate_reader_close",
+            "description": (
+                "Close the plate reader door.  Call AFTER inserting a plate "
+                "and BEFORE reading.\n\n"
+                "PLR: PlateReader.close()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
 
     # ══════════════════════════════════════════════════════════════════════
     # Workspace files (Direction 5 — benchmark-specific)
@@ -871,6 +941,40 @@ def _read_absorbance(ls: LabState, a: dict) -> dict:
     )
 
 
+def _read_fluorescence(ls: LabState, a: dict) -> dict:
+    wells = a["wells"]
+    if not isinstance(wells, list):
+        raise TypeError("wells must be a list")
+    return services.read_fluorescence(
+        ls,
+        plate_id=str(a["plate_id"]),
+        excitation_nm=int(a["excitation_nm"]),
+        emission_nm=int(a["emission_nm"]),
+        focal_height_mm=float(a["focal_height_mm"]),
+        wells=[str(w) for w in wells],
+    )
+
+
+def _read_luminescence(ls: LabState, a: dict) -> dict:
+    wells = a["wells"]
+    if not isinstance(wells, list):
+        raise TypeError("wells must be a list")
+    return services.read_luminescence(
+        ls,
+        plate_id=str(a["plate_id"]),
+        focal_height_mm=float(a["focal_height_mm"]),
+        wells=[str(w) for w in wells],
+    )
+
+
+def _plate_reader_open(ls: LabState, _a: dict) -> dict:
+    return services.plate_reader_open(ls)
+
+
+def _plate_reader_close(ls: LabState, _a: dict) -> dict:
+    return services.plate_reader_close(ls)
+
+
 def _pump_run_duration(ls: LabState, a: dict) -> dict:
     return services.pump_run_for_duration(
         ls,
@@ -942,6 +1046,10 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "list_workspace_files": _list_workspace_files,
     "get_workspace_file": _get_workspace_file,
     "read_absorbance": _read_absorbance,
+    "read_fluorescence": _read_fluorescence,
+    "read_luminescence": _read_luminescence,
+    "plate_reader_open": _plate_reader_open,
+    "plate_reader_close": _plate_reader_close,
     "add_workflow_note": _add_workflow_note,
     "submit_protocol": _submit_protocol,
 }

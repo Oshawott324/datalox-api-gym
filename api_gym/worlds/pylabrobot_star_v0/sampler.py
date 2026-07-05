@@ -1224,6 +1224,117 @@ PUMP_MULTI_STEP_QC = TaskSpec(
 )
 
 
+# ── NEW: PlateReader extended scenarios ────────────────────────────────
+
+# Fluorescence read — tests read_fluorescence
+FLUORESCENCE_QC = TaskSpec(
+    scenario="fluorescence_qc",
+    objective="Perform a fluorescence measurement on a QC sample.",
+    prompt=(
+        "A STAR with plate reader is set up. You need to measure fluorescence "
+        "on assay plate well B1 after transferring sample:\n"
+        "1. Pick up a tip, aspirate 50 uL from source_plate.A1 (contains GFP-tagged QC control).\n"
+        "2. Dispense into assay_plate.B1 and return the tip.\n"
+        "3. Use read_fluorescence with excitation=485 nm, emission=535 nm, "
+        "focal_height_mm=10.0 on assay_plate well B1.\n"
+        "4. Submit: 'continue' if fluorescence > 5.0, else 'hold'. "
+        "(Note: fluorescence values are ~10× absorbance scale.)"
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "gfp_qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "fluor_target"}},
+    },
+    expected={
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "read_mode": "fluorescence",
+        "excitation_nm": 485, "emission_nm": 535, "focal_height_mm": 10.0,
+    },
+)
+
+
+# Luminescence read — tests read_luminescence
+LUMINESCENCE_QC = TaskSpec(
+    scenario="luminescence_qc",
+    objective="Perform an ATP luminescence assay measurement.",
+    prompt=(
+        "An ATP detection reagent has been added to source_plate.A1 which "
+        "produces luminescence proportional to ATP concentration.\n"
+        "1. Pick up a tip, aspirate 50 uL from source_plate.A1.\n"
+        "2. Dispense into assay_plate.B1 and discard the tip (reagent is "
+        "light-sensitive — work quickly).\n"
+        "3. Use read_luminescence with focal_height_mm=10.0 on assay_plate B1.\n"
+        "4. Submit: 'continue' if luminescence > 50.0, else 'hold'. "
+        "(Note: luminescence values are ~100× absorbance scale.)"
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "atp_reagent", "light_sensitive": True}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "lum_target"}},
+    },
+    expected={
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "read_mode": "luminescence",
+        "focal_height_mm": 10.0,
+    },
+)
+
+
+# Reader door control — tests plate_reader_open + plate_reader_close
+READER_DOOR_QC = TaskSpec(
+    scenario="reader_door_qc",
+    objective="Properly operate the plate reader door before and after reading.",
+    prompt=(
+        "The plate reader is loaded with assay_plate already inside but the "
+        "door is open. You must follow the correct reader protocol:\n"
+        "1. Use plate_reader_close to close the reader door.\n"
+        "2. Use read_absorbance at 600 nm on assay_plate well B1.\n"
+        "3. Use plate_reader_open to open the reader door.\n"
+        "4. Submit your QC decision. Control band [0.75, 0.9].\n\n"
+        "IMPORTANT: Never read while the door is open. Always close before "
+        "reading and open after to remove the plate."
+    ),
+    initial_volumes={"source_plate.A1": 0.0, "assay_plate.B1": 50.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "qc_sample", "volume_ul": 50}},
+    },
+    expected={
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "require_door_close": True, "require_door_open": True,
+        "plate_preloaded": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# Multi-mode read — tests absorbance + fluorescence combo
+MULTI_MODE_QC = TaskSpec(
+    scenario="multi_mode_qc",
+    objective="Read both absorbance and fluorescence on the same sample.",
+    prompt=(
+        "A dual-mode QC sample in source_plate.A1 needs both absorbance and "
+        "fluorescence measurement:\n"
+        "1. Transfer 50 uL from source_plate.A1 to assay_plate.B1 (fresh tip).\n"
+        "2. Read absorbance at 600 nm on assay_plate B1.\n"
+        "3. Read fluorescence at ex=485 nm, em=535 nm, focal_height=10.0 mm "
+        "on assay_plate B1.\n"
+        "4. Submit: 'continue' if both absorbance in [0.75, 0.9] AND "
+        "fluorescence > 5.0. Otherwise 'hold'."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "dual_mode_qc"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "dual_target"}},
+    },
+    expected={
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "read_modes": ["absorbance", "fluorescence"],
+        "wavelength_nm": 600, "excitation_nm": 485, "emission_nm": 535,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
 # Mounted tips query — tests get_mounted_tips
 MOUNTED_TIPS_QUERY_QC = TaskSpec(
     scenario="mounted_tips_query_qc",
