@@ -22,7 +22,7 @@ from api_gym.worlds.pylabrobot_star_v0.state import (
     create_star_deck, create_liquid_handler,
     create_plate, create_tip_rack, create_trough,
     create_plate_carrier, create_tip_carrier, create_plate_reader,
-    create_pump,
+    create_pump, create_scale,
     setup_star_deck,
     register_state, get_well, set_well_volume,
     _run_async,
@@ -110,12 +110,19 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
             trough = create_trough("reagent_trough")
             break
 
-    # ── Optional pump (PLR Pump with dry-run backend) ──────────────────
+    # ── Optional pump ──────────────────────────────────────────────────
     pump = None
     pump_use = spec.expected.get("use_pump", False)
     if pump_use:
         pump_cal = spec.expected.get("pump_calibration", None)
         pump = create_pump("reagent_pump", calibration=pump_cal)
+
+    # ── Optional scale ─────────────────────────────────────────────────
+    scale = None
+    scale_use = spec.expected.get("use_scale", False)
+    if scale_use:
+        sw = spec.expected.get("scale_initial_weight", 0.0)
+        scale = create_scale("analytical_balance", initial_weight=sw)
 
     setup_star_deck(lh, plate_carrier, tip_carrier,
                     assay_plate, source_plate, tip_rack, trough)
@@ -154,7 +161,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     lab_state = LabState(
         deck=deck, liquid_handler=lh, plate_reader=plate_reader,
         plate=assay_plate, source_plate=source_plate, tip_rack=tip_rack,
-        trough=trough, pump=pump,
+        trough=trough, pump=pump, scale=scale,
         setup_done=True,
         well_metadata=spec.well_metadata,
         has_96_head=spec.expected.get("use_96_head", False),
@@ -1219,6 +1226,93 @@ PUMP_MULTI_STEP_QC = TaskSpec(
         "use_pump": True, "pump_operations": 2,
         "target_wells": ["assay_plate.B1", "assay_plate.B2", "assay_plate.B3"],
         "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# ── NEW: Scale scenarios ───────────────────────────────────────────────
+
+# Gravimetric verification — weigh plate before/after transfer
+GRAVIMETRIC_QC = TaskSpec(
+    scenario="gravimetric_qc",
+    objective="Use an analytical balance to gravimetrically verify a liquid transfer.",
+    prompt=(
+        "An analytical balance ('analytical_balance') is available. "
+        "You must verify a 50 uL transfer gravimetrically:\n"
+        "1. First, zero the scale with scale_zero.\n"
+        "2. Tare the empty assay plate with scale_tare.\n"
+        "3. Read the empty weight with scale_get_weight (should be ~0.0 g after tare).\n"
+        "4. Pick up a tip, aspirate 50 uL from source_plate.A1, dispense into "
+        "assay_plate.B1, discard the tip.\n"
+        "5. Read the weight again with scale_get_weight.\n"
+        "6. Submit: 'continue' if weight gain > 0.04 g (~50 uL water ≈ 0.05 g).\n"
+        "   Otherwise 'hold'."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_scale": True, "scale_initial_weight": 125.0,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "require_zero": True, "require_tare": True,
+        "expected_weight_gain_g": 0.05,
+    },
+)
+
+
+# Tare before sample — tests tare specifically
+TARE_WEIGH_QC = TaskSpec(
+    scenario="tare_weigh_qc",
+    objective="Tare the balance before weighing to get net sample weight.",
+    prompt=(
+        "A tube rack containing sample tubes is on the analytical balance "
+        "(initial reading: 250.0 g — this is the gross weight including rack). "
+        "You need the net weight of just the sample:\n"
+        "1. Use scale_tare to zero out the empty rack weight.\n"
+        "2. Use scale_get_weight to read the net sample weight.\n"
+        "3. If net weight > 0.0 g, samples are present. Transfer 50 uL from "
+        "source_plate.A1 to assay_plate.B1 and submit 'continue'.\n"
+        "4. If net weight = 0.0 g, submit 'hold' (no sample)."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_scale": True, "scale_initial_weight": 250.0,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "require_tare": True,
+    },
+)
+
+
+# Zero at session start — tests zero vs tare distinction
+ZERO_SCALE_QC = TaskSpec(
+    scenario="zero_scale_qc",
+    objective="Correctly zero the scale at session start, then tare before sample.",
+    prompt=(
+        "You are starting a new weighing session. The scale currently reads "
+        "0.5 g (drift from last session). Protocol requires:\n"
+        "1. Use scale_zero to reset to absolute zero.\n"
+        "2. Use scale_tare to tare the empty container.\n"
+        "3. Verify weight is ~0.0 g with scale_get_weight.\n"
+        "(Note: zero is for session start; tare is per-container.)\n"
+        "4. Then transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_scale": True, "scale_initial_weight": 0.5,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "require_zero": True, "require_tare": True,
         "control_band": {"min": 0.75, "max": 0.9},
     },
 )
