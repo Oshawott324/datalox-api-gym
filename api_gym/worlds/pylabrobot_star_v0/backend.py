@@ -15,6 +15,7 @@ from pylabrobot.liquid_handling.backends.chatterbox import (
 from pylabrobot.plate_reading.backend import PlateReaderBackend
 from pylabrobot.pumps.backend import PumpBackend
 from pylabrobot.resources import Plate, Well
+from pylabrobot.scales.scale_backend import ScaleBackend
 
 
 class STARDryRunBackend(LiquidHandlerChatterboxBackend):
@@ -125,3 +126,43 @@ class PumpDryRunBackend(PumpBackend):
     @classmethod
     def deserialize(cls, data: dict[str, Any]) -> "PumpDryRunBackend":
         return cls()
+
+
+class ScaleDryRunBackend(ScaleBackend):
+    """Dry-run scale backend.
+
+    ``get_weight`` returns a configurable default; ``tare`` and ``zero``
+    are no-ops.  The service layer records events and advances the clock.
+    """
+
+    _default_weight: float = 0.0
+
+    def __init__(self, default_weight: float = 0.0) -> None:
+        self._default_weight = default_weight
+        self._tare_offset: float = 0.0
+
+    async def setup(self) -> None:
+        pass
+
+    async def stop(self) -> None:
+        pass
+
+    async def tare(self) -> None:
+        self._tare_offset = self._default_weight
+
+    async def zero(self) -> None:
+        self._tare_offset = self._default_weight
+
+    async def get_weight(self) -> float:
+        return self._default_weight - self._tare_offset
+
+    async def read_weight(self) -> float:
+        self._default_weight = self._default_weight + 0.001  # slight drift
+        return self._default_weight - self._tare_offset
+
+    def serialize(self) -> dict[str, Any]:
+        return {"default_weight": self._default_weight}
+
+    @classmethod
+    def deserialize(cls, data: dict[str, Any]) -> "ScaleDryRunBackend":
+        return cls(default_weight=data.get("default_weight", 0.0))

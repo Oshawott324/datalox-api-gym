@@ -814,6 +814,78 @@ def pump_halt(lab_state: LabState) -> dict[str, Any]:
     return _ok({"halted": True})
 
 
+# ── Scale operations ────────────────────────────────────────────────────
+
+
+def scale_get_weight(lab_state: LabState) -> dict[str, Any]:
+    """Read the current weight from the analytical balance.
+
+    PLR: ``Scale.get_weight()`` or ``Scale.read_weight()``.
+
+    Returns weight in grams.
+    """
+    if lab_state.scale is None:
+        return _error("no_scale", "No scale configured for this scenario.")
+
+    try:
+        async def _op():
+            return await lab_state.scale.get_weight()
+        weight_g = _run_async(_op())
+    except Exception as exc:
+        return _error("scale_read_failed", f"Scale error: {exc}")
+
+    resp = {"weight_g": round(weight_g, 4)}
+    lab_state.insert_event("scale.weight_read", "scale",
+                           lab_state.scale.name if hasattr(lab_state.scale, "name") else "scale",
+                           resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def scale_tare(lab_state: LabState) -> dict[str, Any]:
+    """Tare the scale — set current weight to zero.
+
+    PLR: ``Scale.tare()``.  Use before placing a sample to measure net weight.
+    """
+    if lab_state.scale is None:
+        return _error("no_scale", "No scale configured for this scenario.")
+
+    try:
+        async def _op():
+            await lab_state.scale.tare()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("scale_tare_failed", f"Scale tare error: {exc}")
+
+    lab_state.insert_event("scale.tared", "scale",
+                           lab_state.scale.name if hasattr(lab_state.scale, "name") else "scale",
+                           {})
+    lab_state.clock.advance(1.0)
+    return _ok({"tared": True})
+
+
+def scale_zero(lab_state: LabState) -> dict[str, Any]:
+    """Zero the scale — reset to absolute zero reference.
+
+    PLR: ``Scale.zero()``.  Use at the start of a weighing session.
+    """
+    if lab_state.scale is None:
+        return _error("no_scale", "No scale configured for this scenario.")
+
+    try:
+        async def _op():
+            await lab_state.scale.zero()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("scale_zero_failed", f"Scale zero error: {exc}")
+
+    lab_state.insert_event("scale.zeroed", "scale",
+                           lab_state.scale.name if hasattr(lab_state.scale, "name") else "scale",
+                           {})
+    lab_state.clock.advance(1.0)
+    return _ok({"zeroed": True})
+
+
 # ── Plate reading ───────────────────────────────────────────────────────
 
 

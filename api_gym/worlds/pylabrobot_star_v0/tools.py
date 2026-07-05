@@ -482,6 +482,47 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
     },
 
     # ══════════════════════════════════════════════════════════════════════
+    # Scale operations (PLR: Scale)
+    # ══════════════════════════════════════════════════════════════════════
+
+    {
+        "type": "function",
+        "function": {
+            "name": "scale_get_weight",
+            "description": (
+                "Read the current weight from the analytical balance in grams. "
+                "Use for gravimetric verification of dispensed volumes.\n\n"
+                "PLR: Scale.get_weight() / Scale.read_weight()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "scale_tare",
+            "description": (
+                "Tare the scale — set the current reading to zero.  Use BEFORE "
+                "placing a sample on the scale to measure net weight.\n\n"
+                "PLR: Scale.tare()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "scale_zero",
+            "description": (
+                "Zero the scale — reset to absolute zero reference.  Use at "
+                "the START of a weighing session (before any tare).\n\n"
+                "PLR: Scale.zero()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+
+    # ══════════════════════════════════════════════════════════════════════
     # Pump operations (PLR: Pump)
     # ══════════════════════════════════════════════════════════════════════
 
@@ -975,6 +1016,18 @@ def _plate_reader_close(ls: LabState, _a: dict) -> dict:
     return services.plate_reader_close(ls)
 
 
+def _scale_get_weight(ls: LabState, _a: dict) -> dict:
+    return services.scale_get_weight(ls)
+
+
+def _scale_tare(ls: LabState, _a: dict) -> dict:
+    return services.scale_tare(ls)
+
+
+def _scale_zero(ls: LabState, _a: dict) -> dict:
+    return services.scale_zero(ls)
+
+
 def _pump_run_duration(ls: LabState, a: dict) -> dict:
     return services.pump_run_for_duration(
         ls,
@@ -1038,6 +1091,10 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     # Convenience
     "transfer": _transfer,
     "stamp": _stamp,
+    # Scale
+    "scale_get_weight": _scale_get_weight,
+    "scale_tare": _scale_tare,
+    "scale_zero": _scale_zero,
     # Pump
     "pump_run_duration": _pump_run_duration,
     "pump_run_volume": _pump_run_volume,

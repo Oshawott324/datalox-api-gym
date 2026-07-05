@@ -42,6 +42,7 @@ class LabState:
     liquid_handler: Any = None       # LiquidHandler with STAR backend
     plate_reader: Any = None         # PlateReader (dry-run backend)
     pump: Any = None                 # Pump (dry-run backend, optional)
+    scale: Any = None                # Scale (dry-run backend, optional)
     plate: Any = None                # assay plate
     source_plate: Any = None         # source plate
     tip_rack: Any = None             # tip rack (96)
@@ -234,6 +235,23 @@ def create_plate_reader(name: str = "plate_reader") -> Any:
     return PlateReader(
         name=name,
         size_x=200, size_y=300, size_z=200,
+        backend=backend,
+    )
+
+
+def create_scale(name: str = "analytical_balance", initial_weight: float = 0.0) -> Any:
+    """Create a dry-run analytical balance.
+
+    Uses ``ScaleDryRunBackend``.  ``initial_weight`` is the weight in grams
+    reported by the scale before any tare/zero operation.
+    """
+    from pylabrobot.scales import Scale
+    from api_gym.worlds.pylabrobot_star_v0.backend import ScaleDryRunBackend
+
+    backend = ScaleDryRunBackend(default_weight=initial_weight)
+    return Scale(
+        name=name,
+        size_x=200, size_y=300, size_z=150,
         backend=backend,
     )
 

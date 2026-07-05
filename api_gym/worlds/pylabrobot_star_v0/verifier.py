@@ -89,6 +89,10 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "luminescence_qc": _verify_luminescence_qc,
         "reader_door_qc": _verify_reader_door_qc,
         "multi_mode_qc": _verify_multi_mode_qc,
+        # Scale scenarios
+        "gravimetric_qc": _verify_gravimetric_qc,
+        "tare_weigh_qc": _verify_tare_weigh_qc,
+        "zero_scale_qc": _verify_zero_scale_qc,
     }
     vfn = verifiers.get(scenario)
     if vfn is None:
@@ -1132,5 +1136,93 @@ def _verify_multi_mode_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
     _add_terminal(checks, len(ls.readouts) >= 2,
                   "multiple_readouts", f"{len(ls.readouts)} readouts.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+# ── Scale verifiers ────────────────────────────────────────────────────
+
+
+def _verify_gravimetric_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Gravimetric QC: zero → tare → weigh before → transfer → weigh after."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + analytical balance.")
+
+    # Check scale operations
+    zeroed = any(e.get("event_type") == "scale.zeroed" for e in events)
+    tared = any(e.get("event_type") == "scale.tared" for e in events)
+    weigh_events = [e for e in events if e.get("event_type") == "scale.weight_read"]
+
+    _add_terminal(checks, zeroed, "scale_zeroed", "Scale zeroed." if zeroed else "Never zeroed.")
+    _add_terminal(checks, tared, "scale_tared", "Scale tared." if tared else "Never tared.")
+    _add_terminal(checks, len(weigh_events) >= 2,
+                  "multiple_weighs",
+                  f"{len(weigh_events)} weigh events (need before + after).")
+
+    # Temporal: zero → tare → weigh(before) → transfer → weigh(after)
+    if zeroed and tared and len(weigh_events) >= 2:
+        z_t = [e for e in events if e.get("event_type") == "scale.zeroed"][0].get("clock_time", 0)
+        ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
+        _add_temporal(checks, z_t <= ta_t, "zero_before_tare",
+                      f"Zero@{z_t:.0f}s before tare@{ta_t:.0f}s.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_tare_weigh_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Tare before weigh: agent must tare to get net weight."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + scale tare.")
+
+    tared = any(e.get("event_type") == "scale.tared" for e in events)
+    _add_terminal(checks, tared, "scale_tared",
+                  "Scale tared." if tared else "Never tared — can't get net weight.")
+
+    weigh_events = [e for e in events if e.get("event_type") == "scale.weight_read"]
+    _add_terminal(checks, len(weigh_events) >= 1,
+                  "scale_read", f"{len(weigh_events)} weight reading(s).")
+
+    # Tare must happen before first weigh
+    if tared and weigh_events:
+        ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
+        w_t = weigh_events[0].get("clock_time", 0)
+        _add_temporal(checks, ta_t <= w_t, "tare_before_weigh",
+                      f"Tare@{ta_t:.0f}s before weigh@{w_t:.0f}s.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    return checks, {}
+
+
+def _verify_zero_scale_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Zero at session start: must zero THEN tare."""
+    checks = []
+    events = ls.events
+    _add_terminal(checks, True, "dry_run", "STAR + scale zero + tare.")
+
+    zeroed = any(e.get("event_type") == "scale.zeroed" for e in events)
+    tared = any(e.get("event_type") == "scale.tared" for e in events)
+
+    _add_terminal(checks, zeroed, "scale_zeroed",
+                  "Scale zeroed." if zeroed else "Never zeroed — session init skipped.")
+    _add_terminal(checks, tared, "scale_tared",
+                  "Scale tared." if tared else "Never tared.")
+
+    # Zero must happen before tare
+    if zeroed and tared:
+        z_t = [e for e in events if e.get("event_type") == "scale.zeroed"][0].get("clock_time", 0)
+        ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
+        _add_temporal(checks, z_t <= ta_t, "zero_before_tare",
+                      f"Zero@{z_t:.0f}s before tare@{ta_t:.0f}s.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
     return checks, {}
