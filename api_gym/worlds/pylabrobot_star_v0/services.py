@@ -183,6 +183,7 @@ def get_labware_state(lab_state: LabState, labware_id: str) -> dict[str, Any]:
         data["wells"] = wells
     if tips:
         data["tips"] = tips
+    lab_state.insert_event("inspection.labware", "labware", labware_id, {})
     return _ok(data)
 
 
@@ -812,6 +813,259 @@ def pump_halt(lab_state: LabState) -> dict[str, Any]:
                            {})
     lab_state.clock.advance(0.5)
     return _ok({"halted": True})
+
+
+# ── Thermocycler operations ────────────────────────────────────────────
+
+
+def tc_close_lid(lab_state: LabState) -> dict[str, Any]:
+    """Close thermocycler lid.  PLR: ``Thermocycler.close_lid()``."""
+    if lab_state.thermocycler is None:
+        return _error("no_thermocycler", "No thermocycler configured.")
+    async def _op(): await lab_state.thermocycler.close_lid()
+    _run_async(_op())
+    lab_state.insert_event("tc.lid_closed", "thermocycler", "thermocycler", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"lid": "closed"})
+
+
+def tc_open_lid(lab_state: LabState) -> dict[str, Any]:
+    """Open thermocycler lid.  PLR: ``Thermocycler.open_lid()``."""
+    if lab_state.thermocycler is None:
+        return _error("no_thermocycler", "No thermocycler configured.")
+    async def _op(): await lab_state.thermocycler.open_lid()
+    _run_async(_op())
+    lab_state.insert_event("tc.lid_opened", "thermocycler", "thermocycler", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"lid": "open"})
+
+
+def tc_set_lid_temp(lab_state: LabState, temperature: float) -> dict[str, Any]:
+    """Heat the lid (prevents condensation).  PLR: ``Thermocycler.set_lid_temperature()``."""
+    if lab_state.thermocycler is None:
+        return _error("no_thermocycler", "No thermocycler configured.")
+    async def _op(): await lab_state.thermocycler.set_lid_temperature([temperature])
+    _run_async(_op())
+    resp = {"lid_target_temperature": temperature}
+    lab_state.insert_event("tc.lid_temp_set", "thermocycler", "thermocycler", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def tc_set_block_temp(lab_state: LabState, temperature: float) -> dict[str, Any]:
+    """Set block temperature.  PLR: ``Thermocycler.set_block_temperature()``."""
+    if lab_state.thermocycler is None:
+        return _error("no_thermocycler", "No thermocycler configured.")
+    async def _op(): await lab_state.thermocycler.set_block_temperature([temperature])
+    _run_async(_op())
+    resp = {"block_target_temperature": temperature}
+    lab_state.insert_event("tc.block_temp_set", "thermocycler", "thermocycler", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def tc_get_block_temp(lab_state: LabState) -> dict[str, Any]:
+    """Read current block temperature.  PLR: ``Thermocycler.get_block_current_temperature()``."""
+    if lab_state.thermocycler is None:
+        return _error("no_thermocycler", "No thermocycler configured.")
+    async def _op(): return await lab_state.thermocycler.get_block_current_temperature()
+    temp = _run_async(_op())[0]
+    resp = {"block_current_temperature": round(temp, 1)}
+    lab_state.insert_event("tc.block_temp_read", "thermocycler", "thermocycler", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def tc_deactivate(lab_state: LabState) -> dict[str, Any]:
+    """Deactivate block and lid heating.  PLR: ``Thermocycler.deactivate_block()`` + ``deactivate_lid()``."""
+    if lab_state.thermocycler is None:
+        return _error("no_thermocycler", "No thermocycler configured.")
+    async def _op():
+        await lab_state.thermocycler.deactivate_block()
+        await lab_state.thermocycler.deactivate_lid()
+    _run_async(_op())
+    lab_state.insert_event("tc.deactivated", "thermocycler", "thermocycler", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"deactivated": True})
+
+
+# ── HeaterShaker operations ─────────────────────────────────────────────
+
+
+def hs_set_temperature(lab_state: LabState, temperature: float) -> dict[str, Any]:
+    """Set target temperature.  PLR: ``HeaterShaker.set_temperature()``."""
+    if lab_state.heater_shaker is None:
+        return _error("no_heater_shaker", "No heater/shaker configured.")
+    async def _op(): await lab_state.heater_shaker.set_temperature(temperature)
+    _run_async(_op())
+    resp = {"target_temperature": temperature}
+    lab_state.insert_event("hs.temp_set", "heater_shaker", "heater_shaker", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def hs_get_temperature(lab_state: LabState) -> dict[str, Any]:
+    """Read current temperature.  PLR: ``HeaterShaker.get_temperature()``."""
+    if lab_state.heater_shaker is None:
+        return _error("no_heater_shaker", "No heater/shaker configured.")
+    async def _op(): return await lab_state.heater_shaker.get_temperature()
+    temp = _run_async(_op())
+    resp = {"current_temperature": round(temp, 1)}
+    lab_state.insert_event("hs.temp_read", "heater_shaker", "heater_shaker", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def hs_shake(lab_state: LabState, speed_rpm: float,
+             duration_s: float | None = None) -> dict[str, Any]:
+    """Start shaking.  PLR: ``HeaterShaker.shake(speed, duration)``."""
+    if lab_state.heater_shaker is None:
+        return _error("no_heater_shaker", "No heater/shaker configured.")
+    async def _op(): await lab_state.heater_shaker.shake(speed=speed_rpm, duration=duration_s)
+    _run_async(_op())
+    dur = duration_s or 0
+    resp = {"speed_rpm": speed_rpm, "duration_s": duration_s}
+    lab_state.insert_event("hs.shake", "heater_shaker", "heater_shaker", resp)
+    lab_state.clock.advance(dur if dur else 2.0)
+    return _ok(resp)
+
+
+def hs_stop_shaking(lab_state: LabState) -> dict[str, Any]:
+    """Stop shaking.  PLR: ``HeaterShaker.stop_shaking()``."""
+    if lab_state.heater_shaker is None:
+        return _error("no_heater_shaker", "No heater/shaker configured.")
+    async def _op(): await lab_state.heater_shaker.stop_shaking()
+    _run_async(_op())
+    lab_state.insert_event("hs.shake_stop", "heater_shaker", "heater_shaker", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"shaking": False})
+
+
+def hs_deactivate(lab_state: LabState) -> dict[str, Any]:
+    """Deactivate heating and shaking.  PLR: ``HeaterShaker.deactivate()``."""
+    if lab_state.heater_shaker is None:
+        return _error("no_heater_shaker", "No heater/shaker configured.")
+    async def _op(): await lab_state.heater_shaker.deactivate()
+    _run_async(_op())
+    lab_state.insert_event("hs.deactivated", "heater_shaker", "heater_shaker", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"deactivated": True})
+
+
+# ── Centrifuge operations ───────────────────────────────────────────────
+
+
+def centrifuge_open_door(lab_state: LabState) -> dict[str, Any]:
+    """Open the centrifuge door.  PLR: ``Centrifuge.open_door()``."""
+    if lab_state.centrifuge is None:
+        return _error("no_centrifuge", "No centrifuge configured.")
+    try:
+        async def _op(): await lab_state.centrifuge.open_door()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("centrifuge_failed", f"Error: {exc}")
+    lab_state.insert_event("centrifuge.door_opened", "centrifuge", "centrifuge", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"door": "open"})
+
+
+def centrifuge_close_door(lab_state: LabState) -> dict[str, Any]:
+    """Close the centrifuge door.  PLR: ``Centrifuge.close_door()``."""
+    if lab_state.centrifuge is None:
+        return _error("no_centrifuge", "No centrifuge configured.")
+    try:
+        async def _op(): await lab_state.centrifuge.close_door()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("centrifuge_failed", f"Error: {exc}")
+    lab_state.insert_event("centrifuge.door_closed", "centrifuge", "centrifuge", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"door": "closed"})
+
+
+def centrifuge_lock_door(lab_state: LabState) -> dict[str, Any]:
+    """Lock the centrifuge door (safety interlock).  PLR: ``Centrifuge.lock_door()``."""
+    if lab_state.centrifuge is None:
+        return _error("no_centrifuge", "No centrifuge configured.")
+    try:
+        async def _op(): await lab_state.centrifuge.lock_door()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("centrifuge_failed", f"Error: {exc}")
+    lab_state.insert_event("centrifuge.door_locked", "centrifuge", "centrifuge", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"door": "locked"})
+
+
+def centrifuge_go_to_bucket1(lab_state: LabState) -> dict[str, Any]:
+    """Rotate to present bucket 1.  PLR: ``Centrifuge.go_to_bucket1()``."""
+    if lab_state.centrifuge is None:
+        return _error("no_centrifuge", "No centrifuge configured.")
+    try:
+        async def _op(): await lab_state.centrifuge.go_to_bucket1()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("centrifuge_failed", f"Error: {exc}")
+    lab_state.insert_event("centrifuge.bucket1", "centrifuge", "centrifuge", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"bucket": 1})
+
+
+def centrifuge_go_to_bucket2(lab_state: LabState) -> dict[str, Any]:
+    """Rotate to present bucket 2.  PLR: ``Centrifuge.go_to_bucket2()``."""
+    if lab_state.centrifuge is None:
+        return _error("no_centrifuge", "No centrifuge configured.")
+    try:
+        async def _op(): await lab_state.centrifuge.go_to_bucket2()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("centrifuge_failed", f"Error: {exc}")
+    lab_state.insert_event("centrifuge.bucket2", "centrifuge", "centrifuge", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"bucket": 2})
+
+
+def centrifuge_lock_bucket(lab_state: LabState) -> dict[str, Any]:
+    """Lock the current bucket.  PLR: ``Centrifuge.lock_bucket()``."""
+    if lab_state.centrifuge is None:
+        return _error("no_centrifuge", "No centrifuge configured.")
+    try:
+        async def _op(): await lab_state.centrifuge.lock_bucket()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("centrifuge_failed", f"Error: {exc}")
+    lab_state.insert_event("centrifuge.bucket_locked", "centrifuge", "centrifuge", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"bucket": "locked"})
+
+
+def centrifuge_spin(lab_state: LabState, g_force: float,
+                    duration_s: float) -> dict[str, Any]:
+    """Spin at specified g-force for duration.  PLR: ``Centrifuge.spin(g, duration)``.
+
+    Dry-run: door must be locked first.  Clock advances by duration.
+    """
+    if lab_state.centrifuge is None:
+        return _error("no_centrifuge", "No centrifuge configured.")
+
+    # Safety: check door is closed and locked
+    backend = lab_state.centrifuge.backend
+    if getattr(backend, "_door_open", True):
+        return _error("door_open", "Door is open — close and lock before spinning.")
+    if not getattr(backend, "_door_locked", False):
+        return _error("door_unlocked", "Door not locked — lock before spinning.")
+
+    try:
+        async def _op():
+            await lab_state.centrifuge.spin(g=g_force, duration=duration_s, acceleration=10.0)
+        _run_async(_op())
+    except Exception as exc:
+        return _error("spin_failed", f"Error: {exc}")
+
+    resp = {"g_force": g_force, "duration_s": duration_s}
+    lab_state.insert_event("centrifuge.spin", "centrifuge", "centrifuge", resp)
+    lab_state.clock.advance(duration_s)
+    return _ok(resp)
 
 
 # ── Scale operations ────────────────────────────────────────────────────

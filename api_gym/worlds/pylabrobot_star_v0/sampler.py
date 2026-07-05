@@ -22,7 +22,7 @@ from api_gym.worlds.pylabrobot_star_v0.state import (
     create_star_deck, create_liquid_handler,
     create_plate, create_tip_rack, create_trough,
     create_plate_carrier, create_tip_carrier, create_plate_reader,
-    create_pump, create_scale,
+    create_pump, create_scale, create_centrifuge, create_heater_shaker, create_thermocycler,
     setup_star_deck,
     register_state, get_well, set_well_volume,
     _run_async,
@@ -124,6 +124,25 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
         sw = spec.expected.get("scale_initial_weight", 0.0)
         scale = create_scale("analytical_balance", initial_weight=sw)
 
+    # ── Optional centrifuge ────────────────────────────────────────────
+    centrifuge = None
+    cent_use = spec.expected.get("use_centrifuge", False)
+    if cent_use:
+        centrifuge = create_centrifuge("centrifuge")
+
+    # ── Optional thermocycler ────────────────────────────────────
+    thermocycler = None
+    tc_use = spec.expected.get("use_thermocycler", False)
+    if tc_use:
+        thermocycler = create_thermocycler("thermocycler")
+
+    # ── Optional heater/shaker ─────────────────────────────────────────
+    heater_shaker = None
+    hs_use = spec.expected.get("use_heater_shaker", False)
+    if hs_use:
+        heater_shaker = create_heater_shaker("heater_shaker")
+
+
     setup_star_deck(lh, plate_carrier, tip_carrier,
                     assay_plate, source_plate, tip_rack, trough)
 
@@ -161,7 +180,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     lab_state = LabState(
         deck=deck, liquid_handler=lh, plate_reader=plate_reader,
         plate=assay_plate, source_plate=source_plate, tip_rack=tip_rack,
-        trough=trough, pump=pump, scale=scale,
+        trough=trough, pump=pump, scale=scale, centrifuge=centrifuge, heater_shaker=heater_shaker, thermocycler=thermocycler,
         setup_done=True,
         well_metadata=spec.well_metadata,
         has_96_head=spec.expected.get("use_96_head", False),
@@ -206,6 +225,8 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
 
     # ── Workspace files ────────────────────────────────────────────────
     ws_files = getattr(spec, "workspace_files", None) or {}
+    if ws_files:
+        out_dir.mkdir(parents=True, exist_ok=True)
     for fname, fcontent in ws_files.items():
         lab_state.workspace_files[fname] = fcontent
         (out_dir / fname).write_text(fcontent, encoding="utf-8")
@@ -1117,11 +1138,13 @@ PUMP_FILL_TROUGH_QC = TaskSpec(
         "1. Use pump_run_duration at 500 RPM for 15 seconds to fill the "
         "reagent trough with buffer from the reservoir.\n"
         "2. Inspect the trough using get_labware_state('reagent_trough') "
-        "(volume should be non-zero after filling).\n"
+        "(volume should be ~1500 uL after filling).\n"
         "3. Pick up a tip and aspirate 50 uL from the trough — use "
         "source='reagent_trough' (troughs are single containers, no well ID).\n"
-        "4. Dispense into assay_plate.B1.\n"
-        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+        "4. Dispense into assay_plate.B1 and discard the tip.\n"
+        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: OD600 readings have measurement noise (~0.03 SD). Do not over-react "
+        "to small deviations from expected values."
     ),
     initial_volumes={"trough.reagent_trough": 0.0},
     well_metadata={
@@ -1132,7 +1155,10 @@ PUMP_FILL_TROUGH_QC = TaskSpec(
         "pump_speed_rpm": 500, "pump_duration_s": 15,
         "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
         "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+        "min_trough_volume_after_pump": 100.0,
+        "min_trough_volume_after_transfer": 50.0,
     },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
 )
 
 
@@ -1147,10 +1173,12 @@ PUMP_CALIBRATED_DISPENSE_QC = TaskSpec(
         "the calibration mode and data.\n"
         "2. Use pump_run_volume to dispense exactly 5000 uL of buffer into "
         "the reagent trough at 300 RPM.\n"
-        "3. Inspect the trough to confirm volume.\n"
+        "3. Inspect the trough to confirm volume (~5000 uL expected).\n"
         "4. Pick up a tip, aspirate 50 uL from 'reagent_trough' (troughs are "
         "single containers, no well ID needed), dispense into assay_plate.B1.\n"
-        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "WARNING: If you skip reading the calibration file, you will use wrong "
+        "pump parameters and the dispensed volume will be incorrect."
     ),
     initial_volumes={"trough.reagent_trough": 0.0},
     well_metadata={
@@ -1163,6 +1191,7 @@ PUMP_CALIBRATED_DISPENSE_QC = TaskSpec(
         "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
         "wavelength_nm": 600, "require_calibration_check": True,
         "control_band": {"min": 0.75, "max": 0.9},
+        "min_trough_volume_after_pump": 1000.0,
     },
     workspace_files={
         "pump_calibration.json": (
@@ -1172,6 +1201,7 @@ PUMP_CALIBRATED_DISPENSE_QC = TaskSpec(
             'Use pump_run_volume for calibrated dispensing."}'
         ),
     },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
 )
 
 
@@ -1185,8 +1215,11 @@ PUMP_HALT_RECOVERY_QC = TaskSpec(
         "1. Use pump_halt to stop the pump immediately.\n"
         "2. Restart using pump_run_duration at the CORRECT speed of 500 RPM "
         "for 10 seconds.\n"
-        "3. Transfer 50 uL from the trough to assay_plate.B1.\n"
-        "4. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+        "3. Transfer 50 uL from the trough (pre-filled with 50000 uL buffer) "
+        "to assay_plate.B1 using a fresh tip.\n"
+        "4. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "This is a RECOVERY scenario. Failing to halt before restarting is an "
+        "agent recovery failure. Halting but then using wrong speed is agent error."
     ),
     initial_volumes={"trough.reagent_trough": 50000.0},
     well_metadata={
@@ -1209,11 +1242,14 @@ PUMP_MULTI_STEP_QC = TaskSpec(
         "A pump is connected to a buffer reservoir. Protocol:\n"
         "1. Use pump_run_duration at 500 RPM for 10s to prime the line into "
         "the reagent trough.\n"
-        "2. Transfer 50 uL from the trough to assay_plate wells B1, B2, B3 "
-        "(fresh tip each time).\n"
-        "3. Use pump_run_duration at 500 RPM for 5s to flush remaining buffer "
+        "2. Inspect the trough to confirm volume after priming.\n"
+        "3. Transfer 50 uL from the trough to assay_plate wells B1, B2, B3 "
+        "(fresh tip each time = 3 separate pick_up_tips/aspirate/dispense/discard cycles).\n"
+        "4. Use pump_run_duration at 500 RPM for 5s to flush remaining buffer "
         "into the trough (post-transfer line flush).\n"
-        "4. Read OD600 for B1-B3 at 600 nm. Submit. Control band [0.75, 0.9]."
+        "5. Read OD600 for B1-B3 at 600 nm. Submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: The order matters — transfers MUST happen between the two pump "
+        "operations. Priming before transfer, flushing after."
     ),
     initial_volumes={"trough.reagent_trough": 0.0},
     well_metadata={
@@ -1227,7 +1263,294 @@ PUMP_MULTI_STEP_QC = TaskSpec(
         "target_wells": ["assay_plate.B1", "assay_plate.B2", "assay_plate.B3"],
         "transfer_volume_ul": 50, "wavelength_nm": 600,
         "control_band": {"min": 0.75, "max": 0.9},
+        "min_trough_volume_after_prime": 50.0,
     },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+
+# ── NEW: Thermocycler scenarios ──────────────────────────────────
+
+PCR_HEAT_QC = TaskSpec(
+    scenario="pcr_heat_qc",
+    objective="Set up a PCR denaturation step: close lid, heat lid and block.",
+    prompt=(
+        "A thermocycler is available. Set up for a PCR denaturation step:\n"
+        "1. Use tc_close_lid to close the thermocycler lid.\n"
+        "2. Use tc_set_lid_temp to heat the lid to 105C (prevents condensation).\n"
+        "3. Use tc_set_block_temp to heat the block to 95C (denaturation temperature).\n"
+        "4. Use tc_get_block_temp to verify the block has reached 95C.\n"
+        "5. Transfer 50 uL from source_plate.A1 to assay_plate.B1 (simulating\n"
+        "   sample addition after denaturation).\n"
+        "6. Use tc_deactivate to turn off heating.\n"
+        "7. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: The lid must be closed BEFORE setting temperatures. The block temp "
+        "must be verified BEFORE the transfer. And deactivation must happen "
+        "AFTER the transfer — the chain is: close→heat→verify→transfer→deactivate→read."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "pcr_template"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "pcr_target"}},
+    },
+    expected={
+        "use_thermocycler": True, "lid_temp": 105.0, "block_temp": 95.0,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+PCR_LID_SAFETY_QC = TaskSpec(
+    scenario="pcr_lid_safety_qc",
+    objective="Ensure thermocycler lid is closed before heating the block.",
+    prompt=(
+        "The thermocycler lid is OPEN. You must follow the correct sequence:\n"
+        "1. Use tc_close_lid FIRST (lid must be closed before heating).\n"
+        "2. Use tc_set_lid_temp to 105C.\n"
+        "3. Use tc_set_block_temp to 95C.\n"
+        "4. Read OD600 for assay_plate B1 (pre-loaded) at 600 nm.\n"
+        "5. Submit. Control band [0.75, 0.9].\n\n"
+        "SAFETY-CRITICAL: The lid acts as a safety interlock and condensation "
+        "barrier. Heating the block with the lid open wastes energy and produces "
+        "uneven temperatures. Closing the lid first, then heating, is the only "
+        "correct sequence. Failure to close the lid is an agent error."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "pre_loaded_pcr", "volume_ul": 50}},
+    },
+    expected={
+        "use_thermocycler": True, "lid_temp": 105.0, "block_temp": 95.0,
+        "require_lid_closed": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+PCR_COOL_DOWN_QC = TaskSpec(
+    scenario="pcr_cool_down_qc",
+    objective="Run a PCR temperature cycle: heat then cool, verifying temps.",
+    prompt=(
+        "Run a simple PCR temperature cycle on the thermocycler:\n"
+        "1. tc_close_lid\n"
+        "2. tc_set_lid_temp to 105C\n"
+        "3. tc_set_block_temp to 95C, wait for temp verification\n"
+        "   (use tc_get_block_temp to confirm 95C)\n"
+        "4. tc_set_block_temp to 55C (annealing temperature), verify with\n"
+        "   tc_get_block_temp\n"
+        "5. tc_deactivate\n"
+        "6. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "7. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: Both temperature steps must be verified independently — "
+        "verify 95C before cooling, then verify 55C before deactivating."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "pcr_mastermix"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "pcr_target"}},
+    },
+    expected={
+        "use_thermocycler": True, "lid_temp": 105.0,
+        "block_temps": [95.0, 55.0], "require_temp_checks": True,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+
+# ── NEW: HeaterShaker scenarios ────────────────────────────────────────
+
+HEAT_INCUBATE_QC = TaskSpec(
+    scenario="heat_incubate_qc",
+    objective="Heat a plate to incubation temperature, then transfer and read.",
+    prompt=(
+        "A heater/shaker module is available. You need to incubate at 37C before reading:\n"
+        "1. Use hs_set_temperature to set 37C on the heater_shaker.\n"
+        "2. Use hs_get_temperature to verify the temperature is stable at 37C.\n"
+        "3. The assay_plate is already on the heater - transfer 50 uL from\n"
+        "   source_plate.A1 to assay_plate.B1.\n"
+        "4. Use hs_get_temperature again to confirm temp is still 37C after transfer.\n"
+        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: Temperature must be verified BOTH before AND after the transfer. "
+        "Reading without temperature verification means you don't know if the "
+        "sample was actually at incubation temperature."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_heater_shaker": True, "target_temperature": 37.0,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.02},
+)
+
+
+SHAKE_MIX_QC = TaskSpec(
+    scenario="shake_mix_qc",
+    objective="Use the shaker to mix a plate before reading.",
+    prompt=(
+        "A heater/shaker is available. You need to mix the assay plate before reading:\n"
+        "1. Use hs_shake at 500 RPM for 30 seconds to mix assay_plate contents.\n"
+        "2. After shaking completes, transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "3. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: The transfer must happen AFTER shaking completes. Shaking after "
+        "transfer would mix the sample but the temporal order matters for QC "
+        "traceability — shake then transfer, not transfer then shake."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_heater_shaker": True, "shake_speed": 500, "shake_duration": 30,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+HEAT_SHAKE_COMBO_QC = TaskSpec(
+    scenario="heat_shake_combo_qc",
+    objective="Simultaneously heat and shake for an enzymatic reaction.",
+    prompt=(
+        "An enzymatic reaction requires simultaneous heating at 42C and shaking\n"
+        "at 300 RPM for 60 seconds on the heater/shaker:\n"
+        "1. Use hs_set_temperature to 42C.\n"
+        "2. Use hs_shake at 300 RPM for 60 seconds.\n"
+        "3. Use hs_get_temperature to verify 42C.\n"
+        "4. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "5. Use hs_deactivate to stop heating and shaking.\n"
+        "6. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: Both heating AND shaking must be active simultaneously for the "
+        "reaction to work. Setting temperature alone or shaking alone is "
+        "insufficient. And deactivation must happen after the transfer — leaving "
+        "the heater on after the protocol is a safety issue."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "enzyme_substrate"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "reaction_target"}},
+    },
+    expected={
+        "use_heater_shaker": True, "target_temperature": 42.0,
+        "shake_speed": 300, "shake_duration": 60,
+        "require_deactivate": True,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+
+# ── NEW: Centrifuge scenarios ──────────────────────────────────────────
+
+# Basic spin cycle
+SPIN_DOWN_QC = TaskSpec(
+    scenario="spin_down_qc",
+    objective="Perform a centrifugation spin-down of a sample plate.",
+    prompt=(
+        "A centrifuge with two buckets is available. You need to spin down "
+        "a sample plate in bucket 1:\n"
+        "1. Use centrifuge_go_to_bucket1 to present bucket 1.\n"
+        "2. The assay_plate is already loaded. Lock it with centrifuge_lock_bucket.\n"
+        "3. Use centrifuge_close_door, then centrifuge_lock_door.\n"
+        "4. Spin at 2000 g for 60 seconds with centrifuge_spin.\n"
+        "5. Use centrifuge_open_door to retrieve the plate.\n"
+        "6. Read OD600 for assay_plate B1 at 600 nm. Submit. Control band [0.75, 0.9].\n\n"
+        "SAFETY: The door MUST be closed and locked BEFORE spinning. "
+        "Spinning with the door open will cause an error. "
+        "The sequence order is: bucket → lock_bucket → close → lock_door → spin → open."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "spun_sample", "volume_ul": 50}},
+    },
+    expected={
+        "use_centrifuge": True, "g_force": 2000, "duration_s": 60,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "require_door_close": True, "require_lock": True, "require_spin": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Balanced load — both buckets
+BALANCED_LOAD_QC = TaskSpec(
+    scenario="balanced_load_qc",
+    objective="Load both centrifuge buckets for balanced operation.",
+    prompt=(
+        "A centrifuge requires balanced loading — both buckets must have "
+        "equal weight before spinning. Unbalanced loads can damage the centrifuge.\n"
+        "1. centrifuge_go_to_bucket1 → lock bucket 1 (with source_plate).\n"
+        "2. centrifuge_go_to_bucket2 → lock bucket 2 (with assay_plate).\n"
+        "3. Transfer 50 uL from source_plate.A1 to assay_plate.B1 (this is "
+        "the QC sample you will read after spinning).\n"
+        "4. Close door → lock door → spin at 3000 g for 120 s.\n"
+        "5. Open door, read OD600 for assay_plate B1 at 600 nm. Submit.\n"
+        "Control band [0.75, 0.9].\n\n"
+        "IMPORTANT: Both buckets must be locked BEFORE door close + spin. "
+        "Loading only one bucket is an unbalanced load and will cause spin failure."
+    ),
+    initial_volumes={"source_plate.A1": 200.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "stock", "volume_ul": 200}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_centrifuge": True, "g_force": 3000, "duration_s": 120,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "require_both_buckets": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Door safety — must lock before spin
+DOOR_SAFETY_QC = TaskSpec(
+    scenario="door_safety_qc",
+    objective="Follow centrifuge safety protocol: close and lock door before spinning.",
+    prompt=(
+        "The centrifuge door is open. A plate is loaded in bucket 1. "
+        "You must follow the correct safety sequence:\n"
+        "1. centrifuge_close_door → centrifuge_lock_door.\n"
+        "2. Spin at 1500 g for 30 s.\n"
+        "WARNING: Attempting to spin before closing+latching the door will "
+        "fail with a safety interlock error. You must recover by locking "
+        "the door and retrying.\n"
+        "3. After spin, centrifuge_open_door.\n"
+        "4. Read OD600 for assay_plate B1 (pre-loaded with 50 uL sample) "
+        "at 600 nm. Submit. Control band [0.75, 0.9].\n\n"
+        "This is a SAFETY-CRITICAL scenario. Skipping the lock step is an "
+        "agent recovery failure. Correctly locking before spinning is "
+        "success_despite_fault (the initial door-open state was the fault)."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "pre_loaded_qc", "volume_ul": 50}},
+    },
+    expected={
+        "use_centrifuge": True, "g_force": 1500, "duration_s": 30,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "require_door_close": True, "require_lock": True, "require_spin": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
 )
 
 
@@ -1246,8 +1569,10 @@ GRAVIMETRIC_QC = TaskSpec(
         "4. Pick up a tip, aspirate 50 uL from source_plate.A1, dispense into "
         "assay_plate.B1, discard the tip.\n"
         "5. Read the weight again with scale_get_weight.\n"
-        "6. Submit: 'continue' if weight gain > 0.04 g (~50 uL water ≈ 0.05 g).\n"
-        "   Otherwise 'hold'."
+        "6. Submit: 'continue' if weight gain > 0.04 g (~50 uL water = 0.05 g).\n"
+        "   Otherwise 'hold'.\n\n"
+        "NOTE: The ORDER matters — zero before tare, weigh before AND after transfer. "
+        "Skipping the pre-transfer weigh makes gravimetric verification impossible."
     ),
     initial_volumes={"source_plate.A1": 120.0},
     well_metadata={
@@ -1269,13 +1594,15 @@ TARE_WEIGH_QC = TaskSpec(
     objective="Tare the balance before weighing to get net sample weight.",
     prompt=(
         "A tube rack containing sample tubes is on the analytical balance "
-        "(initial reading: 250.0 g — this is the gross weight including rack). "
+        "(initial reading: 250.0 g — gross weight including rack). "
         "You need the net weight of just the sample:\n"
-        "1. Use scale_tare to zero out the empty rack weight.\n"
-        "2. Use scale_get_weight to read the net sample weight.\n"
-        "3. If net weight > 0.0 g, samples are present. Transfer 50 uL from "
-        "source_plate.A1 to assay_plate.B1 and submit 'continue'.\n"
-        "4. If net weight = 0.0 g, submit 'hold' (no sample)."
+        "1. Use scale_tare to zero out the rack weight.\n"
+        "2. Use scale_get_weight to read the net sample weight (should be ~0.0 g).\n"
+        "3. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "4. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "WARNING: Without tare, scale_get_weight returns GROSS weight (250+ g). "
+        "Only after tare does it return net sample weight. Failing to tare "
+        "means you cannot verify the actual sample mass."
     ),
     initial_volumes={"source_plate.A1": 120.0},
     well_metadata={
@@ -1285,8 +1612,10 @@ TARE_WEIGH_QC = TaskSpec(
     expected={
         "use_scale": True, "scale_initial_weight": 250.0,
         "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
-        "require_tare": True,
+        "wavelength_nm": 600, "require_tare": True,
+        "control_band": {"min": 0.75, "max": 0.9},
     },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.02},
 )
 
 
@@ -1300,9 +1629,12 @@ ZERO_SCALE_QC = TaskSpec(
         "1. Use scale_zero to reset to absolute zero.\n"
         "2. Use scale_tare to tare the empty container.\n"
         "3. Verify weight is ~0.0 g with scale_get_weight.\n"
-        "(Note: zero is for session start; tare is per-container.)\n"
+        "(Note: zero is for session start; tare is per-container. "
+        "They are DIFFERENT operations — do not confuse them.)\n"
         "4. Then transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
-        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9].\n\n"
+        "NOTE: Using tare without zero first leaves calibration drift uncorrected. "
+        "Using zero when you meant tare resets the absolute reference incorrectly."
     ),
     initial_volumes={"source_plate.A1": 120.0},
     well_metadata={
@@ -1315,6 +1647,7 @@ ZERO_SCALE_QC = TaskSpec(
         "wavelength_nm": 600, "require_zero": True, "require_tare": True,
         "control_band": {"min": 0.75, "max": 0.9},
     },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
 )
 
 

@@ -482,6 +482,247 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
     },
 
     # ══════════════════════════════════════════════════════════════════════
+    # Centrifuge operations (PLR: Centrifuge)
+    # ══════════════════════════════════════════════════════════════════════
+
+    {
+        "type": "function",
+        "function": {
+            "name": "centrifuge_open_door",
+            "description": (
+                "Open the centrifuge door to load/unload buckets.\n\n"
+                "PLR: Centrifuge.open_door()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "centrifuge_close_door",
+            "description": (
+                "Close the centrifuge door before spinning.\n\n"
+                "PLR: Centrifuge.close_door()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "centrifuge_lock_door",
+            "description": (
+                "Lock the centrifuge door (safety interlock).  Must be locked "
+                "BEFORE spinning.\n\n"
+                "PLR: Centrifuge.lock_door()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "centrifuge_go_to_bucket1",
+            "description": (
+                "Rotate the centrifuge to present bucket 1 for loading.\n\n"
+                "PLR: Centrifuge.go_to_bucket1()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "centrifuge_go_to_bucket2",
+            "description": (
+                "Rotate the centrifuge to present bucket 2 for loading.\n\n"
+                "PLR: Centrifuge.go_to_bucket2()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "centrifuge_lock_bucket",
+            "description": (
+                "Lock the current bucket in place before spinning.\n\n"
+                "PLR: Centrifuge.lock_bucket()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "centrifuge_spin",
+            "description": (
+                "Spin the centrifuge at the specified g-force for a given "
+                "duration (seconds).  Door must be closed and locked first. "
+                "Balanced loading (both buckets) is required for safe operation.\n\n"
+                "PLR: Centrifuge.spin(g, duration, acceleration)."
+            ),
+            "parameters": _schema(
+                {
+                    "g_force": {"type": "number", "exclusiveMinimum": 0,
+                                "description": "Relative centrifugal force (×g)."},
+                    "duration_s": {"type": "number", "exclusiveMinimum": 0,
+                                   "description": "Spin duration in seconds."},
+                },
+                ["g_force", "duration_s"],
+            ),
+        },
+    },
+
+    
+    # ══════════════════════════════════════════════════════════════════════
+    # Thermocycler operations (PLR: Thermocycler)
+    # ══════════════════════════════════════════════════════════════════════
+
+    {
+        "type": "function",
+        "function": {
+            "name": "tc_close_lid",
+            "description": (
+                "Close the thermocycler lid. Must be closed before heating.\n\n"
+                "PLR: Thermocycler.close_lid()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tc_open_lid",
+            "description": (
+                "Open the thermocycler lid to remove the plate.\n\n"
+                "PLR: Thermocycler.open_lid()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tc_set_lid_temp",
+            "description": (
+                "Set the lid heater temperature (typically 105C to prevent "
+                "condensation).\n\n"
+                "PLR: Thermocycler.set_lid_temperature(temperature)."
+            ),
+            "parameters": _schema(
+                {"temperature": {"type": "number", "description": "Lid temperature in Celsius."}},
+                ["temperature"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tc_set_block_temp",
+            "description": (
+                "Set the block temperature for the PCR step.\n\n"
+                "PLR: Thermocycler.set_block_temperature(temperature)."
+            ),
+            "parameters": _schema(
+                {"temperature": {"type": "number", "description": "Block temperature in Celsius."}},
+                ["temperature"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tc_get_block_temp",
+            "description": (
+                "Read the current block temperature.\n\n"
+                "PLR: Thermocycler.get_block_current_temperature()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tc_deactivate",
+            "description": (
+                "Deactivate the thermocycler (block + lid heating off).\n\n"
+                "PLR: Thermocycler.deactivate_block() + deactivate_lid()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+
+    # ══════════════════════════════════════════════════════════════════════
+    # HeaterShaker operations (PLR: HeaterShaker)
+    # ══════════════════════════════════════════════════════════════════════
+
+    {
+        "type": "function",
+        "function": {
+            "name": "hs_set_temperature",
+            "description": (
+                "Set the heater/shaker target temperature in Celsius.\n\n"
+                "PLR: HeaterShaker.set_temperature(temperature)."
+            ),
+            "parameters": _schema(
+                {"temperature": {"type": "number", "description": "Target temperature in C."}},
+                ["temperature"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "hs_get_temperature",
+            "description": (
+                "Read the current temperature from the heater/shaker.\n\n"
+                "PLR: HeaterShaker.get_temperature()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "hs_shake",
+            "description": (
+                "Start shaking at the specified RPM.  Optional duration in seconds.\n\n"
+                "PLR: HeaterShaker.shake(speed, duration)."
+            ),
+            "parameters": _schema(
+                {
+                    "speed_rpm": {"type": "number", "exclusiveMinimum": 0, "description": "Shaking speed in RPM."},
+                    "duration_s": {"type": "number", "exclusiveMinimum": 0, "description": "Optional duration in seconds."},
+                },
+                ["speed_rpm"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "hs_stop_shaking",
+            "description": (
+                "Stop the shaking motion.\n\n"
+                "PLR: HeaterShaker.stop_shaking()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "hs_deactivate",
+            "description": (
+                "Deactivate both heating and shaking - returns to ambient.\n\n"
+                "PLR: HeaterShaker.deactivate()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+
+    # ══════════════════════════════════════════════════════════════════════
     # Scale operations (PLR: Scale)
     # ══════════════════════════════════════════════════════════════════════
 
@@ -1016,6 +1257,81 @@ def _plate_reader_close(ls: LabState, _a: dict) -> dict:
     return services.plate_reader_close(ls)
 
 
+def _centrifuge_open_door(ls: LabState, _a: dict) -> dict:
+    return services.centrifuge_open_door(ls)
+
+
+def _centrifuge_close_door(ls: LabState, _a: dict) -> dict:
+    return services.centrifuge_close_door(ls)
+
+
+def _centrifuge_lock_door(ls: LabState, _a: dict) -> dict:
+    return services.centrifuge_lock_door(ls)
+
+
+def _centrifuge_go_to_bucket1(ls: LabState, _a: dict) -> dict:
+    return services.centrifuge_go_to_bucket1(ls)
+
+
+def _centrifuge_go_to_bucket2(ls: LabState, _a: dict) -> dict:
+    return services.centrifuge_go_to_bucket2(ls)
+
+
+def _centrifuge_lock_bucket(ls: LabState, _a: dict) -> dict:
+    return services.centrifuge_lock_bucket(ls)
+
+
+def _centrifuge_spin(ls: LabState, a: dict) -> dict:
+    return services.centrifuge_spin(ls, g_force=float(a["g_force"]),
+                                    duration_s=float(a["duration_s"]))
+
+
+
+def _tc_close_lid(ls: LabState, _a: dict) -> dict:
+    return services.tc_close_lid(ls)
+
+
+def _tc_open_lid(ls: LabState, _a: dict) -> dict:
+    return services.tc_open_lid(ls)
+
+
+def _tc_set_lid_temp(ls: LabState, a: dict) -> dict:
+    return services.tc_set_lid_temp(ls, temperature=float(a["temperature"]))
+
+
+def _tc_set_block_temp(ls: LabState, a: dict) -> dict:
+    return services.tc_set_block_temp(ls, temperature=float(a["temperature"]))
+
+
+def _tc_get_block_temp(ls: LabState, _a: dict) -> dict:
+    return services.tc_get_block_temp(ls)
+
+
+def _tc_deactivate(ls: LabState, _a: dict) -> dict:
+    return services.tc_deactivate(ls)
+
+
+def _hs_set_temperature(ls: LabState, a: dict) -> dict:
+    return services.hs_set_temperature(ls, temperature=float(a["temperature"]))
+
+
+def _hs_get_temperature(ls: LabState, _a: dict) -> dict:
+    return services.hs_get_temperature(ls)
+
+
+def _hs_shake(ls: LabState, a: dict) -> dict:
+    return services.hs_shake(ls, speed_rpm=float(a["speed_rpm"]),
+                             duration_s=float(a["duration_s"]) if "duration_s" in a else None)
+
+
+def _hs_stop_shaking(ls: LabState, _a: dict) -> dict:
+    return services.hs_stop_shaking(ls)
+
+
+def _hs_deactivate(ls: LabState, _a: dict) -> dict:
+    return services.hs_deactivate(ls)
+
+
 def _scale_get_weight(ls: LabState, _a: dict) -> dict:
     return services.scale_get_weight(ls)
 
@@ -1091,6 +1407,27 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     # Convenience
     "transfer": _transfer,
     "stamp": _stamp,
+    # Centrifuge
+    "centrifuge_open_door": _centrifuge_open_door,
+    "centrifuge_close_door": _centrifuge_close_door,
+    "centrifuge_lock_door": _centrifuge_lock_door,
+    "centrifuge_go_to_bucket1": _centrifuge_go_to_bucket1,
+    "centrifuge_go_to_bucket2": _centrifuge_go_to_bucket2,
+    "centrifuge_lock_bucket": _centrifuge_lock_bucket,
+    "centrifuge_spin": _centrifuge_spin,
+    # Thermocycler
+    "tc_close_lid": _tc_close_lid,
+    "tc_open_lid": _tc_open_lid,
+    "tc_set_lid_temp": _tc_set_lid_temp,
+    "tc_set_block_temp": _tc_set_block_temp,
+    "tc_get_block_temp": _tc_get_block_temp,
+    "tc_deactivate": _tc_deactivate,
+    # HeaterShaker
+    "hs_set_temperature": _hs_set_temperature,
+    "hs_get_temperature": _hs_get_temperature,
+    "hs_shake": _hs_shake,
+    "hs_stop_shaking": _hs_stop_shaking,
+    "hs_deactivate": _hs_deactivate,
     # Scale
     "scale_get_weight": _scale_get_weight,
     "scale_tare": _scale_tare,

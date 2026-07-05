@@ -43,6 +43,9 @@ class LabState:
     plate_reader: Any = None         # PlateReader (dry-run backend)
     pump: Any = None                 # Pump (dry-run backend, optional)
     scale: Any = None                # Scale (dry-run backend, optional)
+    centrifuge: Any = None           # Centrifuge (dry-run backend, optional)
+    heater_shaker: Any = None        # HeaterShaker (dry-run backend, optional)
+    thermocycler: Any = None         # Thermocycler (dry-run backend, optional)
     plate: Any = None                # assay plate
     source_plate: Any = None         # source plate
     tip_rack: Any = None             # tip rack (96)
@@ -239,6 +242,48 @@ def create_plate_reader(name: str = "plate_reader") -> Any:
     )
 
 
+def create_thermocycler(name: str = "thermocycler") -> Any:
+    """Create a dry-run thermocycler (PCR machine)."""
+    from pylabrobot.thermocycling import Thermocycler
+    from pylabrobot.resources import Coordinate
+    from api_gym.worlds.pylabrobot_star_v0.backend import ThermocyclerDryRunBackend
+
+    backend = ThermocyclerDryRunBackend()
+    return Thermocycler(
+        name=name, size_x=300, size_y=400, size_z=300,
+        backend=backend, child_location=Coordinate.zero(),
+    )
+
+
+def create_heater_shaker(name: str = "heater_shaker") -> Any:
+    """Create a dry-run heater/shaker (temperature + shaking control)."""
+    from pylabrobot.heating_shaking import HeaterShaker
+    from pylabrobot.resources import Coordinate
+    from api_gym.worlds.pylabrobot_star_v0.backend import HeaterShakerDryRunBackend
+
+    backend = HeaterShakerDryRunBackend()
+    return HeaterShaker(
+        name=name, size_x=200, size_y=300, size_z=200,
+        backend=backend, child_location=Coordinate.zero(),
+    )
+
+
+def create_centrifuge(name: str = "centrifuge") -> Any:
+    """Create a dry-run centrifuge with two buckets.
+
+    Uses ``CentrifugeDryRunBackend``.  The centrifuge has bucket1 and
+    bucket2 for balanced loading.
+    """
+    from pylabrobot.centrifuge import Centrifuge
+    from api_gym.worlds.pylabrobot_star_v0.backend import CentrifugeDryRunBackend
+
+    backend = CentrifugeDryRunBackend()
+    return Centrifuge(
+        backend=backend, name=name,
+        size_x=500, size_y=600, size_z=400,
+    )
+
+
 def create_scale(name: str = "analytical_balance", initial_weight: float = 0.0) -> Any:
     """Create a dry-run analytical balance.
 
@@ -271,7 +316,7 @@ def create_pump(name: str = "reagent_pump", calibration: Any = None) -> Any:
     if calibration is not None:
         cal = PumpCalibration(
             calibration_mode=calibration.get("mode", "duration"),
-            calibration_data=calibration.get("data", [1.0]),
+            calibration=calibration.get("data", [1.0]),
         )
     return Pump(backend=backend, calibration=cal)
 
