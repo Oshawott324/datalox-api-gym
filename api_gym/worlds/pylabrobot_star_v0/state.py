@@ -41,6 +41,7 @@ class LabState:
     deck: Any = None
     liquid_handler: Any = None       # LiquidHandler with STAR backend
     plate_reader: Any = None         # PlateReader (dry-run backend)
+    pump: Any = None                 # Pump (dry-run backend, optional)
     plate: Any = None                # assay plate
     source_plate: Any = None         # source plate
     tip_rack: Any = None             # tip rack (96)
@@ -235,6 +236,26 @@ def create_plate_reader(name: str = "plate_reader") -> Any:
         size_x=400, size_y=300, size_z=200,
         backend=backend,
     )
+
+
+def create_pump(name: str = "reagent_pump", calibration: Any = None) -> Any:
+    """Create a dry-run peristaltic pump.
+
+    Uses ``PumpDryRunBackend`` so all operations succeed silently.
+    If ``calibration`` is provided, ``pump_volume`` is available;
+    otherwise only ``run_for_duration`` and ``run_revolutions`` work.
+    """
+    from pylabrobot.pumps import Pump, PumpCalibration
+    from api_gym.worlds.pylabrobot_star_v0.backend import PumpDryRunBackend
+
+    backend = PumpDryRunBackend()
+    cal = None
+    if calibration is not None:
+        cal = PumpCalibration(
+            calibration_mode=calibration.get("mode", "duration"),
+            calibration_data=calibration.get("data", [1.0]),
+        )
+    return Pump(backend=backend, calibration=cal)
 
 
 def setup_star_deck(lh: Any, plate_carrier: Any, tip_carrier: Any,

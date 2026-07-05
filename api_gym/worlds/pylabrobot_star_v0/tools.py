@@ -482,6 +482,73 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
     },
 
     # ══════════════════════════════════════════════════════════════════════
+    # Pump operations (PLR: Pump)
+    # ══════════════════════════════════════════════════════════════════════
+
+    {
+        "type": "function",
+        "function": {
+            "name": "pump_run_duration",
+            "description": (
+                "Run the peristaltic pump at a fixed speed for a specified "
+                "duration (in seconds).  Use this to fill troughs, dispense "
+                "reagent, or flush lines.\n\n"
+                "PLR: Pump.run_for_duration(speed, duration)."
+            ),
+            "parameters": _schema(
+                {
+                    "speed_rpm": {
+                        "type": "number", "exclusiveMinimum": 0,
+                        "description": "Pump speed in RPM.",
+                    },
+                    "duration_s": {
+                        "type": "number", "exclusiveMinimum": 0,
+                        "description": "Duration in seconds.",
+                    },
+                },
+                ["speed_rpm", "duration_s"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "pump_run_volume",
+            "description": (
+                "Pump a calibrated volume.  Requires the pump to be "
+                "pre-calibrated (check workspace files for calibration data).\n\n"
+                "PLR: Pump.pump_volume(speed, volume)."
+            ),
+            "parameters": _schema(
+                {
+                    "speed_rpm": {
+                        "type": "number", "exclusiveMinimum": 0,
+                        "description": "Pump speed in RPM.",
+                    },
+                    "volume_ul": {
+                        "type": "number", "exclusiveMinimum": 0,
+                        "description": "Volume in microlitres.",
+                    },
+                },
+                ["speed_rpm", "volume_ul"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "pump_halt",
+            "description": (
+                "Emergency-stop the pump immediately.  Use when a pump "
+                "operation needs to be aborted (e.g. wrong speed, wrong "
+                "reagent selected).\n\n"
+                "PLR: Pump.halt()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+
+    # ══════════════════════════════════════════════════════════════════════
     # Plate reading (PLR: PlateReader)
     # ══════════════════════════════════════════════════════════════════════
 
@@ -804,6 +871,26 @@ def _read_absorbance(ls: LabState, a: dict) -> dict:
     )
 
 
+def _pump_run_duration(ls: LabState, a: dict) -> dict:
+    return services.pump_run_for_duration(
+        ls,
+        speed_rpm=float(a["speed_rpm"]),
+        duration_s=float(a["duration_s"]),
+    )
+
+
+def _pump_run_volume(ls: LabState, a: dict) -> dict:
+    return services.pump_run_volume(
+        ls,
+        speed_rpm=float(a["speed_rpm"]),
+        volume_ul=float(a["volume_ul"]),
+    )
+
+
+def _pump_halt(ls: LabState, _a: dict) -> dict:
+    return services.pump_halt(ls)
+
+
 def _add_workflow_note(ls: LabState, a: dict) -> dict:
     return services.add_workflow_note(ls, note=str(a["note"]))
 
@@ -847,6 +934,10 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     # Convenience
     "transfer": _transfer,
     "stamp": _stamp,
+    # Pump
+    "pump_run_duration": _pump_run_duration,
+    "pump_run_volume": _pump_run_volume,
+    "pump_halt": _pump_halt,
     # Benchmark-specific
     "list_workspace_files": _list_workspace_files,
     "get_workspace_file": _get_workspace_file,

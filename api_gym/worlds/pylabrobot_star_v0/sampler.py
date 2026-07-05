@@ -22,6 +22,7 @@ from api_gym.worlds.pylabrobot_star_v0.state import (
     create_star_deck, create_liquid_handler,
     create_plate, create_tip_rack, create_trough,
     create_plate_carrier, create_tip_carrier, create_plate_reader,
+    create_pump,
     setup_star_deck,
     register_state, get_well, set_well_volume,
     _run_async,
@@ -109,6 +110,13 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
             trough = create_trough("reagent_trough")
             break
 
+    # ── Optional pump (PLR Pump with dry-run backend) ──────────────────
+    pump = None
+    pump_use = spec.expected.get("use_pump", False)
+    if pump_use:
+        pump_cal = spec.expected.get("pump_calibration", None)
+        pump = create_pump("reagent_pump", calibration=pump_cal)
+
     setup_star_deck(lh, plate_carrier, tip_carrier,
                     assay_plate, source_plate, tip_rack, trough)
 
@@ -146,7 +154,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     lab_state = LabState(
         deck=deck, liquid_handler=lh, plate_reader=plate_reader,
         plate=assay_plate, source_plate=source_plate, tip_rack=tip_rack,
-        trough=trough,
+        trough=trough, pump=pump,
         setup_done=True,
         well_metadata=spec.well_metadata,
         has_96_head=spec.expected.get("use_96_head", False),
@@ -160,6 +168,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
             "has_96_head": spec.expected.get("use_96_head", False),
             "has_iswap": spec.expected.get("use_iswap", False),
             "trough_name": trough.name if trough else None,
+            "pump_name": "reagent_pump" if pump else None,
         },
     )
 
@@ -1084,6 +1093,132 @@ PLATE_STAMP_QC = TaskSpec(
         "readout_wells": ["assay_plate.A1", "assay_plate.H1",
                           "assay_plate.A12", "assay_plate.H12"],
         "wavelength_nm": 600, "expected_tips_used": 96,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# ── NEW: Pump scenarios (PLR: Pump) ────────────────────────────────────
+
+# Pump fill trough — pump_run_duration + liquid handler
+PUMP_FILL_TROUGH_QC = TaskSpec(
+    scenario="pump_fill_trough_qc",
+    objective="Use the peristaltic pump to fill a reagent trough, then transfer to plate.",
+    prompt=(
+        "A STAR liquid handler with an attached peristaltic pump is set up "
+        "with an empty trough named 'reagent_trough'. Your task:\n"
+        "1. Use pump_run_duration at 500 RPM for 15 seconds to fill the "
+        "reagent trough with buffer from the reservoir.\n"
+        "2. Inspect the trough using get_labware_state('reagent_trough') "
+        "(volume should be non-zero after filling).\n"
+        "3. Pick up a tip and aspirate 50 uL from the trough — use "
+        "source='reagent_trough' (troughs are single containers, no well ID).\n"
+        "4. Dispense into assay_plate.B1.\n"
+        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+    ),
+    initial_volumes={"trough.reagent_trough": 0.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_pump": True, "pump_operation": "run_for_duration",
+        "pump_speed_rpm": 500, "pump_duration_s": 15,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# Pump calibrated dispense — pump_run_volume
+PUMP_CALIBRATED_DISPENSE_QC = TaskSpec(
+    scenario="pump_calibrated_dispense_qc",
+    objective="Use a calibrated pump to dispense a precise volume into the trough.",
+    prompt=(
+        "A calibrated peristaltic pump is attached. You MUST consult workspace "
+        "files before operating the pump.\n"
+        "1. Use get_workspace_file to read 'pump_calibration.json' — it contains "
+        "the calibration mode and data.\n"
+        "2. Use pump_run_volume to dispense exactly 5000 uL of buffer into "
+        "the reagent trough at 300 RPM.\n"
+        "3. Inspect the trough to confirm volume.\n"
+        "4. Pick up a tip, aspirate 50 uL from 'reagent_trough' (troughs are "
+        "single containers, no well ID needed), dispense into assay_plate.B1.\n"
+        "5. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+    ),
+    initial_volumes={"trough.reagent_trough": 0.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_pump": True, "pump_operation": "pump_volume",
+        "pump_calibration": {"mode": "duration", "data": [1000.0]},
+        "pump_speed_rpm": 300, "pump_volume_ul": 5000,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "require_calibration_check": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    workspace_files={
+        "pump_calibration.json": (
+            '{"pump_name": "reagent_pump", "calibration_mode": "duration", '
+            '"calibration_factor_ul_per_s": 1000.0, '
+            '"notes": "Pump dispenses 1000 uL per second at reference speed. '
+            'Use pump_run_volume for calibrated dispensing."}'
+        ),
+    },
+)
+
+
+# Pump halt recovery — pump_halt + retry
+PUMP_HALT_RECOVERY_QC = TaskSpec(
+    scenario="pump_halt_recovery_qc",
+    objective="Recover from a pump error by halting and restarting.",
+    prompt=(
+        "The pump is running but at the WRONG speed (800 RPM — should be 500). "
+        "The pump label says max safe speed is 600 RPM. You must:\n"
+        "1. Use pump_halt to stop the pump immediately.\n"
+        "2. Restart using pump_run_duration at the CORRECT speed of 500 RPM "
+        "for 10 seconds.\n"
+        "3. Transfer 50 uL from the trough to assay_plate.B1.\n"
+        "4. Read OD600 for B1 at 600 nm and submit. Control band [0.75, 0.9]."
+    ),
+    initial_volumes={"trough.reagent_trough": 50000.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_pump": True, "require_halt": True,
+        "pump_speed_rpm": 500, "pump_duration_s": 10,
+        "target_well": "assay_plate.B1", "transfer_volume_ul": 50,
+        "wavelength_nm": 600, "control_band": {"min": 0.75, "max": 0.9},
+    },
+)
+
+
+# Pump multi-step — combined pump + liquid handler workflow
+PUMP_MULTI_STEP_QC = TaskSpec(
+    scenario="pump_multi_step_qc",
+    objective="Complete a multi-step protocol: pump fill, transfer, pump flush.",
+    prompt=(
+        "A pump is connected to a buffer reservoir. Protocol:\n"
+        "1. Use pump_run_duration at 500 RPM for 10s to prime the line into "
+        "the reagent trough.\n"
+        "2. Transfer 50 uL from the trough to assay_plate wells B1, B2, B3 "
+        "(fresh tip each time).\n"
+        "3. Use pump_run_duration at 500 RPM for 5s to flush remaining buffer "
+        "into the trough (post-transfer line flush).\n"
+        "4. Read OD600 for B1-B3 at 600 nm. Submit. Control band [0.75, 0.9]."
+    ),
+    initial_volumes={"trough.reagent_trough": 0.0},
+    well_metadata={
+        "assay_plate": {
+            "B1": {"contents": "empty"}, "B2": {"contents": "empty"},
+            "B3": {"contents": "empty"},
+        },
+    },
+    expected={
+        "use_pump": True, "pump_operations": 2,
+        "target_wells": ["assay_plate.B1", "assay_plate.B2", "assay_plate.B3"],
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
         "control_band": {"min": 0.75, "max": 0.9},
     },
 )
