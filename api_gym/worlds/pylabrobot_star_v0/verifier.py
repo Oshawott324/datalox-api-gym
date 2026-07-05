@@ -89,6 +89,18 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "luminescence_qc": _verify_luminescence_qc,
         "reader_door_qc": _verify_reader_door_qc,
         "multi_mode_qc": _verify_multi_mode_qc,
+        # Centrifuge scenarios
+        "spin_down_qc": _verify_spin_down_qc,
+        "balanced_load_qc": _verify_balanced_load_qc,
+        "door_safety_qc": _verify_door_safety_qc,
+        # HeaterShaker scenarios
+        "heat_incubate_qc": _verify_heat_incubate_qc,
+        "shake_mix_qc": _verify_shake_mix_qc,
+        "heat_shake_combo_qc": _verify_heat_shake_combo_qc,
+        # Thermocycler scenarios
+        "pcr_heat_qc": _verify_pcr_heat_qc,
+        "pcr_lid_safety_qc": _verify_pcr_lid_safety_qc,
+        "pcr_cool_down_qc": _verify_pcr_cool_down_qc,
         # Scale scenarios
         "gravimetric_qc": _verify_gravimetric_qc,
         "tare_weigh_qc": _verify_tare_weigh_qc,
@@ -931,82 +943,158 @@ def _verify_mounted_tips_query_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
 
 def _verify_pump_fill_trough_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
-    """Pump fill trough: pump must run before liquid transfer."""
+    """Pump fill trough: pump → inspect → transfer → read, with noise awareness."""
     checks = []
     events = ls.events
+    attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + pump (dry-run).")
 
-    # Check pump ran
+    # Terminal: pump operated
     pump_events = [e for e in events if e.get("event_type", "").startswith("pump.")]
     _add_terminal(checks, len(pump_events) >= 1,
                   "pump_operated", f"{len(pump_events)} pump event(s)." if pump_events
                   else "Pump was never used.")
 
-    # Check transfer happened after pump
+    # Terminal: trough inspection after pump
+    trough_inspections = [e for e in events
+                          if e.get("event_type") == "inspection.labware"
+                          and e.get("object_id") == "reagent_trough"]
+    _add_terminal(checks, len(trough_inspections) >= 1,
+                  "trough_inspected",
+                  "Trough inspected after fill." if trough_inspections
+                  else "Trough never inspected after pump.")
+
+    # Terminal: transfer
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
-    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    tx_ok = len(disp) >= 1
+    _add_terminal(checks, tx_ok, "transfer", f"{len(disp)} transfer(s).")
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
 
     # Temporal: pump before transfer
-    if pump_events and disp:
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if pump_events and aspirate_events:
         p_t = pump_events[0].get("clock_time", 0)
-        a_t = events[[e.get("event_type") for e in events].index("transfer.aspirated")
-                     if "transfer.aspirated" in [e.get("event_type") for e in events] else 0].get("clock_time", 0) if "transfer.aspirated" in [e.get("event_type") for e in events] else 0
-        _add_temporal(checks, p_t <= a_t if a_t else True,
+        a_t = aspirate_events[0].get("clock_time", 0)
+        _add_temporal(checks, p_t <= a_t,
                       "pump_before_transfer",
                       f"Pump@{p_t:.1f}s before aspirate@{a_t:.1f}s.")
-    return checks, {}
+
+    # Temporal: inspect trough after pump (freshness check)
+    if pump_events and trough_inspections:
+        p_t = pump_events[0].get("clock_time", 0)
+        i_t = trough_inspections[0].get("clock_time", 0)
+        _add_temporal(checks, p_t <= i_t,
+                      "inspect_after_pump",
+                      f"Inspection@{i_t:.1f}s after pump@{p_t:.1f}s.")
+
+    # Temporal: transfer before readout
+    if aspirate_events and ls.readouts:
+        a_t = aspirate_events[0].get("clock_time", 0)
+        r_t = [e for e in events if e.get("event_type") == "readout.created"]
+        if r_t:
+            r_t0 = r_t[0].get("clock_time", 0)
+            _add_temporal(checks, a_t <= r_t0,
+                          "transfer_before_readout",
+                          f"Transfer@{a_t:.1f}s before readout@{r_t0:.1f}s.")
+
+    # Resource: trough volume after pump should be > min threshold
+    if ls.trough is not None and hasattr(ls.trough, "tracker") and ls.trough.tracker:
+        trough_vol = ls.trough.tracker.get_used_volume()
+        min_vol = exp.get("min_trough_volume_after_pump", 100)
+        _add_terminal(checks, trough_vol >= min_vol,
+                      "trough_filled",
+                      f"Trough has {trough_vol:.0f} uL (min {min_vol})."
+                      if trough_vol >= min_vol
+                      else f"Trough only {trough_vol:.0f} uL — insufficient fill.")
+
+    # Failure attribution
+    if not tx_ok and len(disp) == 0:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent transferred nothing after pump fill."}
+    elif not pump_events:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent never used the pump."}
+
+    return checks, attrs
 
 
 def _verify_pump_calibrated_dispense_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
-    """Calibrated pump dispense with workspace file lookup."""
+    """Calibrated pump: must read calibration file, use pump_volume, verify."""
     checks = []
     events = ls.events
+    attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + calibrated pump.")
 
-    # Check calibration file was read
+    # Check calibration file was read BEFORE pump operation
     cal_read = any("pump_calibration" in e.get("object_id", "") for e in events
                    if e.get("event_type") == "workspace.read")
     _add_temporal(checks, cal_read, "calibration_checked",
                   "Calibration file consulted." if cal_read
                   else "Calibration file NOT read.")
 
-    # Check pump_volume used (not just duration)
+    # Calibration must be read BEFORE pump_volume
     vol_events = [e for e in events if e.get("event_type") == "pump.run_volume"]
+    if cal_read and vol_events:
+        cal_ts = [e for e in events if e.get("event_type") == "workspace.read"
+                  and "pump_calibration" in e.get("object_id", "")][0].get("clock_time", 0)
+        pump_ts = vol_events[0].get("clock_time", 0)
+        _add_temporal(checks, cal_ts <= pump_ts,
+                      "calibration_before_pump",
+                      f"Calibration@{cal_ts:.1f}s before pump@{pump_ts:.1f}s.")
+
+    # Pump volume used
     _add_terminal(checks, len(vol_events) >= 1,
                   "pump_volume_used",
                   f"pump_run_volume called." if vol_events
                   else "pump_run_volume NOT used.")
 
+    # Transfer chain
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
-    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    tx_ok = len(disp) >= 1
+    _add_terminal(checks, tx_ok, "transfer", f"{len(disp)} transfer(s).")
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
-    return checks, {}
+
+    # Trough volume check
+    if ls.trough is not None and hasattr(ls.trough, "tracker") and ls.trough.tracker:
+        trough_vol = ls.trough.tracker.get_used_volume()
+        min_vol = exp.get("min_trough_volume_after_pump", 1000)
+        _add_terminal(checks, trough_vol >= min_vol,
+                      "trough_filled",
+                      f"Trough has {trough_vol:.0f} uL." if trough_vol >= min_vol
+                      else f"Trough only {trough_vol:.0f} uL — calibration may be off.")
+
+    # Attribution
+    if not cal_read:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent skipped calibration file — pump volume may be inaccurate."}
+    elif not vol_events:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent used wrong pump method (should use pump_run_volume)."}
+
+    return checks, attrs
 
 
 def _verify_pump_halt_recovery_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
-    """Pump halt + recovery: agent must halt then restart correctly."""
+    """Pump halt recovery: halt → restart with correct speed."""
     checks = []
     events = ls.events
+    attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + pump halt/recovery.")
 
-    # Must have halt event
     halts = [e for e in events if e.get("event_type") == "pump.halted"]
+    run_events = [e for e in events if e.get("event_type") == "pump.run_duration"]
+
     _add_terminal(checks, len(halts) >= 1,
                   "pump_halted",
                   "Pump halted." if halts else "Pump was NOT halted.")
-
-    # Must have at least 2 pump events (halt + restart)
-    pump_events = [e for e in events if e.get("event_type", "").startswith("pump.")]
-    _add_terminal(checks, len(pump_events) >= 2,
+    _add_terminal(checks, len(run_events) >= 1,
                   "pump_restarted",
-                  f"{len(pump_events)} pump event(s)." if len(pump_events) >= 2
-                  else f"Only {len(pump_events)} pump event(s) — expected halt + restart.")
+                  f"Pump restarted ({len(run_events)} run event(s))."
+                  if run_events else "Pump never restarted after halt.")
 
     # Temporal: halt before restart
-    run_events = [e for e in events if e.get("event_type") == "pump.run_duration"]
     if halts and run_events:
         h_t = halts[0].get("clock_time", 0)
         r_t = run_events[0].get("clock_time", 0)
@@ -1014,47 +1102,106 @@ def _verify_pump_halt_recovery_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
                       "halt_before_restart",
                       f"Halt@{h_t:.1f}s before restart@{r_t:.1f}s.")
 
+    # Transfer
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
-    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    tx_ok = len(disp) >= 1
+    _add_terminal(checks, tx_ok, "transfer", f"{len(disp)} transfer(s).")
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
-    return checks, {}
+
+    # Transfer must happen after restart
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if run_events and aspirate_events:
+        r_t = run_events[0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        _add_temporal(checks, r_t <= a_t,
+                      "restart_before_transfer",
+                      f"Restart@{r_t:.1f}s before transfer@{a_t:.1f}s.")
+
+    # Attribution
+    if not halts:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Agent did not halt the pump — recovery failed."}
+    elif not run_events:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Agent halted but never restarted — incomplete recovery."}
+    elif halts and run_events and tx_ok:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly halted and restarted — recovery successful."}
+
+    return checks, attrs
 
 
 def _verify_pump_multi_step_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
-    """Multi-step pump + liquid handler workflow."""
+    """Multi-step pump: prime → transfers → flush, with strict ordering."""
     checks = []
     events = ls.events
+    attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + pump multi-step.")
 
-    # Check 2 pump operations (prime + flush)
     pump_runs = [e for e in events if e.get("event_type") == "pump.run_duration"]
     _add_terminal(checks, len(pump_runs) >= exp.get("pump_operations", 2),
                   "pump_operations",
                   f"{len(pump_runs)} pump runs." if len(pump_runs) >= 2
                   else f"Only {len(pump_runs)} pump run(s).")
 
-    # Check transfers between pump runs
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
-    _add_terminal(checks, len(disp) >= 3, "transfers",
-                  f"{len(disp)} transfers." if len(disp) >= 3
+    tx_ok = len(disp) >= 3
+    _add_terminal(checks, tx_ok, "transfers",
+                  f"{len(disp)} transfers." if tx_ok
                   else f"Only {len(disp)}/3 transfers.")
-
-    # Temporal: prime → transfers → flush
-    if len(pump_runs) >= 2 and disp:
-        prime_t = pump_runs[0].get("clock_time", 0)
-        flush_t = pump_runs[-1].get("clock_time", 0)
-        transfer_ts = [e.get("clock_time", 0) for e in events
-                       if e.get("event_type") == "transfer.dispensed"]
-        if transfer_ts:
-            _add_temporal(checks, prime_t <= transfer_ts[0],
-                          "prime_before_transfer", "Prime before first transfer.")
-            _add_temporal(checks, transfer_ts[-1] <= flush_t,
-                          "flush_after_transfer", "Flush after last transfer.")
 
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
-    return checks, {}
+
+    # Trough inspection between pump runs
+    trough_inspects = [e for e in events
+                       if e.get("event_type") == "inspection.labware"
+                       and e.get("object_id") == "reagent_trough"]
+    _add_terminal(checks, len(trough_inspects) >= 1,
+                  "trough_inspected",
+                  "Trough inspected." if trough_inspects
+                  else "Trough never inspected during workflow.")
+
+    # Temporal sequence: prime → transfers → flush
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    dispense_events = [e for e in events if e.get("event_type") == "transfer.dispensed"]
+    if len(pump_runs) >= 2 and aspirate_events and dispense_events:
+        prime_t = pump_runs[0].get("clock_time", 0)
+        flush_t = pump_runs[-1].get("clock_time", 0)
+        first_asp = aspirate_events[0].get("clock_time", 0)
+        last_disp = dispense_events[-1].get("clock_time", 0)
+
+        _add_temporal(checks, prime_t <= first_asp,
+                      "prime_before_transfers",
+                      f"Prime@{prime_t:.1f}s → first aspirate@{first_asp:.1f}s.")
+        _add_temporal(checks, last_disp <= flush_t,
+                      "flush_after_transfers",
+                      f"Last dispense@{last_disp:.1f}s → flush@{flush_t:.1f}s.")
+
+        # Also check the full chain
+        _add_temporal(checks, prime_t <= first_asp <= last_disp <= flush_t,
+                      "prime_transfer_flush_chain",
+                      f"Prime@{prime_t:.0f}s→transfers→flush@{flush_t:.0f}s.")
+
+    # Resource: trough should have volume after prime
+    if ls.trough is not None and hasattr(ls.trough, "tracker") and ls.trough.tracker:
+        trough_vol = ls.trough.tracker.get_used_volume()
+        min_vol = exp.get("min_trough_volume_after_prime", 50)
+        _add_terminal(checks, trough_vol >= min_vol,
+                      "trough_has_volume",
+                      f"Trough {trough_vol:.0f} uL." if trough_vol >= min_vol
+                      else f"Trough empty: {trough_vol:.0f} uL.")
+
+    # Attribution
+    if len(pump_runs) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": f"Only {len(pump_runs)} pump operations (need prime + flush)."}
+    elif not tx_ok:
+        attrs = {"label": "agent_error",
+                 "detail": f"Only {len(disp)}/3 transfers completed."}
+
+    return checks, attrs
 
 
 # ── PlateReader extended verifiers ────────────────────────────────────
@@ -1144,12 +1291,12 @@ def _verify_multi_mode_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
 
 def _verify_gravimetric_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
-    """Gravimetric QC: zero → tare → weigh before → transfer → weigh after."""
+    """Gravimetric QC: zero → tare → weigh_before → transfer → weigh_after."""
     checks = []
     events = ls.events
+    attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + analytical balance.")
 
-    # Check scale operations
     zeroed = any(e.get("event_type") == "scale.zeroed" for e in events)
     tared = any(e.get("event_type") == "scale.tared" for e in events)
     weigh_events = [e for e in events if e.get("event_type") == "scale.weight_read"]
@@ -1157,37 +1304,121 @@ def _verify_gravimetric_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     _add_terminal(checks, zeroed, "scale_zeroed", "Scale zeroed." if zeroed else "Never zeroed.")
     _add_terminal(checks, tared, "scale_tared", "Scale tared." if tared else "Never tared.")
     _add_terminal(checks, len(weigh_events) >= 2,
-                  "multiple_weighs",
-                  f"{len(weigh_events)} weigh events (need before + after).")
+                  "weigh_before_and_after",
+                  f"{len(weigh_events)} weigh events (need before + after)."
+                  if len(weigh_events) >= 2
+                  else f"Only {len(weigh_events)} weigh(s) — missing before/after pair.")
 
-    # Temporal: zero → tare → weigh(before) → transfer → weigh(after)
-    if zeroed and tared and len(weigh_events) >= 2:
+    # Transfer
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    tx_ok = len(disp) >= 1
+    _add_terminal(checks, tx_ok, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal: zero → tare → weigh1 → transfer → weigh2
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if zeroed and tared:
         z_t = [e for e in events if e.get("event_type") == "scale.zeroed"][0].get("clock_time", 0)
         ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
         _add_temporal(checks, z_t <= ta_t, "zero_before_tare",
                       f"Zero@{z_t:.0f}s before tare@{ta_t:.0f}s.")
 
-    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
-    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
-    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
-    return checks, {}
+    if len(weigh_events) >= 2 and aspirate_events:
+        w1_t = weigh_events[0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        w2_t = weigh_events[-1].get("clock_time", 0)
+        _add_temporal(checks, w1_t <= a_t, "weigh_before_transfer",
+                      f"Weigh@{w1_t:.0f}s before transfer@{a_t:.0f}s.")
+        _add_temporal(checks, a_t <= w2_t, "transfer_before_weigh",
+                      f"Transfer@{a_t:.0f}s before weigh@{w2_t:.0f}s.")
+        # Full chain
+        _add_temporal(checks, w1_t <= a_t <= w2_t,
+                      "weigh_transfer_weigh_chain",
+                      f"Weigh1@{w1_t:.0f}→transfer@{a_t:.0f}→weigh2@{w2_t:.0f}.")
+
+    # Attribution
+    if not zeroed and not tared:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent neither zeroed nor tared — cannot verify weight."}
+    elif len(weigh_events) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": "Missing before/after weigh — gravimetric verification incomplete."}
+
+    return checks, attrs
 
 
 def _verify_tare_weigh_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
-    """Tare before weigh: agent must tare to get net weight."""
+    """Tare before weigh: agent must tare to get net weight, then transfer."""
     checks = []
     events = ls.events
+    attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + scale tare.")
 
     tared = any(e.get("event_type") == "scale.tared" for e in events)
-    _add_terminal(checks, tared, "scale_tared",
-                  "Scale tared." if tared else "Never tared — can't get net weight.")
-
     weigh_events = [e for e in events if e.get("event_type") == "scale.weight_read"]
-    _add_terminal(checks, len(weigh_events) >= 1,
-                  "scale_read", f"{len(weigh_events)} weight reading(s).")
 
-    # Tare must happen before first weigh
+    _add_terminal(checks, tared, "scale_tared",
+                  "Scale tared." if tared else "Never tared — reading gross weight.")
+    _add_terminal(checks, len(weigh_events) >= 1,
+                  "scale_read", f"{len(weigh_events)} weight reading(s)."
+                  if weigh_events else "No weight reading.")
+
+    # Tare before weigh
+    if tared and weigh_events:
+        ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
+        w_t = weigh_events[0].get("clock_time", 0)
+        _add_temporal(checks, ta_t <= w_t, "tare_before_weigh",
+                      f"Tare@{ta_t:.0f}s before weigh@{w_t:.0f}s.")
+
+    # Transfer after tare + weigh
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    tx_ok = len(disp) >= 1
+    _add_terminal(checks, tx_ok, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Transfer must happen after tare
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if tared and aspirate_events:
+        ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        _add_temporal(checks, ta_t <= a_t, "tare_before_transfer",
+                      f"Tare@{ta_t:.0f}s before transfer@{a_t:.0f}s.")
+
+    # Attribution
+    if not tared:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent skipped tare — reading gross weight instead of net."}
+
+    return checks, attrs
+
+
+def _verify_zero_scale_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
+    """Zero at session start: must zero (session init) THEN tare (per-container)."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + scale zero + tare.")
+
+    zeroed = any(e.get("event_type") == "scale.zeroed" for e in events)
+    tared = any(e.get("event_type") == "scale.tared" for e in events)
+    weigh_events = [e for e in events if e.get("event_type") == "scale.weight_read"]
+
+    _add_terminal(checks, zeroed, "scale_zeroed",
+                  "Scale zeroed." if zeroed else "Never zeroed — session init skipped.")
+    _add_terminal(checks, tared, "scale_tared",
+                  "Scale tared." if tared else "Never tared.")
+    _add_terminal(checks, len(weigh_events) >= 1,
+                  "weight_verified", "Weight checked." if weigh_events else "Never verified weight.")
+
+    # Strict ordering: zero → tare → weigh → transfer → readout
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if zeroed and tared:
+        z_t = [e for e in events if e.get("event_type") == "scale.zeroed"][0].get("clock_time", 0)
+        ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
+        _add_temporal(checks, z_t <= ta_t, "zero_before_tare",
+                      f"Zero@{z_t:.0f}s before tare@{ta_t:.0f}s.")
+
     if tared and weigh_events:
         ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
         w_t = weigh_events[0].get("clock_time", 0)
@@ -1195,34 +1426,433 @@ def _verify_tare_weigh_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
                       f"Tare@{ta_t:.0f}s before weigh@{w_t:.0f}s.")
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
-    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    tx_ok = len(disp) >= 1
+    _add_terminal(checks, tx_ok, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
-    return checks, {}
+
+    # Attribution: zero vs tare confusion
+    if not zeroed and tared:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent tared but did not zero — drift from previous session persists."}
+    elif zeroed and not tared:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent zeroed but did not tare — reading includes container weight."}
+    elif not zeroed and not tared:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent skipped all scale calibration."}
+
+    return checks, attrs
 
 
-def _verify_zero_scale_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
-    """Zero at session start: must zero THEN tare."""
+
+def _verify_spin_down_qc(ls, exp):
+    """Spin down: bucket→lock_bucket→close→lock→spin→open. Full chain."""
     checks = []
     events = ls.events
-    _add_terminal(checks, True, "dry_run", "STAR + scale zero + tare.")
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + centrifuge.")
 
-    zeroed = any(e.get("event_type") == "scale.zeroed" for e in events)
-    tared = any(e.get("event_type") == "scale.tared" for e in events)
+    closed = any(e.get("event_type") == "centrifuge.door_closed" for e in events)
+    locked = any(e.get("event_type") == "centrifuge.door_locked" for e in events)
+    spun = any(e.get("event_type") == "centrifuge.spin" for e in events)
+    opened = any(e.get("event_type") == "centrifuge.door_opened" for e in events)
+    bucketed = any(e.get("event_type") == "centrifuge.bucket1" for e in events)
+    bucket_locked = any(e.get("event_type") == "centrifuge.bucket_locked" for e in events)
 
-    _add_terminal(checks, zeroed, "scale_zeroed",
-                  "Scale zeroed." if zeroed else "Never zeroed — session init skipped.")
-    _add_terminal(checks, tared, "scale_tared",
-                  "Scale tared." if tared else "Never tared.")
+    _add_terminal(checks, bucketed, "bucket_accessed", "Bucket 1 accessed." if bucketed else "Bucket never accessed.")
+    _add_terminal(checks, bucket_locked, "bucket_locked", "Bucket locked." if bucket_locked else "Bucket not locked.")
+    _add_terminal(checks, closed, "door_closed", "Door closed." if closed else "Door not closed.")
+    _add_terminal(checks, locked, "door_locked", "Door locked." if locked else "Door not locked.")
+    _add_terminal(checks, spun, "spun", "Spin completed." if spun else "Never spun.")
+    _add_terminal(checks, opened, "door_opened", "Door opened." if opened else "Still closed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
 
-    # Zero must happen before tare
-    if zeroed and tared:
-        z_t = [e for e in events if e.get("event_type") == "scale.zeroed"][0].get("clock_time", 0)
-        ta_t = [e for e in events if e.get("event_type") == "scale.tared"][0].get("clock_time", 0)
-        _add_temporal(checks, z_t <= ta_t, "zero_before_tare",
-                      f"Zero@{z_t:.0f}s before tare@{ta_t:.0f}s.")
+    # Temporal: full chain bucket→lock_bucket→close→lock→spin→open
+    if bucketed and bucket_locked and closed and locked and spun and opened:
+        bk_t = [e for e in events if e.get("event_type") == "centrifuge.bucket1"][0].get("clock_time", 0)
+        bl_t = [e for e in events if e.get("event_type") == "centrifuge.bucket_locked"][0].get("clock_time", 0)
+        c_t = [e for e in events if e.get("event_type") == "centrifuge.door_closed"][0].get("clock_time", 0)
+        l_t = [e for e in events if e.get("event_type") == "centrifuge.door_locked"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "centrifuge.spin"][0].get("clock_time", 0)
+        o_t = [e for e in events if e.get("event_type") == "centrifuge.door_opened"][-1].get("clock_time", 0)
+        chain_ok = bk_t <= bl_t <= c_t <= l_t <= s_t <= o_t
+        _add_temporal(checks, chain_ok, "full_spin_chain",
+                      f"Bucket→lock_bkt→close→lock→spin→open."
+                      if chain_ok else "Chain broken — check event order.")
+
+    # Attribution
+    if locked and spun and opened:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly locked door before spinning (door was initially open)."}
+    elif spun and not locked:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Agent spun without locking door — safety violation."}
+
+    return checks, attrs
+
+
+def _verify_balanced_load_qc(ls, exp):
+    """Balanced load: both buckets accessed and locked before spin."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + centrifuge balanced load.")
+
+    b1 = any(e.get("event_type") == "centrifuge.bucket1" for e in events)
+    b2 = any(e.get("event_type") == "centrifuge.bucket2" for e in events)
+    both = b1 and b2
+    _add_terminal(checks, both, "both_buckets",
+                  "Both buckets accessed." if both else f"B1={b1}, B2={b2} — unbalanced!")
+
+    spun = any(e.get("event_type") == "centrifuge.spin" for e in events)
+    _add_terminal(checks, spun, "spun", "Spin completed." if spun else "Never spun.")
+
+    # Both buckets must be accessed BEFORE door close + spin
+    if b1 and b2 and spun:
+        buckets_done = max(
+            [e for e in events if e.get("event_type") == "centrifuge.bucket1"][0].get("clock_time", 0),
+            [e for e in events if e.get("event_type") == "centrifuge.bucket2"][0].get("clock_time", 0),
+        )
+        close_events = [e for e in events if e.get("event_type") == "centrifuge.door_closed"]
+        if close_events:
+            close_t = close_events[0].get("clock_time", 0)
+            _add_temporal(checks, buckets_done <= close_t,
+                          "buckets_before_close",
+                          f"Both buckets@{buckets_done:.0f}s before close@{close_t:.0f}s.")
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
-    return checks, {}
+
+    # Attribution
+    if not both:
+        attrs = {"label": "agent_error",
+                 "detail": "Unbalanced load — both buckets must be loaded before spinning."}
+
+    return checks, attrs
+
+
+def _verify_door_safety_qc(ls, exp):
+    """Door safety: close→lock must happen before spin. Safety-critical."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + centrifuge door safety.")
+
+    closed = any(e.get("event_type") == "centrifuge.door_closed" for e in events)
+    locked = any(e.get("event_type") == "centrifuge.door_locked" for e in events)
+    spun = any(e.get("event_type") == "centrifuge.spin" for e in events)
+    opened = any(e.get("event_type") == "centrifuge.door_opened" for e in events)
+
+    _add_terminal(checks, closed, "door_closed", "Door closed." if closed else "Door never closed.")
+    _add_terminal(checks, locked, "door_locked", "Door locked." if locked else "Door never locked.")
+    _add_terminal(checks, spun, "spun", "Spin completed." if spun else "Never spun.")
+    _add_terminal(checks, opened, "door_opened", "Door opened after spin." if opened else "Door still closed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal: close→lock→spin. Also check lock before spin.
+    if closed and locked:
+        c_t = [e for e in events if e.get("event_type") == "centrifuge.door_closed"][0].get("clock_time", 0)
+        l_t = [e for e in events if e.get("event_type") == "centrifuge.door_locked"][0].get("clock_time", 0)
+        _add_temporal(checks, c_t <= l_t, "close_before_lock",
+                      f"Close@{c_t:.0f}s before lock@{l_t:.0f}s.")
+
+    if locked and spun:
+        l_t = [e for e in events if e.get("event_type") == "centrifuge.door_locked"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "centrifuge.spin"][0].get("clock_time", 0)
+        _add_temporal(checks, l_t <= s_t, "lock_before_spin",
+                      f"Lock@{l_t:.0f}s before spin@{s_t:.0f}s.")
+
+    if spun and opened:
+        s_t = [e for e in events if e.get("event_type") == "centrifuge.spin"][0].get("clock_time", 0)
+        o_t = [e for e in events if e.get("event_type") == "centrifuge.door_opened"][-1].get("clock_time", 0)
+        _add_temporal(checks, s_t <= o_t, "spin_before_open",
+                      f"Spin@{s_t:.0f}s before open@{o_t:.0f}s.")
+
+    # Attribution
+    if spun and not locked:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Agent spun without locking door — safety interlock violation."}
+    elif locked and spun and opened:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly locked door then spun — safety protocol followed."}
+
+    return checks, attrs
+
+
+def _verify_heat_incubate_qc(ls, exp):
+    """Heat incubate: set temp → verify → transfer → verify → read."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + heater/shaker incubate.")
+
+    temp_set = any(e.get("event_type") == "hs.temp_set" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "hs.temp_read"]
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set.")
+    _add_terminal(checks, len(temp_reads) >= 2, "temp_verified_before_and_after",
+                  f"{len(temp_reads)} temp checks (need before + after transfer)."
+                  if len(temp_reads) >= 2
+                  else f"Only {len(temp_reads)} temp check(s) — must verify before AND after.")
+
+    # Temporal: temp_set → temp_read1 → transfer → temp_read2 → readout
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if temp_set and len(temp_reads) >= 2 and aspirate_events:
+        ts_t = [e for e in events if e.get("event_type") == "hs.temp_set"][0].get("clock_time", 0)
+        tr1_t = temp_reads[0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        tr2_t = temp_reads[-1].get("clock_time", 0)
+        _add_temporal(checks, ts_t <= tr1_t <= a_t <= tr2_t,
+                      "temp_verify_chain",
+                      f"Set@{ts_t:.0f}→verify1@{tr1_t:.0f}→transfer@{a_t:.0f}→verify2@{tr2_t:.0f}.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    if len(temp_reads) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": "Temperature not verified both before and after transfer."}
+    return checks, attrs
+
+
+def _verify_shake_mix_qc(ls, exp):
+    """Shake mix: shake must complete BEFORE transfer (temporal ordering)."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + shaker mix.")
+
+    shaken = any(e.get("event_type") == "hs.shake" for e in events)
+    _add_terminal(checks, shaken, "shaken", "Plate shaken." if shaken else "Never shaken.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal: shake → transfer (must be in this order)
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    shake_events = [e for e in events if e.get("event_type") == "hs.shake"]
+    if shaken and aspirate_events and shake_events:
+        s_t = shake_events[0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        _add_temporal(checks, s_t <= a_t, "shake_before_transfer",
+                      f"Shake@{s_t:.0f}s before transfer@{a_t:.0f}s."
+                      if s_t <= a_t
+                      else f"Transfer@{a_t:.0f}s BEFORE shake@{s_t:.0f}s — wrong order!")
+
+    # Attribution
+    if not shaken:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent did not shake — plate not mixed before transfer."}
+    elif shaken and aspirate_events and shake_events:
+        s_t = shake_events[0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        if s_t > a_t:
+            attrs = {"label": "agent_error",
+                     "detail": "Agent transferred before shaking — wrong temporal order."}
+
+    return checks, attrs
+
+
+def _verify_heat_shake_combo_qc(ls, exp):
+    """Combo: heat AND shake simultaneously, then deactivate after transfer."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + heat+shake combo.")
+
+    temp_set = any(e.get("event_type") == "hs.temp_set" for e in events)
+    shaken = any(e.get("event_type") == "hs.shake" for e in events)
+    deactivated = any(e.get("event_type") == "hs.deactivated" for e in events)
+    temp_verified = any(e.get("event_type") == "hs.temp_read" for e in events)
+
+    _add_terminal(checks, temp_set and shaken, "heat_and_shake",
+                  "Both heated and shaken." if (temp_set and shaken)
+                  else f"Heat={temp_set}, Shake={shaken} — both required simultaneously.")
+    _add_terminal(checks, temp_verified, "temp_verified",
+                  "Temperature checked." if temp_verified else "Never checked temperature.")
+    _add_terminal(checks, deactivated, "deactivated",
+                  "Deactivated after use." if deactivated else "Not deactivated — safety issue.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal: temp_set + shake active → transfer → deactivate → readout
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if temp_set and shaken and aspirate_events and deactivated:
+        heat_t = [e for e in events if e.get("event_type") == "hs.temp_set"][0].get("clock_time", 0)
+        shake_t = [e for e in events if e.get("event_type") == "hs.shake"][0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        deact_t = [e for e in events if e.get("event_type") == "hs.deactivated"][0].get("clock_time", 0)
+        _add_temporal(checks, heat_t <= a_t, "heat_before_transfer",
+                      f"Heat@{heat_t:.0f}s before transfer@{a_t:.0f}s.")
+        _add_temporal(checks, shake_t <= a_t, "shake_before_transfer",
+                      f"Shake@{shake_t:.0f}s before transfer@{a_t:.0f}s.")
+        _add_temporal(checks, a_t <= deact_t, "transfer_before_deactivate",
+                      f"Transfer@{a_t:.0f}s before deactivate@{deact_t:.0f}s.")
+
+    # Attribution
+    if not temp_set or not shaken:
+        attrs = {"label": "agent_error",
+                 "detail": "Missing heat or shake — both required for enzymatic reaction."}
+    elif not deactivated:
+        attrs = {"label": "agent_error",
+                 "detail": "Heater/shaker left running after protocol — safety issue."}
+
+    return checks, attrs
+
+
+def _verify_pcr_heat_qc(ls, exp):
+    """PCR heat: close→heat_lid→heat_block→verify→transfer→deactivate→read."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + thermocycler PCR heat.")
+
+    closed = any(e.get("event_type") == "tc.lid_closed" for e in events)
+    lid_set = any(e.get("event_type") == "tc.lid_temp_set" for e in events)
+    block_set = any(e.get("event_type") == "tc.block_temp_set" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "tc.block_temp_read"]
+    deactivated = any(e.get("event_type") == "tc.deactivated" for e in events)
+
+    _add_terminal(checks, closed, "lid_closed", "Lid closed." if closed else "Lid not closed.")
+    _add_terminal(checks, lid_set, "lid_heated", "Lid heated." if lid_set else "Lid not heated.")
+    _add_terminal(checks, block_set, "block_heated", "Block heated." if block_set else "Block not heated.")
+    _add_terminal(checks, len(temp_reads) >= 1, "block_temp_verified",
+                  "Block temp verified." if temp_reads else "Never verified block temp.")
+    _add_terminal(checks, deactivated, "deactivated", "Deactivated after use." if deactivated else "Not deactivated.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal chain: close→heat→verify→transfer→deactivate
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if closed and block_set and temp_reads and aspirate_events and deactivated:
+        c_t = [e for e in events if e.get("event_type") == "tc.lid_closed"][0].get("clock_time", 0)
+        b_t = [e for e in events if e.get("event_type") == "tc.block_temp_set"][0].get("clock_time", 0)
+        v_t = temp_reads[0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        d_t = [e for e in events if e.get("event_type") == "tc.deactivated"][0].get("clock_time", 0)
+        chain = c_t <= b_t <= v_t <= a_t <= d_t
+        _add_temporal(checks, chain, "pcr_heat_chain",
+                      f"Close→heat→verify→transfer→deactivate." if chain
+                      else "Chain broken — check event order.")
+
+    # Attribution
+    if not closed:
+        attrs = {"label": "agent_error",
+                 "detail": "Lid not closed — condensation will contaminate sample."}
+    elif not deactivated:
+        attrs = {"label": "agent_error",
+                 "detail": "Thermocycler left running — safety issue."}
+
+    return checks, attrs
+
+
+def _verify_pcr_lid_safety_qc(ls, exp):
+    """PCR lid safety: close MUST happen before heating. Safety-critical."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + thermocycler lid safety.")
+
+    closed = any(e.get("event_type") == "tc.lid_closed" for e in events)
+    lid_set = any(e.get("event_type") == "tc.lid_temp_set" for e in events)
+    block_set = any(e.get("event_type") == "tc.block_temp_set" for e in events)
+
+    _add_terminal(checks, closed, "lid_closed", "Lid closed." if closed else "Lid never closed.")
+    _add_terminal(checks, lid_set, "lid_heated", "Lid temperature set." if lid_set else "Lid not heated.")
+    _add_terminal(checks, block_set, "block_heated", "Block temperature set." if block_set else "Block not heated.")
+
+    # Strict ordering: close → lid_temp → block_temp
+    if closed and lid_set:
+        c_t = [e for e in events if e.get("event_type") == "tc.lid_closed"][0].get("clock_time", 0)
+        l_t = [e for e in events if e.get("event_type") == "tc.lid_temp_set"][0].get("clock_time", 0)
+        _add_temporal(checks, c_t <= l_t, "close_before_lid_heat",
+                      f"Close@{c_t:.0f}s before lid heat@{l_t:.0f}s.")
+    if closed and block_set:
+        c_t = [e for e in events if e.get("event_type") == "tc.lid_closed"][0].get("clock_time", 0)
+        b_t = [e for e in events if e.get("event_type") == "tc.block_temp_set"][0].get("clock_time", 0)
+        _add_temporal(checks, c_t <= b_t, "close_before_block_heat",
+                      f"Close@{c_t:.0f}s before block heat@{b_t:.0f}s.")
+
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Attribution
+    if not closed:
+        attrs = {"label": "agent_error",
+                 "detail": "Lid never closed — heating with open lid is unsafe."}
+    elif closed and block_set:
+        c_t = [e for e in events if e.get("event_type") == "tc.lid_closed"][0].get("clock_time", 0)
+        b_t = [e for e in events if e.get("event_type") == "tc.block_temp_set"][0].get("clock_time", 0)
+        if c_t <= b_t:
+            attrs = {"label": "success_despite_fault",
+                     "detail": "Lid was open but agent correctly closed before heating."}
+
+    return checks, attrs
+
+
+def _verify_pcr_cool_down_qc(ls, exp):
+    """PCR cool down: multi-temp cycle with verification at each step."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + thermocycler cool down.")
+
+    block_sets = [e for e in events if e.get("event_type") == "tc.block_temp_set"]
+    temp_reads = [e for e in events if e.get("event_type") == "tc.block_temp_read"]
+    deactivated = any(e.get("event_type") == "tc.deactivated" for e in events)
+
+    _add_terminal(checks, len(block_sets) >= 2, "multi_temp_changes",
+                  f"{len(block_sets)} temp changes (denature + anneal)."
+                  if len(block_sets) >= 2
+                  else f"Only {len(block_sets)} temp change — need denature AND anneal.")
+    _add_terminal(checks, len(temp_reads) >= 2, "temp_verified_each_step",
+                  f"{len(temp_reads)} temp verifications." if len(temp_reads) >= 2
+                  else f"Only {len(temp_reads)} verification(s) — verify at each temp step.")
+    _add_terminal(checks, deactivated, "deactivated", "Deactivated." if deactivated else "Not deactivated.")
+
+    disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # Temporal: heat95 → verify95 → heat55 → verify55 → deactivate → transfer
+    aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+    if len(block_sets) >= 2 and len(temp_reads) >= 2:
+        b1_t = block_sets[0].get("clock_time", 0)
+        v1_t = temp_reads[0].get("clock_time", 0)
+        b2_t = block_sets[-1].get("clock_time", 0)
+        v2_t = temp_reads[-1].get("clock_time", 0)
+        _add_temporal(checks, b1_t <= v1_t <= b2_t <= v2_t,
+                      "heat_verify_cycle",
+                      f"95C@{b1_t:.0f}→verify@{v1_t:.0f}→55C@{b2_t:.0f}→verify@{v2_t:.0f}.")
+
+    # Deactivation must happen before transfer (cool first, then handle sample)
+    if deactivated and aspirate_events:
+        d_t = [e for e in events if e.get("event_type") == "tc.deactivated"][0].get("clock_time", 0)
+        a_t = aspirate_events[0].get("clock_time", 0)
+        _add_temporal(checks, d_t <= a_t, "deactivate_before_transfer",
+                      f"Deactivate@{d_t:.0f}s before transfer@{a_t:.0f}s.")
+
+    # Attribution
+    if len(block_sets) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": "Only one temperature step — missing annealing step."}
+    elif len(temp_reads) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": "Temperature not verified at each step."}
+
+    return checks, attrs
