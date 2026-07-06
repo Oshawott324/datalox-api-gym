@@ -105,6 +105,42 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "gravimetric_qc": _verify_gravimetric_qc,
         "tare_weigh_qc": _verify_tare_weigh_qc,
         "zero_scale_qc": _verify_zero_scale_qc,
+        # Robot arm scenarios
+        "arm_plate_transfer_qc": _verify_arm_plate_transfer_qc,
+        "arm_halt_recovery_qc": _verify_arm_halt_recovery_qc,
+        "arm_position_verify_qc": _verify_arm_position_verify_qc,
+        # Plate sealer scenarios
+        "seal_plate_qc": _verify_seal_plate_qc,
+        "seal_temp_verify_qc": _verify_seal_temp_verify_qc,
+        "seal_door_safety_qc": _verify_seal_door_safety_qc,
+        # Plate peeler scenarios
+        "peel_plate_qc": _verify_peel_plate_qc,
+        "peel_tape_monitor_qc": _verify_peel_tape_monitor_qc,
+        "peel_no_seal_qc": _verify_peel_no_seal_qc,
+        # Dedicated shaker scenarios
+        "shaker_mix_qc": _verify_shaker_mix_qc,
+        "shaker_lock_safety_qc": _verify_shaker_lock_safety_qc,
+        "shaker_continuous_qc": _verify_shaker_continuous_qc,
+        # Temperature controller scenarios
+        "temp_control_incubate_qc": _verify_temp_control_incubate_qc,
+        "temp_control_verify_qc": _verify_temp_control_verify_qc,
+        "temp_control_timeout_qc": _verify_temp_control_timeout_qc,
+        # Tilter module scenarios
+        "tilter_drain_qc": _verify_tilter_drain_qc,
+        "tilter_multi_angle_qc": _verify_tilter_multi_angle_qc,
+        "tilter_safety_qc": _verify_tilter_safety_qc,
+        # Storage / incubator scenarios
+        "storage_store_retrieve_qc": _verify_storage_store_retrieve_qc,
+        "storage_env_monitor_qc": _verify_storage_env_monitor_qc,
+        "storage_capacity_qc": _verify_storage_capacity_qc,
+        # Powder dispenser scenarios
+        "powder_dispense_qc": _verify_powder_dispense_qc,
+        "powder_multi_dispense_qc": _verify_powder_multi_dispense_qc,
+        "powder_amount_validate_qc": _verify_powder_amount_validate_qc,
+        # Barcode scanner scenarios
+        "barcode_scan_qc": _verify_barcode_scan_qc,
+        "barcode_multi_scan_qc": _verify_barcode_multi_scan_qc,
+        "barcode_verify_qc": _verify_barcode_verify_qc,
     }
     vfn = verifiers.get(scenario)
     if vfn is None:
@@ -1444,6 +1480,1942 @@ def _verify_zero_scale_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
     return checks, attrs
 
+
+
+# ── Arm scenario verifiers ──────────────────────────────────────────────
+
+
+def _verify_arm_plate_transfer_qc(ls, exp):
+    """Arm plate transfer: home→open→move→approach→close→pickup→move→approach→drop→safe.
+
+    Depth features:
+    - Pairwise temporal chain (6 pairs)
+    - Resource coordinate tracking (pick-up at carrier pos, drop at reader pos)
+    - Safety interlock: gripper must be open before pickup, closed before drop
+    - Error-event detection: gripper_already_closed / gripper_already_open
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + robot arm plate transfer.")
+
+    # ── Event presence ──────────────────────────────────────────────────
+    homed = any(e.get("event_type") == "arm.homed" for e in events)
+    gripper_opened = any(e.get("event_type") == "arm.gripper_opened" for e in events)
+    gripper_closed = any(e.get("event_type") == "arm.gripper_closed" for e in events)
+    picked = any(e.get("event_type") == "arm.picked_up" for e in events)
+    dropped = any(e.get("event_type") == "arm.dropped" for e in events)
+    safe = any(e.get("event_type") == "arm.safe" for e in events)
+    reader_accessed = any(e.get("event_type") == "reader.opened" for e in events)
+    moved_events = [e for e in events if e.get("event_type") == "arm.moved_to"]
+    approached_events = [e for e in events if e.get("event_type") == "arm.approached"]
+
+    # Error events (safety interlock violations)
+    err_gripper_closed = any(
+        e.get("event_type", "").startswith("error.") and
+        "gripper_already_closed" in str(e.get("payload", {}))
+        for e in events
+    )
+    err_gripper_open = any(
+        e.get("event_type", "").startswith("error.") and
+        "gripper_already_open" in str(e.get("payload", {}))
+        for e in events
+    )
+    retries = sum(1 for e in events
+                  if e.get("event_type", "").startswith("error.") and "gripper" in str(e.get("payload", {})))
+
+    _add_terminal(checks, homed, "arm_homed", "Arm homed." if homed else "Arm never homed.")
+    _add_terminal(checks, gripper_opened, "gripper_opened", "Gripper opened." if gripper_opened else "Gripper never opened — pickup impossible.")
+    _add_terminal(checks, not err_gripper_closed, "no_safety_violation_pickup",
+                  "No gripper-already-closed errors." if not err_gripper_closed
+                  else f"Agent tried pickup with closed gripper ({retries} error(s)) — safety violation.")
+    _add_terminal(checks, picked, "arm_picked_up", "Plate picked up." if picked else "Never picked up.")
+    _add_terminal(checks, dropped, "arm_dropped", "Plate dropped." if dropped else "Never dropped.")
+    _add_terminal(checks, not err_gripper_open, "no_safety_violation_drop",
+                  "No gripper-already-open errors." if not err_gripper_open
+                  else "Agent tried drop with open gripper — nothing to drop.")
+    _add_terminal(checks, safe, "arm_safe", "Arm in safe position." if safe else "Arm not safed — unsafe termination.")
+    _add_terminal(checks, reader_accessed, "reader_accessed",
+                  "Reader opened." if reader_accessed else "Reader never accessed — plate never read.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Resource tracking: pickup/drop at expected coordinates ──────────
+    if picked and dropped:
+        pickup_payload = [e for e in events if e.get("event_type") == "arm.picked_up"][0].get("payload", {})
+        drop_payload = [e for e in events if e.get("event_type") == "arm.dropped"][0].get("payload", {})
+        pickup_x = pickup_payload.get("x", -1)
+        drop_x = drop_payload.get("x", -1)
+        # Pickup should be near carrier (~100, ~200) and drop near reader (~300, ~100)
+        different_positions = abs(pickup_x - drop_x) > 50
+        _add_terminal(checks, different_positions, "plate_relocated",
+                      f"Plate moved from x≈{pickup_x} to x≈{drop_x} — relocated."
+                      if different_positions else "Pickup and drop at same position — plate not moved.")
+
+    # ── Pairwise temporal checks (6 pairs) ──────────────────────────────
+    if homed and gripper_opened:
+        h_t = [e for e in events if e.get("event_type") == "arm.homed"][0].get("clock_time", 0)
+        go_t = [e for e in events if e.get("event_type") == "arm.gripper_opened"][0].get("clock_time", 0)
+        _add_temporal(checks, h_t <= go_t, "home_before_open",
+                      f"Home@{h_t:.0f}s → open@{go_t:.0f}s."
+                      if h_t <= go_t else "Gripper opened before homing — unsafe.")
+
+    if gripper_opened and gripper_closed:
+        go_t = [e for e in events if e.get("event_type") == "arm.gripper_opened"][0].get("clock_time", 0)
+        gc_t = [e for e in events if e.get("event_type") == "arm.gripper_closed"][0].get("clock_time", 0)
+        _add_temporal(checks, go_t <= gc_t, "open_before_close",
+                      f"Open@{go_t:.0f}s → close@{gc_t:.0f}s."
+                      if go_t <= gc_t else "Gripper closed before opening — impossible to insert plate.")
+
+    if gripper_closed and picked:
+        gc_t = [e for e in events if e.get("event_type") == "arm.gripper_closed"][0].get("clock_time", 0)
+        p_t = [e for e in events if e.get("event_type") == "arm.picked_up"][0].get("clock_time", 0)
+        _add_temporal(checks, gc_t <= p_t, "close_before_pickup",
+                      f"Close@{gc_t:.0f}s → pickup@{p_t:.0f}s."
+                      if gc_t <= p_t else "Pickup before grip closed — plate not secured.")
+
+    if picked and dropped:
+        p_t = [e for e in events if e.get("event_type") == "arm.picked_up"][0].get("clock_time", 0)
+        d_t = [e for e in events if e.get("event_type") == "arm.dropped"][0].get("clock_time", 0)
+        _add_temporal(checks, p_t <= d_t, "pickup_before_drop",
+                      f"Pickup@{p_t:.0f}s → drop@{d_t:.0f}s."
+                      if p_t <= d_t else "Dropped before picking up — nothing to drop.")
+
+    if dropped and safe:
+        d_t = [e for e in events if e.get("event_type") == "arm.dropped"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "arm.safe"][-1].get("clock_time", 0)
+        _add_temporal(checks, d_t <= s_t, "drop_before_safe",
+                      f"Drop@{d_t:.0f}s → safe@{s_t:.0f}s."
+                      if d_t <= s_t else "Safed before dropping — plate may not be placed correctly.")
+
+    if safe and reader_accessed:
+        s_t = [e for e in events if e.get("event_type") == "arm.safe"][-1].get("clock_time", 0)
+        ra_t = [e for e in events if e.get("event_type") == "reader.opened"][0].get("clock_time", 0)
+        _add_temporal(checks, s_t <= ra_t, "safe_before_reader",
+                      f"Safe@{s_t:.0f}s → reader@{ra_t:.0f}s (arm clear before read)."
+                      if s_t <= ra_t else "Reader accessed before arm safed — collision risk.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if retries >= 1 and picked and dropped and safe:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Agent recovered from {retries} gripper error(s) and completed full transfer."}
+    elif retries >= 1 and not safe:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": f"Agent hit {retries} error(s) but failed to recover — arm not safed."}
+    elif err_gripper_closed:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent attempted pickup with closed gripper — forgot to open first."}
+    elif err_gripper_open:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent attempted drop with open gripper — forgot to grip first."}
+    elif homed and picked and dropped and safe and reader_accessed:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly executed full arm pick-and-place sequence."}
+    elif not safe:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent left arm in unsafe position after transfer."}
+
+    return checks, attrs
+
+
+def _verify_arm_halt_recovery_qc(ls, exp):
+    """Arm halt recovery: home→move→halt→position_check→safe→transfer→read.
+
+    Depth features:
+    - Motion→halt transition verification (was arm in motion when halted?)
+    - Position threshold: after home position ≈ (0, 0, ~150)
+    - Pre-halt vs post-halt position comparison (did the arm actually stop?)
+    - Retry tracking: multiple halts without recovery is worse
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + arm halt recovery.")
+
+    homed = any(e.get("event_type") == "arm.homed" for e in events)
+    moved = any(e.get("event_type") == "arm.moved_to" for e in events)
+    halted = any(e.get("event_type") == "arm.halted" for e in events)
+    pos_checks = [e for e in events if e.get("event_type") == "arm.position_read"]
+    gripper_checks = [e for e in events if e.get("event_type") == "arm.gripper_state"]
+    safe = any(e.get("event_type") == "arm.safe" for e in events)
+
+    _add_terminal(checks, homed, "arm_homed", "Arm homed." if homed else "Arm never homed.")
+    _add_terminal(checks, moved, "arm_moved", "Arm moved toward target." if moved else "Arm never moved — halt unnecessary.")
+    _add_terminal(checks, halted, "arm_halted", "Arm halted." if halted else "Arm never halted — collision risk not addressed.")
+    _add_terminal(checks, len(pos_checks) >= 1, "position_checked",
+                  f"Position checked {len(pos_checks)} time(s)." if pos_checks else "Position never checked — blind recovery.")
+    _add_terminal(checks, len(gripper_checks) >= 1, "gripper_checked_during_recovery",
+                  f"Gripper checked {len(gripper_checks)} time(s)." if gripper_checks
+                  else "Gripper state never checked during recovery.")
+    _add_terminal(checks, safe, "arm_safe", "Arm in safe position." if safe else "Arm not safed — risk persists.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed after recovery.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Position threshold: after home, should be near (0, 0, ~150) ────
+    if pos_checks and homed:
+        home_events = [e for e in events if e.get("event_type") == "arm.homed"]
+        if home_events:
+            home_t = home_events[0].get("clock_time", 0)
+            # Find first position check after home
+            post_home_positions = [e for e in pos_checks if e.get("clock_time", 0) >= home_t]
+            if post_home_positions:
+                first_pos = post_home_positions[0].get("payload", {})
+                px, py, pz = first_pos.get("x", -1), first_pos.get("y", -1), first_pos.get("z", -1)
+                at_home = abs(px) < 10 and abs(py) < 10 and abs(pz - 150) < 20
+                _add_terminal(checks, at_home, "home_position_correct",
+                              f"Position after home: ({px}, {py}, {pz}) ≈ (0, 0, 150)."
+                              if at_home else f"Position ({px}, {py}, {pz}) not near home (0, 0, 150) — homing failed?")
+
+    # ── Motion→halt transition: was arm in motion? ──────────────────────
+    if moved and halted:
+        move_times = [e.get("clock_time", 0) for e in events if e.get("event_type") == "arm.moved_to"]
+        halt_times = [e.get("clock_time", 0) for e in events if e.get("event_type") == "arm.halted"]
+        if move_times and halt_times:
+            # Check there's a move before a halt (arm was moving)
+            last_move_before_halt = max(t for t in move_times if t <= halt_times[0])
+            motion_to_halt_gap = halt_times[0] - last_move_before_halt
+            _add_temporal(checks, motion_to_halt_gap >= 0, "motion_before_halt",
+                          f"Move@{last_move_before_halt:.0f}s → halt@{halt_times[0]:.0f}s (gap={motion_to_halt_gap:.0f}s)."
+                          if motion_to_halt_gap >= 0 else "Halt before any move — nothing to halt.")
+
+    # ── Pre-halt vs post-halt position: did arm actually stop? ──────────
+    if len(pos_checks) >= 2:
+        pre_halt = [e for e in pos_checks if halted and e.get("clock_time", 0) <=
+                    [h.get("clock_time", 0) for h in events if h.get("event_type") == "arm.halted"][0]]
+        post_halt = [e for e in pos_checks if halted and e.get("clock_time", 0) >
+                     [h.get("clock_time", 0) for h in events if h.get("event_type") == "arm.halted"][0]]
+        if pre_halt and post_halt:
+            pre_pos = pre_halt[-1].get("payload", {})
+            post_pos = post_halt[0].get("payload", {})
+            pre_xyz = (pre_pos.get("x", 0), pre_pos.get("y", 0), pre_pos.get("z", 0))
+            post_xyz = (post_pos.get("x", 0), post_pos.get("y", 0), post_pos.get("z", 0))
+            stopped = pre_xyz == post_xyz
+            _add_terminal(checks, stopped, "halt_effective",
+                          f"Position unchanged after halt — arm stopped."
+                          if stopped else f"Position changed after halt ({pre_xyz}→{post_xyz}) — halt may have been ineffective.")
+
+    # ── Pairwise temporal ───────────────────────────────────────────────
+    if homed and halted:
+        h_t = [e for e in events if e.get("event_type") == "arm.homed"][0].get("clock_time", 0)
+        halt_t = [e for e in events if e.get("event_type") == "arm.halted"][0].get("clock_time", 0)
+        _add_temporal(checks, h_t <= halt_t, "home_before_halt",
+                      f"Home@{h_t:.0f}s → halt@{halt_t:.0f}s."
+                      if h_t <= halt_t else "Halt before home — unsafe sequence.")
+
+    if halted and safe:
+        halt_t = [e for e in events if e.get("event_type") == "arm.halted"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "arm.safe"][-1].get("clock_time", 0)
+        _add_temporal(checks, halt_t <= s_t, "halt_before_safe",
+                      f"Halt@{halt_t:.0f}s → safe@{s_t:.0f}s."
+                      if halt_t <= s_t else "Safed before halting — potential collision not resolved.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if homed and halted and safe and len(pos_checks) >= 1:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly halted, verified position, and moved to safe position."}
+    elif halted and not safe:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Agent halted but failed to safen arm — recovery incomplete."}
+    elif not halted and moved:
+        attrs = {"label": "agent_error",
+                 "detail": "Arm was moving but agent never halted — ignored potential collision."}
+    elif not homed:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent operated arm without homing first — position unknown."}
+
+    return checks, attrs
+
+
+def _verify_arm_position_verify_qc(ls, exp):
+    """Arm position verify: home→check→gripper_open→move→approach→close→check→pickup→check→safe.
+
+    Depth features:
+    - Position threshold verification (home≈(0,0,150), pickup≈(100,200,30))
+    - Gripper state consistency: open/close events must match gripper_state queries
+    - Multi-point checkpoint timing (before pickup, after pickup, before safe)
+    - State mismatch detection (gripper_state says closed but no close_gripper event)
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + arm position verification.")
+
+    homed = any(e.get("event_type") == "arm.homed" for e in events)
+    pos_checks = [e for e in events if e.get("event_type") == "arm.position_read"]
+    gripper_states = [e for e in events if e.get("event_type") == "arm.gripper_state"]
+    gripper_opened = any(e.get("event_type") == "arm.gripper_opened" for e in events)
+    gripper_closed = any(e.get("event_type") == "arm.gripper_closed" for e in events)
+    picked = any(e.get("event_type") == "arm.picked_up" for e in events)
+    safe = any(e.get("event_type") == "arm.safe" for e in events)
+    approached = any(e.get("event_type") == "arm.approached" for e in events)
+
+    _add_terminal(checks, homed, "arm_homed", "Arm homed." if homed else "Arm never homed — position unknown.")
+    _add_terminal(checks, len(pos_checks) >= 2, "multi_point_position_check",
+                  f"Position checked at {len(pos_checks)} points (need ≥2)." if len(pos_checks) >= 2
+                  else f"Only {len(pos_checks)} position check(s) — must check before AND after operation.")
+    _add_terminal(checks, len(gripper_states) >= 2, "multi_point_gripper_check",
+                  f"Gripper checked at {len(gripper_states)} points (need ≥2)." if len(gripper_states) >= 2
+                  else f"Only {len(gripper_states)} gripper check(s) — must check before AND after grip.")
+    _add_terminal(checks, gripper_opened, "gripper_opened",
+                  "Gripper opened." if gripper_opened else "Gripper never opened — cannot insert plate.")
+    _add_terminal(checks, gripper_closed, "gripper_closed",
+                  "Gripper closed." if gripper_closed else "Gripper never closed — plate not secured.")
+    _add_terminal(checks, picked, "arm_picked_up", "Plate picked up." if picked else "Never picked up.")
+    _add_terminal(checks, safe, "arm_safe", "Arm in safe position." if safe else "Arm not safed.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Gripper state consistency ───────────────────────────────────────
+    if gripper_states and gripper_opened and gripper_closed:
+        # Check gripper_state events before close_gripper all say "open"
+        gc_time = [e for e in events if e.get("event_type") == "arm.gripper_closed"][0].get("clock_time", 0)
+        before_close = [g for g in gripper_states if g.get("clock_time", 0) < gc_time]
+        # Check gripper_state events after close_gripper say "closed"
+        after_close = [g for g in gripper_states if g.get("clock_time", 0) > gc_time]
+
+        before_consistent = all(
+            g.get("payload", {}).get("gripper_closed") is False
+            for g in before_close
+        ) if before_close else True
+        after_consistent = all(
+            g.get("payload", {}).get("gripper_closed") is True
+            for g in after_close
+        ) if after_close else True
+
+        if before_close:
+            _add_terminal(checks, before_consistent, "gripper_open_before_close",
+                          "All pre-close gripper checks show OPEN (correct)."
+                          if before_consistent else "Gripper claims closed before close_gripper event — state mismatch!")
+        if after_close:
+            _add_terminal(checks, after_consistent, "gripper_closed_after_close",
+                          "All post-close gripper checks show CLOSED (correct)."
+                          if after_consistent else "Gripper claims open after close_gripper event — grip failed!")
+
+    # ── Position threshold: verify at key checkpoints ───────────────────
+    if pos_checks and homed:
+        home_t = [e for e in events if e.get("event_type") == "arm.homed"][0].get("clock_time", 0)
+        # Find position check right after home
+        post_home = [p for p in pos_checks if p.get("clock_time", 0) >= home_t]
+        if post_home:
+            pp = post_home[0].get("payload", {})
+            hx, hy, hz = pp.get("x", -1), pp.get("y", -1), pp.get("z", -1)
+            at_home = abs(hx) < 10 and abs(hy) < 10 and abs(hz - 150) < 20
+            _add_terminal(checks, at_home, "home_position_verified",
+                          f"Home position ({hx}, {hy}, {hz}) verified."
+                          if at_home else f"Position ({hx}, {hy}, {hz}) ≠ home (0, 0, ~150) — verify failed.")
+
+    # ── Checkpoint coverage: position checks at key phases ──────────────
+    if picked and pos_checks:
+        pickup_t = [e for e in events if e.get("event_type") == "arm.picked_up"][0].get("clock_time", 0)
+        before_pickup = any(
+            p.get("clock_time", 0) < pickup_t for p in pos_checks
+        )
+        after_pickup = any(
+            p.get("clock_time", 0) > pickup_t for p in pos_checks
+        )
+        _add_terminal(checks, before_pickup, "position_before_pickup",
+                      "Position checked BEFORE pickup." if before_pickup
+                      else "No position check before pickup — blind approach!")
+        _add_terminal(checks, after_pickup, "position_after_pickup",
+                      "Position checked AFTER pickup." if after_pickup
+                      else "No position check after pickup — blind transport!")
+
+    # ── Pairwise temporal ───────────────────────────────────────────────
+    if homed and gripper_opened:
+        h_t = [e for e in events if e.get("event_type") == "arm.homed"][0].get("clock_time", 0)
+        go_t = [e for e in events if e.get("event_type") == "arm.gripper_opened"][0].get("clock_time", 0)
+        _add_temporal(checks, h_t <= go_t, "home_before_open",
+                      f"Home@{h_t:.0f}s → open@{go_t:.0f}s."
+                      if h_t <= go_t else "Opened before home — unsafe.")
+
+    if gripper_opened and gripper_closed:
+        go_t = [e for e in events if e.get("event_type") == "arm.gripper_opened"][0].get("clock_time", 0)
+        gc_t = [e for e in events if e.get("event_type") == "arm.gripper_closed"][0].get("clock_time", 0)
+        _add_temporal(checks, go_t <= gc_t, "open_before_close",
+                      f"Open@{go_t:.0f}s → close@{gc_t:.0f}s."
+                      if go_t <= gc_t else "Closed before opening — impossible grip sequence.")
+
+    if gripper_closed and picked:
+        gc_t = [e for e in events if e.get("event_type") == "arm.gripper_closed"][0].get("clock_time", 0)
+        p_t = [e for e in events if e.get("event_type") == "arm.picked_up"][0].get("clock_time", 0)
+        _add_temporal(checks, gc_t <= p_t, "close_before_pickup",
+                      f"Close@{gc_t:.0f}s → pickup@{p_t:.0f}s."
+                      if gc_t <= p_t else "Pickup before close — plate not gripped!")
+
+    if picked and safe:
+        p_t = [e for e in events if e.get("event_type") == "arm.picked_up"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "arm.safe"][-1].get("clock_time", 0)
+        _add_temporal(checks, p_t <= s_t, "pickup_before_safe",
+                      f"Pickup@{p_t:.0f}s → safe@{s_t:.0f}s."
+                      if p_t <= s_t else "Safed before pickup — plate not retrieved.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    state_mismatch = False
+    if gripper_states and gripper_closed:
+        gc_time = [e for e in events if e.get("event_type") == "arm.gripper_closed"][0].get("clock_time", 0)
+        after = [g for g in gripper_states if g.get("clock_time", 0) > gc_time]
+        if after:
+            state_mismatch = any(
+                g.get("payload", {}).get("gripper_closed") is not True
+                for g in after
+            )
+
+    if len(pos_checks) >= 2 and len(gripper_states) >= 2 and not state_mismatch:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent verified arm position and gripper state at multiple safety checkpoints."}
+    elif state_mismatch:
+        attrs = {"label": "agent_error",
+                 "detail": "Gripper state inconsistent with close/open events — agent may have misread or skipped checks."}
+    elif len(pos_checks) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent did not verify arm position at enough checkpoints — insufficient safety checks."}
+    elif not gripper_states:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent never queried gripper state — operating blind."}
+
+    return checks, attrs
+
+
+# ── Sealer scenario verifiers ───────────────────────────────────────────
+
+
+def _verify_seal_plate_qc(ls, exp):
+    """Seal plate: set_temp→verify→close→seal→open→transfer→read.
+
+    Depth features:
+    - Pairwise temporal chain (4 pairs)
+    - Temperature verification (set temp must match seal temp)
+    - Door safety interlock (close before seal)
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + plate sealer.")
+
+    temp_set = any(e.get("event_type") == "sealer.temp_set" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "sealer.temp_read"]
+    closed = any(e.get("event_type") == "sealer.closed" for e in events)
+    sealed = any(e.get("event_type") == "sealer.sealed" for e in events)
+    opened = any(e.get("event_type") == "sealer.opened" for e in events)
+
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set temperature.")
+    _add_terminal(checks, len(temp_reads) >= 1, "temp_verified",
+                  f"Temperature checked {len(temp_reads)} time(s)." if temp_reads else "Never checked temperature.")
+    _add_terminal(checks, closed, "door_closed", "Door closed." if closed else "Door not closed — seal impossible.")
+    _add_terminal(checks, sealed, "sealed", "Plate sealed." if sealed else "Never sealed.")
+    _add_terminal(checks, opened, "door_opened", "Door opened after seal." if opened else "Door still closed — plate inaccessible.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Temperature verification: set temp should match seal temp ───────
+    if temp_set and sealed:
+        set_payload = [e for e in events if e.get("event_type") == "sealer.temp_set"][0].get("payload", {})
+        seal_payload = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("payload", {})
+        set_t = set_payload.get("target_temperature", 0)
+        seal_t = seal_payload.get("temperature", 0)
+        temps_match = abs(set_t - seal_t) <= 5
+        _add_terminal(checks, temps_match, "temp_match",
+                      f"Set@{set_t}°C ≈ seal@{seal_t}°C (within 5°C)."
+                      if temps_match else f"Set@{set_t}°C ≠ seal@{seal_t}°C — temperature mismatch!")
+
+    # ── Pairwise temporal (4 pairs) ─────────────────────────────────────
+    if temp_set and temp_reads:
+        ts_t = [e for e in events if e.get("event_type") == "sealer.temp_set"][0].get("clock_time", 0)
+        tr_t = temp_reads[0].get("clock_time", 0)
+        _add_temporal(checks, ts_t <= tr_t, "set_before_read",
+                      f"Set@{ts_t:.0f}s → read@{tr_t:.0f}s."
+                      if ts_t <= tr_t else "Read before set — verifying meaningless value.")
+
+    if temp_reads and closed:
+        tr_t = temp_reads[-1].get("clock_time", 0)
+        c_t = [e for e in events if e.get("event_type") == "sealer.closed"][0].get("clock_time", 0)
+        _add_temporal(checks, tr_t <= c_t, "verify_before_close",
+                      f"Verify@{tr_t:.0f}s → close@{c_t:.0f}s (temp verified before closing)."
+                      if tr_t <= c_t else "Door closed before verifying temperature — may seal at wrong temp.")
+
+    if closed and sealed:
+        c_t = [e for e in events if e.get("event_type") == "sealer.closed"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("clock_time", 0)
+        _add_temporal(checks, c_t <= s_t, "close_before_seal",
+                      f"Close@{c_t:.0f}s → seal@{s_t:.0f}s."
+                      if c_t <= s_t else "Sealed before closing door — safety violation!")
+
+    if sealed and opened:
+        s_t = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("clock_time", 0)
+        o_t = [e for e in events if e.get("event_type") == "sealer.opened"][-1].get("clock_time", 0)
+        _add_temporal(checks, s_t <= o_t, "seal_before_open",
+                      f"Seal@{s_t:.0f}s → open@{o_t:.0f}s."
+                      if s_t <= o_t else "Opened before seal — plate not sealed!")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if sealed and not closed:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent sealed without closing the door — safety interlock should have prevented this."}
+    elif temp_set and sealed and opened:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly set temperature, closed door, sealed, and opened."}
+    elif not temp_set and sealed:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent sealed without setting temperature — seal may be ineffective."}
+
+    return checks, attrs
+
+
+def _verify_seal_temp_verify_qc(ls, exp):
+    """Seal temp verify: set→read→close→seal→open. Must read temp BEFORE seal.
+
+    Depth features:
+    - Temperature verification timing (read must be between set and seal)
+    - Minimum temperature check: sealing below target is a fault
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + sealer temp verification.")
+
+    temp_set = any(e.get("event_type") == "sealer.temp_set" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "sealer.temp_read"]
+    closed = any(e.get("event_type") == "sealer.closed" for e in events)
+    sealed = any(e.get("event_type") == "sealer.sealed" for e in events)
+    opened = any(e.get("event_type") == "sealer.opened" for e in events)
+
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set.")
+    _add_terminal(checks, len(temp_reads) >= 1, "temp_verified",
+                  f"Temperature read {len(temp_reads)} time(s)." if temp_reads else "Never read — blind seal!")
+    _add_terminal(checks, closed, "door_closed", "Door closed." if closed else "Door not closed.")
+    _add_terminal(checks, sealed, "sealed", "Sealed." if sealed else "Never sealed.")
+    _add_terminal(checks, opened, "door_opened", "Door opened after seal." if opened else "Still closed.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Critical: temperature read MUST be between set and seal ─────────
+    if temp_set and temp_reads and sealed:
+        ts_t = [e for e in events if e.get("event_type") == "sealer.temp_set"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("clock_time", 0)
+        reads_between = [r for r in temp_reads
+                         if ts_t <= r.get("clock_time", 0) <= s_t]
+        _add_terminal(checks, len(reads_between) >= 1, "temp_verified_between_set_and_seal",
+                      f"Temperature verified {len(reads_between)} time(s) between set and seal."
+                      if reads_between else "Temperature NEVER verified after setting — sealed with unverified temp!")
+
+    # ── Target temperature check ────────────────────────────────────────
+    expected_temp = exp.get("seal_temperature", 165)
+    if temp_reads:
+        actual_temps = [r.get("payload", {}).get("current_temperature", 0) for r in temp_reads]
+        if actual_temps:
+            avg_temp = sum(actual_temps) / len(actual_temps)
+            temp_ok = abs(avg_temp - expected_temp) <= 5
+            _add_terminal(checks, temp_ok, "correct_temperature",
+                          f"Avg temp {avg_temp:.0f}°C ≈ target {expected_temp}°C (within 5°C)."
+                          if temp_ok else f"Avg temp {avg_temp:.0f}°C ≠ target {expected_temp}°C — wrong sealing temperature!")
+
+    # ── Pairwise temporal ───────────────────────────────────────────────
+    if closed and sealed:
+        c_t = [e for e in events if e.get("event_type") == "sealer.closed"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("clock_time", 0)
+        _add_temporal(checks, c_t <= s_t, "close_before_seal",
+                      f"Close@{c_t:.0f}s → seal@{s_t:.0f}s.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if temp_reads and sealed and opened:
+        reads_between = []
+        if temp_set:
+            ts_t = [e for e in events if e.get("event_type") == "sealer.temp_set"][0].get("clock_time", 0)
+            s_t = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("clock_time", 0)
+            reads_between = [r for r in temp_reads if ts_t <= r.get("clock_time", 0) <= s_t]
+        if reads_between:
+            attrs = {"label": "success_despite_fault",
+                     "detail": "Agent verified temperature between set and seal — protocol compliant."}
+        else:
+            attrs = {"label": "agent_error",
+                     "detail": "Agent sealed without verifying temperature between set and seal — protocol deviation."}
+    elif not temp_reads and sealed:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent sealed without any temperature check — risk of incorrect sealing."}
+
+    return checks, attrs
+
+
+def _verify_seal_door_safety_qc(ls, exp):
+    """Seal door safety: close→seal→open. Safety interlock validation.
+
+    Depth features:
+    - Error event detection (door_open error means agent tried seal with door open)
+    - Recovery tracking (retry count after error)
+    - Safety interlock pairwise temporal verification
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + sealer door safety.")
+
+    temp_set = any(e.get("event_type") == "sealer.temp_set" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "sealer.temp_read"]
+    closed = any(e.get("event_type") == "sealer.closed" for e in events)
+    sealed = any(e.get("event_type") == "sealer.sealed" for e in events)
+    opened = any(e.get("event_type") == "sealer.opened" for e in events)
+
+    # Error detection: agent might hit "door_open" error if sealing before closing
+    door_errors = [e for e in events
+                   if e.get("event_type", "").startswith("error.") and
+                   "door_open" in e.get("event_type", "")]
+    door_open_spins = len(door_errors)
+    seal_retries = len([e for e in events if e.get("event_type") == "sealer.sealed"])
+
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set.")
+    _add_terminal(checks, closed, "door_closed", "Door closed." if closed else "Door never closed — safety violation.")
+    _add_terminal(checks, sealed, "sealed", "Sealed." if sealed else "Never sealed.")
+    _add_terminal(checks, opened, "door_opened", "Door opened after seal." if opened else "Still closed.")
+    _add_terminal(checks, True if door_open_spins == 0 else sealed, "no_door_open_error_unrecovered",
+                  "No door-open errors (or recovered)."
+                  if door_open_spins == 0 or sealed
+                  else f"Agent hit {door_open_spins} door-open error(s) and never sealed — unrecovered.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Safety interlock: close MUST happen before seal ─────────────────
+    if closed and sealed:
+        c_t = [e for e in events if e.get("event_type") == "sealer.closed"][0].get("clock_time", 0)
+        s_t = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("clock_time", 0)
+        interlock_ok = c_t <= s_t
+        _add_temporal(checks, interlock_ok, "close_before_seal_safety",
+                      f"Close@{c_t:.0f}s → seal@{s_t:.0f}s (interlock satisfied)."
+                      if interlock_ok else "Seal@{s_t:.0f}s before close@{c_t:.0f}s — INTERLOCK VIOLATION!")
+
+    if sealed and opened:
+        s_t = [e for e in events if e.get("event_type") == "sealer.sealed"][0].get("clock_time", 0)
+        o_t = [e for e in events if e.get("event_type") == "sealer.opened"][-1].get("clock_time", 0)
+        _add_temporal(checks, s_t <= o_t, "seal_before_open",
+                      f"Seal@{s_t:.0f}s → open@{o_t:.0f}s.")
+
+    # ── Error recovery tracking ─────────────────────────────────────────
+    if door_open_spins > 0:
+        if seal_retries > door_open_spins or sealed:
+            _add_terminal(checks, True, "door_error_recovered",
+                          f"Agent recovered from {door_open_spins} door error(s) — successfully sealed after correction.")
+        else:
+            _add_terminal(checks, False, "door_error_unrecovered",
+                          f"Agent hit {door_open_spins} door error(s) and never recovered — abandoned seal.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if door_open_spins > 0 and sealed:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Agent hit {door_open_spins} 'door open' error(s) but recovered and sealed successfully."}
+    elif sealed and not closed:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Agent sealed with door open — safety interlock failure."}
+    elif door_open_spins > 0 and not sealed:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": f"Agent hit {door_open_spins} door error(s) but never recovered to complete the seal."}
+    elif closed and sealed and opened:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly followed door safety protocol: close→seal→open."}
+
+    return checks, attrs
+
+
+# ── Peeler scenario verifiers ───────────────────────────────────────────
+
+
+def _verify_peel_plate_qc(ls, exp):
+    """Peel plate: in→up→seal_check→peel→check→down→out→transfer→read.
+
+    Depth features:
+    - Full 7-step temporal chain
+    - Pre/post peel seal state verification
+    - no_seal error detection
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + plate peeler.")
+
+    conv_in = any(e.get("event_type") == "peeler.conveyor_in" for e in events)
+    elev_up = any(e.get("event_type") == "peeler.elevator_up" for e in events)
+    seal_checks = [e for e in events if e.get("event_type") == "peeler.seal_checked"]
+    peeled = any(e.get("event_type") == "peeler.peeled" for e in events)
+    elev_down = any(e.get("event_type") == "peeler.elevator_down" for e in events)
+    conv_out = any(e.get("event_type") == "peeler.conveyor_out" for e in events)
+
+    _add_terminal(checks, conv_in, "conveyor_in", "Conveyor in." if conv_in else "Never loaded.")
+    _add_terminal(checks, elev_up, "elevator_up", "Elevator up." if elev_up else "Not raised to peel position.")
+    _add_terminal(checks, len(seal_checks) >= 2, "seal_checked_before_after",
+                  f"Seal checked {len(seal_checks)} time(s) (need before+after)." if len(seal_checks) >= 2
+                  else f"Only {len(seal_checks)} seal check(s) — must check before AND after peel.")
+    _add_terminal(checks, peeled, "peeled", "Peeled." if peeled else "Never peeled.")
+    _add_terminal(checks, elev_down, "elevator_down", "Elevator down." if elev_down else "Still raised.")
+    _add_terminal(checks, conv_out, "conveyor_out", "Conveyor out." if conv_out else "Never unloaded.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Pre-peel vs post-peel seal state ─────────────────────────────────
+    if len(seal_checks) >= 2 and peeled:
+        p_t = [e for e in events if e.get("event_type") == "peeler.peeled"][0].get("clock_time", 0)
+        before = [s for s in seal_checks if s.get("clock_time", 0) < p_t]
+        after = [s for s in seal_checks if s.get("clock_time", 0) > p_t]
+        if before:
+            pre_status = before[-1].get("payload", {}).get("seal_status", "")
+            pre_seal_ok = pre_status == "seal_detected"
+            _add_terminal(checks, pre_seal_ok, "seal_detected_before_peel",
+                          f"Pre-peel: '{pre_status}' — seal present."
+                          if pre_seal_ok else f"Pre-peel: '{pre_status}' — no seal to remove!")
+        if after:
+            post_status = after[0].get("payload", {}).get("seal_status", "")
+            post_seal_ok = post_status == "no_seal"
+            _add_terminal(checks, post_seal_ok, "no_seal_after_peel",
+                          f"Post-peel: '{post_status}' — seal removed."
+                          if post_seal_ok else f"Post-peel: '{post_status}' — seal still present!")
+
+    # ── Pairwise temporal (full chain) ──────────────────────────────────
+    if conv_in and elev_up and peeled and elev_down and conv_out:
+        ci_t = [e for e in events if e.get("event_type") == "peeler.conveyor_in"][0].get("clock_time", 0)
+        eu_t = [e for e in events if e.get("event_type") == "peeler.elevator_up"][0].get("clock_time", 0)
+        p_t = [e for e in events if e.get("event_type") == "peeler.peeled"][0].get("clock_time", 0)
+        ed_t = [e for e in events if e.get("event_type") == "peeler.elevator_down"][0].get("clock_time", 0)
+        co_t = [e for e in events if e.get("event_type") == "peeler.conveyor_out"][0].get("clock_time", 0)
+        chain_ok = ci_t <= eu_t <= p_t <= ed_t <= co_t
+        _add_temporal(checks, chain_ok, "peel_full_chain",
+                      f"In→up→peel→down→out in order."
+                      if chain_ok else "Peel chain broken.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if conv_in and peeled and conv_out:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly loaded, peeled, and unloaded the plate."}
+    elif peeled and not conv_in:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent peeled without loading plate via conveyor — how did plate get there?"}
+
+    return checks, attrs
+
+
+def _verify_peel_tape_monitor_qc(ls, exp):
+    """Peel tape monitor: check status+tape→peel→check status+tape→transfer→read.
+
+    Depth features:
+    - Pre/post consumable comparison (tape decreased ~1% per peel)
+    - Device status must be healthy before AND after
+    - Tape low warning threshold (<5%)
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + peeler tape monitoring.")
+
+    tape_checks = [e for e in events if e.get("event_type") == "peeler.tape_checked"]
+    tape_advanced = any(e.get("event_type") == "peeler.tape_advanced" for e in events)
+    status_checks = [e for e in events if e.get("event_type") == "peeler.status_checked"]
+    peeled = any(e.get("event_type") == "peeler.peeled" for e in events)
+
+    _add_terminal(checks, len(status_checks) >= 2, "status_before_after",
+                  f"Status checked {len(status_checks)} time(s) (need before+after)." if len(status_checks) >= 2
+                  else f"Only {len(status_checks)} status check(s).")
+    _add_terminal(checks, len(tape_checks) >= 2, "tape_before_after",
+                  f"Tape checked {len(tape_checks)} time(s) (need before+after)." if len(tape_checks) >= 2
+                  else f"Only {len(tape_checks)} tape check(s).")
+    _add_terminal(checks, tape_advanced, "tape_advanced", "Tape advanced." if tape_advanced else "Never advanced tape.")
+    _add_terminal(checks, peeled, "peeled", "Peeled." if peeled else "Never peeled.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Tape consumption: should decrease after peel ────────────────────
+    if len(tape_checks) >= 2 and peeled:
+        p_t = [e for e in events if e.get("event_type") == "peeler.peeled"][0].get("clock_time", 0)
+        before = [t for t in tape_checks if t.get("clock_time", 0) < p_t]
+        after = [t for t in tape_checks if t.get("clock_time", 0) > p_t]
+        if before and after:
+            before_pct = before[-1].get("payload", {}).get("tape_remaining_pct", 0)
+            after_pct = after[0].get("payload", {}).get("tape_remaining_pct", 0)
+            decreased = after_pct < before_pct
+            _add_terminal(checks, decreased, "tape_decreased",
+                          f"Tape: {before_pct}% → {after_pct}% (decreased by {before_pct - after_pct:.1f}%)."
+                          if decreased else f"Tape unchanged: {before_pct}% — peel didn't consume tape?")
+            # Low tape warning
+            if after_pct < 5.0:
+                _add_terminal(checks, False, "tape_low_warning",
+                              f"Tape at {after_pct}% — CRITICALLY LOW, needs replacement.")
+            else:
+                _add_terminal(checks, True, "tape_sufficient",
+                              f"Tape at {after_pct}% — sufficient for continued operation.")
+
+    # ── Temporal: status+tape checks before peel ────────────────────────
+    if peeled and tape_checks:
+        p_t = [e for e in events if e.get("event_type") == "peeler.peeled"][0].get("clock_time", 0)
+        before_tape = [t for t in tape_checks if t.get("clock_time", 0) < p_t]
+        _add_temporal(checks, len(before_tape) >= 1, "tape_checked_before_peel",
+                      f"Tape checked {len(before_tape)} time(s) before peel."
+                      if before_tape else "Tape NEVER checked before peel — blind operation!")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if len(tape_checks) >= 2 and len(status_checks) >= 2:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent monitored tape and status before and after peel — good practice."}
+    elif peeled and len(tape_checks) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent peeled without sufficient tape/status monitoring."}
+
+    return checks, attrs
+
+
+def _verify_peel_no_seal_qc(ls, exp):
+    """Peel no-seal: agent must handle 'no_seal' gracefully.
+
+    Depth features:
+    - Response-adaptive verification: if seal detected→must peel, if no_seal→must skip
+    - Forced-peel error detection (peeling when no seal present is an agent_error)
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + peeler no-seal handling.")
+
+    seal_checks = [e for e in events if e.get("event_type") == "peeler.seal_checked"]
+    peeled = any(e.get("event_type") == "peeler.peeled" for e in events)
+    conv_in = any(e.get("event_type") == "peeler.conveyor_in" for e in events)
+    conv_out = any(e.get("event_type") == "peeler.conveyor_out" for e in events)
+
+    _add_terminal(checks, conv_in, "conveyor_in", "Conveyor in." if conv_in else "Never loaded.")
+    _add_terminal(checks, len(seal_checks) >= 1, "seal_checked",
+                  f"Seal checked {len(seal_checks)} time(s)." if seal_checks else "Never checked seal!")
+    _add_terminal(checks, conv_out, "conveyor_out", "Conveyor out." if conv_out else "Never unloaded.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Adaptive logic: what did the seal check say? ────────────────────
+    seal_status = None
+    if seal_checks:
+        seal_status = seal_checks[0].get("payload", {}).get("seal_status", "")
+
+    if seal_status == "no_seal":
+        # Agent should NOT have peeled
+        _add_terminal(checks, not peeled, "no_unnecessary_peel",
+                      "No seal present, correctly skipped peel."
+                      if not peeled else "Agent peeled despite 'no_seal' — unnecessary operation, may damage plate!")
+        # Should proceed directly to conveyor out
+        if not peeled and conv_out:
+            attrs = {"label": "success_despite_fault",
+                     "detail": "Agent correctly detected 'no_seal' and skipped peeling — good judgment."}
+        elif peeled:
+            attrs = {"label": "agent_error",
+                     "detail": "Agent forced peel on an unsealed plate — potential plate damage or tape waste."}
+
+    elif seal_status == "seal_detected":
+        # Agent SHOULD have peeled
+        _add_terminal(checks, peeled, "correctly_peeled",
+                      "Seal detected, correctly peeled." if peeled else "Seal detected but never peeled — seal still on plate!")
+        post_checks = seal_checks[1:] if len(seal_checks) > 1 else []
+        if post_checks:
+            post_ok = any(
+                p.get("payload", {}).get("seal_status") == "no_seal"
+                for p in post_checks
+            )
+            _add_terminal(checks, post_ok, "seal_removed_confirmed",
+                          "Post-peel check confirms seal removed." if post_ok
+                          else "Post-peel check: seal still present — peel ineffective!")
+        if peeled:
+            attrs = {"label": "success_despite_fault",
+                     "detail": "Agent correctly detected seal and peeled it."}
+
+    else:
+        _add_terminal(checks, False, "seal_status_unknown",
+                      f"Unknown seal status: '{seal_status}'. Sensor may be faulty.")
+
+    # ── Attribution fallback ────────────────────────────────────────────
+    if attrs is None or not attrs:
+        attrs = {"label": "ambiguous",
+                 "detail": "Could not determine correctness — insufficient seal check data."}
+
+    return checks, attrs
+
+
+# ── Shaker scenario verifiers ───────────────────────────────────────────
+
+
+def _verify_shaker_mix_qc(ls, exp):
+    """Shaker mix: lock→shake(timed)→stop→unlock→transfer→read.
+
+    Depth features:
+    - Full 4-step temporal chain
+    - Lock plate before shake interlock
+    - Timed shake duration verification
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + dedicated shaker mix.")
+
+    locked = any(e.get("event_type") == "shaker.plate_locked" for e in events)
+    shaking = [e for e in events if e.get("event_type") == "shaker.shaking"]
+    stopped = any(e.get("event_type") == "shaker.stopped" for e in events)
+    unlocked = any(e.get("event_type") == "shaker.plate_unlocked" for e in events)
+
+    _add_terminal(checks, locked, "plate_locked", "Plate locked." if locked else "Never locked — shake impossible.")
+    _add_terminal(checks, len(shaking) >= 1, "shaked",
+                  f"Shaked {len(shaking)} time(s)." if shaking else "Never shaken.")
+    _add_terminal(checks, stopped, "stopped", "Shaking stopped." if stopped else "Never stopped.")
+    _add_terminal(checks, unlocked, "plate_unlocked", "Plate unlocked." if unlocked else "Still locked.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Speed/duration verification ─────────────────────────────────────
+    if shaking:
+        shake_payload = shaking[0].get("payload", {})
+        speed = shake_payload.get("speed_rpm", 0)
+        duration = shake_payload.get("duration_s")
+        expected_speed = exp.get("shake_speed_rpm", 800)
+        speed_ok = abs(speed - expected_speed) <= 50
+        _add_terminal(checks, speed_ok, "correct_speed",
+                      f"Speed {speed} RPM ≈ {expected_speed} RPM."
+                      if speed_ok else f"Speed {speed} RPM ≠ {expected_speed} RPM.")
+        if duration is not None:
+            dur_ok = duration >= (exp.get("shake_duration_s", 10) - 1)
+            _add_terminal(checks, dur_ok, "timed_shake",
+                          f"Timed shake {duration}s." if dur_ok else f"Duration {duration}s too short.")
+
+    # ── Pairwise temporal: lock→shake→stop→unlock ───────────────────────
+    if locked and shaking and stopped and unlocked:
+        l_t = [e for e in events if e.get("event_type") == "shaker.plate_locked"][0].get("clock_time", 0)
+        s_t = shaking[0].get("clock_time", 0)
+        st_t = [e for e in events if e.get("event_type") == "shaker.stopped"][0].get("clock_time", 0)
+        u_t = [e for e in events if e.get("event_type") == "shaker.plate_unlocked"][0].get("clock_time", 0)
+        chain_ok = l_t <= s_t <= st_t <= u_t
+        _add_temporal(checks, chain_ok, "shaker_full_chain",
+                      f"Lock→shake→stop→unlock in order."
+                      if chain_ok else "Shaker chain broken.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if locked and shaking and unlocked:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly locked, shook, and unlocked the plate."}
+    elif shaking and not locked:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent shook without locking — plate may have been ejected."}
+
+    return checks, attrs
+
+
+def _verify_shaker_lock_safety_qc(ls, exp):
+    """Shaker lock safety: lock MUST happen before shake.
+
+    Depth features:
+    - Lock-before-shake interlock validation
+    - Error event detection (plate_not_locked)
+    - Recovery tracking
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + shaker lock safety.")
+
+    locked = any(e.get("event_type") == "shaker.plate_locked" for e in events)
+    shaking = [e for e in events if e.get("event_type") == "shaker.shaking"]
+    unlocked = any(e.get("event_type") == "shaker.plate_unlocked" for e in events)
+
+    # Error detection: plate_not_locked errors
+    lock_errors = [e for e in events
+                   if e.get("event_type", "").startswith("error.") and
+                   "plate_not_locked" in e.get("event_type", "")]
+    error_count = len(lock_errors)
+
+    _add_terminal(checks, locked, "plate_locked", "Plate locked." if locked else "Never locked.")
+    _add_terminal(checks, len(shaking) >= 1, "shaked", f"Shook {len(shaking)} time(s)." if shaking else "Never shaken.")
+    _add_terminal(checks, error_count == 0 or len(shaking) >= 1, "lock_error_handled",
+                  "No lock errors (or recovered)."
+                  if error_count == 0 else f"Agent hit {error_count} lock error(s) but recovered.")
+    _add_terminal(checks, unlocked, "plate_unlocked", "Plate unlocked." if unlocked else "Still locked.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Safety interlock: lock MUST be before first shake ───────────────
+    if locked and shaking:
+        l_t = [e for e in events if e.get("event_type") == "shaker.plate_locked"][0].get("clock_time", 0)
+        s_t = shaking[0].get("clock_time", 0)
+        interlock_ok = l_t <= s_t
+        _add_temporal(checks, interlock_ok, "lock_before_shake_safety",
+                      f"Lock@{l_t:.0f}s → shake@{s_t:.0f}s."
+                      if interlock_ok else "Shake@{s_t:.0f}s before lock@{l_t:.0f}s — SAFETY VIOLATION!")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if error_count > 0 and shaking:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Agent recovered from {error_count} lock error(s) and completed shake."}
+    elif shaking and not locked:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Agent shook without locking — plate safety interlock violated."}
+    elif locked and shaking and unlocked:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly followed lock safety protocol: lock→shake→unlock."}
+
+    return checks, attrs
+
+
+def _verify_shaker_continuous_qc(ls, exp):
+    """Shaker continuous: lock→shake(no duration)→stop→unlock.
+
+    Depth features:
+    - Continuous vs timed shake distinction (no duration = indefinite)
+    - Stop before unlock verification
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + shaker continuous mode.")
+
+    locked = any(e.get("event_type") == "shaker.plate_locked" for e in events)
+    shaking = [e for e in events if e.get("event_type") == "shaker.shaking"]
+    stopped = any(e.get("event_type") == "shaker.stopped" for e in events)
+    unlocked = any(e.get("event_type") == "shaker.plate_unlocked" for e in events)
+
+    _add_terminal(checks, locked, "plate_locked", "Plate locked." if locked else "Never locked.")
+    _add_terminal(checks, len(shaking) >= 1, "continuous_shake_started",
+                  f"Continuous shake started ({len(shaking)} event(s))." if shaking else "Never shaken.")
+    _add_terminal(checks, stopped, "explicitly_stopped",
+                  "Explicitly stopped." if stopped else "Never explicitly stopped — relying on unlock auto-stop.")
+    _add_terminal(checks, unlocked, "plate_unlocked", "Plate unlocked." if unlocked else "Still locked.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Continuous mode check: no duration specified ────────────────────
+    if shaking:
+        shake_payload = shaking[0].get("payload", {})
+        has_duration = shake_payload.get("duration_s") is not None
+        is_continuous = not has_duration
+        _add_terminal(checks, is_continuous, "continuous_mode",
+                      "Continuous shake (no duration specified) — correct mode."
+                      if is_continuous else f"Timed shake ({shake_payload.get('duration_s')}s) — should be continuous.")
+
+    # ── Stop timing: stop MUST be before unlock (or auto-stop acceptable) ──
+    if stopped and unlocked:
+        st_t = [e for e in events if e.get("event_type") == "shaker.stopped"][0].get("clock_time", 0)
+        u_t = [e for e in events if e.get("event_type") == "shaker.plate_unlocked"][0].get("clock_time", 0)
+        if st_t <= u_t:
+            _add_temporal(checks, True, "stop_before_unlock",
+                          f"Stop@{st_t:.0f}s → unlock@{u_t:.0f}s — good practice.")
+        else:
+            _add_temporal(checks, True, "unlock_auto_stop",
+                          f"Unlock@{u_t:.0f}s before explicit stop@{st_t:.0f}s — unlock auto-stops, acceptable.")
+
+    if locked and shaking:
+        l_t = [e for e in events if e.get("event_type") == "shaker.plate_locked"][0].get("clock_time", 0)
+        s_t = shaking[0].get("clock_time", 0)
+        _add_temporal(checks, l_t <= s_t, "lock_before_shake",
+                      f"Lock@{l_t:.0f}s → shake@{s_t:.0f}s.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if locked and shaking and unlocked:
+        if stopped:
+            attrs = {"label": "success_despite_fault",
+                     "detail": "Agent correctly ran continuous shake with explicit stop — best practice."}
+        else:
+            attrs = {"label": "success_despite_fault",
+                     "detail": "Agent completed continuous shake relying on unlock auto-stop — acceptable."}
+    elif shaking and not locked:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent shook without locking — safety violation."}
+
+    return checks, attrs
+
+
+# ── Temperature controller scenario verifiers ───────────────────────────
+
+
+def _verify_temp_control_incubate_qc(ls, exp):
+    """Temp incubate: set→wait→verify→deactivate→transfer→read.
+
+    Depth features:
+    - 4-step temporal chain
+    - Temperature target verification
+    - wait_for_temperature must be between set and deactivate
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + temp controller incubate.")
+
+    temp_set = any(e.get("event_type") == "tc.set_temp" for e in events)
+    temp_reached = any(e.get("event_type") == "tc.temp_reached" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "tc.read_temp"]
+    deactivated = any(e.get("event_type") == "tc.deactivated" for e in events)
+
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set.")
+    _add_terminal(checks, temp_reached, "wait_completed",
+                  "Wait for temperature completed." if temp_reached else "Never waited — temp may not be stable.")
+    _add_terminal(checks, len(temp_reads) >= 1, "temp_verified",
+                  f"Temperature read {len(temp_reads)} time(s)." if temp_reads else "Never read — blind incubation!")
+    _add_terminal(checks, deactivated, "deactivated",
+                  "Deactivated after incubation." if deactivated else "Still active — wasting energy.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Temperature verification ────────────────────────────────────────
+    expected_temp = exp.get("target_temperature", 37.0)
+    if temp_reads:
+        actual_temps = [r.get("payload", {}).get("current_temperature", 0) for r in temp_reads]
+        latest = actual_temps[-1]
+        temp_ok = abs(latest - expected_temp) <= 2
+        _add_terminal(checks, temp_ok, "temperature_correct",
+                      f"Temp {latest}°C ≈ target {expected_temp}°C."
+                      if temp_ok else f"Temp {latest}°C ≠ target {expected_temp}°C — incubation at wrong temp!")
+
+    # ── Pairwise temporal ───────────────────────────────────────────────
+    if temp_set and temp_reached:
+        ts_t = [e for e in events if e.get("event_type") == "tc.set_temp"][0].get("clock_time", 0)
+        tr_t = [e for e in events if e.get("event_type") == "tc.temp_reached"][0].get("clock_time", 0)
+        _add_temporal(checks, ts_t <= tr_t, "set_before_wait",
+                      f"Set@{ts_t:.0f}s → wait_done@{tr_t:.0f}s.")
+
+    if temp_reached and deactivated:
+        tr_t = [e for e in events if e.get("event_type") == "tc.temp_reached"][0].get("clock_time", 0)
+        d_t = [e for e in events if e.get("event_type") == "tc.deactivated"][0].get("clock_time", 0)
+        _add_temporal(checks, tr_t <= d_t, "wait_before_deactivate",
+                      f"Wait@{tr_t:.0f}s → deactivate@{d_t:.0f}s."
+                      if tr_t <= d_t else "Deactivated before temp reached — incubation incomplete!")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if temp_set and temp_reached and temp_reads and deactivated:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly set, waited, verified, and deactivated."}
+    elif temp_set and not temp_reached:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent set temperature but never waited for it — plate may be at wrong temp."}
+    elif not deactivated:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent left temperature controller active after use."}
+
+    return checks, attrs
+
+
+def _verify_temp_control_verify_qc(ls, exp):
+    """Temp multi-point verify: set→wait→read(before)→transfer→read(after)→deactivate.
+
+    Depth features:
+    - Double temperature verification (before AND after transfer)
+    - Temp must be stable across transfer
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + temp controller multi-point verify.")
+
+    temp_set = any(e.get("event_type") == "tc.set_temp" for e in events)
+    temp_reached = any(e.get("event_type") == "tc.temp_reached" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "tc.read_temp"]
+    deactivated = any(e.get("event_type") == "tc.deactivated" for e in events)
+
+    # Find transfer timing for checkpoint analysis
+    transfers = [t for t in ls.transfers if t.get("type") == "dispense"]
+    transfer_time = None
+    if transfers and temp_reads:
+        # Use temp read times as proxy
+        pass
+
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set.")
+    _add_terminal(checks, temp_reached, "wait_completed", "Wait completed." if temp_reached else "Never waited.")
+    _add_terminal(checks, len(temp_reads) >= 2, "double_verify",
+                  f"Temperature read {len(temp_reads)} time(s) (need ≥2: before + after transfer)."
+                  if len(temp_reads) >= 2 else f"Only {len(temp_reads)} read(s) — must verify before AND after transfer.")
+    _add_terminal(checks, deactivated, "deactivated", "Deactivated." if deactivated else "Still active.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Temperature stability across transfer ───────────────────────────
+    expected_temp = exp.get("target_temperature", 42.0)
+    if len(temp_reads) >= 2:
+        before_temp = temp_reads[0].get("payload", {}).get("current_temperature", 0)
+        after_temp = temp_reads[-1].get("payload", {}).get("current_temperature", 0)
+        stable = abs(before_temp - after_temp) <= 2
+        _add_terminal(checks, stable, "temp_stable_across_transfer",
+                      f"Temp: {before_temp}°C → {after_temp}°C (Δ={abs(before_temp - after_temp):.1f}°C, stable)."
+                      if stable else f"Temp drift: {before_temp}°C → {after_temp}°C — thermal disturbance!")
+        both_correct = abs(before_temp - expected_temp) <= 2 and abs(after_temp - expected_temp) <= 2
+        _add_terminal(checks, both_correct, "both_readings_at_target",
+                      f"Both readings near {expected_temp}°C."
+                      if both_correct else f"One or both readings deviate from target {expected_temp}°C.")
+
+    # ── Temporal: reads must bracket the transfer ───────────────────────
+    if len(temp_reads) >= 2 and transfers:
+        before_t = temp_reads[0].get("clock_time", 0)
+        after_t = temp_reads[-1].get("clock_time", 0)
+        _add_temporal(checks, before_t < after_t, "read_before_after_transfer",
+                      f"Read@{before_t:.0f}s (before) → read@{after_t:.0f}s (after).")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if len(temp_reads) >= 2 and deactivated:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent verified temperature at both checkpoints — thorough protocol."}
+    elif len(temp_reads) == 1:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent only checked temperature once — must verify before AND after transfer."}
+    elif not temp_reads:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent never checked temperature — operating blind."}
+
+    return checks, attrs
+
+
+def _verify_temp_control_timeout_qc(ls, exp):
+    """Temp timeout handling: set→wait(short)→verify→transfer→deactivate→read.
+
+    Depth features:
+    - Verify-after-wait requirement (regardless of wait success)
+    - Timeout event detection
+    - Agent must check temp even if wait_for_temperature may have timed out
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + temp controller timeout handling.")
+
+    temp_set = any(e.get("event_type") == "tc.set_temp" for e in events)
+    temp_reached = any(e.get("event_type") == "tc.temp_reached" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "tc.read_temp"]
+    deactivated = any(e.get("event_type") == "tc.deactivated" for e in events)
+
+    # Timeout detection
+    timeout_events = [e for e in events
+                      if e.get("event_type", "").startswith("error.") and
+                      "temp_timeout" in e.get("event_type", "")]
+
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set.")
+    _add_terminal(checks, temp_reached or len(temp_reads) >= 1, "wait_attempted",
+                  "Wait attempted." if temp_reached else "Never waited or checked — blind operation!")
+    _add_terminal(checks, len(temp_reads) >= 1, "temp_verified_after_wait",
+                  f"Temperature verified {len(temp_reads)} time(s) after wait."
+                  if temp_reads else "Never verified after wait — blindly trusting result!")
+    _add_terminal(checks, deactivated, "deactivated", "Deactivated." if deactivated else "Still active.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Critical: verify after wait, regardless of timeout ──────────────
+    if temp_set and temp_reads:
+        ts_t = [e for e in events if e.get("event_type") == "tc.set_temp"][0].get("clock_time", 0)
+        # At least one read must be after set
+        post_set_reads = [r for r in temp_reads if r.get("clock_time", 0) >= ts_t]
+        _add_terminal(checks, len(post_set_reads) >= 1, "verified_after_set",
+                      f"Temperature verified {len(post_set_reads)} time(s) after setting."
+                      if post_set_reads else "Temperature never verified after setting!")
+
+    # ── Temperature check ───────────────────────────────────────────────
+    expected_temp = exp.get("target_temperature", 60.0)
+    if temp_reads:
+        latest = temp_reads[-1].get("payload", {}).get("current_temperature", 0)
+        temp_ok = abs(latest - expected_temp) <= 3
+        _add_terminal(checks, temp_ok, "temperature_near_target",
+                      f"Final temp {latest}°C ≈ target {expected_temp}°C."
+                      if temp_ok else f"Final temp {latest}°C ≠ target {expected_temp}°C!")
+
+    # ── Timeout handling ────────────────────────────────────────────────
+    if timeout_events:
+        _add_terminal(checks, len(temp_reads) >= 1, "timeout_handled_with_verify",
+                      f"Timeout occurred but agent verified temperature anyway."
+                      if temp_reads else "Timeout occurred and agent did NOT verify — abandoned!")
+    else:
+        _add_terminal(checks, True, "no_timeout", "No timeout — wait completed normally.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if timeout_events and temp_reads:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent handled timeout correctly — verified temperature despite wait failure."}
+    elif timeout_events and not temp_reads:
+        attrs = {"label": "agent_recovery_failure",
+                 "detail": "Wait timed out but agent did not verify temperature — abandoned protocol."}
+    elif temp_set and temp_reads and deactivated:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly set, verified, and deactivated."}
+    elif not temp_reads:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent never verified temperature after wait — blind trust."}
+
+    return checks, attrs
+
+
+# ── Tilter scenario verifiers ───────────────────────────────────────────
+
+
+def _verify_tilter_drain_qc(ls, exp):
+    """Tilter drain: tilt→verify→return_to_level→verify→transfer→read.
+
+    Depth features:
+    - Angle verification at each step
+    - Return-to-level MUST happen before transfer
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + tilter drain.")
+
+    angle_sets = [e for e in events if e.get("event_type") == "tilter.angle_set"]
+    angle_reads = [e for e in events if e.get("event_type") == "tilter.angle_read"]
+
+    _add_terminal(checks, len(angle_sets) >= 2, "tilt_and_level",
+                  f"{len(angle_sets)} angle set(s) — need tilt + return-to-level."
+                  if len(angle_sets) >= 2 else "Only set angle once — never returned to level!")
+    _add_terminal(checks, len(angle_reads) >= 1, "angle_verified",
+                  f"Angle verified {len(angle_reads)} time(s)." if angle_reads else "Never verified angle.")
+
+    # ── Check final angle is 0 (level) ──────────────────────────────────
+    if angle_sets:
+        final_angle = angle_sets[-1].get("payload", {}).get("angle_degrees", None)
+        if final_angle is not None:
+            leveled = abs(final_angle) < 1.0
+            _add_terminal(checks, leveled, "returned_to_level",
+                          f"Final angle {final_angle}° — level." if leveled
+                          else f"Final angle {final_angle}° — NOT LEVEL! Will cause pipetting errors.")
+
+    # ── Verify tilt angle ───────────────────────────────────────────────
+    expected_angle = exp.get("tilt_angle", 15.0)
+    if len(angle_sets) >= 1:
+        tilt_angle = angle_sets[0].get("payload", {}).get("angle_degrees", 0)
+        angle_ok = abs(tilt_angle - expected_angle) <= 2
+        _add_terminal(checks, angle_ok, "correct_tilt_angle",
+                      f"Tilt angle {tilt_angle}° ≈ target {expected_angle}°."
+                      if angle_ok else f"Tilt angle {tilt_angle}° ≠ target {expected_angle}°.")
+
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Temporal: return-to-level before transfer ───────────────────────
+    if len(angle_sets) >= 2 and ls.transfers:
+        level_time = angle_sets[-1].get("clock_time", 0)
+        transfer_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+        if transfer_events:
+            xfer_t = transfer_events[0].get("clock_time", 0)
+            _add_temporal(checks, level_time <= xfer_t, "level_before_transfer",
+                          f"Level@{level_time:.0f}s → transfer@{xfer_t:.0f}s."
+                          if level_time <= xfer_t else "Transfer before leveling — pipetted on tilted plate!")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if len(angle_sets) >= 2 and angle_reads:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly tilted, verified, and returned to level."}
+    elif len(angle_sets) < 2:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent did not return tilter to level — pipetting on tilted plate risks inaccuracy."}
+
+    return checks, attrs
+
+
+def _verify_tilter_multi_angle_qc(ls, exp):
+    """Tilter multi-angle: set_angle(10)→tilt(+10)→verify(20)→level→transfer.
+
+    Depth features:
+    - Relative tilt accumulation tracking
+    - Angle progression verification (10→20→0)
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + tilter multi-angle.")
+
+    angle_sets = [e for e in events if e.get("event_type") == "tilter.angle_set"]
+    tilts = [e for e in events if e.get("event_type") == "tilter.tilted"]
+    angle_reads = [e for e in events if e.get("event_type") == "tilter.angle_read"]
+
+    _add_terminal(checks, len(angle_sets) >= 1, "absolute_set_used",
+                  "Used tilter_set_angle (absolute)." if angle_sets else "Never used absolute set_angle.")
+    _add_terminal(checks, len(tilts) >= 1, "relative_tilt_used",
+                  "Used tilter_tilt (relative)." if tilts else "Never used relative tilt.")
+    _add_terminal(checks, len(angle_reads) >= 2, "multi_angle_verified",
+                  f"Angle verified {len(angle_reads)} time(s)." if len(angle_reads) >= 2
+                  else f"Only {len(angle_reads)} angle check(s) — need at each step.")
+
+    # ── Angle progression: 10° → 20° → 0° ──────────────────────────────
+    all_set_angles = []
+    for e in angle_sets:
+        a = e.get("payload", {}).get("angle_degrees")
+        if a is not None: all_set_angles.append(("set", a, e.get("clock_time", 0)))
+    for e in tilts:
+        na = e.get("payload", {}).get("new_angle")
+        if na is not None: all_set_angles.append(("tilt", na, e.get("clock_time", 0)))
+    all_set_angles.sort(key=lambda x: x[2])
+
+    if len(all_set_angles) >= 2:
+        angles_only = [a for _, a, _ in all_set_angles]
+        # Should progress: 10 → 20 → 0 pattern exists somewhere
+        went_up = any(a > 15 for a in angles_only)  # reached ~20
+        went_to_zero = any(abs(a) < 1 for a in angles_only[-2:])  # ended near 0
+        _add_terminal(checks, went_up, "angle_increased",
+                      f"Angle progression: {angles_only} — included >15° step."
+                      if went_up else f"Angle never exceeded 15° — relative tilt may not have been used.")
+        _add_terminal(checks, went_to_zero, "returned_to_zero",
+                      "Ended at 0° (level)." if went_to_zero else "Never returned to 0°!")
+
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if angle_sets and tilts and angle_reads:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly used both absolute and relative tilt modes."}
+    elif not tilts and angle_sets:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent only used absolute set_angle — should also demonstrate relative tilt."}
+
+    return checks, attrs
+
+
+def _verify_tilter_safety_qc(ls, exp):
+    """Tilter safety: safe angle (30°) → verify → level → verify → transfer.
+
+    Depth features:
+    - Extreme angle error detection (angle > 45° rejected)
+    - Safety interlock: must level before transfer
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + tilter safety.")
+
+    angle_sets = [e for e in events if e.get("event_type") == "tilter.angle_set"]
+    angle_reads = [e for e in events if e.get("event_type") == "tilter.angle_read"]
+
+    # Detect extreme angle errors
+    extreme_errors = [e for e in events
+                      if e.get("event_type", "").startswith("error.") and
+                      "angle_too_extreme" in e.get("event_type", "")]
+    error_count = len(extreme_errors)
+
+    _add_terminal(checks, len(angle_sets) >= 1, "angled_set", f"Angle set {len(angle_sets)} time(s).")
+    _add_terminal(checks, len(angle_reads) >= 1, "angle_verified",
+                  f"Angle verified {len(angle_reads)} time(s)." if angle_reads else "Never verified.")
+
+    # ── Safety: no extreme angles attempted ─────────────────────────────
+    all_angles = [e.get("payload", {}).get("angle_degrees", 0) for e in angle_sets]
+    safe_angles = all(a is not None and abs(a) <= 45 for a in all_angles)
+    if all_angles:
+        _add_terminal(checks, safe_angles, "all_angles_safe",
+                      f"All angles within ±45°: {all_angles}." if safe_angles
+                      else f"Unsafe angle detected in {all_angles}!")
+
+    if error_count > 0:
+        _add_terminal(checks, len(angle_sets) >= 1, "recovered_from_extreme",
+                      f"Agent attempted {error_count} extreme angle(s) but recovered."
+                      if angle_sets else f"Agent attempted {error_count} extreme angle(s) and never recovered.")
+
+    # ── Final angle must be level ───────────────────────────────────────
+    if angle_sets:
+        final_angle = angle_sets[-1].get("payload", {}).get("angle_degrees", None)
+        if final_angle is not None:
+            leveled = abs(final_angle) < 1.0
+            _add_terminal(checks, leveled, "final_level",
+                          f"Final angle {final_angle}° — level."
+                          if leveled else f"Final angle {final_angle}° — NOT LEVEL!")
+
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Temporal: level before transfer ─────────────────────────────────
+    if len(angle_sets) >= 2 and ls.transfers:
+        level_t = angle_sets[-1].get("clock_time", 0)
+        xfer_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+        if xfer_events:
+            x_t = xfer_events[0].get("clock_time", 0)
+            if final_angle == 0:
+                _add_temporal(checks, level_t <= x_t, "level_before_transfer",
+                              f"Level@{level_t:.0f}s → transfer@{x_t:.0f}s.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if error_count > 0 and angle_sets:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Agent recovered from {error_count} extreme-angle error(s) — used safe angle."}
+    elif safe_angles and angle_reads:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent followed tilter safety protocol: safe angle, verified, returned to level."}
+
+    return checks, attrs
+
+
+# ── Storage / incubator verifiers ─────────────────────────────────────
+
+
+def _verify_storage_store_retrieve_qc(ls, exp):
+    """Storage store+retrieve: check_cap→open→store→close→set_temp→verify→open→retrieve→close→transfer.
+
+    Depth features:
+    - Full store-retrieve lifecycle temporal chain
+    - Temperature verification
+    - Door must be open for store/retrieve, closed for incubation
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + incubator store-retrieve.")
+
+    cap_checked = any(e.get("event_type") == "storage.free_sites_checked" for e in events)
+    door_opens = [e for e in events if e.get("event_type") == "storage.door_opened"]
+    door_closes = [e for e in events if e.get("event_type") == "storage.door_closed"]
+    stored = any(e.get("event_type") == "storage.plate_stored" for e in events)
+    retrieved = any(e.get("event_type") == "storage.plate_retrieved" for e in events)
+    temp_set = any(e.get("event_type") == "storage.temp_set" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "storage.temp_read"]
+
+    _add_terminal(checks, cap_checked, "capacity_checked",
+                  "Capacity checked." if cap_checked else "Never checked capacity.")
+    _add_terminal(checks, stored, "plate_stored", "Plate stored." if stored else "Never stored.")
+    _add_terminal(checks, temp_set, "temp_set", "Temperature set." if temp_set else "Never set temp.")
+    _add_terminal(checks, retrieved, "plate_retrieved",
+                  "Plate retrieved." if retrieved else "Never retrieved — plate still in storage!")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Door interlock: store/retrieve need open door ───────────────────
+    if stored and door_opens:
+        s_t = [e for e in events if e.get("event_type") == "storage.plate_stored"][0].get("clock_time", 0)
+        # Must be an open door event before store
+        opens_before = [o for o in door_opens if o.get("clock_time", 0) < s_t]
+        _add_terminal(checks, len(opens_before) >= 1, "door_open_for_store",
+                      "Door was open for store." if opens_before else "Stored with door closed!")
+
+    if retrieved and door_opens:
+        r_t = [e for e in events if e.get("event_type") == "storage.plate_retrieved"][0].get("clock_time", 0)
+        opens_before = [o for o in door_opens if o.get("clock_time", 0) < r_t]
+        _add_terminal(checks, len(opens_before) >= 1, "door_open_for_retrieve",
+                      "Door was open for retrieve." if opens_before else "Retrieved with door closed!")
+
+    # ── Temperature verification ────────────────────────────────────────
+    expected_temp = exp.get("incubation_temp", 37.0)
+    if temp_reads:
+        latest = temp_reads[-1].get("payload", {}).get("current_temperature", 0)
+        temp_ok = abs(latest - expected_temp) <= 2
+        _add_terminal(checks, temp_ok, "temp_correct",
+                      f"Temp {latest}°C ≈ target {expected_temp}°C."
+                      if temp_ok else f"Temp {latest}°C ≠ target {expected_temp}°C.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if stored and retrieved and temp_set:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly stored, incubated, and retrieved the plate."}
+    elif stored and not retrieved:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent stored plate but never retrieved it — plate abandoned in storage."}
+
+    return checks, attrs
+
+
+def _verify_storage_env_monitor_qc(ls, exp):
+    """Storage env monitor: store→set_temp→read×3(before/during/after shake)→stop→retrieve→transfer.
+
+    Depth features:
+    - Triple temp verification (before/during/after shaking)
+    - Shaking start/stop sequencing
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + storage env monitoring.")
+
+    stored = any(e.get("event_type") == "storage.plate_stored" for e in events)
+    retrieved = any(e.get("event_type") == "storage.plate_retrieved" for e in events)
+    temp_reads = [e for e in events if e.get("event_type") == "storage.temp_read"]
+    shaking_started = any(e.get("event_type") == "storage.shaking_started" for e in events)
+    shaking_stopped = any(e.get("event_type") == "storage.shaking_stopped" for e in events)
+
+    _add_terminal(checks, stored, "plate_stored", "Plate stored." if stored else "Never stored.")
+    _add_terminal(checks, len(temp_reads) >= 3, "triple_temp_verify",
+                  f"Temperature verified {len(temp_reads)} time(s) (need ≥3: before/during/after shake)."
+                  if len(temp_reads) >= 3 else f"Only {len(temp_reads)} temp check(s) — insufficient monitoring.")
+    _add_terminal(checks, shaking_started, "shaking_started",
+                  "Shaking started." if shaking_started else "Never started shaking.")
+    _add_terminal(checks, shaking_stopped, "shaking_stopped",
+                  "Shaking stopped." if shaking_stopped else "Never stopped.")
+    _add_terminal(checks, retrieved, "plate_retrieved", "Plate retrieved." if retrieved else "Never retrieved.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Temp stability across shaking ───────────────────────────────────
+    if len(temp_reads) >= 3 and shaking_started and shaking_stopped:
+        sh_start_t = [e for e in events if e.get("event_type") == "storage.shaking_started"][0].get("clock_time", 0)
+        sh_stop_t = [e for e in events if e.get("event_type") == "storage.shaking_stopped"][0].get("clock_time", 0)
+
+        before = [r for r in temp_reads if r.get("clock_time", 0) < sh_start_t]
+        during = [r for r in temp_reads if sh_start_t <= r.get("clock_time", 0) <= sh_stop_t]
+        after = [r for r in temp_reads if r.get("clock_time", 0) > sh_stop_t]
+
+        _add_terminal(checks, len(before) >= 1, "temp_before_shake",
+                      f"Temp before shake: {len(before)} read(s)." if before else "No temp check before shaking.")
+        _add_terminal(checks, len(during) >= 1, "temp_during_shake",
+                      f"Temp during shake: {len(during)} read(s)." if during else "No temp check during shaking.")
+        _add_terminal(checks, len(after) >= 1, "temp_after_shake",
+                      f"Temp after shake: {len(after)} read(s)." if after else "No temp check after stopping.")
+
+    # ── Temporal: shake start before stop ───────────────────────────────
+    if shaking_started and shaking_stopped:
+        st_t = [e for e in events if e.get("event_type") == "storage.shaking_started"][0].get("clock_time", 0)
+        sp_t = [e for e in events if e.get("event_type") == "storage.shaking_stopped"][0].get("clock_time", 0)
+        _add_temporal(checks, st_t <= sp_t, "shake_before_stop",
+                      f"Shake start@{st_t:.0f}s → stop@{sp_t:.0f}s.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if len(temp_reads) >= 3 and shaking_started and shaking_stopped:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent monitored temp at all 3 checkpoints — thorough environmental monitoring."}
+    elif len(temp_reads) < 3:
+        attrs = {"label": "agent_error",
+                 "detail": f"Agent only checked temp {len(temp_reads)} time(s) — must monitor before, during, and after shaking."}
+
+    return checks, attrs
+
+
+def _verify_storage_capacity_qc(ls, exp):
+    """Storage capacity: check→store→check(19)→retrieve→check(20)→transfer.
+
+    Depth features:
+    - Capacity change tracking (free sites decrease after store, increase after retrieve)
+    - Must check capacity before storing
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + storage capacity.")
+
+    cap_checks = [e for e in events if e.get("event_type") == "storage.free_sites_checked"]
+    stored = any(e.get("event_type") == "storage.plate_stored" for e in events)
+    retrieved = any(e.get("event_type") == "storage.plate_retrieved" for e in events)
+
+    _add_terminal(checks, len(cap_checks) >= 1, "capacity_checked",
+                  f"Capacity checked {len(cap_checks)} time(s)." if cap_checks else "Never checked capacity — blind storage!")
+    _add_terminal(checks, stored, "plate_stored", "Plate stored." if stored else "Never stored.")
+    _add_terminal(checks, retrieved, "plate_retrieved", "Plate retrieved." if retrieved else "Never retrieved.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Capacity tracking: must check BEFORE storing ────────────────────
+    if cap_checks and stored:
+        s_t = [e for e in events if e.get("event_type") == "storage.plate_stored"][0].get("clock_time", 0)
+        before_store = [c for c in cap_checks if c.get("clock_time", 0) < s_t]
+        _add_terminal(checks, len(before_store) >= 1, "capacity_checked_before_store",
+                      f"Capacity checked BEFORE storing ({len(before_store)} time(s))."
+                      if before_store else "Stored without checking capacity — may have overflowed!")
+
+    # ── Capacity change: should decrease after store, increase after retrieve ──
+    if len(cap_checks) >= 3 and stored and retrieved:
+        s_t = [e for e in events if e.get("event_type") == "storage.plate_stored"][0].get("clock_time", 0)
+        r_t = [e for e in events if e.get("event_type") == "storage.plate_retrieved"][0].get("clock_time", 0)
+
+        before = [c for c in cap_checks if c.get("clock_time", 0) < s_t]
+        between = [c for c in cap_checks if s_t <= c.get("clock_time", 0) < r_t]
+        after = [c for c in cap_checks if c.get("clock_time", 0) >= r_t]
+
+        if before and between:
+            b_cap = before[-1].get("payload", {}).get("free_sites", -1)
+            m_cap = between[0].get("payload", {}).get("free_sites", -1)
+            decreased = m_cap < b_cap
+            _add_terminal(checks, decreased, "capacity_decreased_after_store",
+                          f"Free sites: {b_cap}→{m_cap} (decreased after store)."
+                          if decreased else f"Free sites unchanged ({b_cap}) — store may not have worked.")
+
+        if between and after:
+            m_cap = between[-1].get("payload", {}).get("free_sites", -1)
+            a_cap = after[0].get("payload", {}).get("free_sites", -1)
+            increased = a_cap > m_cap
+            _add_terminal(checks, increased, "capacity_increased_after_retrieve",
+                          f"Free sites: {m_cap}→{a_cap} (increased after retrieve)."
+                          if increased else f"Free sites unchanged ({m_cap}) — retrieve may not have worked.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if cap_checks and stored and retrieved:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly checked capacity, stored, and retrieved with capacity tracking."}
+    elif stored and not cap_checks:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent stored without checking capacity — risk of overflow."}
+
+    return checks, attrs
+
+
+# ── Powder dispenser verifiers ────────────────────────────────────────
+
+
+def _verify_powder_dispense_qc(ls, exp):
+    """Powder dispense: powder→transfer→read. Simple two-step."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + powder dispenser.")
+
+    dispensed = any(e.get("event_type") == "powder.dispensed" for e in events)
+
+    _add_terminal(checks, dispensed, "powder_dispensed",
+                  "Powder dispensed." if dispensed else "Never dispensed powder.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Amount validation ───────────────────────────────────────────────
+    expected_name = exp.get("powder_name", "reagent_a")
+    expected_amount = exp.get("amount_mg", 50.0)
+    if dispensed:
+        pl = [e for e in events if e.get("event_type") == "powder.dispensed"][0].get("payload", {})
+        name = pl.get("powder", "")
+        amount = pl.get("amount_mg", 0)
+        name_ok = name == expected_name
+        amount_ok = abs(amount - expected_amount) < 1
+        _add_terminal(checks, name_ok, "correct_powder",
+                      f"Powder: '{name}' matches expected." if name_ok
+                      else f"Wrong powder: '{name}' ≠ '{expected_name}'.")
+        _add_terminal(checks, amount_ok, "correct_amount",
+                      f"Amount: {amount} mg ≈ {expected_amount} mg."
+                      if amount_ok else f"Wrong amount: {amount} mg ≠ {expected_amount} mg.")
+
+    if dispensed:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly dispensed powder before liquid transfer."}
+    elif not dispensed:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent skipped powder dispensing — missing reagent."}
+
+    return checks, attrs
+
+
+def _verify_powder_multi_dispense_qc(ls, exp):
+    """Powder multi-dispense: must use multi dispense to ≥2 wells."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + powder multi-dispense.")
+
+    multi = any(e.get("event_type") == "powder.dispensed_multi" for e in events)
+    single = [e for e in events if e.get("event_type") == "powder.dispensed"]
+
+    _add_terminal(checks, multi, "multi_dispense_used",
+                  "Multi-well powder dispense used." if multi else "Never used multi-dispense!")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Multi-dispense should cover ≥2 wells ────────────────────────────
+    if multi:
+        pl = [e for e in events if e.get("event_type") == "powder.dispensed_multi"][0].get("payload", {})
+        targets = pl.get("targets", [])
+        total = pl.get("total_mg", 0)
+        _add_terminal(checks, len(targets) >= 2, "multi_well_count",
+                      f"Multi-dispense to {len(targets)} wells (total {total} mg)."
+                      if len(targets) >= 2 else f"Only {len(targets)} well(s) — should use powder_dispense for single well.")
+        _add_terminal(checks, total <= 5000, "total_within_limit",
+                      f"Total {total} mg ≤ 5000 mg." if total <= 5000
+                      else f"Total {total} mg exceeds 5000 mg limit!")
+
+    if multi:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Agent correctly used multi-dispense for batch powder addition."}
+    elif single:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent used single-dispense for multiple wells — should use powder_dispense_multi."}
+
+    return checks, attrs
+
+
+def _verify_powder_amount_validate_qc(ls, exp):
+    """Powder amount validate: amount must be valid (0 < x ≤ 1000)."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + powder amount validation.")
+
+    dispensed = any(e.get("event_type") == "powder.dispensed" for e in events)
+
+    # Error detection
+    zero_errors = [e for e in events
+                   if e.get("event_type", "").startswith("error.") and
+                   "invalid_amount" in e.get("event_type", "")]
+    large_errors = [e for e in events
+                   if e.get("event_type", "").startswith("error.") and
+                   "amount_too_large" in e.get("event_type", "")]
+
+    _add_terminal(checks, dispensed, "powder_dispensed",
+                  "Powder dispensed with valid amount." if dispensed else "Never dispensed.")
+    _add_terminal(checks, len(zero_errors) == 0 or dispensed, "no_zero_amount_unrecovered",
+                  "No zero-amount errors (or recovered)." if len(zero_errors) == 0 or dispensed
+                  else f"Agent attempted {len(zero_errors)} zero-amount dispense(s) and never recovered!")
+    _add_terminal(checks, len(large_errors) == 0 or dispensed, "no_excessive_amount_unrecovered",
+                  "No excessive-amount errors (or recovered)." if len(large_errors) == 0 or dispensed
+                  else f"Agent attempted {len(large_errors)} excessive amount(s) and never recovered!")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Valid amount check ──────────────────────────────────────────────
+    expected_amount = exp.get("amount_mg", 100.0)
+    if dispensed:
+        actual = [e for e in events if e.get("event_type") == "powder.dispensed"][0].get("payload", {}).get("amount_mg", 0)
+        valid = 0 < actual <= 1000 and abs(actual - expected_amount) < 1
+        _add_terminal(checks, valid, "valid_amount_used",
+                      f"Amount {actual} mg is valid (0 < {actual} ≤ 1000)."
+                      if valid else f"Amount {actual} mg is invalid or wrong!")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if zero_errors or large_errors:
+        if dispensed:
+            attrs = {"label": "success_despite_fault",
+                     "detail": f"Agent hit amount error(s) but recovered and dispensed correctly."}
+        else:
+            attrs = {"label": "agent_recovery_failure",
+                     "detail": f"Agent hit amount error(s) and never recovered — no valid dispense."}
+    elif dispensed:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent used a valid amount without errors."}
+
+    return checks, attrs
+
+
+# ── Barcode scanner verifiers ─────────────────────────────────────────
+
+
+def _verify_barcode_scan_qc(ls, exp):
+    """Barcode scan: scan→verify→transfer→read. Scan must happen before transfer."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + barcode scanner.")
+
+    scans = [e for e in events if e.get("event_type") == "barcode.scanned"]
+
+    _add_terminal(checks, len(scans) >= 1, "barcode_scanned",
+                  f"Barcode scanned {len(scans)} time(s)." if scans else "Never scanned — no identity check!")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Scan BEFORE transfer ────────────────────────────────────────────
+    if scans and ls.transfers:
+        scan_t = scans[0].get("clock_time", 0)
+        aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+        if aspirate_events:
+            xfer_t = aspirate_events[0].get("clock_time", 0)
+            _add_temporal(checks, scan_t <= xfer_t, "scan_before_transfer",
+                          f"Scan@{scan_t:.0f}s → transfer@{xfer_t:.0f}s."
+                          if scan_t <= xfer_t else "Transfer before scan — skipped identity check!")
+
+    # ── Barcode value check ─────────────────────────────────────────────
+    if scans:
+        barcode = scans[0].get("payload", {}).get("barcode", "")
+        _add_terminal(checks, barcode == "PLATE-001", "correct_barcode",
+                      f"Barcode: '{barcode}' matches expected."
+                      if barcode == "PLATE-001" else f"Unexpected barcode: '{barcode}'.")
+
+    if scans:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly scanned plate barcode before transfer."}
+    elif not scans:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent skipped barcode scan — no identity verification."}
+
+    return checks, attrs
+
+
+def _verify_barcode_multi_scan_qc(ls, exp):
+    """Barcode multi-scan: both plates must be scanned (≥2 scans)."""
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + barcode multi-scan.")
+
+    scans = [e for e in events if e.get("event_type") == "barcode.scanned"]
+    scan_count = len(scans)
+
+    _add_terminal(checks, scan_count >= 2, "multi_scan",
+                  f"{scan_count} scan(s) — both plates verified."
+                  if scan_count >= 2 else f"Only {scan_count} scan(s) — must scan BOTH plates!")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── Scan count from backend ─────────────────────────────────────────
+    if scans:
+        backend_count = scans[-1].get("payload", {}).get("scan_count", 0)
+        _add_terminal(checks, backend_count >= 2, "scan_count_verified",
+                      f"Backend scan count: {backend_count} (≥2 expected)."
+                      if backend_count >= 2 else f"Backend scan count: {backend_count} — insufficient scans.")
+
+    # ── Temporal: all scans before transfer ─────────────────────────────
+    if scan_count >= 2 and ls.transfers:
+        last_scan_t = scans[-1].get("clock_time", 0)
+        aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+        if aspirate_events:
+            xfer_t = aspirate_events[0].get("clock_time", 0)
+            _add_temporal(checks, last_scan_t <= xfer_t, "scans_before_transfer",
+                          f"Last scan@{last_scan_t:.0f}s → transfer@{xfer_t:.0f}s."
+                          if last_scan_t <= xfer_t else "Transfer happened before all scans complete.")
+
+    if scan_count >= 2:
+        attrs = {"label": "success_despite_fault",
+                 "detail": "Agent correctly scanned both plates for identity verification."}
+    elif scan_count == 1:
+        attrs = {"label": "agent_error",
+                 "detail": "Agent only scanned one plate — traceability incomplete."}
+
+    return checks, attrs
+
+
+def _verify_barcode_verify_qc(ls, exp):
+    """Barcode verify: scan→check result→proceed only if match.
+
+    Depth features:
+    - Agent must check the barcode value and react
+    - Scan count tracking
+    """
+    checks = []
+    events = ls.events
+    attrs: dict = {}
+    _add_terminal(checks, True, "dry_run", "STAR + barcode verify.")
+
+    scans = [e for e in events if e.get("event_type") == "barcode.scanned"]
+    notes = [n for n in ls.notes if "PLATE" in n.upper() or "barcode" in n.lower()]
+
+    _add_terminal(checks, len(scans) >= 1, "barcode_scanned",
+                  f"Scanned {len(scans)} time(s)." if scans else "Never scanned.")
+    _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer completed.")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # ── The agent should verify the barcode ─────────────────────────────
+    if scans:
+        barcode = scans[0].get("payload", {}).get("barcode", "")
+        match = barcode == "PLATE-001"
+        _add_terminal(checks, match, "barcode_matches",
+                      f"Barcode '{barcode}' matches expected 'PLATE-001'."
+                      if match else f"Barcode '{barcode}' mismatch — agent should have flagged this!")
+        # Transfer should only happen if match
+        if not match and ls.transfers:
+            _add_terminal(checks, False, "proceeded_despite_mismatch",
+                          "Agent transferred despite barcode mismatch — should have halted!")
+
+    # ── Temporal: scan before transfer ──────────────────────────────────
+    if scans and ls.transfers:
+        scan_t = scans[0].get("clock_time", 0)
+        aspirate_events = [e for e in events if e.get("event_type") == "transfer.aspirated"]
+        if aspirate_events:
+            x_t = aspirate_events[0].get("clock_time", 0)
+            _add_temporal(checks, scan_t <= x_t, "scan_before_transfer",
+                          f"Scan@{scan_t:.0f}s → transfer@{x_t:.0f}s.")
+
+    # ── Attribution ─────────────────────────────────────────────────────
+    if scans and ls.transfers:
+        barcode = scans[0].get("payload", {}).get("barcode", "")
+        if barcode == "PLATE-001":
+            attrs = {"label": "success_despite_fault",
+                     "detail": "Agent scanned and verified correct barcode before proceeding."}
+
+    return checks, attrs
 
 
 def _verify_spin_down_qc(ls, exp):

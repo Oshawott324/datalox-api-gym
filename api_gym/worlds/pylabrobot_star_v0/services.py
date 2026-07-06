@@ -1068,6 +1068,807 @@ def centrifuge_spin(lab_state: LabState, g_force: float,
     return _ok(resp)
 
 
+# ── Robot arm operations ────────────────────────────────────────────────
+
+
+def _arm_cartesian(x: float, y: float, z: float):
+    """Build a PreciseFlexCartesianCoords from x, y, z mm."""
+    from pylabrobot.resources import Coordinate, Rotation
+    from pylabrobot.arms.precise_flex.coords import PreciseFlexCartesianCoords
+    loc = Coordinate(x=x, y=y, z=z)
+    rot = Rotation(x=0.0, y=0.0, z=0.0)
+    return PreciseFlexCartesianCoords(location=loc, rotation=rot)
+
+
+def arm_home(lab_state: LabState) -> dict[str, Any]:
+    """Home the robot arm.  PLR: ``ExperimentalSCARA.home()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    async def _op(): await lab_state.arm.home()
+    _run_async(_op())
+    lab_state.insert_event("arm.homed", "arm", "robot_arm", {})
+    lab_state.clock.advance(5.0)
+    return _ok({"homed": True})
+
+
+def arm_move_to(lab_state: LabState, x: float, y: float,
+                z: float) -> dict[str, Any]:
+    """Move the arm to cartesian coordinates.  PLR: ``ExperimentalSCARA.move_to()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    pos = _arm_cartesian(x, y, z)
+    async def _op(): await lab_state.arm.move_to(pos)
+    _run_async(_op())
+    lab_state.insert_event("arm.moved_to", "arm", "robot_arm",
+                           {"x": x, "y": y, "z": z})
+    lab_state.clock.advance(3.0)
+    return _ok({"position": {"x": x, "y": y, "z": z}})
+
+
+def arm_move_to_safe(lab_state: LabState) -> dict[str, Any]:
+    """Move the arm to a safe retracted position.  PLR: ``ExperimentalSCARA.move_to_safe()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    async def _op(): await lab_state.arm.move_to_safe()
+    _run_async(_op())
+    lab_state.insert_event("arm.safe", "arm", "robot_arm", {})
+    lab_state.clock.advance(2.0)
+    return _ok({"safe": True})
+
+
+def arm_approach(lab_state: LabState, x: float, y: float,
+                 z: float, access: str = "vertical") -> dict[str, Any]:
+    """Approach a position (slower, precision move).  PLR: ``ExperimentalSCARA.approach()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    from pylabrobot.arms.backend import VerticalAccess, HorizontalAccess
+    pos = _arm_cartesian(x, y, z)
+    acc = VerticalAccess() if access == "vertical" else HorizontalAccess()
+    async def _op(): await lab_state.arm.approach(pos, access=acc)
+    _run_async(_op())
+    lab_state.insert_event("arm.approached", "arm", "robot_arm",
+                           {"x": x, "y": y, "z": z, "access": access})
+    lab_state.clock.advance(4.0)
+    return _ok({"position": {"x": x, "y": y, "z": z}})
+
+
+def arm_pick_up_resource(lab_state: LabState, x: float, y: float,
+                         z: float, plate_width_mm: float) -> dict[str, Any]:
+    """Pick up a resource at a position.  PLR: ``ExperimentalSCARA.pick_up_resource()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    backend = lab_state.arm.backend
+    if getattr(backend, "_gripper_open", True) is False:
+        return _error("gripper_already_closed",
+                      "Gripper is already holding something — drop or open first.")
+    pos = _arm_cartesian(x, y, z)
+    async def _op(): await lab_state.arm.pick_up_resource(pos, plate_width=plate_width_mm)
+    _run_async(_op())
+    lab_state.insert_event("arm.picked_up", "arm", "robot_arm",
+                           {"x": x, "y": y, "z": z, "plate_width_mm": plate_width_mm})
+    lab_state.clock.advance(4.0)
+    return _ok({"picked_up": True, "position": {"x": x, "y": y, "z": z}})
+
+
+def arm_drop_resource(lab_state: LabState, x: float, y: float,
+                      z: float) -> dict[str, Any]:
+    """Drop the currently held resource at a position.  PLR: ``ExperimentalSCARA.drop_resource()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    backend = lab_state.arm.backend
+    if getattr(backend, "_gripper_open", False) is True:
+        return _error("gripper_already_open",
+                      "Gripper is already open — nothing to drop.")
+    pos = _arm_cartesian(x, y, z)
+    async def _op(): await lab_state.arm.drop_resource(pos)
+    _run_async(_op())
+    lab_state.insert_event("arm.dropped", "arm", "robot_arm",
+                           {"x": x, "y": y, "z": z})
+    lab_state.clock.advance(3.0)
+    return _ok({"dropped": True, "position": {"x": x, "y": y, "z": z}})
+
+
+def arm_open_gripper(lab_state: LabState,
+                     width_mm: float = 80.0) -> dict[str, Any]:
+    """Open the gripper to a specified width.  PLR: ``ExperimentalSCARA.open_gripper()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    async def _op(): await lab_state.arm.open_gripper(gripper_width=width_mm)
+    _run_async(_op())
+    lab_state.insert_event("arm.gripper_opened", "arm", "robot_arm",
+                           {"width_mm": width_mm})
+    lab_state.clock.advance(1.0)
+    return _ok({"gripper": "open", "width_mm": width_mm})
+
+
+def arm_close_gripper(lab_state: LabState,
+                      width_mm: float = 85.0) -> dict[str, Any]:
+    """Close the gripper to a specified width.  PLR: ``ExperimentalSCARA.close_gripper()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    async def _op(): await lab_state.arm.close_gripper(gripper_width=width_mm)
+    _run_async(_op())
+    lab_state.insert_event("arm.gripper_closed", "arm", "robot_arm",
+                           {"width_mm": width_mm})
+    lab_state.clock.advance(1.0)
+    return _ok({"gripper": "closed", "width_mm": width_mm})
+
+
+def arm_get_position(lab_state: LabState) -> dict[str, Any]:
+    """Get current cartesian position.  PLR: ``ExperimentalSCARA.get_cartesian_position()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    async def _op(): return await lab_state.arm.get_cartesian_position()
+    pos = _run_async(_op())
+    loc = getattr(pos, 'location', pos)
+    resp = {"x": loc.x, "y": loc.y, "z": loc.z}
+    lab_state.insert_event("arm.position_read", "arm", "robot_arm", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def arm_get_gripper_state(lab_state: LabState) -> dict[str, Any]:
+    """Check if the gripper is closed (holding something).  PLR: ``ExperimentalSCARA.is_gripper_closed()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    async def _op(): return await lab_state.arm.is_gripper_closed()
+    closed = _run_async(_op())
+    backend = lab_state.arm.backend
+    width = getattr(backend, "_gripper_width", 0.0)
+    resp = {"gripper_closed": closed, "gripper_width_mm": width}
+    lab_state.insert_event("arm.gripper_state", "arm", "robot_arm", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def arm_halt(lab_state: LabState) -> dict[str, Any]:
+    """Emergency-stop the robot arm.  PLR: ``ExperimentalSCARA.halt()``."""
+    if lab_state.arm is None:
+        return _error("no_arm", "No robot arm configured.")
+    async def _op(): await lab_state.arm.halt()
+    _run_async(_op())
+    lab_state.insert_event("arm.halted", "arm", "robot_arm", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"halted": True})
+
+
+# ── Plate sealer operations ─────────────────────────────────────────────
+
+
+def sealer_seal(lab_state: LabState, temperature: int,
+                duration_s: float) -> dict[str, Any]:
+    """Heat-seal a plate.  PLR: ``Sealer.seal(temperature, duration)``.
+
+    Door must be closed before sealing.  The service layer enforces
+    the safety interlock.
+    """
+    if lab_state.sealer is None:
+        return _error("no_sealer", "No sealer configured.")
+    backend = lab_state.sealer.backend
+    if getattr(backend, "_door_open", True):
+        return _error("door_open",
+                      "Sealer door is open — close before sealing.")
+    try:
+        async def _op():
+            await lab_state.sealer.seal(temperature=temperature, duration=duration_s)
+        _run_async(_op())
+    except Exception as exc:
+        return _error("seal_failed", f"Seal error: {exc}")
+
+    resp = {"temperature": temperature, "duration_s": duration_s}
+    lab_state.insert_event("sealer.sealed", "sealer", "plate_sealer", resp)
+    lab_state.clock.advance(duration_s)
+    return _ok(resp)
+
+
+def sealer_open(lab_state: LabState) -> dict[str, Any]:
+    """Open the sealer door.  PLR: ``Sealer.open()``."""
+    if lab_state.sealer is None:
+        return _error("no_sealer", "No sealer configured.")
+    async def _op(): await lab_state.sealer.open()
+    _run_async(_op())
+    lab_state.insert_event("sealer.opened", "sealer", "plate_sealer", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"door": "open"})
+
+
+def sealer_close(lab_state: LabState) -> dict[str, Any]:
+    """Close the sealer door.  PLR: ``Sealer.close()``."""
+    if lab_state.sealer is None:
+        return _error("no_sealer", "No sealer configured.")
+    async def _op(): await lab_state.sealer.close()
+    _run_async(_op())
+    lab_state.insert_event("sealer.closed", "sealer", "plate_sealer", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"door": "closed"})
+
+
+def sealer_set_temperature(lab_state: LabState,
+                           temperature: float) -> dict[str, Any]:
+    """Set the sealing temperature.  PLR: ``Sealer.set_temperature()``."""
+    if lab_state.sealer is None:
+        return _error("no_sealer", "No sealer configured.")
+    async def _op(): await lab_state.sealer.set_temperature(temperature)
+    _run_async(_op())
+    resp = {"target_temperature": temperature}
+    lab_state.insert_event("sealer.temp_set", "sealer", "plate_sealer", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def sealer_get_temperature(lab_state: LabState) -> dict[str, Any]:
+    """Read current sealer temperature.  PLR: ``Sealer.get_temperature()``."""
+    if lab_state.sealer is None:
+        return _error("no_sealer", "No sealer configured.")
+    async def _op(): return await lab_state.sealer.get_temperature()
+    temp = _run_async(_op())
+    resp = {"current_temperature": round(temp, 1)}
+    lab_state.insert_event("sealer.temp_read", "sealer", "plate_sealer", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+# ── Plate peeler operations ─────────────────────────────────────────────
+
+
+def _peeler_backend(lab_state: LabState):
+    """Get peeler backend, raising if not configured."""
+    if lab_state.peeler is None:
+        return None
+    return lab_state.peeler.backend
+
+
+def peeler_seal_check(lab_state: LabState) -> dict[str, Any]:
+    """Check if a seal is present on the plate.  PLR: XPeelBackend.seal_check()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): return await b.seal_check()
+    result = _run_async(_op())
+    resp = {"seal_status": result}
+    lab_state.insert_event("peeler.seal_checked", "peeler", "plate_peeler", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def peeler_peel(lab_state: LabState, begin_location: int = 0,
+                fast: bool = False, adhere_time: float = 2.5) -> dict[str, Any]:
+    """Peel the seal off a plate.  PLR: XPeelBackend.peel()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    # Safety: verify seal is present before peeling
+    seal_state = b._seal_present
+    if not seal_state:
+        return _error("no_seal",
+                      "No seal detected on plate — nothing to peel.")
+    try:
+        async def _op():
+            await b.peel(begin_location=begin_location, fast=fast,
+                         adhere_time=adhere_time)
+        _run_async(_op())
+    except Exception as exc:
+        return _error("peel_failed", f"Peel error: {exc}")
+
+    resp = {"begin_location": begin_location, "fast": fast,
+            "adhere_time_s": adhere_time}
+    lab_state.insert_event("peeler.peeled", "peeler", "plate_peeler", resp)
+    lab_state.clock.advance(adhere_time + 2.0)
+    return _ok(resp)
+
+
+def peeler_move_conveyor_in(lab_state: LabState) -> dict[str, Any]:
+    """Move conveyor in (load plate into peeler).  PLR: XPeelBackend.move_conveyor_in()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): await b.move_conveyor_in()
+    _run_async(_op())
+    lab_state.insert_event("peeler.conveyor_in", "peeler", "plate_peeler", {})
+    lab_state.clock.advance(2.0)
+    return _ok({"conveyor": "in"})
+
+
+def peeler_move_conveyor_out(lab_state: LabState) -> dict[str, Any]:
+    """Move conveyor out (unload plate from peeler).  PLR: XPeelBackend.move_conveyor_out()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): await b.move_conveyor_out()
+    _run_async(_op())
+    lab_state.insert_event("peeler.conveyor_out", "peeler", "plate_peeler", {})
+    lab_state.clock.advance(2.0)
+    return _ok({"conveyor": "out"})
+
+
+def peeler_move_elevator_up(lab_state: LabState) -> dict[str, Any]:
+    """Raise elevator to peeling position.  PLR: XPeelBackend.move_elevator_up()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): await b.move_elevator_up()
+    _run_async(_op())
+    lab_state.insert_event("peeler.elevator_up", "peeler", "plate_peeler", {})
+    lab_state.clock.advance(1.5)
+    return _ok({"elevator": "up"})
+
+
+def peeler_move_elevator_down(lab_state: LabState) -> dict[str, Any]:
+    """Lower elevator.  PLR: XPeelBackend.move_elevator_down()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): await b.move_elevator_down()
+    _run_async(_op())
+    lab_state.insert_event("peeler.elevator_down", "peeler", "plate_peeler", {})
+    lab_state.clock.advance(1.5)
+    return _ok({"elevator": "down"})
+
+
+def peeler_advance_tape(lab_state: LabState) -> dict[str, Any]:
+    """Advance adhesive tape.  PLR: XPeelBackend.advance_tape()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): await b.advance_tape()
+    _run_async(_op())
+    resp = {"tape_remaining_pct": b._tape_remaining}
+    lab_state.insert_event("peeler.tape_advanced", "peeler", "plate_peeler", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def peeler_get_tape_remaining(lab_state: LabState) -> dict[str, Any]:
+    """Get remaining adhesive tape percentage.  PLR: XPeelBackend.get_tape_remaining()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): return await b.get_tape_remaining()
+    pct = _run_async(_op())
+    resp = {"tape_remaining_pct": round(pct, 1)}
+    lab_state.insert_event("peeler.tape_checked", "peeler", "plate_peeler", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def peeler_get_status(lab_state: LabState) -> dict[str, Any]:
+    """Get peeler device status.  PLR: XPeelBackend.get_status()."""
+    b = _peeler_backend(lab_state)
+    if b is None:
+        return _error("no_peeler", "No peeler configured.")
+    async def _op(): return await b.get_status()
+    status = _run_async(_op())
+    resp = {"state": status[0], "error": status[1], "warning": status[2]}
+    lab_state.insert_event("peeler.status_checked", "peeler", "plate_peeler", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+# ── Dedicated shaker operations ─────────────────────────────────────────
+
+
+def shaker_lock_plate(lab_state: LabState) -> dict[str, Any]:
+    """Lock the plate onto the shaker.  Required before shaking.
+
+    PLR: ``Shaker.lock_plate()``.
+    """
+    if lab_state.shaker is None:
+        return _error("no_shaker", "No shaker configured.")
+    async def _op(): await lab_state.shaker.lock_plate()
+    _run_async(_op())
+    lab_state.insert_event("shaker.plate_locked", "shaker", "plate_shaker", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"plate_locked": True})
+
+
+def shaker_unlock_plate(lab_state: LabState) -> dict[str, Any]:
+    """Unlock the plate from the shaker.  Auto-stops shaking if active.
+
+    PLR: ``Shaker.unlock_plate()``.
+    """
+    if lab_state.shaker is None:
+        return _error("no_shaker", "No shaker configured.")
+    async def _op(): await lab_state.shaker.unlock_plate()
+    _run_async(_op())
+    lab_state.insert_event("shaker.plate_unlocked", "shaker", "plate_shaker", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"plate_locked": False})
+
+
+def shaker_shake(lab_state: LabState, speed_rpm: float,
+                 duration_s: float | None = None) -> dict[str, Any]:
+    """Start shaking at the specified speed.
+
+    PLR: ``Shaker.shake(speed, duration)``.
+
+    Plate must be locked first.  If duration is provided, the shaker
+    runs for that long; otherwise it runs until stop_shaking is called.
+    """
+    if lab_state.shaker is None:
+        return _error("no_shaker", "No shaker configured.")
+    backend = lab_state.shaker.backend
+    if not getattr(backend, "_plate_locked", False):
+        return _error("plate_not_locked",
+                      "Plate must be locked before shaking — call shaker_lock_plate first.")
+    try:
+        async def _op():
+            await lab_state.shaker.shake(speed=speed_rpm, duration=duration_s)
+        _run_async(_op())
+    except Exception as exc:
+        return _error("shake_failed", f"Shake error: {exc}")
+
+    resp = {"speed_rpm": speed_rpm, "duration_s": duration_s}
+    lab_state.insert_event("shaker.shaking", "shaker", "plate_shaker", resp)
+    dur = duration_s if duration_s else 2.0
+    lab_state.clock.advance(dur)
+    return _ok(resp)
+
+
+def shaker_stop_shaking(lab_state: LabState) -> dict[str, Any]:
+    """Stop the shaking immediately.  PLR: ``Shaker.stop_shaking()``."""
+    if lab_state.shaker is None:
+        return _error("no_shaker", "No shaker configured.")
+    async def _op(): await lab_state.shaker.stop_shaking()
+    _run_async(_op())
+    lab_state.insert_event("shaker.stopped", "shaker", "plate_shaker", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"shaking": False})
+
+
+# ── Temperature controller operations ────────────────────────────────────
+
+
+def tc_set_temperature(lab_state: LabState, temperature: float,
+                       passive: bool = False) -> dict[str, Any]:
+    """Set target temperature on the dedicated temperature controller.
+
+    PLR: ``TemperatureController.set_temperature(temperature, passive)``.
+    """
+    if lab_state.temp_controller is None:
+        return _error("no_temp_controller", "No temperature controller configured.")
+    async def _op():
+        await lab_state.temp_controller.set_temperature(temperature, passive=passive)
+    _run_async(_op())
+    resp = {"target_temperature": temperature, "passive": passive}
+    lab_state.insert_event("tc.set_temp", "temp_controller", "temp_controller", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def tc_get_temperature(lab_state: LabState) -> dict[str, Any]:
+    """Read current temperature from the dedicated temperature controller.
+
+    PLR: ``TemperatureController.get_temperature()``.
+    """
+    if lab_state.temp_controller is None:
+        return _error("no_temp_controller", "No temperature controller configured.")
+    async def _op(): return await lab_state.temp_controller.get_temperature()
+    temp = _run_async(_op())
+    resp = {"current_temperature": round(temp, 1)}
+    lab_state.insert_event("tc.read_temp", "temp_controller", "temp_controller", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def tc_deactivate(lab_state: LabState) -> dict[str, Any]:
+    """Deactivate the temperature controller (return to ambient).
+
+    PLR: ``TemperatureController.deactivate()``.
+    """
+    if lab_state.temp_controller is None:
+        return _error("no_temp_controller", "No temperature controller configured.")
+    async def _op(): await lab_state.temp_controller.deactivate()
+    _run_async(_op())
+    lab_state.insert_event("tc.deactivated", "temp_controller", "temp_controller", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"deactivated": True})
+
+
+def tc_wait_for_temperature(lab_state: LabState, timeout: float = 300.0,
+                            tolerance: float = 0.5) -> dict[str, Any]:
+    """Wait until the temperature controller reaches target temperature.
+
+    PLR: ``TemperatureController.wait_for_temperature(timeout, tolerance)``.
+    """
+    if lab_state.temp_controller is None:
+        return _error("no_temp_controller", "No temperature controller configured.")
+    try:
+        async def _op():
+            await lab_state.temp_controller.wait_for_temperature(
+                timeout=timeout, tolerance=tolerance)
+        _run_async(_op())
+    except Exception as exc:
+        return _error("temp_timeout", f"Temperature wait timed out: {exc}")
+
+    resp = {"timeout_s": timeout, "tolerance": tolerance}
+    lab_state.insert_event("tc.temp_reached", "temp_controller", "temp_controller", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+# ── Tilter module operations ────────────────────────────────────────────
+
+
+def tilter_set_angle(lab_state: LabState, angle: float) -> dict[str, Any]:
+    """Set the absolute tilt angle.  0° = flat, positive = tilted.
+    PLR: ``Tilter.set_angle(absolute_angle)``.
+    """
+    if lab_state.tilter is None:
+        return _error("no_tilter", "No tilter configured.")
+    # Safety: prevent extreme angles
+    if abs(angle) > 45.0:
+        return _error("angle_too_extreme",
+                      f"Tilt angle {angle}° exceeds safety limit (±45°).")
+    async def _op(): await lab_state.tilter.set_angle(absolute_angle=angle)
+    _run_async(_op())
+    resp = {"angle_degrees": angle}
+    lab_state.insert_event("tilter.angle_set", "tilter", "tilter", resp)
+    lab_state.clock.advance(1.5)
+    return _ok(resp)
+
+
+def tilter_tilt(lab_state: LabState, relative_angle: float) -> dict[str, Any]:
+    """Tilt by a relative amount from the current angle.
+    PLR: ``Tilter.tilt(relative_angle)``.
+    """
+    if lab_state.tilter is None:
+        return _error("no_tilter", "No tilter configured.")
+    backend = lab_state.tilter.backend
+    current = getattr(backend, "_angle", 0.0)
+    new_angle = current + relative_angle
+    if abs(new_angle) > 45.0:
+        return _error("angle_too_extreme",
+                      f"Relative tilt of {relative_angle}° would reach {new_angle}° — exceeds ±45° limit.")
+    async def _op(): await lab_state.tilter.tilt(relative_angle=relative_angle)
+    _run_async(_op())
+    resp = {"relative_angle": relative_angle, "new_angle": new_angle}
+    lab_state.insert_event("tilter.tilted", "tilter", "tilter", resp)
+    lab_state.clock.advance(1.5)
+    return _ok(resp)
+
+
+def tilter_get_angle(lab_state: LabState) -> dict[str, Any]:
+    """Get the current tilt angle.
+    Reads directly from backend state (no dedicated PLR getter).
+    """
+    if lab_state.tilter is None:
+        return _error("no_tilter", "No tilter configured.")
+    backend = lab_state.tilter.backend
+    angle = getattr(backend, "_angle", 0.0)
+    resp = {"angle_degrees": round(angle, 1)}
+    lab_state.insert_event("tilter.angle_read", "tilter", "tilter", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def tilter_return_to_level(lab_state: LabState) -> dict[str, Any]:
+    """Return the tilter to 0° (flat/level).
+    Convenience wrapper around tilter_set_angle(0.0).
+    """
+    return tilter_set_angle(lab_state, 0.0)
+
+
+# ── Storage / incubator operations ──────────────────────────────────────
+
+
+def storage_open_door(lab_state: LabState) -> dict[str, Any]:
+    """Open the storage/incubator door.  PLR: ``Incubator.open_door()``."""
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    async def _op(): await lab_state.storage.open_door()
+    _run_async(_op())
+    lab_state.insert_event("storage.door_opened", "storage", "incubator_storage", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"door": "open"})
+
+
+def storage_close_door(lab_state: LabState) -> dict[str, Any]:
+    """Close the storage/incubator door.  PLR: ``Incubator.close_door()``."""
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    async def _op(): await lab_state.storage.close_door()
+    _run_async(_op())
+    lab_state.insert_event("storage.door_closed", "storage", "incubator_storage", {})
+    lab_state.clock.advance(1.0)
+    return _ok({"door": "closed"})
+
+
+def storage_set_temperature(lab_state: LabState,
+                            temperature: float) -> dict[str, Any]:
+    """Set storage temperature.  PLR: ``Incubator.set_temperature()``."""
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    async def _op(): await lab_state.storage.set_temperature(temperature)
+    _run_async(_op())
+    resp = {"target_temperature": temperature}
+    lab_state.insert_event("storage.temp_set", "storage", "incubator_storage", resp)
+    lab_state.clock.advance(1.0)
+    return _ok(resp)
+
+
+def storage_get_temperature(lab_state: LabState) -> dict[str, Any]:
+    """Read storage temperature.  PLR: ``Incubator.get_temperature()``."""
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    async def _op(): return await lab_state.storage.get_temperature()
+    temp = _run_async(_op())
+    resp = {"current_temperature": round(temp, 1)}
+    lab_state.insert_event("storage.temp_read", "storage", "incubator_storage", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def storage_start_shaking(lab_state: LabState,
+                          frequency: float = 1.0) -> dict[str, Any]:
+    """Start built-in shaker.  PLR: ``Incubator.start_shaking()``."""
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    async def _op(): await lab_state.storage.start_shaking(frequency=frequency)
+    _run_async(_op())
+    resp = {"frequency": frequency}
+    lab_state.insert_event("storage.shaking_started", "storage", "incubator_storage", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+def storage_stop_shaking(lab_state: LabState) -> dict[str, Any]:
+    """Stop built-in shaker.  PLR: ``Incubator.stop_shaking()``."""
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    async def _op(): await lab_state.storage.stop_shaking()
+    _run_async(_op())
+    lab_state.insert_event("storage.shaking_stopped", "storage", "incubator_storage", {})
+    lab_state.clock.advance(0.5)
+    return _ok({"shaking": False})
+
+
+def storage_store_plate(lab_state: LabState,
+                        plate_name: str) -> dict[str, Any]:
+    """Store a plate into the incubator at a random free site.
+    PLR: ``Incubator.take_in_plate(site)``.
+    """
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    plate = _resolve_resource(lab_state, plate_name)
+    site = lab_state.storage.find_random_site(plate)
+    async def _op(): await lab_state.storage.take_in_plate(site=site)
+    _run_async(_op())
+    resp = {"plate": plate_name, "site": getattr(site, 'name', str(site))}
+    lab_state.insert_event("storage.plate_stored", "storage", "incubator_storage", resp)
+    lab_state.clock.advance(2.0)
+    return _ok(resp)
+
+
+def storage_retrieve_plate(lab_state: LabState,
+                           plate_name: str) -> dict[str, Any]:
+    """Retrieve a plate from the incubator to the loading tray.
+    PLR: ``Incubator.fetch_plate_to_loading_tray(plate_name)``.
+    """
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    async def _op():
+        await lab_state.storage.fetch_plate_to_loading_tray(plate_name=plate_name)
+    _run_async(_op())
+    resp = {"plate": plate_name}
+    lab_state.insert_event("storage.plate_retrieved", "storage", "incubator_storage", resp)
+    lab_state.clock.advance(3.0)
+    return _ok(resp)
+
+
+def storage_get_free_sites(lab_state: LabState) -> dict[str, Any]:
+    """Get number of free storage sites.  PLR: ``Incubator.get_num_free_sites()``."""
+    if lab_state.storage is None:
+        return _error("no_storage", "No storage configured.")
+    # Use backend tracking
+    backend = lab_state.storage.backend
+    free = getattr(backend, "_free_sites", 0)
+    resp = {"free_sites": free}
+    lab_state.insert_event("storage.free_sites_checked", "storage", "incubator_storage", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
+# ── Powder dispenser operations ───────────────────────────────────────
+
+
+def powder_dispense(lab_state: LabState, powder_name: str,
+                    amount_mg: float, target_well: str) -> dict[str, Any]:
+    """Dispense powder into a target well.
+    PLR: ``PowderDispenser.dispense(resources, powders, amounts)``.
+    """
+    if lab_state.powder_dispenser is None:
+        return _error("no_powder_dispenser", "No powder dispenser configured.")
+    if amount_mg <= 0:
+        return _error("invalid_amount", "Amount must be positive.")
+    if amount_mg > 1000:
+        return _error("amount_too_large",
+                      f"Amount {amount_mg} mg exceeds max single dispense (1000 mg).")
+
+    from pylabrobot.resources.powder import Powder
+    powder = Powder(name=powder_name)
+    well = _resolve_well(lab_state, target_well)
+
+    try:
+        async def _op():
+            return await lab_state.powder_dispenser.dispense(
+                resources=[well], powders=[powder], amounts=[amount_mg],
+            )
+        results = _run_async(_op())
+    except Exception as exc:
+        return _error("dispense_failed", f"Powder dispense error: {exc}")
+
+    resp = {"powder": powder_name, "amount_mg": amount_mg,
+            "target": target_well, "results": results}
+    lab_state.insert_event("powder.dispensed", "powder_dispenser",
+                           "powder_dispenser", resp)
+    lab_state.clock.advance(2.0)
+    return _ok(resp)
+
+
+def powder_dispense_multi(lab_state: LabState, powder_name: str,
+                          amount_mg: float,
+                          target_wells: list[str]) -> dict[str, Any]:
+    """Dispense powder to multiple wells with the same amount each.
+    PLR: ``PowderDispenser.dispense(resources, powders, amounts)`` with lists.
+    """
+    if lab_state.powder_dispenser is None:
+        return _error("no_powder_dispenser", "No powder dispenser configured.")
+    if amount_mg <= 0:
+        return _error("invalid_amount", "Amount must be positive.")
+    total = amount_mg * len(target_wells)
+    if total > 5000:
+        return _error("total_too_large",
+                      f"Total {total} mg across {len(target_wells)} wells exceeds limit (5000 mg).")
+
+    from pylabrobot.resources.powder import Powder
+    powder = Powder(name=powder_name)
+    wells = [_resolve_well(lab_state, w) for w in target_wells]
+    amounts = [amount_mg] * len(target_wells)
+
+    try:
+        async def _op():
+            return await lab_state.powder_dispenser.dispense(
+                resources=wells, powders=[powder] * len(wells), amounts=amounts,
+            )
+        results = _run_async(_op())
+    except Exception as exc:
+        return _error("dispense_failed", f"Multi-dispense error: {exc}")
+
+    resp = {"powder": powder_name, "amount_per_well_mg": amount_mg,
+            "targets": target_wells, "total_mg": total, "results": results}
+    lab_state.insert_event("powder.dispensed_multi", "powder_dispenser",
+                           "powder_dispenser", resp)
+    lab_state.clock.advance(1.0 * len(target_wells))
+    return _ok(resp)
+
+
+# ── Barcode scanner operations ────────────────────────────────────────
+
+
+def barcode_scan(lab_state: LabState) -> dict[str, Any]:
+    """Scan a barcode.  PLR: ``BarcodeScanner.scan()``.
+
+    Returns a barcode identifier for plate identity verification.
+    In dry-run mode returns a configurable default.
+    """
+    if lab_state.barcode_scanner is None:
+        return _error("no_barcode_scanner", "No barcode scanner configured.")
+    try:
+        async def _op(): return await lab_state.barcode_scanner.scan()
+        _run_async(_op())
+    except Exception as exc:
+        return _error("scan_failed", f"Barcode scan error: {exc}")
+
+    backend = lab_state.barcode_scanner.backend
+    barcode = getattr(backend, "_barcode", "UNKNOWN")
+    scan_count = getattr(backend, "_scan_count", 0)
+    resp = {"barcode": barcode, "scan_count": scan_count}
+    lab_state.insert_event("barcode.scanned", "barcode_scanner",
+                           "barcode_scanner", resp)
+    lab_state.clock.advance(0.5)
+    return _ok(resp)
+
+
 # ── Scale operations ────────────────────────────────────────────────────
 
 

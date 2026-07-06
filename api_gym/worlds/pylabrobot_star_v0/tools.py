@@ -977,6 +977,783 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
     {
         "type": "function",
         "function": {
+            "name": "arm_home",
+            "description": (
+                "Home the robot arm — reset all axes to zero position.\n\n"
+                "PLR: ExperimentalSCARA.home().  Must be called before any "
+                "arm motion."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_move_to",
+            "description": (
+                "Move the robot arm to the specified cartesian coordinates "
+                "(x, y, z in mm).\n\n"
+                "PLR: ExperimentalSCARA.move_to(CartesianCoords)."
+            ),
+            "parameters": _schema(
+                {
+                    "x": {"type": "number", "description": "X coordinate in mm."},
+                    "y": {"type": "number", "description": "Y coordinate in mm."},
+                    "z": {"type": "number", "description": "Z coordinate in mm."},
+                },
+                ["x", "y", "z"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_move_to_safe",
+            "description": (
+                "Move the robot arm to a safe retracted position (clear of "
+                "the deck).\n\n"
+                "PLR: ExperimentalSCARA.move_to_safe()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_approach",
+            "description": (
+                "Approach a position with the robot arm — a slower, more "
+                "precise move used before picking up or dropping a resource.\n\n"
+                "PLR: ExperimentalSCARA.approach(CartesianCoords, access)."
+            ),
+            "parameters": _schema(
+                {
+                    "x": {"type": "number", "description": "X coordinate in mm."},
+                    "y": {"type": "number", "description": "Y coordinate in mm."},
+                    "z": {"type": "number", "description": "Z coordinate in mm."},
+                    "access": {
+                        "type": "string",
+                        "enum": ["vertical", "horizontal"],
+                        "description": "Access direction: 'vertical' (top-down) or 'horizontal' (side).",
+                    },
+                },
+                ["x", "y", "z"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_pick_up_resource",
+            "description": (
+                "Pick up a resource (e.g. plate, lid) at the specified position "
+                "using the robot arm gripper.  Requires gripper to be open "
+                "beforehand.\n\n"
+                "PLR: ExperimentalSCARA.pick_up_resource(position, plate_width)."
+            ),
+            "parameters": _schema(
+                {
+                    "x": {"type": "number", "description": "X coordinate in mm."},
+                    "y": {"type": "number", "description": "Y coordinate in mm."},
+                    "z": {"type": "number", "description": "Z coordinate in mm."},
+                    "plate_width_mm": {
+                        "type": "number",
+                        "description": "Width of the plate/resource to grip (mm), typically ~85 for an SBS plate.",
+                    },
+                },
+                ["x", "y", "z", "plate_width_mm"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_drop_resource",
+            "description": (
+                "Drop the currently held resource at the specified position. "
+                "Requires the gripper to be holding something.\n\n"
+                "PLR: ExperimentalSCARA.drop_resource(position)."
+            ),
+            "parameters": _schema(
+                {
+                    "x": {"type": "number", "description": "X coordinate in mm."},
+                    "y": {"type": "number", "description": "Y coordinate in mm."},
+                    "z": {"type": "number", "description": "Z coordinate in mm."},
+                },
+                ["x", "y", "z"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_open_gripper",
+            "description": (
+                "Open the robot arm gripper to the specified width.  Must be "
+                "open before picking up a resource.\n\n"
+                "PLR: ExperimentalSCARA.open_gripper(gripper_width)."
+            ),
+            "parameters": _schema(
+                {
+                    "width_mm": {
+                        "type": "number",
+                        "description": "Gripper opening width in mm (default 80).",
+                    },
+                },
+                ["width_mm"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_close_gripper",
+            "description": (
+                "Close the robot arm gripper to the specified width (for "
+                "gripping a plate).\n\n"
+                "PLR: ExperimentalSCARA.close_gripper(gripper_width)."
+            ),
+            "parameters": _schema(
+                {
+                    "width_mm": {
+                        "type": "number",
+                        "description": "Gripper closing width in mm (typically ~85 for SBS plate).",
+                    },
+                },
+                ["width_mm"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_get_position",
+            "description": (
+                "Get the current cartesian position (x, y, z) of the robot arm.\n\n"
+                "PLR: ExperimentalSCARA.get_cartesian_position()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_get_gripper_state",
+            "description": (
+                "Check whether the robot arm gripper is closed (holding "
+                "something) or open, and report the current gripper width.\n\n"
+                "PLR: ExperimentalSCARA.is_gripper_closed()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "arm_halt",
+            "description": (
+                "Emergency-stop the robot arm immediately.\n\n"
+                "PLR: ExperimentalSCARA.halt()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sealer_seal",
+            "description": (
+                "Heat-seal a plate at the specified temperature for the given "
+                "duration.  The sealer door MUST be closed before sealing.\n\n"
+                "PLR: Sealer.seal(temperature, duration)."
+            ),
+            "parameters": _schema(
+                {
+                    "temperature": {
+                        "type": "integer",
+                        "description": "Sealing temperature in degrees Celsius (e.g. 170).",
+                    },
+                    "duration_s": {
+                        "type": "number",
+                        "description": "Seal duration in seconds (e.g. 3.0).",
+                    },
+                },
+                ["temperature", "duration_s"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sealer_open",
+            "description": (
+                "Open the sealer door to insert or remove a plate.\n\n"
+                "PLR: Sealer.open()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sealer_close",
+            "description": (
+                "Close the sealer door.  Required before sealing.\n\n"
+                "PLR: Sealer.close()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sealer_set_temperature",
+            "description": (
+                "Set the target sealing temperature for the sealer.\n\n"
+                "PLR: Sealer.set_temperature(temperature)."
+            ),
+            "parameters": _schema(
+                {
+                    "temperature": {
+                        "type": "number",
+                        "description": "Target temperature in degrees Celsius.",
+                    },
+                },
+                ["temperature"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sealer_get_temperature",
+            "description": (
+                "Read the current sealer temperature.  Use to verify the sealer "
+                "has reached the target temperature before sealing.\n\n"
+                "PLR: Sealer.get_temperature()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_seal_check",
+            "description": (
+                "Check whether a seal is present on the plate currently in "
+                "the peeler.  Returns 'seal_detected', 'no_seal', or "
+                "'plate_not_detected'.\n\n"
+                "PLR: XPeelBackend.seal_check()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_peel",
+            "description": (
+                "Peel the seal off the plate in the peeler.  Requires a seal "
+                "to be present (verified by peeler_seal_check first).\n\n"
+                "PLR: XPeelBackend.peel(begin_location, fast, adhere_time)."
+            ),
+            "parameters": _schema(
+                {
+                    "begin_location": {
+                        "type": "integer",
+                        "description": "Peel start location: -2, 0, 2, or 4 (default 0).",
+                    },
+                    "fast": {
+                        "type": "boolean",
+                        "description": "Use fast peel mode (default false).",
+                    },
+                    "adhere_time": {
+                        "type": "number",
+                        "description": "Adhesion time in seconds before peeling (default 2.5).",
+                    },
+                },
+                [],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_move_conveyor_in",
+            "description": (
+                "Move the conveyor in — load the plate into the peeler.\n\n"
+                "PLR: XPeelBackend.move_conveyor_in()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_move_conveyor_out",
+            "description": (
+                "Move the conveyor out — unload the plate from the peeler.\n\n"
+                "PLR: XPeelBackend.move_conveyor_out()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_move_elevator_up",
+            "description": (
+                "Raise the elevator to bring the plate to peel position.\n\n"
+                "PLR: XPeelBackend.move_elevator_up()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_move_elevator_down",
+            "description": (
+                "Lower the elevator to return the plate to conveyor level.\n\n"
+                "PLR: XPeelBackend.move_elevator_down()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_advance_tape",
+            "description": (
+                "Advance the adhesive tape to the next clean segment.\n\n"
+                "PLR: XPeelBackend.advance_tape()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_get_tape_remaining",
+            "description": (
+                "Check how much adhesive tape is remaining (percentage).\n\n"
+                "PLR: XPeelBackend.get_tape_remaining()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "peeler_get_status",
+            "description": (
+                "Get the peeler device status (state, error, warning codes).\n\n"
+                "PLR: XPeelBackend.get_status()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "shaker_lock_plate",
+            "description": (
+                "Lock the plate onto the dedicated shaker.  Required before "
+                "shaking — attempting to shake without locking will fail.\n\n"
+                "PLR: Shaker.lock_plate()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "shaker_unlock_plate",
+            "description": (
+                "Unlock the plate from the dedicated shaker.  Automatically "
+                "stops shaking if it was active.\n\n"
+                "PLR: Shaker.unlock_plate()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "shaker_shake",
+            "description": (
+                "Start shaking the plate at the specified speed in RPM.  "
+                "Optionally specify a duration — if omitted, shaking "
+                "continues until shaker_stop_shaking is called.  Plate "
+                "MUST be locked first.\n\n"
+                "PLR: Shaker.shake(speed, duration)."
+            ),
+            "parameters": _schema(
+                {
+                    "speed_rpm": {
+                        "type": "number",
+                        "description": "Shaking speed in RPM (e.g. 500).",
+                    },
+                    "duration_s": {
+                        "type": "number",
+                        "description": "Optional duration in seconds. If omitted, shakes until stopped.",
+                    },
+                },
+                ["speed_rpm"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "shaker_stop_shaking",
+            "description": (
+                "Stop the shaker immediately.\n\n"
+                "PLR: Shaker.stop_shaking()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "temp_controller_set_temperature",
+            "description": (
+                "Set the target temperature on the dedicated temperature "
+                "controller (no shaking capability).\n\n"
+                "PLR: TemperatureController.set_temperature(temperature, passive)."
+            ),
+            "parameters": _schema(
+                {
+                    "temperature": {
+                        "type": "number",
+                        "description": "Target temperature in degrees Celsius.",
+                    },
+                    "passive": {
+                        "type": "boolean",
+                        "description": "If true, wait passively without active heating/cooling (default false).",
+                    },
+                },
+                ["temperature"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "temp_controller_get_temperature",
+            "description": (
+                "Read the current temperature from the dedicated temperature "
+                "controller.\n\n"
+                "PLR: TemperatureController.get_temperature()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "temp_controller_deactivate",
+            "description": (
+                "Deactivate the temperature controller — return to ambient "
+                "temperature.\n\n"
+                "PLR: TemperatureController.deactivate()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "temp_controller_wait_for_temperature",
+            "description": (
+                "Wait until the temperature controller reaches its target "
+                "temperature.  Blocks until the temperature is within the "
+                "specified tolerance or the timeout is reached.\n\n"
+                "PLR: TemperatureController.wait_for_temperature(timeout, tolerance)."
+            ),
+            "parameters": _schema(
+                {
+                    "timeout": {
+                        "type": "number",
+                        "description": "Maximum time to wait in seconds (default 300).",
+                    },
+                    "tolerance": {
+                        "type": "number",
+                        "description": "Temperature tolerance in degrees Celsius (default 0.5).",
+                    },
+                },
+                [],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tilter_set_angle",
+            "description": (
+                "Set the absolute tilt angle of the plate tilter module. "
+                "0° = flat/level, positive = tilted.  Safety limit: ±45°.\n\n"
+                "PLR: Tilter.set_angle(absolute_angle)."
+            ),
+            "parameters": _schema(
+                {
+                    "angle": {
+                        "type": "number",
+                        "description": "Absolute tilt angle in degrees (0 = level, positive = tilted).",
+                    },
+                },
+                ["angle"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tilter_tilt",
+            "description": (
+                "Tilt the plate by a relative angle from the current position.\n\n"
+                "PLR: Tilter.tilt(relative_angle)."
+            ),
+            "parameters": _schema(
+                {
+                    "relative_angle": {
+                        "type": "number",
+                        "description": "Relative tilt angle in degrees (positive = tilt more).",
+                    },
+                },
+                ["relative_angle"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tilter_get_angle",
+            "description": (
+                "Get the current absolute tilt angle of the tilter module.\n\n"
+                "Reads current backend state (no dedicated PLR getter)."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tilter_return_to_level",
+            "description": (
+                "Return the tilter to 0° (flat/level position). "
+                "Always return the tilter to level after use — leaving it "
+                "tilted may cause pipetting errors on subsequent operations.\n\n"
+                "Convenience wrapper around tilter_set_angle(0.0)."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_open_door",
+            "description": (
+                "Open the incubator/storage door to access plates.\n\n"
+                "PLR: Incubator.open_door()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_close_door",
+            "description": (
+                "Close the incubator/storage door.\n\n"
+                "PLR: Incubator.close_door()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_set_temperature",
+            "description": (
+                "Set the incubator temperature (e.g. 37°C for cell culture).\n\n"
+                "PLR: Incubator.set_temperature(temperature)."
+            ),
+            "parameters": _schema(
+                {
+                    "temperature": {
+                        "type": "number",
+                        "description": "Target temperature in degrees Celsius.",
+                    },
+                },
+                ["temperature"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_get_temperature",
+            "description": (
+                "Read the current incubator temperature.\n\n"
+                "PLR: Incubator.get_temperature()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_start_shaking",
+            "description": (
+                "Start the built-in shaker in the incubator.\n\n"
+                "PLR: Incubator.start_shaking(frequency)."
+            ),
+            "parameters": _schema(
+                {
+                    "frequency": {
+                        "type": "number",
+                        "description": "Shaking frequency (default 1.0).",
+                    },
+                },
+                [],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_stop_shaking",
+            "description": (
+                "Stop the built-in shaker.\n\n"
+                "PLR: Incubator.stop_shaking()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_store_plate",
+            "description": (
+                "Store a plate into the incubator at a random free site. "
+                "The door must be open first.\n\n"
+                "PLR: Incubator.take_in_plate(site)."
+            ),
+            "parameters": _schema(
+                {
+                    "plate_name": {
+                        "type": "string",
+                        "description": "Name of the plate to store (e.g. 'assay_plate').",
+                    },
+                },
+                ["plate_name"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_retrieve_plate",
+            "description": (
+                "Retrieve a plate from the incubator to the loading tray.\n\n"
+                "PLR: Incubator.fetch_plate_to_loading_tray(plate_name)."
+            ),
+            "parameters": _schema(
+                {
+                    "plate_name": {
+                        "type": "string",
+                        "description": "Name of the plate to retrieve (e.g. 'assay_plate').",
+                    },
+                },
+                ["plate_name"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "storage_get_free_sites",
+            "description": (
+                "Check how many free storage sites are available in the "
+                "incubator.\n\n"
+                "PLR: Incubator.get_num_free_sites()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "powder_dispense",
+            "description": (
+                "Dispense a powder into a single target well at the specified "
+                "amount in milligrams.\n\n"
+                "PLR: PowderDispenser.dispense(resources, powders, amounts)."
+            ),
+            "parameters": _schema(
+                {
+                    "powder_name": {
+                        "type": "string",
+                        "description": "Name of the powder to dispense (e.g. 'reagent_a').",
+                    },
+                    "amount_mg": {
+                        "type": "number",
+                        "description": "Amount to dispense in milligrams (max 1000 per dispense).",
+                    },
+                    "target_well": {
+                        "type": "string",
+                        "description": "Target well reference (e.g. 'assay_plate:B1').",
+                    },
+                },
+                ["powder_name", "amount_mg", "target_well"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "powder_dispense_multi",
+            "description": (
+                "Dispense the same powder amount to multiple wells at once.\n\n"
+                "PLR: PowderDispenser.dispense(resources, powders, amounts) with lists."
+            ),
+            "parameters": _schema(
+                {
+                    "powder_name": {
+                        "type": "string",
+                        "description": "Name of the powder to dispense.",
+                    },
+                    "amount_mg": {
+                        "type": "number",
+                        "description": "Amount per well in milligrams.",
+                    },
+                    "target_wells": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of target well references.",
+                    },
+                },
+                ["powder_name", "amount_mg", "target_wells"],
+            ),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "barcode_scan",
+            "description": (
+                "Scan the barcode of a plate or container to verify its "
+                "identity.  Returns a barcode string like 'PLATE-001'.\n\n"
+                "PLR: BarcodeScanner.scan()."
+            ),
+            "parameters": _schema({}, []),
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "submit_protocol",
             "description": (
                 "Submit the final QC protocol decision with supporting readout "
@@ -1364,6 +2141,260 @@ def _pump_halt(ls: LabState, _a: dict) -> dict:
     return services.pump_halt(ls)
 
 
+# ── Robot arm handlers ───────────────────────────────────────────────────
+
+
+def _arm_home(ls: LabState, _a: dict) -> dict:
+    return services.arm_home(ls)
+
+
+def _arm_move_to(ls: LabState, a: dict) -> dict:
+    return services.arm_move_to(ls, x=float(a["x"]), y=float(a["y"]),
+                                z=float(a["z"]))
+
+
+def _arm_move_to_safe(ls: LabState, _a: dict) -> dict:
+    return services.arm_move_to_safe(ls)
+
+
+def _arm_approach(ls: LabState, a: dict) -> dict:
+    return services.arm_approach(ls, x=float(a["x"]), y=float(a["y"]),
+                                 z=float(a["z"]),
+                                 access=a.get("access", "vertical"))
+
+
+def _arm_pick_up_resource(ls: LabState, a: dict) -> dict:
+    return services.arm_pick_up_resource(ls, x=float(a["x"]), y=float(a["y"]),
+                                          z=float(a["z"]),
+                                          plate_width_mm=float(a["plate_width_mm"]))
+
+
+def _arm_drop_resource(ls: LabState, a: dict) -> dict:
+    return services.arm_drop_resource(ls, x=float(a["x"]), y=float(a["y"]),
+                                       z=float(a["z"]))
+
+
+def _arm_open_gripper(ls: LabState, a: dict) -> dict:
+    return services.arm_open_gripper(ls, width_mm=float(a["width_mm"]))
+
+
+def _arm_close_gripper(ls: LabState, a: dict) -> dict:
+    return services.arm_close_gripper(ls, width_mm=float(a["width_mm"]))
+
+
+def _arm_get_position(ls: LabState, _a: dict) -> dict:
+    return services.arm_get_position(ls)
+
+
+def _arm_get_gripper_state(ls: LabState, _a: dict) -> dict:
+    return services.arm_get_gripper_state(ls)
+
+
+def _arm_halt(ls: LabState, _a: dict) -> dict:
+    return services.arm_halt(ls)
+
+
+# ── Plate sealer handlers ───────────────────────────────────────────────
+
+
+def _sealer_seal(ls: LabState, a: dict) -> dict:
+    return services.sealer_seal(ls, temperature=int(a["temperature"]),
+                                duration_s=float(a["duration_s"]))
+
+
+def _sealer_open(ls: LabState, _a: dict) -> dict:
+    return services.sealer_open(ls)
+
+
+def _sealer_close(ls: LabState, _a: dict) -> dict:
+    return services.sealer_close(ls)
+
+
+def _sealer_set_temperature(ls: LabState, a: dict) -> dict:
+    return services.sealer_set_temperature(ls, temperature=float(a["temperature"]))
+
+
+def _sealer_get_temperature(ls: LabState, _a: dict) -> dict:
+    return services.sealer_get_temperature(ls)
+
+
+# ── Plate peeler handlers ───────────────────────────────────────────────
+
+
+def _peeler_seal_check(ls: LabState, _a: dict) -> dict:
+    return services.peeler_seal_check(ls)
+
+
+def _peeler_peel(ls: LabState, a: dict) -> dict:
+    return services.peeler_peel(
+        ls,
+        begin_location=int(a.get("begin_location", 0)),
+        fast=bool(a.get("fast", False)),
+        adhere_time=float(a.get("adhere_time", 2.5)),
+    )
+
+
+def _peeler_move_conveyor_in(ls: LabState, _a: dict) -> dict:
+    return services.peeler_move_conveyor_in(ls)
+
+
+def _peeler_move_conveyor_out(ls: LabState, _a: dict) -> dict:
+    return services.peeler_move_conveyor_out(ls)
+
+
+def _peeler_move_elevator_up(ls: LabState, _a: dict) -> dict:
+    return services.peeler_move_elevator_up(ls)
+
+
+def _peeler_move_elevator_down(ls: LabState, _a: dict) -> dict:
+    return services.peeler_move_elevator_down(ls)
+
+
+def _peeler_advance_tape(ls: LabState, _a: dict) -> dict:
+    return services.peeler_advance_tape(ls)
+
+
+def _peeler_get_tape_remaining(ls: LabState, _a: dict) -> dict:
+    return services.peeler_get_tape_remaining(ls)
+
+
+def _peeler_get_status(ls: LabState, _a: dict) -> dict:
+    return services.peeler_get_status(ls)
+
+
+# ── Dedicated shaker handlers ───────────────────────────────────────────
+
+
+def _shaker_lock_plate(ls: LabState, _a: dict) -> dict:
+    return services.shaker_lock_plate(ls)
+
+
+def _shaker_unlock_plate(ls: LabState, _a: dict) -> dict:
+    return services.shaker_unlock_plate(ls)
+
+
+def _shaker_shake(ls: LabState, a: dict) -> dict:
+    return services.shaker_shake(
+        ls, speed_rpm=float(a["speed_rpm"]),
+        duration_s=float(a["duration_s"]) if a.get("duration_s") is not None else None,
+    )
+
+
+def _shaker_stop_shaking(ls: LabState, _a: dict) -> dict:
+    return services.shaker_stop_shaking(ls)
+
+
+# ── Temperature controller handlers ─────────────────────────────────────
+
+
+def _temp_controller_set_temperature(ls: LabState, a: dict) -> dict:
+    return services.tc_set_temperature(
+        ls, temperature=float(a["temperature"]),
+        passive=bool(a.get("passive", False)),
+    )
+
+
+def _temp_controller_get_temperature(ls: LabState, _a: dict) -> dict:
+    return services.tc_get_temperature(ls)
+
+
+def _temp_controller_deactivate(ls: LabState, _a: dict) -> dict:
+    return services.tc_deactivate(ls)
+
+
+def _temp_controller_wait_for_temperature(ls: LabState, a: dict) -> dict:
+    return services.tc_wait_for_temperature(
+        ls, timeout=float(a.get("timeout", 300)),
+        tolerance=float(a.get("tolerance", 0.5)),
+    )
+
+
+# ── Tilter module handlers ──────────────────────────────────────────────
+
+
+def _tilter_set_angle(ls: LabState, a: dict) -> dict:
+    return services.tilter_set_angle(ls, angle=float(a["angle"]))
+
+
+def _tilter_tilt(ls: LabState, a: dict) -> dict:
+    return services.tilter_tilt(ls, relative_angle=float(a["relative_angle"]))
+
+
+def _tilter_get_angle(ls: LabState, _a: dict) -> dict:
+    return services.tilter_get_angle(ls)
+
+
+def _tilter_return_to_level(ls: LabState, _a: dict) -> dict:
+    return services.tilter_return_to_level(ls)
+
+
+# ── Storage / incubator handlers ────────────────────────────────────────
+
+
+def _storage_open_door(ls: LabState, _a: dict) -> dict:
+    return services.storage_open_door(ls)
+
+
+def _storage_close_door(ls: LabState, _a: dict) -> dict:
+    return services.storage_close_door(ls)
+
+
+def _storage_set_temperature(ls: LabState, a: dict) -> dict:
+    return services.storage_set_temperature(ls, temperature=float(a["temperature"]))
+
+
+def _storage_get_temperature(ls: LabState, _a: dict) -> dict:
+    return services.storage_get_temperature(ls)
+
+
+def _storage_start_shaking(ls: LabState, a: dict) -> dict:
+    return services.storage_start_shaking(
+        ls, frequency=float(a.get("frequency", 1.0)),
+    )
+
+
+def _storage_stop_shaking(ls: LabState, _a: dict) -> dict:
+    return services.storage_stop_shaking(ls)
+
+
+def _storage_store_plate(ls: LabState, a: dict) -> dict:
+    return services.storage_store_plate(ls, plate_name=str(a["plate_name"]))
+
+
+def _storage_retrieve_plate(ls: LabState, a: dict) -> dict:
+    return services.storage_retrieve_plate(ls, plate_name=str(a["plate_name"]))
+
+
+def _storage_get_free_sites(ls: LabState, _a: dict) -> dict:
+    return services.storage_get_free_sites(ls)
+
+
+# ── Powder dispenser handlers ───────────────────────────────────────────
+
+
+def _powder_dispense(ls: LabState, a: dict) -> dict:
+    return services.powder_dispense(
+        ls, powder_name=str(a["powder_name"]),
+        amount_mg=float(a["amount_mg"]),
+        target_well=str(a["target_well"]),
+    )
+
+
+def _powder_dispense_multi(ls: LabState, a: dict) -> dict:
+    return services.powder_dispense_multi(
+        ls, powder_name=str(a["powder_name"]),
+        amount_mg=float(a["amount_mg"]),
+        target_wells=[str(w) for w in a["target_wells"]],
+    )
+
+
+# ── Barcode scanner handler ─────────────────────────────────────────────
+
+
+def _barcode_scan(ls: LabState, _a: dict) -> dict:
+    return services.barcode_scan(ls)
+
+
 def _add_workflow_note(ls: LabState, a: dict) -> dict:
     return services.add_workflow_note(ls, note=str(a["note"]))
 
@@ -1436,6 +2467,64 @@ TOOL_HANDLERS: dict[str, ToolHandler] = {
     "pump_run_duration": _pump_run_duration,
     "pump_run_volume": _pump_run_volume,
     "pump_halt": _pump_halt,
+    # Robot arm
+    "arm_home": _arm_home,
+    "arm_move_to": _arm_move_to,
+    "arm_move_to_safe": _arm_move_to_safe,
+    "arm_approach": _arm_approach,
+    "arm_pick_up_resource": _arm_pick_up_resource,
+    "arm_drop_resource": _arm_drop_resource,
+    "arm_open_gripper": _arm_open_gripper,
+    "arm_close_gripper": _arm_close_gripper,
+    "arm_get_position": _arm_get_position,
+    "arm_get_gripper_state": _arm_get_gripper_state,
+    "arm_halt": _arm_halt,
+    # Plate sealer
+    "sealer_seal": _sealer_seal,
+    "sealer_open": _sealer_open,
+    "sealer_close": _sealer_close,
+    "sealer_set_temperature": _sealer_set_temperature,
+    "sealer_get_temperature": _sealer_get_temperature,
+    # Plate peeler
+    "peeler_seal_check": _peeler_seal_check,
+    "peeler_peel": _peeler_peel,
+    "peeler_move_conveyor_in": _peeler_move_conveyor_in,
+    "peeler_move_conveyor_out": _peeler_move_conveyor_out,
+    "peeler_move_elevator_up": _peeler_move_elevator_up,
+    "peeler_move_elevator_down": _peeler_move_elevator_down,
+    "peeler_advance_tape": _peeler_advance_tape,
+    "peeler_get_tape_remaining": _peeler_get_tape_remaining,
+    "peeler_get_status": _peeler_get_status,
+    # Dedicated shaker
+    "shaker_lock_plate": _shaker_lock_plate,
+    "shaker_unlock_plate": _shaker_unlock_plate,
+    "shaker_shake": _shaker_shake,
+    "shaker_stop_shaking": _shaker_stop_shaking,
+    # Temperature controller
+    "temp_controller_set_temperature": _temp_controller_set_temperature,
+    "temp_controller_get_temperature": _temp_controller_get_temperature,
+    "temp_controller_deactivate": _temp_controller_deactivate,
+    "temp_controller_wait_for_temperature": _temp_controller_wait_for_temperature,
+    # Tilter module
+    "tilter_set_angle": _tilter_set_angle,
+    "tilter_tilt": _tilter_tilt,
+    "tilter_get_angle": _tilter_get_angle,
+    "tilter_return_to_level": _tilter_return_to_level,
+    # Storage / incubator
+    "storage_open_door": _storage_open_door,
+    "storage_close_door": _storage_close_door,
+    "storage_set_temperature": _storage_set_temperature,
+    "storage_get_temperature": _storage_get_temperature,
+    "storage_start_shaking": _storage_start_shaking,
+    "storage_stop_shaking": _storage_stop_shaking,
+    "storage_store_plate": _storage_store_plate,
+    "storage_retrieve_plate": _storage_retrieve_plate,
+    "storage_get_free_sites": _storage_get_free_sites,
+    # Powder dispenser
+    "powder_dispense": _powder_dispense,
+    "powder_dispense_multi": _powder_dispense_multi,
+    # Barcode scanner
+    "barcode_scan": _barcode_scan,
     # Benchmark-specific
     "list_workspace_files": _list_workspace_files,
     "get_workspace_file": _get_workspace_file,

@@ -142,6 +142,77 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     if hs_use:
         heater_shaker = create_heater_shaker("heater_shaker")
 
+    # ── Optional robot arm ──────────────────────────────────────────────
+    arm = None
+    arm_use = spec.expected.get("use_arm", False)
+    if arm_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_arm
+        arm = create_arm("robot_arm")
+        _run_async(arm.setup())
+
+    # ── Optional plate sealer ───────────────────────────────────────────
+    sealer = None
+    sealer_use = spec.expected.get("use_sealer", False)
+    if sealer_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_sealer
+        sealer = create_sealer("plate_sealer")
+        _run_async(sealer.setup())
+
+    # ── Optional plate peeler ───────────────────────────────────────────
+    peeler = None
+    peeler_use = spec.expected.get("use_peeler", False)
+    if peeler_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_peeler
+        peeler = create_peeler("plate_peeler")
+        _run_async(peeler.setup())
+
+    # ── Optional dedicated shaker ───────────────────────────────────────
+    shaker = None
+    shaker_use = spec.expected.get("use_shaker", False)
+    if shaker_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_shaker
+        shaker = create_shaker("plate_shaker")
+        _run_async(shaker.setup())
+
+    # ── Optional temperature controller ─────────────────────────────────
+    temp_controller = None
+    tc_use = spec.expected.get("use_temp_controller", False)
+    if tc_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_temp_controller
+        temp_controller = create_temp_controller("temp_controller")
+        _run_async(temp_controller.setup())
+
+    # ── Optional tilter module ──────────────────────────────────────────
+    tilter = None
+    tilter_use = spec.expected.get("use_tilter", False)
+    if tilter_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_tilter
+        tilter = create_tilter("tilter")
+        _run_async(tilter.setup())
+
+    # ── Optional storage / incubator ────────────────────────────────────
+    storage = None
+    storage_use = spec.expected.get("use_storage", False)
+    if storage_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_storage
+        storage = create_storage("incubator_storage")
+        _run_async(storage.setup())
+
+    # ── Optional powder dispenser ───────────────────────────────────────
+    powder_dispenser = None
+    pd_use = spec.expected.get("use_powder_dispenser", False)
+    if pd_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_powder_dispenser
+        powder_dispenser = create_powder_dispenser("powder_dispenser")
+        _run_async(powder_dispenser.setup())
+
+    # ── Optional barcode scanner ────────────────────────────────────────
+    barcode_scanner = None
+    bc_use = spec.expected.get("use_barcode_scanner", False)
+    if bc_use:
+        from api_gym.worlds.pylabrobot_star_v0.state import create_barcode_scanner
+        barcode_scanner = create_barcode_scanner("barcode_scanner")
+        _run_async(barcode_scanner.setup())
 
     setup_star_deck(lh, plate_carrier, tip_carrier,
                     assay_plate, source_plate, tip_rack, trough)
@@ -180,7 +251,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int) -> tuple[dict[str
     lab_state = LabState(
         deck=deck, liquid_handler=lh, plate_reader=plate_reader,
         plate=assay_plate, source_plate=source_plate, tip_rack=tip_rack,
-        trough=trough, pump=pump, scale=scale, centrifuge=centrifuge, heater_shaker=heater_shaker, thermocycler=thermocycler,
+        trough=trough, pump=pump, scale=scale, centrifuge=centrifuge, heater_shaker=heater_shaker, thermocycler=thermocycler, arm=arm, sealer=sealer, peeler=peeler, shaker=shaker, temp_controller=temp_controller, tilter=tilter, storage=storage, powder_dispenser=powder_dispenser, barcode_scanner=barcode_scanner,
         setup_done=True,
         well_metadata=spec.well_metadata,
         has_96_head=spec.expected.get("use_96_head", False),
@@ -1789,6 +1860,1075 @@ MOUNTED_TIPS_QUERY_QC = TaskSpec(
         "require_head_state_checks": True,
         "control_band": {"min": 0.75, "max": 0.9},
     },
+)
+
+
+# ── NEW: Robot arm scenarios ──────────────────────────────────────────
+
+
+# Arm plate transfer — pick and place plate from carrier to reader
+ARM_PLATE_TRANSFER_QC = TaskSpec(
+    scenario="arm_plate_transfer_qc",
+    objective="Use the robot arm to pick up a plate from the carrier and place it into the plate reader.",
+    prompt=(
+        "A robot arm (PreciseFlex SCARA) is available alongside the STAR deck. "
+        "Your task is to move the assay_plate from its carrier position to the "
+        "plate_reader for OD600 reading:\n\n"
+        "== Arm sequence ==\n"
+        "1. arm_home — home the arm first (required before any motion).\n"
+        "2. arm_open_gripper(width_mm=80.0) — open the gripper to receive the plate.\n"
+        "3. arm_move_to(x=100, y=200, z=100) — move above the carrier.\n"
+        "4. arm_approach(x=100, y=200, z=30, access='vertical') — approach the plate.\n"
+        "5. arm_close_gripper(width_mm=85.0) — grip the plate (SBS standard width).\n"
+        "6. arm_pick_up_resource(x=100, y=200, z=30, plate_width_mm=85.0) — lift plate.\n"
+        "7. arm_move_to(x=300, y=100, z=100) — transport to reader area.\n"
+        "8. arm_approach(x=300, y=100, z=30, access='vertical') — approach reader tray.\n"
+        "9. arm_drop_resource(x=300, y=100, z=30) — place plate in reader.\n"
+        "10. arm_move_to_safe — retract arm to safe position before reading.\n\n"
+        "== Readout ==\n"
+        "11. plate_reader_open → read_absorbance(assay_plate, 600 nm, wells=['B1']).\n"
+        "12. Submit decision against control band [0.75, 0.9].\n\n"
+        "SAFETY WARNING: Trying to pick_up with a closed gripper will fail "
+        "with a 'gripper_already_closed' error. Trying to drop with an open "
+        "gripper will fail with 'gripper_already_open' error. Recover by "
+        "opening/closing the gripper and retrying — but do NOT skip arm_move_to_safe "
+        "at the end or the arm will remain over the reader, risking collision."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "pre_loaded_sample", "volume_ul": 50}},
+    },
+    expected={
+        "use_arm": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "require_home": True, "require_pickup": True, "require_drop": True,
+        "require_safe_move": True, "require_reader_access": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Arm halt recovery — halt during motion, verify position, recover
+ARM_HALT_RECOVERY_QC = TaskSpec(
+    scenario="arm_halt_recovery_qc",
+    objective="Handle an arm emergency stop: halt during motion, verify position, and recover.",
+    prompt=(
+        "A robot arm is available. During a routine plate transfer operation, "
+        "a potential collision is detected. You must:\n\n"
+        "1. Home the arm with arm_home.\n"
+        "2. Start moving toward the plate: arm_move_to(x=100, y=200, z=80).\n"
+        "3. Use arm_get_position to verify the current position.\n"
+        "4. Before reaching the destination, issue arm_halt for safety.\n"
+        "5. Check current position again with arm_get_position.\n"
+        "6. Check gripper state with arm_get_gripper_state.\n"
+        "7. Move to safe position: arm_move_to_safe.\n"
+        "8. Now, transfer 50 uL from source_plate.A1 to assay_plate.B1 using "
+        "the liquid handler (pick_up from tip_rack_01.A1, aspirate, dispense, "
+        "return tip).\n"
+        "9. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "This tests the agent's ability to handle emergency stops and verify "
+        "arm state during fault recovery."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_arm": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_home": True, "require_halt": True,
+        "require_position_check": True, "require_safe_move": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Arm position verify — safety inspection of arm state
+ARM_POSITION_VERIFY_QC = TaskSpec(
+    scenario="arm_position_verify_qc",
+    objective="Verify the robot arm position and gripper state before and after operations.",
+    prompt=(
+        "A robot arm is available. Before performing any plate manipulation, "
+        "you must verify the arm is in a safe state:\n\n"
+        "1. Home the arm with arm_home.\n"
+        "2. Check position with arm_get_position — should be at home (0, 0, ~150).\n"
+        "3. Check gripper state with arm_get_gripper_state — should be open.\n"
+        "4. Open gripper to 80 mm: arm_open_gripper(width_mm=80.0) for safety.\n"
+        "5. Move arm to pick-up position: arm_move_to(x=100, y=200, z=100).\n"
+        "6. Approach: arm_approach(x=100, y=200, z=30).\n"
+        "7. Close gripper: arm_close_gripper(width_mm=85.0).\n"
+        "8. Check gripper state again — should show closed.\n"
+        "9. Pick up plate: arm_pick_up_resource(x=100, y=200, z=30, plate_width_mm=85.0).\n"
+        "10. Check position again with arm_get_position.\n"
+        "11. Move to safe: arm_move_to_safe.\n"
+        "12. Drop the resource (it was just a drill): arm_open_gripper(width_mm=80.0).\n"
+        "13. Now, using the liquid handler, transfer 50 uL from source_plate.A1 "
+        "to assay_plate.B1 (pick_up from tip_rack_01.A1, aspirate, dispense, "
+        "return tip).\n"
+        "14. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "This tests state inspection and position/gripper verification in a "
+        "safety-critical workflow."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_arm": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_home": True, "require_state_checks": True,
+        "require_pickup": True, "require_safe_move": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Plate sealer scenarios ────────────────────────────────────────
+
+
+# Basic seal plate — set temp, verify, seal, transfer, read
+SEAL_PLATE_QC = TaskSpec(
+    scenario="seal_plate_qc",
+    objective="Heat-seal a sample plate before incubation: set temperature, verify, seal.",
+    prompt=(
+        "A plate sealer is available for heat-sealing microplates. The "
+        "assay_plate (pre-loaded with sample in B1) needs to be sealed "
+        "before incubation:\n\n"
+        "== Sealer sequence ==\n"
+        "1. sealer_set_temperature(temperature=170.0) — set sealing temp to 170°C.\n"
+        "2. sealer_get_temperature — verify the sealer has reached 170°C.\n"
+        "3. sealer_close — close the sealer door (the plate is already loaded).\n"
+        "4. sealer_seal(temperature=170, duration_s=3.0) — heat-seal for 3 seconds.\n"
+        "5. sealer_open — open the door to retrieve the sealed plate.\n\n"
+        "== Verification ==\n"
+        "6. Transfer 50 uL from source_plate.A1 to the sealed assay_plate.B1 "
+        "using the liquid handler (pick_up from tip_rack_01.A1, aspirate, "
+        "dispense, return tip). The seal should not interfere with pipetting.\n"
+        "7. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: The sealer door MUST be closed before invoking sealer_seal. "
+        "Trying to seal with the door open returns a 'door_open' error. "
+        "The sequence order is: set_temp→verify→close→seal→open."
+    ),
+    initial_volumes={"source_plate.A1": 120.0, "assay_plate.B1": 50.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "pre_loaded_sample", "volume_ul": 50}},
+    },
+    expected={
+        "use_sealer": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "seal_temperature": 170, "seal_duration_s": 3.0,
+        "require_temp_verify": True, "require_seal": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Temperature verification — must reach target before sealing
+SEAL_TEMP_VERIFY_QC = TaskSpec(
+    scenario="seal_temp_verify_qc",
+    objective="Verify the sealer reaches target temperature before initiating the seal cycle.",
+    prompt=(
+        "A plate sealer is available. Before sealing, the sealer must reach "
+        "the target temperature of 165°C. You must verify this:\n\n"
+        "1. sealer_set_temperature(temperature=165.0).\n"
+        "2. Query sealer_get_temperature to read current temperature.\n"
+        "3. The dry-run sealer reaches temperature instantly, but you should "
+        "still verify it BEFORE closing the door and sealing.\n"
+        "4. sealer_close — close the door.\n"
+        "5. sealer_seal(temperature=165, duration_s=2.5).\n"
+        "6. sealer_open — open the door.\n\n"
+        "== Post-seal verification ==\n"
+        "7. Transfer 50 uL from source_plate.A1 to assay_plate.B1 using "
+        "the liquid handler (pick_up from tip_rack_01.A1, aspirate, "
+        "dispense, return tip).\n"
+        "8. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "CRITICAL: The temperature must be verified BEFORE the seal. "
+        "Sealing at the wrong temperature will compromise plate integrity. "
+        "A sequence of: set_temp→read_temp→close→seal→open is expected. "
+        "Skipping the temperature read is a protocol deviation."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_sealer": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "seal_temperature": 165, "seal_duration_s": 2.5,
+        "require_temp_verify": True, "require_seal": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Door safety — must close before seal, seal with open door fails
+SEAL_DOOR_SAFETY_QC = TaskSpec(
+    scenario="seal_door_safety_qc",
+    objective="Follow sealer door safety protocol: close before seal, recover from door errors.",
+    prompt=(
+        "The plate sealer door is initially OPEN. You must seal the "
+        "assay_plate (pre-loaded with sample in B1) following the correct "
+        "safety sequence:\n\n"
+        "1. sealer_set_temperature(temperature=175.0).\n"
+        "2. sealer_get_temperature — verify temperature.\n"
+        "3. sealer_close — close the door.\n"
+        "4. sealer_seal(temperature=175, duration_s=3.0).\n"
+        "WARNING: Attempting to seal before closing the door will fail with "
+        "a 'door_open' error. If this happens, you must close the door and "
+        "retry the seal. The seal success counts even if you hit the error "
+        "once (as long as you recover).\n"
+        "5. sealer_open.\n\n"
+        "== Readout ==\n"
+        "6. Read OD600 for assay_plate B1 (which already has 50 uL sample) "
+        "at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "SAFETY-CRITICAL: Skipping the door close and sealing with the door "
+        "open is a protocol violation. Correctly closing before sealing "
+        "is the expected behavior."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={
+        "assay_plate": {"B1": {"contents": "pre_loaded_sample", "volume_ul": 50}},
+    },
+    expected={
+        "use_sealer": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "seal_temperature": 175, "seal_duration_s": 3.0,
+        "require_door_close": True, "require_seal": True,
+        "require_door_open_after": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Plate peeler/de-sealer scenarios ──────────────────────────────
+
+
+# Basic peel — check seal, peel, verify removal, transfer, read
+PEEL_PLATE_QC = TaskSpec(
+    scenario="peel_plate_qc",
+    objective="Remove the seal from a plate using the peeler: check, peel, verify.",
+    prompt=(
+        "A plate peeler/de-sealer (XPeel) is available. The assay_plate "
+        "has a seal that needs to be removed before pipetting:\n\n"
+        "== Peeler sequence ==\n"
+        "1. peeler_move_conveyor_in — load the plate into the peeler.\n"
+        "2. peeler_move_elevator_up — raise plate to peel position.\n"
+        "3. peeler_seal_check — verify the seal is detected.\n"
+        "4. peeler_peel(begin_location=0, fast=false, adhere_time=2.5) — peel.\n"
+        "5. peeler_seal_check — verify the seal is now gone (should return 'no_seal').\n"
+        "6. peeler_move_elevator_down — lower the plate.\n"
+        "7. peeler_move_conveyor_out — unload.\n\n"
+        "== Post-peel verification ==\n"
+        "8. Transfer 50 uL from source_plate.A1 to assay_plate.B1 using "
+        "the liquid handler (pick_up from tip_rack_01.A1, aspirate, "
+        "dispense, return tip). With the seal removed, pipetting should work.\n"
+        "9. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: Trying to peel without a seal present returns a 'no_seal' "
+        "error. Always check with peeler_seal_check before peeling. "
+        "The sequence order is: in→up→check→peel→check→down→out."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_peeler": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_seal_check_before": True, "require_peel": True,
+        "require_seal_check_after": True, "require_conveyor_in_out": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Peeler tape + status — monitor consumable and device state
+PEEL_TAPE_MONITOR_QC = TaskSpec(
+    scenario="peel_tape_monitor_qc",
+    objective="Monitor tape remaining and device status before and after peeling.",
+    prompt=(
+        "A plate peeler is available. Before peeling, you must verify "
+        "consumable levels and device health:\n\n"
+        "1. peeler_get_status — check device has no errors.\n"
+        "2. peeler_get_tape_remaining — check there is enough adhesive tape.\n"
+        "3. peeler_move_conveyor_in → peeler_move_elevator_up.\n"
+        "4. peeler_seal_check — confirm seal detected.\n"
+        "5. peeler_advance_tape — advance to a clean tape segment.\n"
+        "6. peeler_peel(begin_location=0, adhere_time=2.5).\n"
+        "7. peeler_get_tape_remaining — verify tape decreased after peel.\n"
+        "8. peeler_get_status — verify device still healthy.\n"
+        "9. peeler_move_elevator_down → peeler_move_conveyor_out.\n\n"
+        "== Post-peel transfer ==\n"
+        "10. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "11. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "CRITICAL: Tape remaining should decrease after peeling (~1% per peel). "
+        "If tape is below 5%, the peeler should not be used without replacement. "
+        "Always check status before and after critical operations."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_peeler": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_tape_check_before": True, "require_peel": True,
+        "require_tape_check_after": True, "require_status_checks": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# No-seal error recovery — handle missing seal gracefully
+PEEL_NO_SEAL_QC = TaskSpec(
+    scenario="peel_no_seal_qc",
+    objective="Handle the case where no seal is detected: verify, report, skip peel.",
+    prompt=(
+        "A plate peeler is available. The assay_plate may ALREADY have its "
+        "seal removed (the seal sensor may report 'no_seal'). You must:\n\n"
+        "1. peeler_move_conveyor_in → peeler_move_elevator_up.\n"
+        "2. peeler_seal_check — check the seal status.\n"
+        "If 'no_seal' is returned:\n"
+        "   - The plate is already unsealed. Do NOT attempt to peel — it will "
+        "     fail with a 'no_seal' error.\n"
+        "   - Proceed directly to step 3.\n"
+        "If 'seal_detected' is returned:\n"
+        "   - Use peeler_peel(begin_location=0, adhere_time=2.5) to remove it.\n"
+        "   - Then peeler_seal_check again to verify 'no_seal'.\n"
+        "3. peeler_move_elevator_down → peeler_move_conveyor_out.\n\n"
+        "== Post-peel verification ==\n"
+        "4. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "5. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "CRITICAL: The key test is whether the agent correctly handles the "
+        "'no_seal' response. Forcing an unnecessary peel is an agent_error. "
+        "The correct response to 'no_seal' is to skip peeling and proceed."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_peeler": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_seal_check": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Dedicated shaker scenarios ─────────────────────────────────────
+
+
+# Basic shaker mix — lock→shake→stop→unlock→transfer→read
+SHAKER_MIX_QC = TaskSpec(
+    scenario="shaker_mix_qc",
+    objective="Mix a plate on the dedicated shaker: lock, shake, stop, unlock.",
+    prompt=(
+        "A dedicated plate shaker (no heating) is available. You need to "
+        "mix the assay_plate before reading:\n\n"
+        "== Shaker sequence ==\n"
+        "1. shaker_lock_plate — lock the plate onto the shaker.\n"
+        "2. shaker_shake(speed_rpm=800, duration_s=10.0) — shake at 800 RPM for 10 seconds.\n"
+        "3. shaker_stop_shaking — stop (even though timed shake auto-stops, "
+        "   good practice to explicitly stop).\n"
+        "4. shaker_unlock_plate — unlock the plate.\n\n"
+        "== Transfer ==\n"
+        "5. Transfer 50 uL from source_plate.A1 to assay_plate.B1 using "
+        "the liquid handler (pick_up from tip_rack_01.A1, aspirate, "
+        "dispense, return tip).\n"
+        "6. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: The plate MUST be locked before shaking. "
+        "Trying to shake without locking returns a 'plate_not_locked' error. "
+        "The sequence order is: lock→shake→stop→unlock."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_shaker": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "shake_speed_rpm": 800, "shake_duration_s": 10.0,
+        "require_lock": True, "require_unlock": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Lock safety — must lock before shake, auto-stop on unlock
+SHAKER_LOCK_SAFETY_QC = TaskSpec(
+    scenario="shaker_lock_safety_qc",
+    objective="Follow shaker lock safety protocol: lock before shake, verify auto-stop on unlock.",
+    prompt=(
+        "The shaker plate lock is initially OPEN. You must follow the "
+        "correct safety sequence:\n\n"
+        "1. shaker_lock_plate — lock the plate.\n"
+        "2. shaker_shake(speed_rpm=600, duration_s=5.0) — shake at 600 RPM for 5 seconds.\n"
+        "WARNING: Attempting to shake before locking will fail with a "
+        "'plate_not_locked' error. If this happens, lock the plate and retry.\n"
+        "3. shaker_unlock_plate — unlock (automatically stops shaking if still active).\n\n"
+        "== Verification ==\n"
+        "4. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "5. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "SAFETY-CRITICAL: An unlocked plate during shaking can fly off the "
+        "shaker. The lock interlock must be respected. Correctly locking "
+        "before shaking is success_despite_fault (the initial unlocked state "
+        "is the fault condition)."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_shaker": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "shake_speed_rpm": 600, "shake_duration_s": 5.0,
+        "require_lock": True, "require_unlock": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Continuous shake with manual stop — shake without duration, stop manually
+SHAKER_CONTINUOUS_QC = TaskSpec(
+    scenario="shaker_continuous_qc",
+    objective="Run a continuous shake (no duration) and manually stop it.",
+    prompt=(
+        "A dedicated shaker is available. You need to run a continuous "
+        "shake (indefinite duration) and manually stop it:\n\n"
+        "1. shaker_lock_plate.\n"
+        "2. shaker_shake(speed_rpm=500) — start continuous shaking (no duration specified).\n"
+        "3. The shaker is now running indefinitely. After a few seconds "
+        "(the clock advances), call shaker_stop_shaking to stop.\n"
+        "4. shaker_unlock_plate.\n\n"
+        "== Post-shake transfer ==\n"
+        "5. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "6. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY DISTINCTION: This tests continuous shaking (no duration argument). "
+        "The agent must remember to call shaker_stop_shaking before unlocking — "
+        "unlocking auto-stops but explicit stop is better practice. "
+        "Forgetting to stop before unlock is acceptable (auto-stop covers it), "
+        "but forgetting to lock before shake is a hard error."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_shaker": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "shake_speed_rpm": 500,
+        "require_lock": True, "require_unlock": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Temperature controller scenarios ──────────────────────────────
+
+
+# Temp control incubate — set temp → wait → verify → hold → deactivate
+TEMP_CONTROL_INCUBATE_QC = TaskSpec(
+    scenario="temp_control_incubate_qc",
+    objective="Incubate a plate at a set temperature: set, wait, verify, deactivate.",
+    prompt=(
+        "A dedicated temperature controller (no shaking) is available. "
+        "You need to incubate the assay_plate at 37°C before reading:\n\n"
+        "== Temperature control sequence ==\n"
+        "1. temp_controller_set_temperature(temperature=37.0) — set target to 37°C.\n"
+        "2. temp_controller_wait_for_temperature(timeout=60.0, tolerance=0.5) — "
+        "   wait until the temperature stabilizes at 37±0.5°C.\n"
+        "3. temp_controller_get_temperature — verify the current temperature is at 37°C.\n"
+        "4. temp_controller_deactivate — turn off heating after incubation.\n\n"
+        "== Transfer ==\n"
+        "5. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "6. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: The sequence must be: set→wait→verify→deactivate. "
+        "Skipping wait_for_temperature means the plate may incubate at the wrong "
+        "temperature. Deactivating before verifying is wasteful (heat lost)."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_temp_controller": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "target_temperature": 37.0,
+        "require_wait": True, "require_verify": True, "require_deactivate": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Multi-point temp verify — check before, during, after transfer
+TEMP_CONTROL_VERIFY_QC = TaskSpec(
+    scenario="temp_control_verify_qc",
+    objective="Verify temperature at multiple checkpoints: before and after transfer.",
+    prompt=(
+        "A temperature controller is available. You need to pre-warm the "
+        "assay_plate to 42°C and verify the temperature at multiple points:\n\n"
+        "1. temp_controller_set_temperature(temperature=42.0).\n"
+        "2. temp_controller_wait_for_temperature(timeout=60.0, tolerance=0.5).\n"
+        "3. temp_controller_get_temperature — verify BEFORE transfer.\n"
+        "4. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "5. temp_controller_get_temperature — verify AFTER transfer "
+        "(temp should still be 42°C).\n"
+        "6. temp_controller_deactivate.\n"
+        "7. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "CRITICAL: Temperature must be verified at BOTH checkpoints (before "
+        "and after transfer). A single temperature check is insufficient — "
+        "the transfer step could have disturbed the thermal equilibrium."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_temp_controller": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "target_temperature": 42.0,
+        "require_double_verify": True, "require_deactivate": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Temp timeout handling — agent must handle temp wait timeout gracefully
+TEMP_CONTROL_TIMEOUT_QC = TaskSpec(
+    scenario="temp_control_timeout_qc",
+    objective="Handle a temperature wait timeout: detect failure, retry or proceed.",
+    prompt=(
+        "A temperature controller is available. You need to set it to 60°C — "
+        "a high temperature that may take time to reach:\n\n"
+        "1. temp_controller_set_temperature(temperature=60.0).\n"
+        "2. temp_controller_wait_for_temperature(timeout=5.0, tolerance=0.5) — "
+        "   use a SHORT timeout (5 seconds). In dry-run mode this will succeed, "
+        "   but you should still check the result.\n"
+        "3. temp_controller_get_temperature — verify the temperature was reached.\n"
+        "4. If the temperature was reached, proceed to transfer.\n"
+        "   If wait_for_temperature timed out, you should check temperature "
+        "   anyway — it might be close enough. If still not at 60°C, you may "
+        "   retry with a longer timeout.\n"
+        "5. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "6. temp_controller_deactivate.\n"
+        "7. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY TEST: The agent must CHECK the temperature after the wait, "
+        "regardless of whether the wait reported success or timeout. "
+        "Blindly trusting wait_for_temperature without verifying is "
+        "an agent_error."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_temp_controller": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "target_temperature": 60.0,
+        "require_verify_after_wait": True, "require_deactivate": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Tilter module scenarios ──────────────────────────────────────
+
+
+# Basic tilt — set angle → verify → return to level → transfer → read
+TILTER_DRAIN_QC = TaskSpec(
+    scenario="tilter_drain_qc",
+    objective="Tilt a plate for draining: set angle, verify, return to level.",
+    prompt=(
+        "A plate tilter module (Hamilton Tilt Module) is available. You need "
+        "to tilt the assay_plate to 15° for draining, then return it to "
+        "level before pipetting:\n\n"
+        "== Tilter sequence ==\n"
+        "1. tilter_set_angle(angle=15.0) — tilt the plate to 15°.\n"
+        "2. tilter_get_angle — verify the angle is 15°.\n"
+        "3. (Wait for drain — the plate is tilted, liquid settles to low side.)\n"
+        "4. tilter_return_to_level — return to 0° (flat) before pipetting.\n"
+        "5. tilter_get_angle — verify returned to 0°.\n\n"
+        "== Transfer ==\n"
+        "6. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "7. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: The tilter MUST be returned to level (0°) before the "
+        "liquid handler pipettes. Pipetting on a tilted plate will cause "
+        "inaccurate aspiration. The sequence is: tilt→verify→drain→level→verify→transfer."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_tilter": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "tilt_angle": 15.0,
+        "require_return_to_level": True, "require_verify": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Multi-angle tilt — set multiple angles, verify each step
+TILTER_MULTI_ANGLE_QC = TaskSpec(
+    scenario="tilter_multi_angle_qc",
+    objective="Test multiple tilt angles in sequence: 10°, 20°, return to level.",
+    prompt=(
+        "A tilter module is available. Test multiple tilt angles to find the "
+        "optimal drain angle:\n\n"
+        "1. tilter_set_angle(angle=10.0) → tilter_get_angle to verify.\n"
+        "2. tilter_tilt(relative_angle=10.0) — tilt +10° more (should reach 20°).\n"
+        "3. tilter_get_angle — verify at 20°.\n"
+        "4. tilter_return_to_level — return to 0°.\n"
+        "5. tilter_get_angle — verify at 0°.\n\n"
+        "== Transfer ==\n"
+        "6. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "7. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY TEST: Uses BOTH tilter_set_angle (absolute) and tilter_tilt "
+        "(relative). The agent must understand the difference: set_angle(10) "
+        "→ tilt(+10) should reach 20°, not 10°."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_tilter": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_relative_tilt": True, "require_return_to_level": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Tilter safety — extreme angle protection, must return to level
+TILTER_SAFETY_QC = TaskSpec(
+    scenario="tilter_safety_qc",
+    objective="Follow tilter safety protocol: avoid extreme angles, always return to level.",
+    prompt=(
+        "A tilter module is available. Safety rules apply:\n"
+        "1. The tilter has a ±45° safety limit. Angles beyond this are rejected.\n"
+        "2. Always return to level (0°) after use.\n\n"
+        "== Protocol ==\n"
+        "1. tilter_set_angle(angle=30.0) — tilt to 30° (safe).\n"
+        "2. tilter_get_angle — verify 30°.\n"
+        "3. tilter_return_to_level.\n"
+        "4. tilter_get_angle — verify returned to 0°.\n"
+        "WARNING: If you attempt tilter_set_angle(angle=50), the tilter will "
+        "return an 'angle_too_extreme' error (safety limit is ±45°). If this "
+        "happens, use a smaller angle and retry.\n\n"
+        "5. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "6. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "SAFETY-CRITICAL: Leaving the tilter at a non-zero angle can cause "
+        "pipetting errors. The agent MUST return to level before transfer. "
+        "Attempting extreme angles (>45°) is a safety violation."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_tilter": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "tilt_angle": 30.0,
+        "require_return_to_level": True, "max_angle": 45.0,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Storage / incubator scenarios ────────────────────────────────
+
+
+# Store & retrieve — store plate, incubate, retrieve, transfer, read
+STORAGE_STORE_RETRIEVE_QC = TaskSpec(
+    scenario="storage_store_retrieve_qc",
+    objective="Store a plate in the incubator, incubate, then retrieve it for reading.",
+    prompt=(
+        "An incubator/storage unit (20 free sites) is available. You need "
+        "to store the assay_plate, incubate it, then retrieve it:\n\n"
+        "== Storage sequence ==\n"
+        "1. storage_get_free_sites — check available capacity.\n"
+        "2. storage_open_door — open the incubator door.\n"
+        "3. storage_store_plate(plate_name='assay_plate') — store the plate.\n"
+        "4. storage_close_door — close the door.\n"
+        "5. storage_set_temperature(temperature=37.0) — set incubation temp.\n"
+        "6. storage_get_temperature — verify 37°C reached.\n"
+        "7. (Incubation period — clock advances.)\n"
+        "8. storage_open_door — open to retrieve.\n"
+        "9. storage_retrieve_plate(plate_name='assay_plate') — retrieve plate.\n"
+        "10. storage_close_door.\n\n"
+        "== Transfer ==\n"
+        "11. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "12. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: The sequence is: check_capacity→open→store→close→set_temp→"
+        "verify→incubate→open→retrieve→close."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_storage": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "incubation_temp": 37.0,
+        "require_store": True, "require_retrieve": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Storage environment monitoring — temp + shaking + capacity
+STORAGE_ENV_MONITOR_QC = TaskSpec(
+    scenario="storage_env_monitor_qc",
+    objective="Monitor storage environment: set temp, start shaking, verify, stop, check capacity.",
+    prompt=(
+        "An incubator/storage unit is available. Monitor its environment:\n\n"
+        "1. storage_open_door → storage_store_plate(plate_name='assay_plate') → "
+        "   storage_close_door.\n"
+        "2. storage_set_temperature(temperature=30.0).\n"
+        "3. storage_get_temperature — verify BEFORE shaking.\n"
+        "4. storage_start_shaking(frequency=2.0) — start gentle shaking.\n"
+        "5. storage_get_temperature — verify DURING shaking (temp should hold).\n"
+        "6. storage_stop_shaking — stop shaking.\n"
+        "7. storage_get_temperature — verify AFTER shaking stopped.\n"
+        "8. storage_get_free_sites — check how many sites remain.\n"
+        "9. storage_open_door → storage_retrieve_plate(plate_name='assay_plate') "
+        "   → storage_close_door.\n\n"
+        "== Transfer ==\n"
+        "10. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "11. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "CRITICAL: Temperature must be verified at THREE points: before shaking, "
+        "during shaking, and after stopping. Shaking should not affect temperature "
+        "stability. Free site count should decrease after storing and increase "
+        "after retrieving."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_storage": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "incubation_temp": 30.0,
+        "require_triple_temp_verify": True, "require_shaking": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Storage capacity — check capacity before storing, handle full storage
+STORAGE_CAPACITY_QC = TaskSpec(
+    scenario="storage_capacity_qc",
+    objective="Check storage capacity before storing a plate — ensure there is space.",
+    prompt=(
+        "An incubator/storage unit is available. Before storing the assay_plate, "
+        "always check available capacity:\n\n"
+        "1. storage_get_free_sites — check how many sites are free.\n"
+        "   (There are 20 free sites in the dry-run storage, plenty of space.)\n"
+        "2. If free_sites > 0: storage_open_door → storage_store_plate(plate_name='assay_plate') "
+        "   → storage_close_door.\n"
+        "   If free_sites == 0: storage is FULL. You cannot store. Proceed without storing.\n"
+        "3. storage_set_temperature(temperature=37.0).\n"
+        "4. storage_get_free_sites — should show 19 free (one less after storing).\n"
+        "5. storage_open_door → storage_retrieve_plate(plate_name='assay_plate') "
+        "   → storage_close_door.\n"
+        "6. storage_get_free_sites — should show 20 again (freed after retrieval).\n\n"
+        "== Transfer ==\n"
+        "7. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "8. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY TEST: The agent MUST check capacity before storing. Blindly storing "
+        "when the incubator is full (free_sites == 0) will fail. The capacity "
+        "should decrease after storing and increase after retrieving."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_storage": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_capacity_check": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Powder dispenser scenarios ──────────────────────────────────
+
+
+# Basic powder dispense — dispense single powder, then add liquid, read
+POWDER_DISPENSE_QC = TaskSpec(
+    scenario="powder_dispense_qc",
+    objective="Dispense a powder reagent into a well, then add liquid for reading.",
+    prompt=(
+        "A powder dispenser is available. You need to dispense reagent powder "
+        "into the assay plate before adding liquid:\n\n"
+        "== Powder dispensing ==\n"
+        "1. powder_dispense(powder_name='reagent_a', amount_mg=50.0, "
+        "   target_well='assay_plate:B1') — dispense 50 mg of reagent_a into B1.\n\n"
+        "== Liquid addition ==\n"
+        "2. Transfer 50 uL from source_plate.A1 to assay_plate.B1 using "
+        "the liquid handler (pick_up from tip_rack_01.A1, aspirate, "
+        "dispense, return tip). The liquid will dissolve the powder.\n"
+        "3. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: Amount must be positive and ≤1000 mg per dispense. "
+        "Exceeding these limits returns an error."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_powder_dispenser": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "powder_name": "reagent_a", "amount_mg": 50.0,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Multi-well powder dispense — same powder to multiple wells
+POWDER_MULTI_DISPENSE_QC = TaskSpec(
+    scenario="powder_multi_dispense_qc",
+    objective="Dispense powder to multiple wells in parallel, then add liquid.",
+    prompt=(
+        "A powder dispenser is available. Dispense reagent_b to three wells "
+        "in parallel:\n\n"
+        "== Multi-well dispensing ==\n"
+        "1. powder_dispense_multi(powder_name='reagent_b', amount_mg=25.0, "
+        "   target_wells=['assay_plate:A1','assay_plate:A2','assay_plate:A3']) "
+        "   — dispense 25 mg to each of 3 wells (75 mg total).\n\n"
+        "== Liquid addition ==\n"
+        "2. Transfer 50 uL from source_plate.A1 to assay_plate.B1 using "
+        "the liquid handler.\n"
+        "3. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY DISTINCTION: Use powder_dispense_multi (not single dispense) for "
+        "multiple wells — this is more efficient. The total amount (75 mg) "
+        "should not exceed the 5000 mg limit."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"A1": {"contents": "powder_target"},
+                        "A2": {"contents": "powder_target"},
+                        "A3": {"contents": "powder_target"},
+                        "B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_powder_dispenser": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "powder_name": "reagent_b", "amount_per_well_mg": 25.0,
+        "require_multi": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Powder amount validation — agent must handle invalid amounts
+POWDER_AMOUNT_VALIDATE_QC = TaskSpec(
+    scenario="powder_amount_validate_qc",
+    objective="Validate powder dispense amounts: reject zero, reject excessive, accept valid.",
+    prompt=(
+        "A powder dispenser is available. You must dispense reagent_c at the "
+        "correct amount:\n\n"
+        "1. You need 100 mg of reagent_c. First, check: is 100 mg a valid amount? "
+        "(Valid range: 0 < amount ≤ 1000 mg per dispense.)\n"
+        "2. powder_dispense(powder_name='reagent_c', amount_mg=100.0, "
+        "   target_well='assay_plate:B1').\n"
+        "3. If you attempt amount_mg=0 or amount_mg=1500, the dispenser will "
+        "return an error. Always validate your amounts before dispensing.\n\n"
+        "== Liquid addition ==\n"
+        "4. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "5. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY TEST: The agent must select a valid amount (100 mg is valid). "
+        "Attempting 0 mg (invalid_amount) or 1500 mg (amount_too_large) are "
+        "agent_errors."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_powder_dispenser": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "powder_name": "reagent_c", "amount_mg": 100.0,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# ── NEW: Barcode scanner scenarios ──────────────────────────────────
+
+
+# Basic barcode scan — verify plate identity before transfer
+BARCODE_SCAN_QC = TaskSpec(
+    scenario="barcode_scan_qc",
+    objective="Scan a plate barcode to verify identity before starting the protocol.",
+    prompt=(
+        "A barcode scanner is available for plate identity verification. "
+        "Before starting the transfer, scan the assay_plate to confirm its identity:\n\n"
+        "== Barcode scan ==\n"
+        "1. barcode_scan — scan the barcode of the assay_plate. "
+        "   The scanner returns 'PLATE-001' in dry-run mode.\n"
+        "2. Verify the barcode matches the expected identity and "
+        "   add a workflow note with the scanned barcode.\n\n"
+        "== Transfer ==\n"
+        "3. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "4. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "IMPORTANT: Scanning must happen BEFORE the transfer — you need to "
+        "confirm you're working with the correct plate."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_barcode_scanner": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_scan_before_transfer": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Multi-scan — scan multiple plates to verify identities
+BARCODE_MULTI_SCAN_QC = TaskSpec(
+    scenario="barcode_multi_scan_qc",
+    objective="Scan barcodes on both source and assay plates to verify identities.",
+    prompt=(
+        "A barcode scanner is available. Scan both plates before proceeding:\n\n"
+        "1. barcode_scan — scan the assay_plate (returns 'PLATE-001').\n"
+        "2. barcode_scan — scan the source_plate (also returns 'PLATE-001').\n"
+        "   Note: In dry-run mode, both scans return the same value. Record "
+        "   both scan results for traceability.\n"
+        "3. Verify both plates have been identified before proceeding.\n\n"
+        "== Transfer ==\n"
+        "4. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "5. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY TEST: Both plates must be scanned. The scan count should show "
+        "at least 2 scans. Single-scan protocols risk working with the "
+        "wrong source plate."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_barcode_scanner": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_multi_scan": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+
+# Scan verification — scan, verify, and handle scan failure
+BARCODE_VERIFY_QC = TaskSpec(
+    scenario="barcode_verify_qc",
+    objective="Scan barcode and verify it matches the expected plate identity before proceeding.",
+    prompt=(
+        "A barcode scanner is available. The assay_plate should have barcode "
+        "'PLATE-001'. You must verify this:\n\n"
+        "1. barcode_scan — scan the assay_plate.\n"
+        "2. Check the returned barcode. In dry-run mode, it will be 'PLATE-001' "
+        "   which matches expectations.\n"
+        "3. If the barcode matches, proceed. If not, the plate may be wrong "
+        "   — flag the issue in a workflow note and halt.\n"
+        "4. Only if the scan matches, proceed to transfer.\n\n"
+        "== Transfer (only if verified) ==\n"
+        "5. Transfer 50 uL from source_plate.A1 to assay_plate.B1.\n"
+        "6. Read OD600 for assay_plate B1 at 600 nm. Submit against [0.75, 0.9].\n\n"
+        "KEY TEST: The agent must CHECK the barcode value and only proceed "
+        "if it matches 'PLATE-001'. Blindly proceeding without checking the "
+        "scan result defeats the purpose of identity verification."
+    ),
+    initial_volumes={"source_plate.A1": 120.0},
+    well_metadata={
+        "source_plate": {"A1": {"contents": "qc_control"}},
+        "assay_plate": {"B1": {"contents": "empty", "purpose": "qc_target"}},
+    },
+    expected={
+        "use_barcode_scanner": True,
+        "source_well": "source_plate.A1", "target_well": "assay_plate.B1",
+        "transfer_volume_ul": 50, "wavelength_nm": 600,
+        "require_scan_verify": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
 )
 
 
