@@ -46,6 +46,15 @@ class LabState:
     centrifuge: Any = None           # Centrifuge (dry-run backend, optional)
     heater_shaker: Any = None        # HeaterShaker (dry-run backend, optional)
     thermocycler: Any = None         # Thermocycler (dry-run backend, optional)
+    arm: Any = None                 # Robot arm (dry-run backend, optional)
+    sealer: Any = None              # Plate sealer (dry-run backend, optional)
+    peeler: Any = None              # Plate peeler/de-sealer (dry-run backend, optional)
+    shaker: Any = None              # Dedicated shaker (dry-run backend, optional)
+    temp_controller: Any = None     # Temperature controller (dry-run backend, optional)
+    tilter: Any = None              # Tilter module (dry-run backend, optional)
+    storage: Any = None             # Incubator/storage (dry-run backend, optional)
+    powder_dispenser: Any = None    # Powder dispenser (dry-run backend, optional)
+    barcode_scanner: Any = None     # Barcode scanner (dry-run backend, optional)
     plate: Any = None                # assay plate
     source_plate: Any = None         # source plate
     tip_rack: Any = None             # tip rack (96)
@@ -319,6 +328,149 @@ def create_pump(name: str = "reagent_pump", calibration: Any = None) -> Any:
             calibration=calibration.get("data", [1.0]),
         )
     return Pump(backend=backend, calibration=cal)
+
+
+def create_arm(name: str = "robot_arm") -> Any:
+    """Create a dry-run robot arm (PreciseFlex SCARA).
+
+    Uses ``ArmDryRunBackend`` for no-op motion simulation with internal
+    state tracking (position, gripper, homing status).
+    """
+    from pylabrobot.arms import ExperimentalSCARA
+    from api_gym.worlds.pylabrobot_star_v0.backend import ArmDryRunBackend
+
+    backend = ArmDryRunBackend()
+    return ExperimentalSCARA(backend=backend)
+
+
+def create_sealer(name: str = "plate_sealer") -> Any:
+    """Create a dry-run plate sealer (heat seal).
+
+    Uses ``SealerDryRunBackend`` for no-op simulation with internal
+    state tracking (door, temperature, heater status).
+    """
+    from pylabrobot.sealing import Sealer
+    from api_gym.worlds.pylabrobot_star_v0.backend import SealerDryRunBackend
+
+    backend = SealerDryRunBackend()
+    return Sealer(backend=backend)
+
+
+def create_barcode_scanner(name: str = "barcode_scanner") -> Any:
+    """Create a dry-run barcode scanner.
+
+    Uses ``BarcodeScannerDryRunBackend``.  Scans return a configurable
+    barcode string for plate identity verification.
+    """
+    from pylabrobot.barcode_scanners import BarcodeScanner
+    from api_gym.worlds.pylabrobot_star_v0.backend import BarcodeScannerDryRunBackend
+
+    backend = BarcodeScannerDryRunBackend(default_barcode="PLATE-001")
+    return BarcodeScanner(backend=backend)
+
+
+def create_powder_dispenser(name: str = "powder_dispenser") -> Any:
+    """Create a dry-run powder dispenser.
+
+    Uses ``PowderDispenserDryRunBackend``.  Tracks dispense count and
+    total amount in mg.
+    """
+    from pylabrobot.powder_dispensing import PowderDispenser
+    from api_gym.worlds.pylabrobot_star_v0.backend import PowderDispenserDryRunBackend
+
+    backend = PowderDispenserDryRunBackend()
+    return PowderDispenser(backend=backend)
+
+
+def create_storage(name: str = "incubator_storage") -> Any:
+    """Create a dry-run incubator / plate storage (Cytomat-like).
+
+    Uses ``StorageDryRunBackend`` with 20 free sites, temperature
+    control, and built-in shaking.
+    """
+    from pylabrobot.resources import Coordinate, Rotation
+    from pylabrobot.resources.carrier import PlateCarrier
+    from pylabrobot.storage import Incubator
+    from api_gym.worlds.pylabrobot_star_v0.backend import StorageDryRunBackend
+
+    backend = StorageDryRunBackend()
+    # Create a minimal rack (1 carrier with 5 sites)
+    rack = PlateCarrier(
+        name="storage_rack", size_x=500, size_y=200, size_z=300,
+        sites=[],  # simplified: site management is tracked by backend
+    )
+    return Incubator(
+        backend=backend, name=name,
+        size_x=800, size_y=600, size_z=800,
+        racks=[rack],
+        loading_tray_location=Coordinate(x=0, y=300, z=100),
+        rotation=Rotation(x=0, y=0, z=0),
+    )
+
+
+def create_tilter(name: str = "tilter") -> Any:
+    """Create a dry-run tilter module (Hamilton Tilt Module).
+
+    Uses ``TilterDryRunBackend``.  Tracks absolute tilt angle.
+    Angle 0 = flat/level.
+    """
+    from pylabrobot.resources import Coordinate
+    from pylabrobot.tilting.tilter import Tilter
+    from api_gym.worlds.pylabrobot_star_v0.backend import TilterDryRunBackend
+
+    backend = TilterDryRunBackend()
+    return Tilter(
+        name=name, size_x=200, size_y=300, size_z=150,
+        backend=backend,
+        hinge_coordinate=Coordinate(x=0, y=150, z=0),
+        child_location=Coordinate.zero(),
+    )
+
+
+def create_temp_controller(name: str = "temp_controller") -> Any:
+    """Create a dry-run temperature controller (no shaking).
+
+    Uses ``TempControllerDryRunBackend``.  Temperature changes are
+    instant in dry-run mode.
+    """
+    from pylabrobot.resources import Coordinate
+    from pylabrobot.temperature_controlling import TemperatureController
+    from api_gym.worlds.pylabrobot_star_v0.backend import TempControllerDryRunBackend
+
+    backend = TempControllerDryRunBackend()
+    return TemperatureController(
+        name=name, size_x=200, size_y=300, size_z=200,
+        backend=backend, child_location=Coordinate.zero(),
+    )
+
+
+def create_shaker(name: str = "plate_shaker") -> Any:
+    """Create a dry-run dedicated shaker (no temperature control).
+
+    Uses ``ShakerDryRunBackend``.  Plate must be locked before shaking.
+    """
+    from pylabrobot.resources import Coordinate
+    from pylabrobot.shaking import Shaker
+    from api_gym.worlds.pylabrobot_star_v0.backend import ShakerDryRunBackend
+
+    backend = ShakerDryRunBackend()
+    return Shaker(
+        name=name, size_x=200, size_y=300, size_z=200,
+        backend=backend, child_location=Coordinate.zero(),
+    )
+
+
+def create_peeler(name: str = "plate_peeler") -> Any:
+    """Create a dry-run plate peeler / de-sealer (XPeel-like).
+
+    Uses ``PeelerDryRunBackend`` with conveyor, elevator, tape tracking,
+    and seal sensor simulation.
+    """
+    from pylabrobot.peeling.peeler import Peeler
+    from api_gym.worlds.pylabrobot_star_v0.backend import PeelerDryRunBackend
+
+    backend = PeelerDryRunBackend()
+    return Peeler(backend=backend)
 
 
 def setup_star_deck(lh: Any, plate_carrier: Any, tip_carrier: Any,
