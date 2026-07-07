@@ -2,6 +2,17 @@
 
 This is the canonical product definition for `datalox-api-gym`.
 
+## Freeze Boundary
+
+As of 2026-07-07, runtime authority has moved to
+`datalox-gated-runtime`. New work on gates, generic session lifecycle, live
+capture, promotion, replay verification, call-path adapters, generic audit
+plumbing, and runtime exports belongs there.
+
+This repo keeps its existing API source packs and worlds as migration assets.
+Use them to import source-pack evidence and port selected stateful worlds into
+the gated runtime. Do not add new runtime features here.
+
 ## Definition
 
 Datalox API Gym packages source-backed dry-run worlds: resettable, stateful
@@ -42,20 +53,22 @@ training or eval datasets.
 
 ## Owned Here
 
-- API source packs and source references
-- world specs
-- world session lifecycle
-- per-episode state backends
-- action contracts exposed through MCP or host adapters
-- dynamics backends
-- observation contracts
-- hidden verifier execution
-- tool traces
-- session manifests
-- run exports
+- API source packs and source references as migration assets
+- existing world specs
+- existing per-episode state backends
+- existing action contracts exposed through MCP or host adapters
+- existing dynamics backends
+- existing observation contracts
+- existing hidden verifier logic
+- existing tool traces, session manifests, and run exports for worlds that have
+  not yet migrated
 
 ## Not Owned Here
 
+- new gate or call-path runtime features
+- new generic session lifecycle, live capture, promotion, or replay
+  verification features
+- new generic audit/export plumbing
 - dataset manifests
 - train/dev/test split assignment
 - dataset quality labels
@@ -97,10 +110,10 @@ The source-pack pipeline is:
 ```text
 source_packs/apis/<provider>/<version>
   -> normalized operation catalog
+  -> import into datalox-gated-runtime replay environment
   -> world candidate design
-  -> worlds/<world_id>
-  -> MCP/session/runtime
-  -> run_export
+  -> selected stateful world port in datalox-gated-runtime
+  -> session evidence and runtime export
   -> datalox-rollout-collector
 ```
 

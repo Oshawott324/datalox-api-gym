@@ -22,16 +22,25 @@ Primary model:
 source substrate -> world package -> world session -> MCP/action interface -> verifier outcome -> run_export evidence
 ```
 
+Freeze boundary:
+
+- Runtime authority now lives in `datalox-gated-runtime`: gates, session
+  lifecycle, live capture, promotion, replay verification, generic audit/export
+  plumbing, and call-path adapters should be built there.
+- Do not add new runtime features in this repo. Treat existing source packs and
+  worlds as migration assets until they are imported or re-homed.
+
 Business rules:
 
-- API Gym owns world specs, world sessions, state backends, action contracts,
-  dynamics backends, observation contracts, hidden verifier execution, tool
-  traces, and run exports.
+- API Gym contains existing world specs, world sessions, state backends, action
+  contracts, dynamics backends, observation contracts, hidden verifier
+  execution, tool traces, and run exports as migration assets.
 - API Gym does not own dataset manifests, train/dev/test split assignment,
   dataset quality labels, dataset validation reports, or model training
   recipes.
-- Use `api-gym session create`, `api-gym session check-tools`, and
-  `api-gym session finalize` as the canonical agent-host lifecycle.
+- For existing, not-yet-migrated worlds, use `api-gym session create`,
+  `api-gym session check-tools`, and `api-gym session finalize` as the
+  canonical agent-host lifecycle.
 - MCP is the action channel. The session manifest is the lifecycle contract.
 - Agents must not receive hidden verifier state or direct access to mutable
   state files such as `state.sqlite`.
@@ -48,5 +57,7 @@ Drift rule:
 
 If a change starts building dataset packaging, split assignment, quality labels,
 or validation reports, move it to `datalox-rollout-collector`. If a change
-starts building generic replay hashing or replay lookup, move it to the replay
-engine.
+starts building gates, generic session lifecycle, capture, promotion, replay
+verification, generic audit/export plumbing, or call-path adapters, move it to
+`datalox-gated-runtime`. If a change starts building generic replay hashing or
+replay lookup, move it to the replay engine.
