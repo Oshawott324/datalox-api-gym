@@ -244,6 +244,7 @@ pre, code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, m
         <option value="pylabrobot_lab_v0">PyLabRobot Lab v0 (ChatterBox)</option>
       </optgroup>
       <optgroup label="Hamilton STAR">
+        <option value="pylabrobot_star_v0_viz">PyLabRobot STAR Visualizer</option>
         <option value="pylabrobot_star_v0">PyLabRobot STAR (ChatterBox)</option>
       </optgroup>
       <optgroup label="Legacy">
@@ -897,7 +898,7 @@ let _replay = {
 
 async function startReplay() {
   const world = document.getElementById("world-select").value;
-  if (!world.includes("ot2")) { alert("Replay only available for OT-2 Visualizer world."); return; }
+  if (!world.includes("ot2") && !world.includes("star_v0_viz")) { alert("Replay only available for visualizer worlds."); return; }
   if (!sessionInfo) { alert("Start a session first."); return; }
 
   const btn = document.getElementById("btn-replay");
@@ -1109,17 +1110,17 @@ function _attentionGuideText(toolName, args) {
 
 function _showOt2VizIfNeeded() {
   const world = document.getElementById("world-select").value;
-  const isOt2 = world.includes("ot2");
+  const hasViz = world.includes("ot2") || world.includes("star_v0_viz");
   const container = document.getElementById("s3-viz-container");
   const iframe = document.getElementById("s3-viz-iframe");
   const replayBtn = document.getElementById("btn-replay");
 
-  if (isOt2 && container && iframe) {
+  if (hasViz && container && iframe) {
     container.style.display = "block";
-    if (iframe.src.indexOf("1337") === -1) iframe.src = "http://127.0.0.1:1337";
+    var port = world.includes("star") ? 1338 : 1337;
+    if (iframe.src.indexOf(port.toString()) === -1) iframe.src = "http://127.0.0.1:" + port;
     if (replayBtn) replayBtn.disabled = agentDone ? false : true;
 
-    // Show latest tool call in attention guide during live execution
     if (!agentDone && toolHistory.length > 0) {
       const last = toolHistory[toolHistory.length - 1];
       const tc = last.tool_call || {};

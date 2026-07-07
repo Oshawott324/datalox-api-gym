@@ -64,7 +64,7 @@ from api_gym.exports.run_export import write_run_export
 
 MODEL = "deepseek-v4-pro"
 BASE_URL = "https://api.deepseek.com"
-MAX_TURNS = 20
+MAX_TURNS = 40
 TEMPERATURE = 0.0
 
 SYSTEM_PROMPT_UNITELABS = """\
