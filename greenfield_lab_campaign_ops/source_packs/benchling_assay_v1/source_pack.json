@@ -58,6 +58,8 @@
   ],
   "source_pack_id": "benchling_assay_v1",
   "source_status": "source_grounded",
+  "tool_surface_status": "source_grounded",
+  "response_body_status": "derived_from_source_example",
   "tools": [
     {
       "dry_run_behavior": "Reads an assay request from sandbox state.",

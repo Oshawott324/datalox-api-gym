@@ -1,3 +1,9 @@
+<!-- DATALOX_PACK:BEGIN -->
+## Datalox Pack
+If `DATALOX.md` exists in this repo, read it after this file and treat it as the repo-local Datalox contract.
+Use reusable local knowledge in `agent-wiki/notes/` and grounded event records in `agent-wiki/events/`.
+<!-- DATALOX_PACK:END -->
+
 # Agent Instructions
 
 Read in this order:

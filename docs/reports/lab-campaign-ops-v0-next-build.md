@@ -75,7 +75,43 @@ Example:
 
 ## Source Packs
 
-Start with three source packs. Do not start with six.
+Start with three source-pack lanes, not three fixed vendors. The evidence audit
+is in `docs/reports/source-pack-provider-evidence-audit-2026-07-01.md`.
+
+Provider choice must follow response-body evidence:
+
+```text
+tool surface grounded != response body grounded
+```
+
+Do not claim a source pack is source-grounded when its fixtures are synthetic.
+Use `tool_surface_status` and `response_body_status` separately.
+
+The revised lanes are:
+
+```text
+robot/protocol/instrument control
+  Opentrons first, with high-risk robot-control operations included but blocked
+  or simulated under dry-run.
+
+costly live campaign API
+  Adaptyv Foundry first, because it has public OpenAPI and exact JSON examples
+  for experiment creation, cost estimates, status, targets, results, and tokens.
+
+ELN/LIMS/workflow or query system
+  Pick one exact-JSON/probeable pack first: Labstep, eLabFTW, SciNote, or
+  LabKey. Use Benchling when we want pharma-realism and can tolerate source
+  examples without public probe captures.
+```
+
+The old Benchling/Opentrons/Tetra set remains a useful prototype composition,
+but it is not the default source-grounding strategy until the response fixtures
+are copied or captured.
+
+## Prototype Source Packs
+
+The current greenfield prototype starts with three source packs. Treat them as
+a calibration slice, not the final provider set.
 
 ### 1. `opentrons_http_v1`
 

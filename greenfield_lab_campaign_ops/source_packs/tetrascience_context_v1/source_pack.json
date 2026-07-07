@@ -63,7 +63,9 @@
     "Instrument record fixture is synthetic until replaced by source examples or partner-reviewed captures."
   ],
   "source_pack_id": "tetrascience_context_v1",
-  "source_status": "source_grounded",
+  "source_status": "domain_reviewed",
+  "tool_surface_status": "source_grounded",
+  "response_body_status": "not_captured",
   "tools": [
     {
       "dry_run_behavior": "Reads an instrument-data context record from sandbox state.",

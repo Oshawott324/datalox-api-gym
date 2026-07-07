@@ -8,6 +8,8 @@
     "provider",
     "role",
     "source_status",
+    "tool_surface_status",
+    "response_body_status",
     "evidence_urls",
     "tools",
     "fixtures",
@@ -37,6 +39,23 @@
       "enum": [
         "source_grounded",
         "domain_reviewed",
+        "speculative_calibration_only"
+      ]
+    },
+    "tool_surface_status": {
+      "enum": [
+        "source_grounded",
+        "domain_reviewed",
+        "speculative_calibration_only"
+      ]
+    },
+    "response_body_status": {
+      "enum": [
+        "exact_public_json_body",
+        "public_openapi_schema_only",
+        "captured_probe_response",
+        "derived_from_source_example",
+        "not_captured",
         "speculative_calibration_only"
       ]
     },
@@ -121,6 +140,7 @@
           "fixture_status": {
             "enum": [
               "source_copied_example",
+              "captured_probe_response",
               "derived_from_source_example",
               "speculative_fixture_for_schema_exercise"
             ]

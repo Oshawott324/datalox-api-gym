@@ -1,0 +1,226 @@
+{
+  "allowed_errors": [
+    {
+      "code": "UNKNOWN_LABSTEP_ENTITY",
+      "meaning": "The requested Labstep-shaped entity id is absent from sandbox state."
+    },
+    {
+      "code": "LABSTEP_SANDBOX_SCHEMA_MISMATCH",
+      "meaning": "The sandbox payload does not match the selected Labstep public example shape."
+    },
+    {
+      "code": "LIVE_LABSTEP_API_FORBIDDEN",
+      "meaning": "The agent attempted a credentialed or production Labstep API call instead of the dry-run source pack."
+    }
+  ],
+  "dry_run_semantics": [
+    "Experiment workflow, comment, protocol collection, and resource item records are sandbox records shaped from official Labstep public JSON examples.",
+    "Create and update tools mutate only sandbox state and return the exact public Labstep example response shape selected for that operation family.",
+    "Read tools return sandbox records keyed by Labstep-style ids, guids, thread ids, and permission entity info without calling a live Labstep workspace."
+  ],
+  "evidence_urls": [
+    {
+      "evidence_type": "api_reference",
+      "label": "labstep_api_docs",
+      "url": "https://apidoc.labstep.com/"
+    },
+    {
+      "evidence_type": "openapi_reference",
+      "label": "labstep_openapi",
+      "url": "https://apidoc.labstep.com/openapi.yaml"
+    },
+    {
+      "evidence_type": "api_reference",
+      "label": "labstep_experiment_workflow_index_example",
+      "url": "https://apidoc.labstep.com/json/experiment_workflow_default_experiment_workflow_index.json"
+    },
+    {
+      "evidence_type": "api_reference",
+      "label": "labstep_experiment_workflow_show_example",
+      "url": "https://apidoc.labstep.com/json/experiment_workflow_default_experiment_workflow_show.json"
+    },
+    {
+      "evidence_type": "api_reference",
+      "label": "labstep_comment_show_example",
+      "url": "https://apidoc.labstep.com/json/comment_default_comment_show.json"
+    },
+    {
+      "evidence_type": "api_reference",
+      "label": "labstep_protocol_collection_show_example",
+      "url": "https://apidoc.labstep.com/json/protocol_collection_default_protocol_collection_show.json"
+    },
+    {
+      "evidence_type": "api_reference",
+      "label": "labstep_resource_item_show_example",
+      "url": "https://apidoc.labstep.com/json/resource_item_default_resource_item_show.json"
+    }
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "experiment_workflow_index",
+      "fixture_status": "source_copied_example",
+      "path": "fixtures/experiment_workflow_index.json",
+      "source_refs": [
+        "labstep_experiment_workflow_index_example"
+      ]
+    },
+    {
+      "fixture_id": "experiment_workflow_show",
+      "fixture_status": "source_copied_example",
+      "path": "fixtures/experiment_workflow_show.json",
+      "source_refs": [
+        "labstep_experiment_workflow_show_example"
+      ]
+    },
+    {
+      "fixture_id": "comment_show",
+      "fixture_status": "source_copied_example",
+      "path": "fixtures/comment_show.json",
+      "source_refs": [
+        "labstep_comment_show_example"
+      ]
+    },
+    {
+      "fixture_id": "protocol_collection_show",
+      "fixture_status": "source_copied_example",
+      "path": "fixtures/protocol_collection_show.json",
+      "source_refs": [
+        "labstep_protocol_collection_show_example"
+      ]
+    },
+    {
+      "fixture_id": "resource_item_show",
+      "fixture_status": "source_copied_example",
+      "path": "fixtures/resource_item_show.json",
+      "source_refs": [
+        "labstep_resource_item_show_example"
+      ]
+    }
+  ],
+  "live_boundary": {
+    "boundary_statement": "This source pack forbids production Labstep workspace mutations, credentialed live Labstep API calls, and writes against any real Labstep tenant.",
+    "forbidden_actions": [
+      "call_credentialed_live_labstep_api",
+      "mutate_production_labstep_workspace",
+      "create_production_experiment_workflow",
+      "update_production_experiment_workflow",
+      "create_production_comment",
+      "create_production_protocol_collection",
+      "create_production_resource_item"
+    ]
+  },
+  "provider": "Labstep",
+  "role": "ELN experiment workflow, comment, protocol, and inventory operations grounded in official Labstep OpenAPI examples.",
+  "schema_version": "greenfield_lab_campaign_ops.source_pack.v0",
+  "source_gaps": [],
+  "source_pack_id": "labstep_workflow_v1",
+  "source_status": "source_grounded",
+  "tool_surface_status": "source_grounded",
+  "response_body_status": "exact_public_json_body",
+  "tools": [
+    {
+      "dry_run_behavior": "Reads sandbox experiment workflow records using the exact Labstep public list response example shape.",
+      "fixture_refs": [
+        "experiment_workflow_index"
+      ],
+      "operation": "GET /api/generic/experiment-workflow - Retrieve a list of ExperimentWorkflow.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_experiment_workflow_index_example"
+      ],
+      "tool_id": "list_experiment_workflows",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads one sandbox experiment workflow record using the exact public example referenced by Labstep's get_single operation.",
+      "fixture_refs": [
+        "experiment_workflow_index"
+      ],
+      "operation": "GET /api/generic/experiment-workflow?get_single=1 - Retrieve a single ExperimentWorkflow.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_experiment_workflow_index_example"
+      ],
+      "tool_id": "get_experiment_workflow",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Creates a sandbox experiment workflow record and returns the exact Labstep public created ExperimentWorkflow example shape.",
+      "fixture_refs": [
+        "experiment_workflow_show"
+      ],
+      "operation": "POST /api/generic/experiment-workflow - Create one or multiple ExperimentWorkflow.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_experiment_workflow_show_example"
+      ],
+      "tool_id": "create_experiment_workflow",
+      "writes_sandbox_state": true
+    },
+    {
+      "dry_run_behavior": "Updates a sandbox experiment workflow record and returns the exact Labstep public updated ExperimentWorkflow example shape.",
+      "fixture_refs": [
+        "experiment_workflow_show"
+      ],
+      "operation": "PUT /api/generic/experiment-workflow - Updates one of multiple ExperimentWorkflow.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_experiment_workflow_show_example"
+      ],
+      "tool_id": "update_experiment_workflow",
+      "writes_sandbox_state": true
+    },
+    {
+      "dry_run_behavior": "Creates a sandbox comment in a Labstep-style thread and returns the exact Labstep public created comment example shape.",
+      "fixture_refs": [
+        "comment_show"
+      ],
+      "operation": "POST /api/generic/comment - Creates one or multiple Comment.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_comment_show_example"
+      ],
+      "tool_id": "create_comment",
+      "writes_sandbox_state": true
+    },
+    {
+      "dry_run_behavior": "Creates a sandbox protocol collection and returns the exact Labstep public created ProtocolCollection example shape.",
+      "fixture_refs": [
+        "protocol_collection_show"
+      ],
+      "operation": "POST /api/generic/protocol-collection - Creates one or multiple ProtocolCollection.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_protocol_collection_show_example"
+      ],
+      "tool_id": "create_protocol_collection",
+      "writes_sandbox_state": true
+    },
+    {
+      "dry_run_behavior": "Reads one sandbox inventory item using the exact Labstep public ResourceItem example shape.",
+      "fixture_refs": [
+        "resource_item_show"
+      ],
+      "operation": "GET /api/generic/resource-item?get_single=1 - Retrieve a ResourceItem.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_resource_item_show_example"
+      ],
+      "tool_id": "get_resource_item",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Creates a sandbox inventory item and returns the exact Labstep public created ResourceItem example shape.",
+      "fixture_refs": [
+        "resource_item_show"
+      ],
+      "operation": "POST /api/generic/resource-item - Create a ResourceItem.",
+      "source_refs": [
+        "labstep_openapi",
+        "labstep_resource_item_show_example"
+      ],
+      "tool_id": "create_resource_item",
+      "writes_sandbox_state": true
+    }
+  ]
+}

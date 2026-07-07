@@ -1,0 +1,312 @@
+{
+  "allowed_errors": [
+    {
+      "code": "OPENTRONS_ANALYSIS_NOT_OK",
+      "meaning": "The Opentrons analyzer returned result not-ok and included structured error records."
+    },
+    {
+      "code": "OPENTRONS_INCOMPATIBLE_ADDRESSABLE_AREA",
+      "meaning": "The protocol attempted an impossible deck or fixture placement, such as loading a module into an occupied or incompatible deck area."
+    },
+    {
+      "code": "OPENTRONS_API_VERSION_UNSUPPORTED",
+      "meaning": "The protocol used an operation gated behind an API level newer than the installed Opentrons package supports."
+    },
+    {
+      "code": "LIVE_OPENTRONS_ROBOT_FORBIDDEN",
+      "meaning": "The agent attempted to start or control live Opentrons hardware instead of staying within captured protocol-analysis dry-run evidence."
+    },
+    {
+      "code": "OPENTRONS_PROBE_FIXTURE_MISMATCH",
+      "meaning": "A reproduced analyzer fixture no longer matches the captured command family, package version, or protocol artifact."
+    }
+  ],
+  "dry_run_semantics": [
+    "Fixtures are captured local analyzer responses from opentrons==9.1.0 using python -m opentrons.cli analyze against the protocol files in this pack.",
+    "Captured outputs are protocol-analysis dry runs: they expose command plans, labware, pipettes, modules, liquids, errors, and placement constraints without moving hardware.",
+    "Positive fixtures cover liquid handling, waste chute use, module temperature control, heater-shaker control, thermocycler control, absorbance-reader read planning, gripper labware movement, magnetic block loading, and Flex stacker operations.",
+    "Negative fixtures preserve real analyzer error bodies for invalid deck placement and vacuum-module API-level gating.",
+    "This pack does not claim live robot HTTP /runs, /commands, gantry movement, homing, or attached-module execution response bodies."
+  ],
+  "evidence_urls": [
+    {
+      "evidence_type": "api_reference",
+      "label": "opentrons_python_protocol_api",
+      "url": "https://docs.opentrons.com/python-api/"
+    },
+    {
+      "evidence_type": "simulation_docs",
+      "label": "opentrons_execute_simulate_docs",
+      "url": "https://docs.opentrons.com/python-api/reference/execute-simulate/"
+    },
+    {
+      "evidence_type": "developer_guide",
+      "label": "opentrons_liquid_control_docs",
+      "url": "https://docs.opentrons.com/python-api/building-block-commands/liquids/"
+    },
+    {
+      "evidence_type": "developer_guide",
+      "label": "opentrons_moving_labware_docs",
+      "url": "https://docs.opentrons.com/python-api/moving-labware/"
+    },
+    {
+      "evidence_type": "developer_guide",
+      "label": "opentrons_flex_modules_docs",
+      "url": "https://docs.opentrons.com/flex/modules/"
+    },
+    {
+      "evidence_type": "api_reference",
+      "label": "opentrons_thermocycler_docs",
+      "url": "https://docs.opentrons.com/python-api/modules/thermocycler/"
+    },
+    {
+      "evidence_type": "api_reference",
+      "label": "opentrons_flex_stacker_reference",
+      "url": "https://docs.opentrons.com/python-api/reference/flex-stacker/"
+    },
+    {
+      "evidence_type": "openapi_reference",
+      "label": "opentrons_http_api_reference",
+      "url": "https://docs.opentrons.com/http/api_reference.html"
+    }
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "flex_core_liquid_waste",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_flex_core_liquid_waste.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_liquid_control_docs"
+      ]
+    },
+    {
+      "fixture_id": "flex_temperature_magnetic",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_flex_temperature_magnetic.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_flex_modules_docs"
+      ]
+    },
+    {
+      "fixture_id": "flex_heater_shaker",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_flex_heater_shaker.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_flex_modules_docs"
+      ]
+    },
+    {
+      "fixture_id": "flex_thermocycler",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_flex_thermocycler.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_thermocycler_docs"
+      ]
+    },
+    {
+      "fixture_id": "flex_absorbance_gripper",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_flex_absorbance_gripper.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_flex_modules_docs",
+        "opentrons_moving_labware_docs"
+      ]
+    },
+    {
+      "fixture_id": "flex_stacker",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_flex_stacker.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_flex_stacker_reference"
+      ]
+    },
+    {
+      "fixture_id": "flex_invalid_deck_conflict_check",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_flex_invalid_deck_conflict_check.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_flex_modules_docs"
+      ]
+    },
+    {
+      "fixture_id": "vacuum_api_version_error",
+      "fixture_status": "captured_probe_response",
+      "path": "fixtures/analysis_vacuum_api_version_error.json",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs",
+        "opentrons_flex_modules_docs"
+      ]
+    }
+  ],
+  "live_boundary": {
+    "boundary_statement": "This source pack forbids live Opentrons robot hardware movement, run start/resume/stop actions, homing, direct motor control, and live attached-module commands.",
+    "forbidden_actions": [
+      "start_live_opentrons_run",
+      "resume_live_opentrons_run",
+      "stop_live_opentrons_run",
+      "home_live_robot_axes",
+      "move_live_robot_gantry",
+      "execute_live_attached_module_command",
+      "send_live_robot_http_command"
+    ]
+  },
+  "provider": "Opentrons",
+  "role": "Local Opentrons protocol-analysis dry-run projection for physical lab automation command plans and analyzer failures.",
+  "schema_version": "greenfield_lab_campaign_ops.source_pack.v0",
+  "source_gaps": [
+    "The captured response bodies are local analyzer outputs, not live robot-server HTTP /runs or /commands response bodies.",
+    "Vacuum pump commands are represented by a captured API-version gate because opentrons==9.1.0 reports MAX_SUPPORTED_VERSION 2.29 while start_set_vacuum_power requires API 2.30.",
+    "Direct robot movement, homing, run-action, and attached-module execution endpoints remain in opentrons_http_v1 until a real robot server or robot-server fixture can be captured."
+  ],
+  "source_pack_id": "opentrons_protocol_analysis_v1",
+  "source_status": "source_grounded",
+  "tool_surface_status": "source_grounded",
+  "response_body_status": "captured_probe_response",
+  "tools": [
+    {
+      "dry_run_behavior": "Runs or replays local protocol-analysis against a sandbox protocol artifact and records the resulting Opentrons analysis JSON.",
+      "fixture_refs": [
+        "flex_core_liquid_waste",
+        "flex_invalid_deck_conflict_check"
+      ],
+      "operation": "Analyze an Opentrons Python protocol locally without starting robot hardware.",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "analyze_protocol_locally",
+      "writes_sandbox_state": true
+    },
+    {
+      "dry_run_behavior": "Reads captured pipette, aspirate, dispense, blowout, tip pickup/drop, and timing commands from analyzer state.",
+      "fixture_refs": [
+        "flex_core_liquid_waste"
+      ],
+      "operation": "Inspect core liquid-handling and waste-chute command plan.",
+      "source_refs": [
+        "opentrons_liquid_control_docs",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_liquid_handling_plan",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads captured gripper-based moveLabware operations and waste/trash addressable-area movement from analyzer state.",
+      "fixture_refs": [
+        "flex_core_liquid_waste",
+        "flex_absorbance_gripper"
+      ],
+      "operation": "Inspect labware movement, gripper, trash, and waste-chute dry-run plan.",
+      "source_refs": [
+        "opentrons_moving_labware_docs",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_labware_movement_plan",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads captured temperature-module set, wait, deactivate, and magnetic-block load commands from analyzer state.",
+      "fixture_refs": [
+        "flex_temperature_magnetic"
+      ],
+      "operation": "Inspect temperature-module and magnetic-block command plan.",
+      "source_refs": [
+        "opentrons_flex_modules_docs",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_temperature_magnetic_plan",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads captured heater-shaker latch, temperature, shake, deactivate, and wait commands from analyzer state.",
+      "fixture_refs": [
+        "flex_heater_shaker"
+      ],
+      "operation": "Inspect heater-shaker command plan.",
+      "source_refs": [
+        "opentrons_flex_modules_docs",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_heater_shaker_plan",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads captured thermocycler lid, lid-temperature, block-temperature, profile, and deactivate commands from analyzer state.",
+      "fixture_refs": [
+        "flex_thermocycler"
+      ],
+      "operation": "Inspect thermocycler command plan.",
+      "source_refs": [
+        "opentrons_thermocycler_docs",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_thermocycler_plan",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads captured absorbance-reader open-lid, close-lid, initialize, read, and gripper move commands from analyzer state.",
+      "fixture_refs": [
+        "flex_absorbance_gripper"
+      ],
+      "operation": "Inspect absorbance-reader read and downstream labware-movement plan.",
+      "source_refs": [
+        "opentrons_flex_modules_docs",
+        "opentrons_moving_labware_docs",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_absorbance_reader_plan",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads captured Flex stacker setStoredLabware, retrieve, and store commands from analyzer state.",
+      "fixture_refs": [
+        "flex_stacker"
+      ],
+      "operation": "Inspect Flex stacker command plan.",
+      "source_refs": [
+        "opentrons_flex_stacker_reference",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_flex_stacker_plan",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Reads captured not-ok analyzer state for deck conflicts and API-level gates without retrying against live hardware.",
+      "fixture_refs": [
+        "flex_invalid_deck_conflict_check",
+        "vacuum_api_version_error"
+      ],
+      "operation": "Inspect structured analyzer errors from invalid or unsupported protocols.",
+      "source_refs": [
+        "opentrons_python_protocol_api",
+        "opentrons_execute_simulate_docs"
+      ],
+      "tool_id": "inspect_analysis_errors",
+      "writes_sandbox_state": false
+    },
+    {
+      "dry_run_behavior": "Records that live robot HTTP and hardware-control actions are forbidden for this source pack unless a separate live-gate policy is approved.",
+      "operation": "Block live Opentrons robot-server actions while preserving dry-run evidence.",
+      "source_refs": [
+        "opentrons_http_api_reference"
+      ],
+      "tool_id": "block_live_robot_action",
+      "writes_sandbox_state": true
+    }
+  ]
+}

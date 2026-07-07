@@ -16,6 +16,8 @@ REQUIRED_FIELDS = {
     "provider",
     "role",
     "source_status",
+    "tool_surface_status",
+    "response_body_status",
     "evidence_urls",
     "tools",
     "fixtures",
@@ -29,8 +31,22 @@ ALLOWED_SOURCE_STATUSES = {
     "domain_reviewed",
     "speculative_calibration_only",
 }
+ALLOWED_RESPONSE_BODY_STATUSES = {
+    "exact_public_json_body",
+    "public_openapi_schema_only",
+    "captured_probe_response",
+    "derived_from_source_example",
+    "not_captured",
+    "speculative_calibration_only",
+}
+RESPONSE_BODY_GROUNDED_STATUSES = {
+    "exact_public_json_body",
+    "captured_probe_response",
+    "derived_from_source_example",
+}
 ALLOWED_FIXTURE_STATUSES = {
     "source_copied_example",
+    "captured_probe_response",
     "derived_from_source_example",
     "speculative_fixture_for_schema_exercise",
 }
@@ -69,6 +85,10 @@ def _validate_pack(pack_path: Path, seen_pack_ids: set[str]) -> list[str]:
         failures.append(f"{rel}: BAD_SCHEMA_VERSION {pack['schema_version']!r}")
     if pack["source_status"] not in ALLOWED_SOURCE_STATUSES:
         failures.append(f"{rel}: BAD_SOURCE_STATUS {pack['source_status']!r}")
+    if pack["tool_surface_status"] not in ALLOWED_SOURCE_STATUSES:
+        failures.append(f"{rel}: BAD_TOOL_SURFACE_STATUS {pack['tool_surface_status']!r}")
+    if pack["response_body_status"] not in ALLOWED_RESPONSE_BODY_STATUSES:
+        failures.append(f"{rel}: BAD_RESPONSE_BODY_STATUS {pack['response_body_status']!r}")
 
     pack_id = pack["source_pack_id"]
     if pack_id in seen_pack_ids:
@@ -80,6 +100,7 @@ def _validate_pack(pack_path: Path, seen_pack_ids: set[str]) -> list[str]:
     failures.extend(_validate_evidence_urls(pack_path, pack))
     failures.extend(_validate_tools(pack_path, pack))
     failures.extend(_validate_fixtures(pack_path, pack))
+    failures.extend(_validate_grounding_claims(pack_path, pack))
     failures.extend(_validate_live_boundary(pack_path, pack))
     failures.extend(_validate_allowed_errors(pack_path, pack))
     return failures
@@ -152,6 +173,36 @@ def _validate_fixtures(pack_path: Path, pack: dict[str, Any]) -> list[str]:
         for source_ref in _expect_list(fixture.get("source_refs")):
             if source_ref not in evidence_labels:
                 failures.append(f"{pack_path}: fixture {fixture_id} unknown source_ref {source_ref}")
+    return failures
+
+
+def _validate_grounding_claims(pack_path: Path, pack: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    fixture_statuses = {
+        fixture.get("fixture_status")
+        for fixture in _expect_list(pack.get("fixtures"))
+        if fixture.get("fixture_status")
+    }
+
+    if pack["source_status"] == "source_grounded":
+        if pack["response_body_status"] not in RESPONSE_BODY_GROUNDED_STATUSES:
+            failures.append(
+                f"{pack_path}: SOURCE_GROUNDED_REQUIRES_RESPONSE_BODY_GROUNDING "
+                f"{pack['response_body_status']!r}"
+            )
+        if "speculative_fixture_for_schema_exercise" in fixture_statuses:
+            failures.append(f"{pack_path}: SOURCE_GROUNDED_FORBIDS_SPECULATIVE_FIXTURES")
+
+    if pack["response_body_status"] == "not_captured":
+        if not _expect_list(pack.get("source_gaps")):
+            failures.append(f"{pack_path}: NOT_CAPTURED_REQUIRES_SOURCE_GAPS")
+        names_capture_gap = any(
+            "capture" in gap.lower() or "captur" in gap.lower()
+            for gap in _expect_list(pack.get("source_gaps"))
+        )
+        if not names_capture_gap:
+            failures.append(f"{pack_path}: NOT_CAPTURED_SOURCE_GAPS_MUST_NAME_CAPTURE_GAP")
+
     return failures
 
 

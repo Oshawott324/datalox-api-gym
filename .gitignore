@@ -29,3 +29,20 @@ website/.vitepress/dist/
 .env
 .env.*
 runs/
+
+# Datalox pack install artifacts owned by datalox-pack, not this repo.
+.claude/
+.codex/
+.cursor/
+.datalox/
+.github/copilot-instructions.md
+.superpowers/
+.windsurf/
+CLAUDE.md
+DATALOX.md
+GEMINI.md
+START_HERE.md
+WIKI.md
+agent-wiki/
+bin/
+skills/
