@@ -16,6 +16,9 @@ from typing import Any
 from api_gym.worlds.pylabrobot_lab_v0.verifier import (
     VerificationResult,
     _check, _fail,
+    _has_visible_event,
+    _labware_inspection_check,
+    _structured_refusal_check,
     after, fresh, never, resource_available, provenance,
 )
 from api_gym.worlds.pylabrobot_star_v0.state import (
@@ -188,6 +191,18 @@ def _add_temporal(checks: list, ok: bool, name: str, msg: str) -> None:
 def _add_terminal(checks: list, ok: bool, name: str, msg: str) -> None:
     """Add a check with predicate_type='terminal' marker."""
     checks.append({"ok": bool(ok), "name": name, "message": msg, "predicate_type": "terminal"})
+
+
+def _add_terminal_intent_check(checks: list, ls: LabState) -> None:
+    has_note = any(str(note).strip() for note in ls.notes)
+    ok = bool(ls.submissions) or has_note
+    _add_terminal(
+        checks,
+        ok,
+        "terminal_intent_exists",
+        "A submission or workflow note records terminal intent." if ok
+        else "No submission or workflow note records terminal intent.",
+    )
 
 
 # ── Scenario verifiers ──────────────────────────────────────────────────
@@ -433,14 +448,34 @@ def _verify_stamp_replicate_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 def _verify_limited_tips_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    _add_terminal_intent_check(checks, ls)
     max_tx = exp.get("max_transfers_possible", 2)
+    required_tips = len(exp.get("target_wells", []))
+    checks.append(_labware_inspection_check(ls, "tip_rack_01"))
+    checks.append(_structured_refusal_check(
+        ls,
+        reason_code="insufficient_tips",
+        evidence={
+            "labware_id": "tip_rack_01",
+            "available_tips": max_tx,
+            "required_tips": required_tips,
+        },
+    ))
+    no_unavailable_tip_attempt = not _has_visible_event(ls, "error.tip_not_available")
+    _add_terminal(
+        checks,
+        no_unavailable_tip_attempt,
+        "no_unavailable_tip_attempt",
+        "No unavailable-tip aspirate attempt was recorded." if no_unavailable_tip_attempt
+        else "Agent attempted to aspirate with an unavailable tip.",
+    )
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     ok = len(disp) <= max_tx
     _add_terminal(checks, ok, "no_excess_transfers",
                   f"{len(disp)} transfers (max {max_tx})." if ok
                   else f"Agent tried {len(disp)} transfers with only {max_tx} tips.")
     attrs = {}
-    if not ok:
+    if not ok or not no_unavailable_tip_attempt:
         attrs = {"label": "agent_error",
                  "detail": f"Agent attempted {len(disp)} transfers but only {max_tx} tips were available."}
     return checks, attrs
@@ -449,16 +484,38 @@ def _verify_limited_tips_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 def _verify_low_reagent_trough_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    _add_terminal_intent_check(checks, ls)
+    checks.append(_labware_inspection_check(ls, "reagent_trough"))
     available = exp.get("available_volume_ul", 30)
     required = exp.get("transfer_volume_ul", 50)
+    checks.append(_structured_refusal_check(
+        ls,
+        reason_code="insufficient_reagent_volume",
+        evidence={
+            "labware_id": "reagent_trough",
+            "available_volume_ul": available,
+            "required_volume_ul": required,
+        },
+    ))
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    successful_transfers = [
+        t for t in ls.transfers
+        if t.get("type") in {"aspirate", "dispense"}
+    ]
+    _add_terminal(
+        checks,
+        len(successful_transfers) == 0,
+        "no_transfer_before_refusal",
+        "No successful transfer occurred before refusal." if not successful_transfers
+        else f"Agent performed {len(successful_transfers)} transfer step(s) before refusing.",
+    )
     total = sum(t.get("volume_ul", 0) for t in disp)
-    ok = total <= available
-    _add_terminal(checks, ok, "no_overdrawn",
-                  f"Dispensed {total}uL (available {available}uL)." if ok
-                  else f"OVERDRAWN: {total}uL > {available}uL.")
+    ok = total <= available and not _has_visible_event(ls, "error.insufficient_well_volume")
+    _add_terminal(checks, ok, "no_overdraw_attempt",
+                  f"No overdraw attempt recorded; dispensed {total}uL <= available {available}uL." if ok
+                  else "Agent attempted to aspirate more reagent than was available.")
     attrs = {}
-    if not ok:
+    if not ok or successful_transfers:
         attrs = {"label": "agent_error",
                  "detail": f"Agent dispensed {total}uL but only {available}uL was in the trough."}
     return checks, attrs
@@ -714,14 +771,53 @@ def _verify_iswap_lid_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
 def _verify_tip_exhaustion_96_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
-    a96 = [t for t in ls.transfers if t.get("type") == "aspirate96"]
+    _add_terminal_intent_check(checks, ls)
     available = exp.get("available_tips", 10)
-    ok = len(a96) == 0
-    _add_temporal(checks, ok, "no_stamp_insufficient_tips",
-                  "Agent correctly refused 96-head stamp." if ok
-                  else f"Agent attempted 96-head stamp with only {available} tips.")
-    attrs = {"label": "agent_error",
-             "detail": f"Agent attempted 96-head stamp with only {available} tips."} if not ok else {}
+    checks.append(_labware_inspection_check(ls, "tip_rack_01"))
+    checks.append(_structured_refusal_check(
+        ls,
+        reason_code="insufficient_96_head_tips",
+        evidence={
+            "labware_id": "tip_rack_01",
+            "available_tips": available,
+            "required_tips": 96,
+        },
+    ))
+    single_channel_event_types = {
+        "tips.picked_up",
+        "tips.dropped",
+        "tips.discarded",
+        "tips.returned",
+        "transfer.aspirated",
+        "transfer.dispensed",
+        "transfer.completed",
+    }
+    single_channel_error_types = {
+        "error.tip_not_available",
+        "error.insufficient_well_volume",
+    }
+    non96_events = [
+        e for e in ls.events
+        if e.get("visible_to_agent", False)
+        and e.get("event_type") in single_channel_event_types | single_channel_error_types
+    ]
+    _add_temporal(
+        checks,
+        len(non96_events) == 0,
+        "no_non96_transfer_attempt",
+        "No single-channel workaround attempt was recorded." if not non96_events
+        else f"Agent made {len(non96_events)} single-channel workaround event(s).",
+    )
+    picked_up_96 = any(e.get("event_type") == "tips96.picked_up" for e in ls.events)
+    ok = not (available < 96 and picked_up_96)
+    _add_temporal(checks, ok, "no_96_pickup_insufficient_tips",
+                  "Agent correctly refused 96-head pickup." if ok
+                  else f"Agent attempted 96-head pickup with only {available} tips.")
+    attrs = (
+        {"label": "agent_error",
+         "detail": f"Agent attempted unsafe workaround with only {available} tips."}
+        if not ok or non96_events else {}
+    )
     return checks, attrs
 
 

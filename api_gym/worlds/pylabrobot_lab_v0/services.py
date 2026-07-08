@@ -92,6 +92,7 @@ def get_labware_state(lab_state: LabState, labware_id: str) -> dict[str, Any]:
     if tips:
         data["tips"] = tips
 
+    lab_state.insert_event("inspection.labware", "labware", labware_id, {})
     return _ok(data)
 
 
@@ -119,10 +120,18 @@ def aspirate(lab_state: LabState, source: str, volume_ul: float,
     src_well = get_well(source_plate, source_well_name)
     src_vol = get_well_volume(src_well)
     if src_vol < volume_ul:
+        details = {"available_ul": src_vol, "requested_ul": volume_ul}
+        _record_error_event(
+            lab_state,
+            "insufficient_well_volume",
+            "well",
+            source,
+            {"source": source, **details},
+        )
         return _error(
             "insufficient_well_volume",
             "Source well does not contain enough volume.",
-            {"available_ul": src_vol, "requested_ul": volume_ul},
+            details,
         )
 
     # Find and reserve tip
@@ -132,6 +141,13 @@ def aspirate(lab_state: LabState, source: str, volume_ul: float,
 
     tip_spot = get_well(tip_rack, tip_well_name)
     if not (callable(tip_spot.has_tip) and tip_spot.has_tip()) or not getattr(tip_spot, "has_tip", False):
+        _record_error_event(
+            lab_state,
+            "tip_not_available",
+            "tip",
+            tip_ref,
+            {"tip": tip_ref, "source": source, "requested_volume_ul": volume_ul},
+        )
         return _error("tip_not_available", "Tip is not available or already used.")
 
     # Mark tip as used
@@ -335,6 +351,16 @@ def _ok(data: dict[str, Any]) -> dict[str, Any]:
 
 def _error(code: str, message: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"ok": False, "error": {"code": code, "message": message, "details": details or {}}}
+
+
+def _record_error_event(
+    lab_state: LabState,
+    code: str,
+    object_type: str,
+    object_id: str,
+    payload: dict[str, Any],
+) -> None:
+    lab_state.insert_event(f"error.{code}", object_type, object_id, {"code": code, **payload})
 
 
 def _parse_ref(value: str) -> tuple[str, str]:

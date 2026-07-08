@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from api_gym.worlds.pylabrobot_lab_v0.sampler import SCENARIOS, sample_episode
-from api_gym.worlds.pylabrobot_lab_v0.verifier import verify_run
+from api_gym.lab_strict_admission import run_strict_admission_suite
 
 
 def main() -> None:
@@ -29,7 +29,8 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.verify_all:
-        verify_all_scenarios()
+        ok = verify_all_scenarios()
+        raise SystemExit(0 if ok else 1)
     elif args.output:
         package_benchmark(args.output)
     else:
@@ -37,8 +38,8 @@ def main() -> None:
         print(f"Available scenarios: {len(SCENARIOS)}")
 
 
-def verify_all_scenarios() -> None:
-    """Verify that all chatterbox scenarios can be sampled without errors."""
+def verify_all_scenarios() -> bool:
+    """Verify benchmark sampling and strict verifier admission."""
     chatterbox_scenarios = [k for k in sorted(SCENARIOS) if not k.endswith("_ot2")]
     passed = 0
     failed = 0
@@ -55,6 +56,17 @@ def verify_all_scenarios() -> None:
             print(f"  {scenario}: FAIL - {e}")
             failed += 1
     print(f"\n{passed} sampled, {failed} failed out of {len(chatterbox_scenarios)}")
+    with tempfile.TemporaryDirectory(prefix="strict_admission_") as td:
+        result = run_strict_admission_suite(out_dir=Path(td))
+    summary = result["summary"]
+    status = "PASS" if result["ok"] else "FAIL"
+    print(
+        "\n"
+        f"Strict admission: {status} "
+        f"({summary['passed_cases']}/{summary['cases']} cases passed, "
+        f"{summary['scenarios']} scenarios)"
+    )
+    return failed == 0 and bool(result["ok"])
 
 
 def package_benchmark(output_dir: str) -> None:

@@ -233,7 +233,15 @@ def pick_up_tips(lab_state: LabState, tip_refs: list[str],
             await lh.pick_up_tips(tip_spots, use_channels=channels)
         _run_async(_op())
     except Exception as exc:
-        return _translate_plr_error(exc)
+        error = _translate_plr_error(exc)
+        _record_tool_error_result(
+            lab_state,
+            error,
+            "tip",
+            ",".join(tip_refs),
+            {"tip_refs": tip_refs, "channels": channels},
+        )
+        return error
 
     lab_state.tips_used += len(tip_refs)
     resp = {"tip_refs": tip_refs, "channels": channels}
@@ -338,15 +346,31 @@ def aspirate(lab_state: LabState, source: str, volume_ul: float,
     src_vol_before = get_well_volume(src_well)
 
     if src_vol_before < volume_ul:
+        details = {"available_ul": src_vol_before, "requested_ul": volume_ul}
+        _record_error_event(
+            lab_state,
+            "insufficient_well_volume",
+            "well",
+            source,
+            {"source": source, "channel": channel, **details},
+        )
         return _error("insufficient_well_volume", "Not enough volume.",
-                      {"available_ul": src_vol_before, "requested_ul": volume_ul})
+                      details)
 
     try:
         async def _op():
             await lh.aspirate([src_well], vols=[volume_ul], use_channels=[channel])
         _run_async(_op())
     except Exception as exc:
-        return _translate_plr_error(exc)
+        error = _translate_plr_error(exc)
+        _record_tool_error_result(
+            lab_state,
+            error,
+            "well",
+            source,
+            {"source": source, "channel": channel, "requested_ul": volume_ul},
+        )
+        return error
 
     src_vol_after = get_well_volume(src_well)
     resp = {"source": source, "volume_ul": volume_ul, "channel": channel,
@@ -2313,6 +2337,32 @@ def _error(code: str, message: str,
            details: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"ok": False, "error": {"code": code, "message": message,
                                     "details": details or {}}}
+
+
+def _record_error_event(
+    lab_state: LabState,
+    code: str,
+    object_type: str,
+    object_id: str,
+    payload: dict[str, Any],
+) -> None:
+    lab_state.insert_event(f"error.{code}", object_type, object_id, {"code": code, **payload})
+
+
+def _record_tool_error_result(
+    lab_state: LabState,
+    result: dict[str, Any],
+    object_type: str,
+    object_id: str,
+    context: dict[str, Any],
+) -> None:
+    error = result.get("error", {})
+    code = str(error.get("code", "operation_failed"))
+    details = error.get("details", {})
+    payload: dict[str, Any] = {"code": code, **context}
+    if isinstance(details, dict):
+        payload["details"] = details
+    _record_error_event(lab_state, code, object_type, object_id, payload)
 
 
 def _parse_ref(value: str) -> tuple[str, str]:

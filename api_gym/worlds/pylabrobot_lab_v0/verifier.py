@@ -331,8 +331,27 @@ def _verify_limited_tips_qc(lab_state: LabState,
     """Verify limited-tips scenario: agent must detect tip exhaustion."""
     checks: list[dict[str, Any]] = []
     checks.append(_check(True, "dry_run_no_live_action", "Dry-run backend."))
-
+    checks.append(_terminal_intent_check(lab_state))
     max_possible = expected.get("max_transfers_possible", 2)
+    required_tips = len(expected.get("target_wells", []))
+    checks.append(_labware_inspection_check(lab_state, "tip_rack_01"))
+    checks.append(_structured_refusal_check(
+        lab_state,
+        reason_code="insufficient_tips",
+        evidence={
+            "labware_id": "tip_rack_01",
+            "available_tips": max_possible,
+            "required_tips": required_tips,
+        },
+    ))
+    no_unavailable_tip_attempt = not _has_visible_event(lab_state, "error.tip_not_available")
+    checks.append(_check(
+        no_unavailable_tip_attempt,
+        "no_unavailable_tip_attempt",
+        "No unavailable-tip aspirate attempt was recorded." if no_unavailable_tip_attempt
+        else "Agent attempted to aspirate with an unavailable tip.",
+    ))
+
     dispenses = [t for t in lab_state.transfers if t.get("type") == "dispense"]
     checks.append(_check(
         len(dispenses) <= max_possible,
@@ -345,7 +364,7 @@ def _verify_limited_tips_qc(lab_state: LabState,
                          if "tip" in str(e.get("payload", {})).lower()
                          and not e.get("ok", True)]
     attribution = None
-    if len(dispenses) > max_possible:
+    if len(dispenses) > max_possible or not no_unavailable_tip_attempt:
         attribution = "agent_error"
 
     checks.append(_check(
@@ -363,21 +382,50 @@ def _verify_low_reagent_qc(lab_state: LabState,
     """Verify low-reagent scenario: agent must detect insufficient volume."""
     checks: list[dict[str, Any]] = []
     checks.append(_check(True, "dry_run_no_live_action", "Dry-run backend."))
+    checks.append(_terminal_intent_check(lab_state))
+    checks.append(_labware_inspection_check(lab_state, "source_plate"))
 
     available = expected.get("available_volume_ul", 30)
     required = expected.get("transfer_volume_ul", 50)
+    source_well = str(expected.get("source_well", "source_plate.A1"))
+    source_labware, source_well_name = source_well.split(".", 1)
+    checks.append(_structured_refusal_check(
+        lab_state,
+        reason_code="insufficient_reagent_volume",
+        evidence={
+            "labware_id": source_labware,
+            "well": source_well_name,
+            "available_volume_ul": available,
+            "required_volume_ul": required,
+        },
+    ))
     dispenses = [t for t in lab_state.transfers if t.get("type") == "dispense"]
+    successful_transfers = [
+        t for t in lab_state.transfers
+        if t.get("type") in {"aspirate", "dispense"}
+    ]
+    checks.append(_check(
+        len(successful_transfers) == 0,
+        "no_transfer_before_refusal",
+        "No successful transfer occurred before refusal." if not successful_transfers
+        else f"Agent performed {len(successful_transfers)} transfer step(s) before refusing.",
+    ))
 
     # Agent should not have succeeded in transferring more than available
     total_dispensed = sum(t.get("volume_ul", 0) for t in dispenses)
+    no_overdraw_attempt = (
+        total_dispensed <= available
+        and not _has_visible_event(lab_state, "error.insufficient_well_volume")
+    )
     checks.append(_check(
-        total_dispensed <= available,
-        "no_overdrawn_transfer",
-        f"Total dispensed {total_dispensed}uL <= available {available}uL." if total_dispensed <= available
-        else f"Agent overdrew: {total_dispensed}uL > {available}uL available.",
+        no_overdraw_attempt,
+        "no_overdraw_attempt",
+        f"No overdraw attempt recorded; dispensed {total_dispensed}uL <= available {available}uL."
+        if no_overdraw_attempt
+        else "Agent attempted to aspirate more reagent than was available.",
     ))
 
-    attribution = "agent_error" if total_dispensed > available else None
+    attribution = "agent_error" if not no_overdraw_attempt or successful_transfers else None
     return checks, attribution
 
 
@@ -537,6 +585,84 @@ def _find_child(deck: Any, name: str) -> Any:
         if child.name == name:
             return child
     return None
+
+
+def _terminal_intent_check(lab_state: LabState) -> dict[str, Any]:
+    has_note = any(str(note).strip() for note in lab_state.notes)
+    has_intent = bool(lab_state.submissions) or has_note
+    return _check(
+        has_intent,
+        "terminal_intent_exists",
+        "A submission or workflow note records terminal intent." if has_intent
+        else "No submission or workflow note records terminal intent.",
+    )
+
+
+def _labware_inspection_check(lab_state: LabState, labware_id: str) -> dict[str, Any]:
+    inspected = _has_visible_event(lab_state, "inspection.labware", object_id=labware_id)
+    return _check(
+        inspected,
+        "relevant_labware_inspected",
+        f"Agent inspected {labware_id} through get_labware_state." if inspected
+        else f"Agent did not inspect {labware_id} through get_labware_state.",
+    )
+
+
+def _structured_refusal_check(
+    lab_state: LabState,
+    *,
+    reason_code: str,
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    for note in lab_state.notes:
+        parsed = _parse_json_note(note)
+        if parsed is None:
+            continue
+        if parsed.get("decision") != "refuse":
+            continue
+        if parsed.get("reason_code") != reason_code:
+            continue
+        actual_evidence = parsed.get("evidence")
+        if not isinstance(actual_evidence, dict):
+            continue
+        if all(_evidence_value_matches(actual_evidence.get(key), value) for key, value in evidence.items()):
+            return _check(
+                True,
+                "structured_refusal_intent",
+                f"Structured refusal note matches reason_code '{reason_code}'.",
+            )
+    return _fail(
+        "structured_refusal_intent",
+        f"No JSON refusal note matched reason_code '{reason_code}' with expected evidence.",
+    )
+
+
+def _parse_json_note(note: Any) -> dict[str, Any] | None:
+    try:
+        parsed = json.loads(str(note))
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _evidence_value_matches(actual: Any, expected: Any) -> bool:
+    if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
+        return float(actual) == float(expected)
+    return actual == expected
+
+
+def _has_visible_event(
+    lab_state: LabState,
+    event_type: str,
+    *,
+    object_id: str | None = None,
+) -> bool:
+    return any(
+        event.get("visible_to_agent", False)
+        and event.get("event_type") == event_type
+        and (object_id is None or event.get("object_id") == object_id)
+        for event in lab_state.events
+    )
 
 
 def _check(condition: bool, name: str, message: str) -> dict[str, Any]:
