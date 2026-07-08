@@ -8,7 +8,8 @@ This note is for discussion with Zheng. It is intentionally about what the curre
 
 ## Current State
 
-Phase 0 now has a strict admission gate for a small but concrete lab slice.
+Phase 0 now has a strict admission gate for a small but concrete lab slice,
+plus one deeper fault-recovery family.
 
 The gate runs through the public world runtime surface:
 
@@ -21,8 +22,8 @@ It does not inspect hidden mutable state directly from the admission harness.
 Current strict suite:
 
 ```text
-7 scenarios
-30 admission cases
+8 scenarios
+36 admission cases
 ```
 
 Covered worlds:
@@ -40,6 +41,7 @@ stale/provenance read-before-transfer
 limited tips refusal
 low reagent refusal
 STAR 96-head insufficient tips refusal
+STAR instrument busy fault recovery
 ```
 
 Each strict scenario now includes at least:
@@ -48,7 +50,7 @@ Each strict scenario now includes at least:
 oracle pass
 empty plan fail
 known-bad or resource/provenance mutant fail
-expected failure code match
+exact expected failure-code set match
 ```
 
 Resource-refusal scenarios now reject arbitrary notes. A valid refusal must include a structured JSON workflow note with:
@@ -88,6 +90,10 @@ partially transfer low reagent before refusing
 attempt 96-head pickup with fewer than 96 tips
 attempt single-channel workaround in a 96-head refusal task
 failed single-channel tip pickup workaround
+busy instrument error then giving up
+using a pre-transfer readout after recovery
+wrong final decision after a valid recovered readout
+extra successful readout after recovery
 ```
 
 The important shift is that the admission gate is now testing verifier validity, not only task sampling.
@@ -103,80 +109,56 @@ It does not prove:
 ```text
 all STAR scenarios are admission-safe
 all lab scenarios have oracle/mutant coverage
-fault recovery is covered deeply
-stochastic dynamics are covered deeply
+fault recovery is covered across multiple families
+stochastic dynamics are covered across multiple families
 task generation can scale to 1,000 tasks
-mutants are generated systematically
+mutants can be generated rather than hand-authored
 verifier checks are grounded across many scenario families
 biology-specific realism is enough for a paper
 ```
 
-The current suite is still hand-written. That is acceptable for Phase 0 because the goal is to prove the verifier can reject known bad behavior. It is not acceptable as the long-term scaling strategy.
+The current suite still uses hand-written runners. That is acceptable for Phase 0
+because the goal is to prove the verifier can reject known bad behavior. It is
+not acceptable as the long-term scaling strategy.
 
-## Next Decision
+## What Changed In This Checkpoint
 
-We should not immediately expand by adding many more hand-written tasks.
-
-The next question for Zheng is:
-
-```text
-Do we turn this into a scalable admission framework first, or add one more deep scenario family first?
-```
-
-My recommendation:
+We did the recommended next slice:
 
 ```text
-Do one more deep family first, then abstract the mutant framework.
+instrument_fault_star_qc
 ```
 
-Reason: abstracting now risks building a generic framework around only resource-refusal examples. We need one non-resource long-horizon family to pressure-test the design.
+In plain English: the agent transfers liquid, the plate reader first says it is
+busy, the agent must retry, recover one valid OD600 reading, and make the
+decision from that recovered evidence.
 
-## Recommended Next Slice
-
-Build a strict admission slice for:
+The strict suite now includes these cases for the family:
 
 ```text
-instrument_busy_wait_or_reschedule
+oracle: transfer -> busy read -> successful retry -> correct submit
+empty: no work
+no_retry_after_busy: gives up after the recoverable busy error
+read_before_transfer_then_retry: uses a recovered but stale pre-transfer reading
+wrong_decision_after_recovery: reads correctly but chooses the wrong final action
+extra_read_after_success: keeps reading after recovery instead of stopping cleanly
 ```
 
-Why this one:
+We also added a first mutant-declaration layer:
 
 ```text
-It is not just resource refusal.
-It forces temporal reasoning.
-It tests fault handling.
-It is easy to understand without deep biology.
-It maps to real lab/instrument behavior.
-It creates reusable mutant patterns for later scenarios.
+StrictScenarioDecl(world, scenario, oracle, mutants, seed)
+StrictMutantDecl(family, case_id, runner, expected_failure_codes)
 ```
 
-Admission cases should include:
+This is intentionally not a full generic mutant generator yet. It gives every
+scenario an explicit list of applicable mutant families and exact expected
+failure-code sets, without pretending every scenario supports every failure
+mode. The exact set matters: if a mutant is expected to fail one check but
+actually fails three, strict admission now treats that as drift instead of a
+pass.
 
-```text
-oracle waits/retries and succeeds
-empty plan fails
-single busy error then gives up fails
-submits without successful readout fails
-uses stale pre-fault readout fails
-retries too many times or ignores limit fails
-wrong final decision after valid readout fails
-```
-
-Expected verifier codes should be explicit, for example:
-
-```text
-readout_after_busy_recovery
-retry_count_within_policy
-fresh_readout_used_for_submission
-successful_readout_required
-decision_matches_observed_data
-```
-
-## Then Build Mutant Families
-
-After the instrument-busy slice passes, introduce a small reusable mutant-family layer.
-
-Do not make it too generic yet. Start with a registry like:
+Current declared mutant families:
 
 ```text
 empty_plan
@@ -185,68 +167,51 @@ wrong_decision
 stale_evidence
 unsafe_resource_attempt
 partial_action_before_refusal
+non96_workaround_attempt
 failed_tool_then_false_success
-give_up_after_recoverable_fault
-skip_required_inspection
+fault_recovery
+extra_retry_after_success
 ```
-
-Each scenario declares which families apply:
-
-```json
-{
-  "scenario": "low_reagent_qc",
-  "mutants": [
-    "empty_plan",
-    "arbitrary_note",
-    "unsafe_resource_attempt",
-    "partial_action_before_refusal"
-  ]
-}
-```
-
-This avoids pretending every scenario has every failure mode.
 
 ## Zheng Review Questions
 
-Ask Zheng to review these, not to write biological task generators.
+Ask Zheng to review the scaling path, not to write biological task generators.
 
 1. Is the structured-refusal contract acceptable, or should refusal be a first-class tool instead of JSON in `add_workflow_note`?
 
 2. Should strict admission live in API Gym for now, or should the generic admission harness move later to `datalox-gated-runtime` once it stops being world-specific?
 
-3. Is `instrument_busy_wait_or_reschedule` the right next deep family, or should we choose `stale_evidence_detection` first?
+3. Is the declaration layer enough for the next checkpoint, or do we need a real mutant generator before adding more families?
 
-4. Does the mutant-family registry design look like the right scaling path from 30 cases to hundreds?
+4. For training/evaluation, what is the minimum abstraction needed to scale from 36 hand-authored admission cases to hundreds without creating reward drift?
 
 5. What is the minimum report/table needed before showing this to external partners or posting a Hugging Face benchmark preview?
 
 ## Proposed Work Plan
 
-Immediate:
+Immediate discussion:
 
 ```text
-commit strict admission branch
-write this note
-Zheng reviews current proof and next-slice choice
+Zheng reviews current proof
+Zheng reviews whether the mutant-declaration layer is the right scaling surface
+Do not ask Zheng biological realism questions unless we translate them into plain workflow terms
 ```
 
 Next implementation:
 
 ```text
-add instrument_busy strict admission slice
-add verifier checks for recovery/freshness/retry policy
-add admission cases for busy/retry/stale/give-up mutants
-wire into --verify-all
-run final reviewer
+apply declarations to 3-5 more scenario families
+produce an admission matrix: scenario x mutant family x expected failure code
+separate reusable mutant families from one-off scenario runners
+add one generator experiment for a low-biology family, such as resource refusal or stale evidence
 ```
 
 After that:
 
 ```text
-extract mutant-family declarations
-apply to 3-5 scenario families
-produce an admission matrix
+decide D&B artifact paper vs method paper
 write benchmark card / technical report outline
+only then decide whether domain researchers are needed
 ```
 
 ## When To Use Domain Researchers
@@ -268,4 +233,6 @@ For the next engineering step, this is mostly systems/verifier work, not biology
 
 The current branch is a good Phase 0 verifier-validity checkpoint.
 
-The next serious move is not more demo polish. It is one more deep long-horizon family, then a small mutant-family framework so the benchmark can scale beyond hand-coded examples.
+The next serious move is not more demo polish. It is turning the new
+declaration layer into an admission matrix and one small generator experiment,
+so we can tell whether this scales beyond hand-authored examples.

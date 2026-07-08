@@ -19,4 +19,4 @@ def test_verify_all_runs_strict_admission_suite() -> None:
 
     assert completed.returncode == 0, completed.stderr + completed.stdout
     assert "Strict admission: PASS" in completed.stdout
-    assert "30/30 cases passed" in completed.stdout
+    assert "36/36 cases passed" in completed.stdout

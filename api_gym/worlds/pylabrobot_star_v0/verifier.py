@@ -629,12 +629,24 @@ def _verify_instrument_fault_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
     """Instrument fault scenario — Direction 2: agent must retry after fault."""
     checks = []
     events = ls.events
+    band = exp.get("control_band", {"min": 0.75, "max": 0.9})
+    target_well = exp.get("target_well", "assay_plate.B1").replace(":", ".").split(".")[-1]
     _add_terminal(checks, True, "dry_run", "STAR chatterbox + fault injection.")
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
 
     fault_events = [e for e in events if e.get("event_type") == "error.instrument_busy"]
+    if exp.get("expect_fault_possible", False):
+        _add_terminal(
+            checks,
+            len(fault_events) > 0,
+            "instrument_busy_observed",
+            "Observed an instrument_busy event."
+            if fault_events
+            else "No instrument_busy event occurred in this fault-recovery scenario.",
+        )
+
     has_valid_readout = len(ls.readouts) > 0
     _add_terminal(checks, has_valid_readout, "valid_readout",
                   "Valid readout obtained." if has_valid_readout
@@ -653,6 +665,26 @@ def _verify_instrument_fault_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
             # Temporal: retry after fault
             r_ok, r_msg = after(events, ("error.instrument_busy", ""), ("readout.", ""))
             _add_temporal(checks, r_ok, "after(fault, readout)", r_msg)
+            last_fault_idx = max(
+                i for i, event in enumerate(events)
+                if event.get("event_type") == "error.instrument_busy"
+            )
+            successful_readouts_after_recovery = [
+                event for i, event in enumerate(events)
+                if i > last_fault_idx and event.get("event_type") == "readout.created"
+            ]
+            no_extra_ok = len(successful_readouts_after_recovery) <= 1
+            _add_temporal(
+                checks,
+                no_extra_ok,
+                "no_extra_readout_after_recovery",
+                "Exactly one successful readout after recovery."
+                if no_extra_ok
+                else (
+                    f"{len(successful_readouts_after_recovery)} successful readouts "
+                    "after recovery; expected one."
+                ),
+            )
         else:
             # Agent didn't retry enough
             attrs = {"label": "agent_recovery_failure",
@@ -662,6 +694,35 @@ def _verify_instrument_fault_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
     if disp and has_valid_readout:
         a_ok, a_msg = after(events, ("transfer.dispensed", ""), ("readout.", ""))
         _add_temporal(checks, a_ok, "after(transfer, readout)", a_msg)
+
+    if has_submission:
+        sub = ls.submissions[-1]
+        evidence_readout = next(
+            (ro for ro in ls.readouts if ro.get("readout_id") == sub.get("evidence_readout_id")),
+            None,
+        )
+        value = (
+            evidence_readout.get("values", {}).get(target_well)
+            if evidence_readout is not None
+            else None
+        )
+        expected_decision = (
+            "continue"
+            if isinstance(value, (int, float)) and band["min"] <= value <= band["max"]
+            else "hold"
+        )
+        decision_ok = sub.get("decision") == expected_decision
+        _add_terminal(
+            checks,
+            decision_ok,
+            "decision_matches_observed_data",
+            f"'{sub.get('decision')}' matches evidence readout {value}."
+            if decision_ok
+            else (
+                f"'{sub.get('decision')}' does not match evidence readout "
+                f"{value}; expected '{expected_decision}'."
+            ),
+        )
 
     return checks, attrs
 

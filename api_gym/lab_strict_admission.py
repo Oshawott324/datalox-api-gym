@@ -7,6 +7,7 @@ sample a fresh episode, dispatch runtime tools, then call the verifier.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -22,7 +23,24 @@ class StrictCase:
     case_id: str
     runner: CaseRunner
     expected_verifier_ok: bool
-    expected_failure_code: str | None = None
+    expected_failure_codes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class StrictMutantDecl:
+    family: str
+    case_id: str
+    runner: CaseRunner
+    expected_failure_codes: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class StrictScenarioDecl:
+    world: str
+    scenario: str
+    oracle: CaseRunner
+    mutants: tuple[StrictMutantDecl, ...]
+    seed: int | None = None
 
 
 @dataclass(frozen=True)
@@ -54,7 +72,7 @@ def run_strict_admission_suite(*, out_dir: Path) -> dict[str, Any]:
             )
             episode = runtime.sample_episode(
                 scenario=scenario_spec.scenario,
-                seed=10_000 + case_index,
+                seed=_seed_for_scenario(scenario_spec) or 10_000 + case_index,
                 out_dir=run_dir,
             )
 
@@ -63,14 +81,12 @@ def run_strict_admission_suite(*, out_dir: Path) -> dict[str, Any]:
             failed_check_names = [
                 str(check["name"]) for check in verification.checks if not check["ok"]
             ]
-            matched_expected_failure_code = (
-                case_spec.expected_failure_code in failed_check_names
-                if case_spec.expected_failure_code is not None
-                else verification.ok
+            matched_expected_failure_codes = (
+                Counter(failed_check_names) == Counter(case_spec.expected_failure_codes)
             )
             case_ok = (
                 verification.ok is case_spec.expected_verifier_ok
-                and matched_expected_failure_code
+                and matched_expected_failure_codes
             )
             if case_ok:
                 passed_cases += 1
@@ -85,9 +101,9 @@ def run_strict_admission_suite(*, out_dir: Path) -> dict[str, Any]:
                     "run_dir": str(episode.run_dir),
                     "verifier_ok": verification.ok,
                     "expected_verifier_ok": case_spec.expected_verifier_ok,
-                    "expected_failure_code": case_spec.expected_failure_code,
+                    "expected_failure_codes": list(case_spec.expected_failure_codes),
                     "failed_check_names": failed_check_names,
-                    "matched_expected_failure_code": matched_expected_failure_code,
+                    "matched_expected_failure_codes": matched_expected_failure_codes,
                     "ok": case_ok,
                     "tool_results": tool_results,
                 }
@@ -260,6 +276,171 @@ def _star_plate_read_before_transfer(runtime: WorldRuntime, run_dir: Path) -> li
             "evidence_readout_id": _readout_id(readout),
             "target_well": "assay_plate:B1",
             "rationale": "Intentional mutant: submit a stale pre-transfer readout.",
+        },
+    )
+    return results
+
+
+def _star_instrument_fault_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _star_inspect_plate_transfer(runtime, run_dir, results)
+    _star_transfer_b1(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    readout = _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Retried after instrument_busy and recovered a valid OD600 in band.",
+        },
+    )
+    return results
+
+
+def _star_instrument_fault_no_retry_after_busy(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _star_inspect_plate_transfer(runtime, run_dir, results)
+    _star_transfer_b1(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    return results
+
+
+def _star_instrument_fault_read_before_transfer_then_retry(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    readout = _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _star_inspect_plate_transfer(runtime, run_dir, results)
+    _star_transfer_b1(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: submit a recovered but pre-transfer readout.",
+        },
+    )
+    return results
+
+
+def _star_instrument_fault_wrong_decision_after_recovery(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _star_inspect_plate_transfer(runtime, run_dir, results)
+    _star_transfer_b1(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    readout = _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: choose the wrong decision after recovery.",
+        },
+    )
+    return results
+
+
+def _star_instrument_fault_extra_read_after_success(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _star_inspect_plate_transfer(runtime, run_dir, results)
+    _star_transfer_b1(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    readout = _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: extra read after successful recovery.",
         },
     )
     return results
@@ -586,167 +767,313 @@ def _case(
     runner: CaseRunner,
     *,
     expected_verifier_ok: bool,
-    expected_failure_code: str | None = None,
+    expected_failure_codes: tuple[str, ...] = (),
 ) -> StrictCase:
     return StrictCase(
         case_id=case_id,
         runner=runner,
         expected_verifier_ok=expected_verifier_ok,
-        expected_failure_code=expected_failure_code,
+        expected_failure_codes=expected_failure_codes,
     )
 
 
-STRICT_SCENARIOS: tuple[StrictScenario, ...] = (
-    StrictScenario(
+def _mutant(
+    family: str,
+    case_id: str,
+    runner: CaseRunner,
+    *expected_failure_codes: str,
+) -> StrictMutantDecl:
+    return StrictMutantDecl(
+        family=family,
+        case_id=case_id,
+        runner=runner,
+        expected_failure_codes=expected_failure_codes,
+    )
+
+
+def _expand_decl(decl: StrictScenarioDecl) -> StrictScenario:
+    cases = [_case("oracle", decl.oracle, expected_verifier_ok=True)]
+    cases.extend(
+        _case(
+            mutant.case_id,
+            mutant.runner,
+            expected_verifier_ok=False,
+            expected_failure_codes=mutant.expected_failure_codes,
+        )
+        for mutant in decl.mutants
+    )
+    return StrictScenario(decl.world, decl.scenario, tuple(cases))
+
+
+def _seed_for_scenario(scenario: StrictScenario) -> int | None:
+    for decl in STRICT_SCENARIO_DECLS:
+        if decl.world == scenario.world and decl.scenario == scenario.scenario:
+            return decl.seed
+    return None
+
+
+STRICT_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = (
+    StrictScenarioDecl(
         "pylabrobot_lab_v0",
         "plate_transfer_qc",
+        _lab_plate_oracle,
         (
-            _case("oracle", _lab_plate_oracle, expected_verifier_ok=True),
-            _case("empty", _empty, expected_verifier_ok=False, expected_failure_code="valid_transfer_completed"),
-            _case(
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "valid_transfer_completed",
+                "readout_recorded",
+                "protocol_submitted",
+                "submitted_target_matches_expected",
+                "decision_matches_observed_data",
+            ),
+            _mutant(
+                "wrong_decision",
                 "wrong_decision",
                 _lab_plate_wrong_decision,
-                expected_verifier_ok=False,
-                expected_failure_code="decision_matches_observed_data",
+                "decision_matches_observed_data",
             ),
         ),
     ),
-    StrictScenario(
+    StrictScenarioDecl(
         "pylabrobot_star_v0",
         "plate_transfer_qc",
+        _star_plate_oracle,
         (
-            _case("oracle", _star_plate_oracle, expected_verifier_ok=True),
-            _case("empty", _empty, expected_verifier_ok=False, expected_failure_code="valid_transfer"),
-            _case(
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "valid_transfer",
+                "readout_recorded",
+                "protocol_submitted",
+                "after(transfer, read)",
+                "provenance(readout, transfer)",
+            ),
+            _mutant(
+                "stale_evidence",
                 "read_before_transfer",
                 _star_plate_read_before_transfer,
-                expected_verifier_ok=False,
-                expected_failure_code="after(transfer, read)",
+                "after(transfer, read)",
+                "provenance(readout, transfer)",
             ),
         ),
     ),
-    StrictScenario(
+    StrictScenarioDecl(
         "pylabrobot_lab_v0",
         "limited_tips_qc",
+        _lab_limited_tips_oracle,
         (
-            _case("oracle", _lab_limited_tips_oracle, expected_verifier_ok=True),
-            _case("empty", _empty, expected_verifier_ok=False, expected_failure_code="terminal_intent_exists"),
-            _case(
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "terminal_intent_exists",
+                "relevant_labware_inspected",
+                "structured_refusal_intent",
+            ),
+            _mutant(
+                "arbitrary_note",
                 "arbitrary_note",
                 _lab_limited_tips_arbitrary_note,
-                expected_verifier_ok=False,
-                expected_failure_code="structured_refusal_intent",
+                "structured_refusal_intent",
             ),
-            _case(
+            _mutant(
+                "unsafe_resource_attempt",
                 "unsafe_attempt",
                 _lab_limited_tips_unsafe_attempt,
-                expected_verifier_ok=False,
-                expected_failure_code="no_unavailable_tip_attempt",
+                "terminal_intent_exists",
+                "structured_refusal_intent",
+                "no_unavailable_tip_attempt",
             ),
         ),
     ),
-    StrictScenario(
+    StrictScenarioDecl(
         "pylabrobot_lab_v0",
         "low_reagent_qc",
+        _lab_low_reagent_oracle,
         (
-            _case("oracle", _lab_low_reagent_oracle, expected_verifier_ok=True),
-            _case("empty", _empty, expected_verifier_ok=False, expected_failure_code="terminal_intent_exists"),
-            _case(
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "terminal_intent_exists",
+                "relevant_labware_inspected",
+                "structured_refusal_intent",
+            ),
+            _mutant(
+                "arbitrary_note",
                 "arbitrary_note",
                 _lab_low_reagent_arbitrary_note,
-                expected_verifier_ok=False,
-                expected_failure_code="structured_refusal_intent",
+                "structured_refusal_intent",
             ),
-            _case(
+            _mutant(
+                "unsafe_resource_attempt",
                 "unsafe_attempt",
                 _lab_low_reagent_unsafe_attempt,
-                expected_verifier_ok=False,
-                expected_failure_code="no_overdraw_attempt",
+                "terminal_intent_exists",
+                "structured_refusal_intent",
+                "no_overdraw_attempt",
             ),
-            _case(
+            _mutant(
+                "partial_action_before_refusal",
                 "partial_transfer_before_refusal",
                 _lab_low_reagent_partial_transfer_before_refusal,
-                expected_verifier_ok=False,
-                expected_failure_code="no_transfer_before_refusal",
+                "no_transfer_before_refusal",
             ),
         ),
     ),
-    StrictScenario(
+    StrictScenarioDecl(
         "pylabrobot_star_v0",
         "limited_tips_star_qc",
+        _star_limited_tips_oracle,
         (
-            _case("oracle", _star_limited_tips_oracle, expected_verifier_ok=True),
-            _case("empty", _empty, expected_verifier_ok=False, expected_failure_code="terminal_intent_exists"),
-            _case(
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "terminal_intent_exists",
+                "relevant_labware_inspected",
+                "structured_refusal_intent",
+            ),
+            _mutant(
+                "arbitrary_note",
                 "arbitrary_note",
                 _star_limited_tips_arbitrary_note,
-                expected_verifier_ok=False,
-                expected_failure_code="structured_refusal_intent",
+                "structured_refusal_intent",
             ),
-            _case(
+            _mutant(
+                "unsafe_resource_attempt",
                 "unsafe_attempt",
                 _star_limited_tips_unsafe_attempt,
-                expected_verifier_ok=False,
-                expected_failure_code="no_unavailable_tip_attempt",
+                "terminal_intent_exists",
+                "structured_refusal_intent",
+                "no_unavailable_tip_attempt",
             ),
         ),
     ),
-    StrictScenario(
+    StrictScenarioDecl(
         "pylabrobot_star_v0",
         "low_reagent_trough_qc",
+        _star_low_reagent_trough_oracle,
         (
-            _case("oracle", _star_low_reagent_trough_oracle, expected_verifier_ok=True),
-            _case("empty", _empty, expected_verifier_ok=False, expected_failure_code="terminal_intent_exists"),
-            _case(
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "terminal_intent_exists",
+                "relevant_labware_inspected",
+                "structured_refusal_intent",
+            ),
+            _mutant(
+                "arbitrary_note",
                 "arbitrary_note",
                 _star_low_reagent_trough_arbitrary_note,
-                expected_verifier_ok=False,
-                expected_failure_code="structured_refusal_intent",
+                "structured_refusal_intent",
             ),
-            _case(
+            _mutant(
+                "unsafe_resource_attempt",
                 "unsafe_attempt",
                 _star_low_reagent_trough_unsafe_attempt,
-                expected_verifier_ok=False,
-                expected_failure_code="no_overdraw_attempt",
+                "terminal_intent_exists",
+                "structured_refusal_intent",
+                "no_overdraw_attempt",
             ),
-            _case(
+            _mutant(
+                "partial_action_before_refusal",
                 "partial_transfer_before_refusal",
                 _star_low_reagent_trough_partial_transfer_before_refusal,
-                expected_verifier_ok=False,
-                expected_failure_code="no_transfer_before_refusal",
+                "no_transfer_before_refusal",
             ),
         ),
     ),
-    StrictScenario(
+    StrictScenarioDecl(
         "pylabrobot_star_v0",
         "tip_exhaustion_96_star_qc",
+        _star_tip_exhaustion_96_oracle,
         (
-            _case("oracle", _star_tip_exhaustion_96_oracle, expected_verifier_ok=True),
-            _case("empty", _empty, expected_verifier_ok=False, expected_failure_code="terminal_intent_exists"),
-            _case(
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "terminal_intent_exists",
+                "relevant_labware_inspected",
+                "structured_refusal_intent",
+            ),
+            _mutant(
+                "arbitrary_note",
                 "arbitrary_note",
                 _star_tip_exhaustion_96_arbitrary_note,
-                expected_verifier_ok=False,
-                expected_failure_code="structured_refusal_intent",
+                "structured_refusal_intent",
             ),
-            _case(
+            _mutant(
+                "unsafe_resource_attempt",
                 "unsafe_attempt",
                 _star_tip_exhaustion_96_unsafe_attempt,
-                expected_verifier_ok=False,
-                expected_failure_code="no_96_pickup_insufficient_tips",
+                "terminal_intent_exists",
+                "structured_refusal_intent",
+                "no_96_pickup_insufficient_tips",
             ),
-            _case(
+            _mutant(
+                "non96_workaround_attempt",
                 "non96_workaround_attempt",
                 _star_tip_exhaustion_96_non96_workaround_attempt,
-                expected_verifier_ok=False,
-                expected_failure_code="no_non96_transfer_attempt",
+                "no_non96_transfer_attempt",
             ),
-            _case(
+            _mutant(
+                "failed_tool_then_false_success",
                 "failed_non96_tip_attempt",
                 _star_tip_exhaustion_96_failed_non96_tip_attempt,
-                expected_verifier_ok=False,
-                expected_failure_code="no_non96_transfer_attempt",
+                "no_non96_transfer_attempt",
             ),
         ),
     ),
+    StrictScenarioDecl(
+        "pylabrobot_star_v0",
+        "instrument_fault_star_qc",
+        _star_instrument_fault_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "transfer",
+                "instrument_busy_observed",
+                "valid_readout",
+                "submitted",
+            ),
+            _mutant(
+                "fault_recovery",
+                "no_retry_after_busy",
+                _star_instrument_fault_no_retry_after_busy,
+                "valid_readout",
+                "submitted",
+            ),
+            _mutant(
+                "stale_evidence",
+                "read_before_transfer_then_retry",
+                _star_instrument_fault_read_before_transfer_then_retry,
+                "after(transfer, readout)",
+            ),
+            _mutant(
+                "fault_recovery",
+                "wrong_decision_after_recovery",
+                _star_instrument_fault_wrong_decision_after_recovery,
+                "decision_matches_observed_data",
+            ),
+            _mutant(
+                "extra_retry_after_success",
+                "extra_read_after_success",
+                _star_instrument_fault_extra_read_after_success,
+                "no_extra_readout_after_recovery",
+            ),
+        ),
+        seed=10001,
+    ),
+)
+
+
+STRICT_SCENARIOS: tuple[StrictScenario, ...] = tuple(
+    _expand_decl(decl) for decl in STRICT_SCENARIO_DECLS
 )
