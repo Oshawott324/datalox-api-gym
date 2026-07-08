@@ -4,11 +4,14 @@ Date: 2026-07-08
 Branch: `codex/strict-admission`
 Base: `origin/unitelabs-api-grounding-wz`
 
-This note is for discussion with Zheng. It is intentionally about what the current branch proves, what it does not prove, and what we should build next if the goal is a serious scalable benchmark rather than a toy demo.
+This note summarizes what the current branch proves, what it does not prove,
+and what we should build next if the goal is a serious scalable benchmark rather
+than a toy demo.
 
-Do not spend Zheng's review time on repo-boundary or internal packaging
-questions. We should resolve those ourselves. Use Zheng only where his technical
-judgment changes the benchmark's scientific or training value.
+The useful review focus is benchmark and training depth: whether this
+environment would produce credible evaluation or training signal for
+long-horizon lab agents, and what evidence would make it comparable to recent
+agent-environment papers.
 
 ## Current State
 
@@ -212,12 +215,11 @@ fault_recovery
 extra_retry_after_success
 ```
 
-## Zheng Review Questions
+## Review Questions
 
-Ask Zheng questions only if they require technical depth about training,
-benchmark design, or how AI-lab agents would actually be built. Do not ask him
-internal repo questions, schema questions, or biology questions unless we
-translate them into plain workflow terms.
+The questions below are intentionally about benchmark design, training signal,
+and how AI-lab agents would actually be developed. The focus is on decisions
+that affect scientific value.
 
 1. For training/evaluation, what task distribution would actually teach a
 long-horizon lab agent useful behavior rather than overfit a simulator?
@@ -243,12 +245,12 @@ transitions need programmatic or source-grounded checks.
 
 ## Proposed Work Plan
 
-Immediate discussion:
+Immediate discussion focus:
 
 ```text
-Do not ask Zheng about internal repo boundaries.
-Ask Zheng whether the benchmark should optimize for training data, eval credibility, or AI-lab workflow realism first.
-Ask Zheng how to avoid reward drift when tasks and verifiers scale.
+Primary objective: training data, eval credibility, or AI-lab workflow realism.
+Reward drift risk: how to keep tasks and verifiers aligned as the benchmark scales.
+Release bar: what minimum evidence makes a Hugging Face preview credible.
 ```
 
 Next implementation:
@@ -270,11 +272,10 @@ run baseline agents and publish failure taxonomy
 only then decide whether domain researchers are needed
 ```
 
-## When To Use Domain Researchers
+## Domain Researcher Input
 
-Do not use the Ann Arbor researcher network yet.
-
-Use them only if we decide to build a larger scientifically valuable task set, for example:
+Domain researcher input becomes most valuable if we decide to build a larger
+scientifically grounded task set, for example:
 
 ```text
 100+ biology-grounded tasks
