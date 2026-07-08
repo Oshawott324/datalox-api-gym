@@ -6,6 +6,10 @@ Base: `origin/unitelabs-api-grounding-wz`
 
 This note is for discussion with Zheng. It is intentionally about what the current branch proves, what it does not prove, and what we should build next if the goal is a serious scalable benchmark rather than a toy demo.
 
+Do not spend Zheng's review time on repo-boundary or internal packaging
+questions. We should resolve those ourselves. Use Zheng only where his technical
+judgment changes the benchmark's scientific or training value.
+
 ## Current State
 
 Phase 0 now has a strict admission gate for a small but concrete lab slice,
@@ -121,6 +125,41 @@ The current suite still uses hand-written runners. That is acceptable for Phase 
 because the goal is to prove the verifier can reject known bad behavior. It is
 not acceptable as the long-term scaling strategy.
 
+## Bar From Recent Env/Gym Benchmarks
+
+The standard we need to match is not "a demo with a verifier." Recent serious
+agent environments have a recognizable shape:
+
+- AppWorld: a controllable execution environment with 9 apps, 457 APIs, 750
+  tasks, and state-based unit tests that also check unexpected collateral
+  changes. Reference: https://arxiv.org/abs/2407.18901
+- ToolSandbox: stateful tool execution, implicit state dependencies, user
+  simulation, and dynamic evaluation over intermediate and final milestones.
+  Reference: https://aclanthology.org/2025.findings-naacl.65/
+- tau2-bench: shared dynamic environment where both the agent and user can use
+  tools to observe, act, and verify state, formalized as a dual-control setting.
+  Reference: https://arxiv.org/pdf/2506.07982
+- BrowserGym: a gym-like standardized interface with defined observations,
+  actions, reproducible experiment management, and multi-benchmark comparisons.
+  Reference: https://arxiv.org/abs/2412.05467
+- ScienceAgentBench: scientific authenticity through tasks extracted from
+  peer-reviewed papers and expert validation, with explicit metrics and
+  execution-based checks. Reference: https://arxiv.org/abs/2410.05080
+- MLGym: gym-style training/evaluation environments for research agents, with
+  reproducible task registration and evaluation across open-ended tasks.
+  Reference: https://arxiv.org/abs/2502.14499
+
+What this means for LabLongRun:
+
+```text
+Executable/resettable environment is table stakes.
+State-based final verification is table stakes.
+We need task-scale, task-source discipline, split discipline, dynamic/milestone checks, collateral-damage checks, reproducible run exports, and baseline/failure analysis.
+```
+
+The next checkpoint should therefore prove benchmark solidity, not just add more
+lab scenarios.
+
 ## What Changed In This Checkpoint
 
 We did the recommended next slice:
@@ -175,35 +214,51 @@ extra_retry_after_success
 
 ## Zheng Review Questions
 
-Ask Zheng to review the scaling path, not to write biological task generators.
+Ask Zheng questions only if they require technical depth about training,
+benchmark design, or how AI-lab agents would actually be built. Do not ask him
+internal repo questions, schema questions, or biology questions unless we
+translate them into plain workflow terms.
 
-1. Is the structured-refusal contract acceptable, or should refusal be a first-class tool instead of JSON in `add_workflow_note`?
+1. For training/evaluation, what task distribution would actually teach a
+long-horizon lab agent useful behavior rather than overfit a simulator?
 
-2. Should strict admission live in API Gym for now, or should the generic admission harness move later to `datalox-gated-runtime` once it stops being world-specific?
+2. What split design is credible: random task split, family-held-out split,
+fault-held-out split, instrument-held-out split, or some combination?
 
-3. Is the declaration layer enough for the next checkpoint, or do we need a real mutant generator before adding more families?
+3. Which intermediate milestones should be scored for training signal: inspect
+before act, resource check before irreversible action, recovery after tool
+fault, fresh evidence before submission, or collateral-damage avoidance?
 
-4. For training/evaluation, what is the minimum abstraction needed to scale from 36 hand-authored admission cases to hundreds without creating reward drift?
+4. How would an AI lab team actually use such an environment: pre-deployment
+eval, RL training, regression testing after agent changes, protocol authoring
+guardrails, or post-run audit? Which of these is real enough to optimize for?
 
-5. What is the minimum report/table needed before showing this to external partners or posting a Hugging Face benchmark preview?
+5. What is the minimum credible release size for a Hugging Face preview:
+100 tasks with strong provenance and baselines, or a smaller number with deeper
+verifier/admission evidence?
+
+6. Where is LLM generation acceptable, and where is it dangerous? For example:
+LLM-written task text may be fine, but verifier logic and expected state
+transitions need programmatic or source-grounded checks.
 
 ## Proposed Work Plan
 
 Immediate discussion:
 
 ```text
-Zheng reviews current proof
-Zheng reviews whether the mutant-declaration layer is the right scaling surface
-Do not ask Zheng biological realism questions unless we translate them into plain workflow terms
+Do not ask Zheng about internal repo boundaries.
+Ask Zheng whether the benchmark should optimize for training data, eval credibility, or AI-lab workflow realism first.
+Ask Zheng how to avoid reward drift when tasks and verifiers scale.
 ```
 
 Next implementation:
 
 ```text
-apply declarations to 3-5 more scenario families
-produce an admission matrix: scenario x mutant family x expected failure code
-separate reusable mutant families from one-off scenario runners
-add one generator experiment for a low-biology family, such as resource refusal or stale evidence
+produce an admission matrix: scenario x mutant family x exact expected failure-code set
+add milestone-level verifier outputs, not only final pass/fail
+add collateral-damage checks for unintended state changes
+add one controlled generator experiment for a low-biology family, such as resource refusal or stale evidence
+create a small held-out split by family or fault type, even before scaling task count
 ```
 
 After that:
@@ -211,6 +266,7 @@ After that:
 ```text
 decide D&B artifact paper vs method paper
 write benchmark card / technical report outline
+run baseline agents and publish failure taxonomy
 only then decide whether domain researchers are needed
 ```
 
@@ -234,5 +290,7 @@ For the next engineering step, this is mostly systems/verifier work, not biology
 The current branch is a good Phase 0 verifier-validity checkpoint.
 
 The next serious move is not more demo polish. It is turning the new
-declaration layer into an admission matrix and one small generator experiment,
-so we can tell whether this scales beyond hand-authored examples.
+declaration layer into an admission matrix, milestone verifier, collateral
+damage checker, and one small generator experiment, so we can tell whether this
+scales beyond hand-authored examples and reaches the solidity of recent
+agent-environment papers.
