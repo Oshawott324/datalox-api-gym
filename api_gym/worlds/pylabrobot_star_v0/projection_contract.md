@@ -124,12 +124,12 @@ attribution_label: environment_noise
 
 Applied when `stochastic_config.od600_noise = True` in TaskSpec.
 
-### Instrument Busy Fault (planned, not yet in STAR scenarios)
+### Instrument Busy Fault
 
 ```
 name: instrument_busy_fault
 source_status: assumption_for_calibration
-distribution: per-readout-attempt Bernoulli(p=0.15), deterministic per seed
+distribution: per-readout-attempt Bernoulli(p=scenario_config.fault_prob), deterministic per seed
 seed_behavior: pre-generated FaultSchedule per (task_seed, readout_spec)
 agent_visible_observation: error response with code "instrument_busy"
 hidden_truth: fault_schedule.json with retry count
@@ -138,12 +138,18 @@ attribution_label: environment_fault
 max_retries: 2
 ```
 
+Implemented as benchmark-local plate-reader fault injection for
+`instrument_fault_star_qc` and combined with measurement noise in
+`fault_and_noise_star_qc`. The current scenario probabilities are 0.5 for
+`instrument_fault_star_qc` and 0.4 for `fault_and_noise_star_qc`. This is not a
+STAR firmware simulation and does not claim vendor-calibrated fault rates.
+
 ### Stochastic Source Status Summary
 
 | Element | Source Status | Basis |
 |---------|-------------|-------|
 | od600_measurement_noise | `assumption_for_calibration` | No real spectrophotometer data; σ=0.03 is a placeholder |
-| instrument_busy_fault | `assumption_for_calibration` | No real instrument availability logs; p=0.15 is a placeholder |
+| instrument_busy_fault | `assumption_for_calibration` | No real instrument availability logs; scenario-configured probabilities are placeholders |
 | base OD600 = 0.82 | `assumption_for_calibration` | Not calibrated against real QC control readings |
 
 ## 7. Safety Projection
@@ -187,6 +193,6 @@ Each check is tagged `predicate_type: "terminal"` or `"temporal"` for transparen
 | No real incubation | `add_workflow_note` simulates incubation; no timer/temperature model |
 | No collision consequences | Warnings logged but operations not blocked |
 | No tube rack physical model | `tube_transfer_qc` repurposes source plate wells as proxy for tubes |
-| No STAR firmware error simulation | Using PLR resource-layer errors (TooLittleLiquidError, NoTipError) only |
+| No vendor STAR firmware error simulation | Instrument busy is benchmark-local plate-reader fault injection; other failures use PLR resource-layer errors (TooLittleLiquidError, NoTipError) |
 | No multi-liquid mixing | Liquid enum exists in PLR but not used in scenario definitions |
 | No lid operations | iSWAP `move_lid` available but no scenario uses it |
