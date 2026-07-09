@@ -96,7 +96,9 @@ VALID_DECISIONS = {"continue", "hold"}
 def get_deck_state(lab_state: LabState) -> dict[str, Any]:
     if lab_state.liquid_handler is None:
         return _error("deck_not_found", "Deck state is not initialised.")
-    return _ok(deck_summary(lab_state.liquid_handler))
+    summary = deck_summary(lab_state.liquid_handler)
+    lab_state.insert_event("inspection.deck", "deck", summary["deck_name"], {})
+    return _ok(summary)
 
 
 def get_labware_state(lab_state: LabState, labware_id: str) -> dict[str, Any]:
@@ -156,6 +158,7 @@ def get_labware_state(lab_state: LabState, labware_id: str) -> dict[str, Any]:
         data["wells"] = wells
     if tips:
         data["tips"] = tips
+    lab_state.insert_event("inspection.labware", "labware", labware_id, {})
     return _ok(data)
 
 
@@ -232,6 +235,12 @@ def aspirate(lab_state: LabState, source: str, volume_ul: float,
         return _translate_plr_error(exc)
 
     new_src_vol = get_well_volume(src_well)
+    from api_gym.worlds.pylabrobot_lab_v0.services import _well_od600_metadata
+
+    lab_state._pending_volume_ul = volume_ul
+    lab_state._pending_tip = tip_ref
+    lab_state._pending_source = source
+    lab_state._pending_od600 = _well_od600_metadata(lab_state, source_labware_name, source_well_name)
 
     response = {
         "source": source, "volume_ul": volume_ul, "tip": tip_ref,
@@ -244,11 +253,13 @@ def aspirate(lab_state: LabState, source: str, volume_ul: float,
 
 def dispense(lab_state: LabState, target: str, volume_ul: float,
              mix_after: bool = False) -> dict[str, Any]:
-    """OT-2 visual dispense: dispense → return tips."""
+    """OT-2 visual dispense. Call discard_tips separately after the dispense."""
     if lab_state.liquid_handler is None or lab_state.deck is None:
         return _error("not_initialised", "Deck / liquid handler not initialised.")
 
     lh = lab_state.liquid_handler
+    pending_source = getattr(lab_state, "_pending_source", None)
+    pending_tip = getattr(lab_state, "_pending_tip", None)
 
     from api_gym.worlds.pylabrobot_lab_v0.services import _parse_ref
     target_labware_name, target_well_name = _parse_ref(target)
@@ -271,22 +282,38 @@ def dispense(lab_state: LabState, target: str, volume_ul: float,
         async def _op():
             await lh.dispense([tgt_well], vols=[volume_ul], use_channels=[0])
             await asyncio.sleep(1.5)
-            await lh.return_tips()
-            await asyncio.sleep(1.5)
 
         _run_async(_op())
     except Exception as exc:
         return _translate_plr_error(exc)
 
     after_vol = get_well_volume(tgt_well)
+    from api_gym.worlds.pylabrobot_lab_v0.services import _mix_target_metadata
+
+    lab_state._pending_volume_ul = max(0.0, float(getattr(lab_state, "_pending_volume_ul", 0.0)) - volume_ul)
+    _mix_target_metadata(
+        lab_state,
+        target_labware_name,
+        target_well_name,
+        before_vol,
+        volume_ul,
+        after_vol,
+        pending_od600=getattr(lab_state, "_pending_od600", None),
+    )
 
     response = {
-        "target": target, "volume_ul": volume_ul,
+        "source": pending_source, "target": target, "volume_ul": volume_ul, "tip": pending_tip,
         "target_volume_before_ul": before_vol, "target_volume_after_ul": after_vol,
         "mix_after": mix_after,
     }
     lab_state.transfers.append({
-        "type": "dispense", "target_well": target, "volume_ul": volume_ul,
+        "type": "dispense",
+        "source": pending_source,
+        "source_well": pending_source,
+        "target_well": target,
+        "volume_ul": volume_ul,
+        "tip": pending_tip,
+        "mix_after": mix_after,
     })
     lab_state.insert_event("transfer.dispensed", "well", target, response)
     return _ok(response)
@@ -308,11 +335,14 @@ def discard_tips(lab_state: LabState) -> dict[str, Any]:
         return _translate_plr_error(exc)
 
     pending = getattr(lab_state, "_pending_volume_ul", 0.0)
+    tip = getattr(lab_state, "_pending_tip", None)
     lab_state._pending_volume_ul = 0.0
     lab_state._pending_tip = None
+    lab_state._pending_source = None
+    lab_state._pending_od600 = None
     lab_state.insert_event("tips.discarded", "pipette", "channel_0",
-                           {"pending_volume_discarded_ul": pending})
-    return _ok({"discarded": True, "pending_volume_discarded_ul": pending})
+                           {"pending_volume_discarded_ul": pending, "tip": tip})
+    return _ok({"discarded": True, "pending_volume_discarded_ul": pending, "tip": tip})
 
 
 # ── Plate reading / workflow (no hardware motion) ──────────────────────────
@@ -334,7 +364,17 @@ def read_absorbance(lab_state: LabState, plate_id: str,
         w = plate[well_name]
         well = w[0] if isinstance(w, list) else w
         vol = get_well_volume(well)
-        values[well_name] = 0.82 if vol >= 50.0 else (round(0.82 * vol / 50.0, 4) if vol > 0 else 0.0)
+        from api_gym.worlds.pylabrobot_lab_v0.services import _well_od600_metadata
+        explicit_od600 = _well_od600_metadata(lab_state, plate_id, well_name)
+        if wavelength_nm == 600 and explicit_od600 is not None:
+            if vol >= 50.0:
+                values[well_name] = round(float(explicit_od600), 4)
+            elif vol > 0:
+                values[well_name] = round(float(explicit_od600) * vol / 50.0, 4)
+            else:
+                values[well_name] = 0.0
+        else:
+            values[well_name] = 0.82 if vol >= 50.0 else (round(0.82 * vol / 50.0, 4) if vol > 0 else 0.0)
 
     readout_id = f"ro_{plate_id}_{wavelength_nm}_{len(lab_state.readouts) + 1}"
     readout = {

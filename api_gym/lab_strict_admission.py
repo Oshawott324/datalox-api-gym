@@ -252,6 +252,172 @@ def _lab_plate_wrong_decision(runtime: WorldRuntime, run_dir: Path) -> list[dict
     return results
 
 
+def _lab_serial_dilution_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _lab_inspect_plate_transfer(runtime, run_dir, results)
+    _lab_serial_dilution_chain(runtime, run_dir, results, discard_between_steps=True)
+    readout = _lab_read_serial_dilution(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B5",
+            "rationale": "OD600 decreases across B1-B5 after the serial dilution.",
+        },
+    )
+    return results
+
+
+def _lab_serial_dilution_read_before_dilution(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    stale_readout = _lab_read_serial_dilution(runtime, run_dir, results)
+    _lab_inspect_plate_transfer(runtime, run_dir, results)
+    _lab_serial_dilution_chain(runtime, run_dir, results, discard_between_steps=True)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(stale_readout),
+            "target_well": "assay_plate:B5",
+            "rationale": "Intentional mutant: submit a stale pre-dilution readout.",
+        },
+    )
+    return results
+
+
+def _lab_serial_dilution_tip_reuse_between_steps(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _lab_inspect_plate_transfer(runtime, run_dir, results)
+    _lab_serial_dilution_chain(runtime, run_dir, results, discard_between_steps=False)
+    readout = _lab_read_serial_dilution(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B5",
+            "rationale": "Intentional mutant: transfers occurred without discarding tips between steps.",
+        },
+    )
+    return results
+
+
+def _lab_serial_dilution_missing_mix_after_dispense(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _lab_inspect_plate_transfer(runtime, run_dir, results)
+    _lab_serial_dilution_chain(
+        runtime,
+        run_dir,
+        results,
+        discard_between_steps=True,
+        mix_after=False,
+    )
+    readout = _lab_read_serial_dilution(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B5",
+            "rationale": "Intentional mutant: dilution dispenses omitted mix_after.",
+        },
+    )
+    return results
+
+
+def _lab_serial_dilution_post_dilution_mutation(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _lab_inspect_plate_transfer(runtime, run_dir, results)
+    _lab_serial_dilution_chain(runtime, run_dir, results, discard_between_steps=True)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "aspirate",
+        {"source": "assay_plate:B5", "volume_ul": 50, "tip": "tip_rack_01:A6"},
+    )
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "dispense",
+        {"target": "assay_plate:C1", "volume_ul": 50, "mix_after": False},
+    )
+    _call(runtime, run_dir, results, "discard_tips", {})
+    readout = _lab_read_serial_dilution(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B5",
+            "rationale": "Intentional mutant: mutate a dilution well after completing the chain.",
+        },
+    )
+    return results
+
+
+def _lab_serial_dilution_missing_terminal_readout(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _lab_inspect_plate_transfer(runtime, run_dir, results)
+    _lab_serial_dilution_chain(runtime, run_dir, results, discard_between_steps=True)
+    return results
+
+
+def _lab_serial_dilution_wrong_decision(
+    runtime: WorldRuntime,
+    run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _lab_inspect_plate_transfer(runtime, run_dir, results)
+    _lab_serial_dilution_chain(runtime, run_dir, results, discard_between_steps=True)
+    readout = _lab_read_serial_dilution(runtime, run_dir, results)
+    _call(
+        runtime,
+        run_dir,
+        results,
+        "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B5",
+            "rationale": "Intentional mutant: submit the wrong decision for a valid dilution curve.",
+        },
+    )
+    return results
+
+
 def _star_plate_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     _star_inspect_plate_transfer(runtime, run_dir, results)
@@ -748,6 +914,56 @@ def _star_transfer_b1(runtime: WorldRuntime, run_dir: Path, results: list[dict[s
     _call(runtime, run_dir, results, "dispense", {"target": "assay_plate:B1", "volume_ul": 50})
 
 
+def _lab_serial_dilution_chain(
+    runtime: WorldRuntime,
+    run_dir: Path,
+    results: list[dict[str, Any]],
+    *,
+    discard_between_steps: bool,
+    mix_after: bool = True,
+) -> None:
+    for index, (source, target) in enumerate(
+        (
+            ("source_plate:A1", "assay_plate:B1"),
+            ("assay_plate:B1", "assay_plate:B2"),
+            ("assay_plate:B2", "assay_plate:B3"),
+            ("assay_plate:B3", "assay_plate:B4"),
+            ("assay_plate:B4", "assay_plate:B5"),
+        ),
+        start=1,
+    ):
+        _call(
+            runtime,
+            run_dir,
+            results,
+            "aspirate",
+            {"source": source, "volume_ul": 50, "tip": f"tip_rack_01:A{index}"},
+        )
+        _call(
+            runtime,
+            run_dir,
+            results,
+            "dispense",
+            {"target": target, "volume_ul": 50, "mix_after": mix_after},
+        )
+        if discard_between_steps:
+            _call(runtime, run_dir, results, "discard_tips", {})
+
+
+def _lab_read_serial_dilution(
+    runtime: WorldRuntime,
+    run_dir: Path,
+    results: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return _call(
+        runtime,
+        run_dir,
+        results,
+        "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1", "B2", "B3", "B4", "B5"]},
+    )
+
+
 def _refusal_oracle(
     runtime: WorldRuntime,
     run_dir: Path,
@@ -856,6 +1072,70 @@ STRICT_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = (
                 "wrong_decision",
                 _lab_plate_wrong_decision,
                 "decision_matches_observed_data",
+            ),
+        ),
+    ),
+    StrictScenarioDecl(
+        "pylabrobot_lab_v0",
+        "serial_dilution_qc",
+        _lab_serial_dilution_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "dilution_transfer_sequence",
+                "fresh_tip_per_dilution_step",
+                "mix_after_each_dilution_step",
+                "all_dilution_wells_read",
+                "after(dilution, readout)",
+                "provenance(readout, dilution_series)",
+                "od600_decreasing_curve",
+                "protocol_submitted",
+                "decision_matches_dilution_curve",
+            ),
+            _mutant(
+                "stale_evidence",
+                "read_before_dilution",
+                _lab_serial_dilution_read_before_dilution,
+                "after(dilution, readout)",
+                "provenance(readout, dilution_series)",
+                "od600_decreasing_curve",
+            ),
+            _mutant(
+                "tip_reuse_between_steps",
+                "tip_reuse_between_steps",
+                _lab_serial_dilution_tip_reuse_between_steps,
+                "fresh_tip_per_dilution_step",
+            ),
+            _mutant(
+                "missing_mix_after_dispense",
+                "missing_mix_after_dispense",
+                _lab_serial_dilution_missing_mix_after_dispense,
+                "mix_after_each_dilution_step",
+            ),
+            _mutant(
+                "post_dilution_mutation",
+                "post_dilution_mutation",
+                _lab_serial_dilution_post_dilution_mutation,
+                "dilution_well_volumes_intact",
+            ),
+            _mutant(
+                "missing_terminal_readout",
+                "missing_terminal_readout",
+                _lab_serial_dilution_missing_terminal_readout,
+                "all_dilution_wells_read",
+                "after(dilution, readout)",
+                "provenance(readout, dilution_series)",
+                "od600_decreasing_curve",
+                "protocol_submitted",
+                "decision_matches_dilution_curve",
+            ),
+            _mutant(
+                "wrong_decision",
+                "wrong_decision",
+                _lab_serial_dilution_wrong_decision,
+                "decision_matches_dilution_curve",
             ),
         ),
     ),

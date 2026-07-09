@@ -13,11 +13,11 @@ def test_admission_matrix_covers_every_strict_case() -> None:
     expected_case_count = sum(len(scenario.cases) for scenario in STRICT_SCENARIOS)
     assert len(matrix["rows"]) == expected_case_count
     assert matrix["summary"] == {
-        "scenarios": 8,
-        "cases": 36,
-        "mutant_families": 10,
+        "scenarios": 9,
+        "cases": 44,
+        "mutant_families": 14,
         "splits": {
-            "dev": 24,
+            "dev": 32,
             "test_family_heldout": 6,
             "test_fault_heldout": 6,
         },
@@ -80,6 +80,9 @@ def test_admission_matrix_declares_milestones_and_collateral_damage() -> None:
         "no_96_pickup_insufficient_tips",
         "no_non96_transfer_attempt",
         "no_extra_readout_after_recovery",
+        "fresh_tip_per_dilution_step",
+        "mix_after_each_dilution_step",
+        "dilution_well_volumes_intact",
     }.issubset({
         code
         for row in collateral_rows
@@ -160,9 +163,9 @@ def test_strict_admission_suite_reports_milestones(tmp_path: Path) -> None:
     result = run_strict_admission_suite(out_dir=tmp_path / "strict-admission")
 
     assert result["quality_summary"]["milestones"]["recover_after_fault"]["cases"] == 4
-    assert result["quality_summary"]["milestones"]["collateral_damage_avoidance"]["cases"] == 9
+    assert result["quality_summary"]["milestones"]["collateral_damage_avoidance"]["cases"] == 12
     assert result["quality_summary"]["splits"] == {
-        "dev": {"cases": 24, "passed_cases": 24},
+        "dev": {"cases": 32, "passed_cases": 32},
         "test_family_heldout": {"cases": 6, "passed_cases": 6},
         "test_fault_heldout": {"cases": 6, "passed_cases": 6},
     }

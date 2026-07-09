@@ -20,7 +20,7 @@ def test_verify_all_runs_strict_admission_suite() -> None:
 
     assert completed.returncode == 0, completed.stderr + completed.stdout
     assert "Strict admission: PASS" in completed.stdout
-    assert "36/36 cases passed" in completed.stdout
+    assert "44/44 cases passed" in completed.stdout
 
 
 def test_package_writes_admission_matrix(tmp_path: Path) -> None:
@@ -39,16 +39,16 @@ def test_package_writes_admission_matrix(tmp_path: Path) -> None:
 
     matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
     assert matrix["summary"] == {
-        "scenarios": 8,
-        "cases": 36,
-        "mutant_families": 10,
+        "scenarios": 9,
+        "cases": 44,
+        "mutant_families": 14,
         "splits": {
-            "dev": 24,
+            "dev": 32,
             "test_family_heldout": 6,
             "test_fault_heldout": 6,
         },
     }
-    assert len(matrix["rows"]) == 36
+    assert len(matrix["rows"]) == 44
     assert {
         "world",
         "scenario",

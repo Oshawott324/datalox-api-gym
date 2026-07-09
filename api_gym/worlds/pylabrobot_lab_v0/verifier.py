@@ -214,62 +214,345 @@ def _expected_resolution(lab_state: LabState) -> dict[str, Any] | None:
 
 def _verify_serial_dilution_qc(lab_state: LabState,
                                 expected: dict[str, Any]) -> list[dict[str, Any]]:
-    """Verify the serial dilution scenario."""
+    """Verify the OD600 serial dilution workflow."""
     checks: list[dict[str, Any]] = []
 
     checks.append(_check(True, "dry_run_no_live_action",
                          "Chatterbox/OT-2 backend — no live hardware."))
 
-    # Expected transfers: 5 dispense operations
-    dispenses = [t for t in lab_state.transfers if t.get("type") == "dispense"]
+    volume_ul = float(expected.get("transfer_volume_ul", 50))
+    expected_edges = [
+        tuple(edge)
+        for edge in expected.get(
+            "expected_dilution_edges",
+            [
+                ("source_plate:A1", "assay_plate:B1"),
+                ("assay_plate:B1", "assay_plate:B2"),
+                ("assay_plate:B2", "assay_plate:B3"),
+                ("assay_plate:B3", "assay_plate:B4"),
+                ("assay_plate:B4", "assay_plate:B5"),
+            ],
+        )
+    ]
+    expected_wells = [
+        well.split(".")[-1] if "." in well else well.split(":")[-1]
+        for well in expected.get(
+            "dilution_wells",
+            ["assay_plate.B1", "assay_plate.B2", "assay_plate.B3", "assay_plate.B4", "assay_plate.B5"],
+        )
+    ]
+
+    edge_matches = _serial_dilution_edge_matches(lab_state, expected_edges, volume_ul)
+    transfer_sequence_ok = len(edge_matches) == len(expected_edges)
     checks.append(_check(
-        len(dispenses) >= expected.get("expected_transfers", 5),
-        "minimum_transfers_completed",
-        f"At least {expected.get('expected_transfers', 5)} dispense transfers recorded.",
+        transfer_sequence_ok,
+        "dilution_transfer_sequence",
+        "Expected 50 uL serial dilution edges occurred in order."
+        if transfer_sequence_ok
+        else "Expected 50 uL serial dilution edge sequence was incomplete or out of order.",
     ))
 
-    # Readouts should cover all wells in the dilution chain
-    # Strip plate prefix for matching (readout stores short well names like "B1")
-    wells_expected_raw = expected.get("dilution_wells", [])
-    wells_expected = set(w.split(".")[-1] if "." in w else w for w in wells_expected_raw)
-    wells_read = set()
-    for ro in lab_state.readouts:
-        wells_read.update(ro.get("wells", []))
+    fresh_tip_ok = (
+        transfer_sequence_ok
+        and _fresh_tip_per_dilution_step(lab_state, edge_matches)
+    )
     checks.append(_check(
-        wells_expected.issubset(wells_read),
+        fresh_tip_ok,
+        "fresh_tip_per_dilution_step",
+        "Each dilution transfer used a unique tip and discarded it before the next step/readout."
+        if fresh_tip_ok
+        else "Dilution transfers did not use unique tips with discard events between steps.",
+    ))
+
+    mix_ok = (
+        transfer_sequence_ok
+        and all(bool(match["transfer"].get("mix_after")) for match in edge_matches)
+    )
+    checks.append(_check(
+        mix_ok,
+        "mix_after_each_dilution_step",
+        "Each dilution dispense requested mix_after."
+        if mix_ok
+        else "One or more dilution dispenses omitted mix_after.",
+    ))
+
+    evidence_readout = _submitted_readout(lab_state)
+    last_dispense_index = edge_matches[-1]["event_index"] if transfer_sequence_ok else None
+    readout_index = _event_index_for_readout(lab_state, evidence_readout) if evidence_readout else None
+    volumes_intact_ok = _dilution_well_volumes_intact(
+        lab_state,
+        expected,
+        last_dispense_index=last_dispense_index,
+        readout_index=readout_index,
+    ) if transfer_sequence_ok else True
+    checks.append(_check(
+        volumes_intact_ok,
+        "dilution_well_volumes_intact",
+        "Dilution well volumes remained intact from completed chain through readout."
+        if volumes_intact_ok
+        else "One or more dilution wells were mutated after the completed chain or had an unexpected final volume.",
+    ))
+
+    wells_read = set(str(w) for w in evidence_readout.get("wells", [])) if evidence_readout else set()
+    all_wells_read = set(expected_wells).issubset(wells_read)
+    checks.append(_check(
+        all_wells_read,
         "all_dilution_wells_read",
-        f"OD600 read for all dilution wells. Expected: {sorted(wells_expected)}, Got: {sorted(wells_read)}",
+        f"OD600 read covers B1-B5. Expected: {expected_wells}, Got: {sorted(wells_read)}",
     ))
 
-    # Protocol submitted
+    after_ok = (
+        transfer_sequence_ok
+        and last_dispense_index is not None
+        and readout_index is not None
+        and last_dispense_index < readout_index
+    )
     checks.append(_check(
-        len(lab_state.submissions) > 0,
+        after_ok,
+        "after(dilution, readout)",
+        "Submitted readout occurs after the last dilution dispense."
+        if after_ok
+        else "Submitted readout occurred before the complete dilution series.",
+    ))
+
+    provenance_ok = (
+        transfer_sequence_ok
+        and evidence_readout is not None
+        and readout_index is not None
+        and last_dispense_index is not None
+        and last_dispense_index < readout_index
+        and set(expected_wells).issubset(set(str(w) for w in evidence_readout.get("wells", [])))
+    )
+    checks.append(_check(
+        provenance_ok,
+        "provenance(readout, dilution_series)",
+        "Submitted readout covers B1-B5 after the complete dilution chain."
+        if provenance_ok
+        else "Submitted readout does not cover B1-B5 after the complete dilution chain.",
+    ))
+
+    curve_values = _dilution_curve_values(evidence_readout, expected_wells)
+    curve_valid = (
+        curve_values is not None
+        and all(curve_values[i] > curve_values[i + 1] for i in range(len(curve_values) - 1))
+    )
+    checks.append(_check(
+        curve_valid,
+        "od600_decreasing_curve",
+        f"OD600 values decrease across B1-B5: {curve_values}."
+        if curve_valid
+        else f"OD600 values do not strictly decrease across B1-B5: {curve_values}.",
+    ))
+
+    submitted = len(lab_state.submissions) > 0
+    checks.append(_check(
+        submitted,
         "protocol_submitted",
         "A final protocol decision was submitted.",
     ))
 
+    decision_ok = False
     if lab_state.submissions:
-        sub = lab_state.submissions[-1]
-        # Decision should be based on decreasing OD values
-        od_values = []
-        for ro in lab_state.readouts:
-            od_values.extend(ro.get("values", {}).values())
-        decreasing = all(
-            od_values[i] >= od_values[i + 1]
-            for i in range(len(od_values) - 1)
-        ) if len(od_values) >= 2 else False
-        checks.append(_check(
-            decreasing,
-            "od600_decreasing_curve",
-            "OD600 values show decreasing trend (dilution verified).",
-        ))
-        checks.append(_check(
-            sub["decision"] in ("continue", "hold"),
-            "valid_decision",
-            f"Decision is '{sub['decision']}'.",
-        ))
+        decision = lab_state.submissions[-1].get("decision")
+        expected_decision = "continue" if curve_valid else "hold"
+        decision_ok = decision == expected_decision
+    checks.append(_check(
+        decision_ok,
+        "decision_matches_dilution_curve",
+        "Decision matches the submitted OD600 dilution curve."
+        if decision_ok
+        else "Decision does not match the submitted OD600 dilution curve.",
+    ))
 
     return checks
+
+
+def _serial_dilution_edge_matches(
+    lab_state: LabState,
+    expected_edges: list[tuple[str, str]],
+    volume_ul: float,
+) -> list[dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
+    search_start = 0
+    dispenses = [
+        transfer
+        for transfer in lab_state.transfers
+        if transfer.get("type") == "dispense"
+    ]
+    for source, target in expected_edges:
+        found: dict[str, Any] | None = None
+        for transfer_index, transfer in enumerate(dispenses[search_start:], start=search_start):
+            if (
+                transfer.get("source") == source
+                and transfer.get("target_well") == target
+                and float(transfer.get("volume_ul", -1)) == volume_ul
+            ):
+                event_index = _event_index_for_dispense(lab_state, source, target, volume_ul)
+                if event_index is None:
+                    continue
+                found = {"transfer": transfer, "event_index": event_index}
+                search_start = transfer_index + 1
+                break
+        if found is None:
+            return matches
+        matches.append(found)
+    return matches
+
+
+def _fresh_tip_per_dilution_step(
+    lab_state: LabState,
+    edge_matches: list[dict[str, Any]],
+) -> bool:
+    tips = [match["transfer"].get("tip") for match in edge_matches]
+    if any(not tip for tip in tips) or len(set(tips)) != len(tips):
+        return False
+
+    readout_indices = [
+        index for index, event in enumerate(lab_state.events)
+        if event.get("event_type") == "readout.created"
+    ]
+    for index, match in enumerate(edge_matches):
+        tip = match["transfer"].get("tip")
+        start = int(match["event_index"])
+        if index + 1 < len(edge_matches):
+            stop = int(edge_matches[index + 1]["event_index"])
+        elif readout_indices:
+            stop = min((readout_index for readout_index in readout_indices if readout_index > start), default=len(lab_state.events))
+        else:
+            stop = len(lab_state.events)
+        if not _has_tip_discard_between(lab_state, str(tip), start, stop):
+            return False
+    return True
+
+
+def _submitted_readout(lab_state: LabState) -> dict[str, Any] | None:
+    if not lab_state.submissions:
+        return None
+    readout_id = lab_state.submissions[-1].get("evidence_readout_id")
+    for readout in lab_state.readouts:
+        if readout.get("readout_id") == readout_id:
+            return readout
+    return None
+
+
+def _dilution_curve_values(
+    readout: dict[str, Any] | None,
+    expected_wells: list[str],
+) -> list[float] | None:
+    if readout is None:
+        return None
+    values = readout.get("values", {})
+    if not all(well in values for well in expected_wells):
+        return None
+    return [float(values[well]) for well in expected_wells]
+
+
+def _event_index_for_dispense(
+    lab_state: LabState,
+    source: str,
+    target: str,
+    volume_ul: float,
+) -> int | None:
+    for index, event in enumerate(lab_state.events):
+        payload = event.get("payload", {})
+        if (
+            event.get("event_type") == "transfer.dispensed"
+            and payload.get("source") == source
+            and payload.get("target") == target
+            and float(payload.get("volume_ul", -1)) == volume_ul
+        ):
+            return index
+    return None
+
+
+def _event_index_for_readout(
+    lab_state: LabState,
+    readout: dict[str, Any] | None,
+) -> int | None:
+    if readout is None:
+        return None
+    readout_id = readout.get("readout_id")
+    for index, event in enumerate(lab_state.events):
+        if (
+            event.get("event_type") == "readout.created"
+            and event.get("payload", {}).get("readout_id") == readout_id
+        ):
+            return index
+    return None
+
+
+def _has_tip_discard_between(
+    lab_state: LabState,
+    tip: str,
+    start_index: int,
+    stop_index: int,
+) -> bool:
+    return any(
+        event.get("event_type") == "tips.discarded"
+        and event.get("payload", {}).get("tip") == tip
+        for event in lab_state.events[start_index + 1:stop_index]
+    )
+
+
+def _dilution_well_volumes_intact(
+    lab_state: LabState,
+    expected: dict[str, Any],
+    *,
+    last_dispense_index: int | None,
+    readout_index: int | None,
+) -> bool:
+    expected_volumes = {
+        _normalize_ref(ref): float(volume)
+        for ref, volume in expected.get("expected_final_dilution_volumes_ul", {}).items()
+    }
+    if not expected_volumes:
+        return True
+    if not _expected_final_volumes_match(lab_state, expected_volumes):
+        return False
+    if last_dispense_index is None or readout_index is None:
+        return True
+
+    dilution_refs = set(expected_volumes)
+    for event in lab_state.events[last_dispense_index + 1:readout_index]:
+        if event.get("event_type") not in {"transfer.aspirated", "transfer.dispensed"}:
+            continue
+        payload = event.get("payload", {})
+        refs = {
+            _normalize_ref(str(payload.get(key)))
+            for key in ("source", "target")
+            if payload.get(key) is not None
+        }
+        object_id = event.get("object_id")
+        if object_id:
+            refs.add(_normalize_ref(str(object_id)))
+        if refs & dilution_refs:
+            return False
+    return True
+
+
+def _expected_final_volumes_match(
+    lab_state: LabState,
+    expected_volumes: dict[str, float],
+) -> bool:
+    if lab_state.deck is None:
+        return True
+    for ref, expected_volume in expected_volumes.items():
+        labware_id, well_name = ref.split(":", 1)
+        plate = _find_child(lab_state.deck, labware_id)
+        if plate is None:
+            return False
+        actual_volume = get_well_volume(get_well(plate, well_name))
+        if actual_volume != expected_volume:
+            return False
+    return True
+
+
+def _normalize_ref(ref: str) -> str:
+    ref = ref.replace(".", ":")
+    if ":" not in ref:
+        return ref
+    labware_id, well_name = ref.split(":", 1)
+    return f"{labware_id}:{well_name}"
 
 
 def _verify_multi_sample_qc(lab_state: LabState,

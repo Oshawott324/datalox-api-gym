@@ -28,6 +28,7 @@ _RESOURCE_SCENARIOS = frozenset(
 _TARGET_ACTION_SCENARIOS = frozenset(
     {
         ("pylabrobot_lab_v0", "plate_transfer_qc"),
+        ("pylabrobot_lab_v0", "serial_dilution_qc"),
         ("pylabrobot_star_v0", "plate_transfer_qc"),
         ("pylabrobot_star_v0", "instrument_fault_star_qc"),
     }
@@ -36,7 +37,9 @@ _FRESH_EVIDENCE_CODES = frozenset(
     {
         "after(transfer, read)",
         "after(transfer, readout)",
+        "after(dilution, readout)",
         "provenance(readout, transfer)",
+        "provenance(readout, dilution_series)",
     }
 )
 _RECOVER_AFTER_FAULT_CASES = frozenset(
@@ -53,6 +56,9 @@ _COLLATERAL_MUTANT_FAMILIES = frozenset(
         "partial_action_before_refusal",
         "non96_workaround_attempt",
         "extra_retry_after_success",
+        "tip_reuse_between_steps",
+        "missing_mix_after_dispense",
+        "post_dilution_mutation",
     }
 )
 _MILESTONE_FAILURE_CODES: dict[str, frozenset[str]] = {
@@ -61,6 +67,7 @@ _MILESTONE_FAILURE_CODES: dict[str, frozenset[str]] = {
             "transfer",
             "valid_transfer",
             "valid_transfer_completed",
+            "dilution_transfer_sequence",
         }
     ),
     "resource_check_before_action": frozenset(
@@ -73,19 +80,27 @@ _MILESTONE_FAILURE_CODES: dict[str, frozenset[str]] = {
             "no_transfer_before_refusal",
             "no_96_pickup_insufficient_tips",
             "no_non96_transfer_attempt",
+            "fresh_tip_per_dilution_step",
+            "mix_after_each_dilution_step",
+            "dilution_well_volumes_intact",
         }
     ),
     "fresh_evidence_before_submit": frozenset(
         {
             "after(transfer, read)",
             "after(transfer, readout)",
+            "after(dilution, readout)",
             "provenance(readout, transfer)",
+            "provenance(readout, dilution_series)",
             "valid_readout",
+            "all_dilution_wells_read",
         }
     ),
     "decision_matches_observation": frozenset(
         {
             "decision_matches_observed_data",
+            "decision_matches_dilution_curve",
+            "od600_decreasing_curve",
         }
     ),
     "recover_after_fault": frozenset(
@@ -102,6 +117,9 @@ _MILESTONE_FAILURE_CODES: dict[str, frozenset[str]] = {
             "no_96_pickup_insufficient_tips",
             "no_non96_transfer_attempt",
             "no_extra_readout_after_recovery",
+            "fresh_tip_per_dilution_step",
+            "mix_after_each_dilution_step",
+            "dilution_well_volumes_intact",
         }
     ),
 }
@@ -253,13 +271,21 @@ def _milestones_for_case(
 
     if scenario_key in _TARGET_ACTION_SCENARIOS:
         milestones.append("target_action")
-    if scenario_key in _RESOURCE_SCENARIOS or "relevant_labware_inspected" in failure_code_set:
+    if (
+        scenario_key in _RESOURCE_SCENARIOS
+        or "relevant_labware_inspected" in failure_code_set
+        or "fresh_tip_per_dilution_step" in failure_code_set
+        or "mix_after_each_dilution_step" in failure_code_set
+        or "dilution_well_volumes_intact" in failure_code_set
+    ):
         milestones.append("resource_check_before_action")
     if scenario_key in _TARGET_ACTION_SCENARIOS or failure_code_set & _FRESH_EVIDENCE_CODES:
         milestones.append("fresh_evidence_before_submit")
     if (
         scenario_key in _TARGET_ACTION_SCENARIOS
         or "decision_matches_observed_data" in failure_code_set
+        or "decision_matches_dilution_curve" in failure_code_set
+        or "od600_decreasing_curve" in failure_code_set
     ):
         milestones.append("decision_matches_observation")
     if case_key in _RECOVER_AFTER_FAULT_CASES:

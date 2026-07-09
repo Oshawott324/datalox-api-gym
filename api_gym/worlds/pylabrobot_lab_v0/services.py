@@ -29,7 +29,9 @@ def get_deck_state(lab_state: LabState) -> dict[str, Any]:
     """Inspect the dry-run deck and instruments."""
     if lab_state.liquid_handler is None:
         return _error("deck_not_found", "Deck state is not initialised.")
-    return _ok(deck_summary(lab_state.liquid_handler))
+    summary = deck_summary(lab_state.liquid_handler)
+    lab_state.insert_event("inspection.deck", "deck", summary["deck_name"], {})
+    return _ok(summary)
 
 
 def get_labware_state(lab_state: LabState, labware_id: str) -> dict[str, Any]:
@@ -162,6 +164,8 @@ def aspirate(lab_state: LabState, source: str, volume_ul: float,
     # Record pipette pending volume
     lab_state._pending_volume_ul = volume_ul
     lab_state._pending_tip = tip_ref
+    lab_state._pending_source = source
+    lab_state._pending_od600 = _well_od600_metadata(lab_state, source_labware_name, source_well_name)
     lab_state.tips_used += 1
 
     response = {
@@ -182,6 +186,8 @@ def dispense(lab_state: LabState, target: str, volume_ul: float,
         return _error("not_initialised", "Deck not initialised.")
 
     pending = getattr(lab_state, "_pending_volume_ul", 0.0)
+    pending_source = getattr(lab_state, "_pending_source", None)
+    pending_tip = getattr(lab_state, "_pending_tip", None)
     if pending <= 0:
         return _error("no_aspirated_volume", "No aspirated volume is pending.")
 
@@ -214,10 +220,21 @@ def dispense(lab_state: LabState, target: str, volume_ul: float,
 
     remaining = pending - volume_ul
     lab_state._pending_volume_ul = remaining
+    _mix_target_metadata(
+        lab_state,
+        target_labware_name,
+        target_well_name,
+        before_vol,
+        volume_ul,
+        after_vol,
+        pending_od600=getattr(lab_state, "_pending_od600", None),
+    )
 
     response = {
+        "source": pending_source,
         "target": target,
         "volume_ul": volume_ul,
+        "tip": pending_tip,
         "target_volume_before_ul": before_vol,
         "target_volume_after_ul": after_vol,
         "remaining_aspirated_volume_ul": remaining,
@@ -225,9 +242,12 @@ def dispense(lab_state: LabState, target: str, volume_ul: float,
     }
     lab_state.transfers.append({
         "type": "dispense",
-        "source_well": getattr(lab_state, "_pending_tip", "pipette"),
+        "source": pending_source,
+        "source_well": pending_source,
         "target_well": target,
         "volume_ul": volume_ul,
+        "tip": pending_tip,
+        "mix_after": mix_after,
     })
     lab_state.insert_event("transfer.dispensed", "well", target, response)
     return _ok(response)
@@ -242,6 +262,8 @@ def discard_tips(lab_state: LabState) -> dict[str, Any]:
     tip = getattr(lab_state, "_pending_tip", None)
     lab_state._pending_volume_ul = 0.0
     lab_state._pending_tip = None
+    lab_state._pending_source = None
+    lab_state._pending_od600 = None
     lab_state.insert_event("tips.discarded", "pipette", "channel_0",
                            {"pending_volume_discarded_ul": pending, "tip": tip})
     return _ok({"discarded": True, "pending_volume_discarded_ul": pending, "tip": tip})
@@ -269,8 +291,16 @@ def read_absorbance(lab_state: LabState, plate_id: str,
     for well_name in wells:
         well = get_well(plate, well_name)
         vol = get_well_volume(well)
+        explicit_od600 = _well_od600_metadata(lab_state, plate_id, well_name)
         # Simulated OD600: proportional to volume, capped at control band
-        if vol >= 50.0:
+        if wavelength_nm == 600 and explicit_od600 is not None:
+            if vol >= 50.0:
+                values[well_name] = round(float(explicit_od600), 4)
+            elif vol > 0:
+                values[well_name] = round(float(explicit_od600) * vol / 50.0, 4)
+            else:
+                values[well_name] = 0.0
+        elif vol >= 50.0:
             values[well_name] = 0.82  # expected control value
         elif vol > 0:
             values[well_name] = round(0.82 * vol / 50.0, 4)
@@ -361,6 +391,37 @@ def _record_error_event(
     payload: dict[str, Any],
 ) -> None:
     lab_state.insert_event(f"error.{code}", object_type, object_id, {"code": code, **payload})
+
+
+def _well_metadata(lab_state: LabState, labware_id: str, well_name: str) -> dict[str, Any]:
+    return lab_state.well_metadata.setdefault(labware_id, {}).setdefault(well_name, {})
+
+
+def _well_od600_metadata(lab_state: LabState, labware_id: str, well_name: str) -> float | None:
+    metadata = lab_state.well_metadata.get(labware_id, {}).get(well_name, {})
+    value = metadata.get("od600")
+    return float(value) if value is not None else None
+
+
+def _mix_target_metadata(
+    lab_state: LabState,
+    labware_id: str,
+    well_name: str,
+    before_volume_ul: float,
+    dispense_volume_ul: float,
+    after_volume_ul: float,
+    *,
+    pending_od600: float | None,
+) -> None:
+    if after_volume_ul <= 0:
+        return
+
+    target = _well_metadata(lab_state, labware_id, well_name)
+    target_od600 = _well_od600_metadata(lab_state, labware_id, well_name)
+    if target_od600 is not None and pending_od600 is not None:
+        target["od600"] = (
+            target_od600 * before_volume_ul + pending_od600 * dispense_volume_ul
+        ) / after_volume_ul
 
 
 def _parse_ref(value: str) -> tuple[str, str]:
