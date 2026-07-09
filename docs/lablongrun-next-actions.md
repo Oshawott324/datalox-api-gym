@@ -31,6 +31,8 @@ Current strict suite:
 ```text
 8 scenarios
 36 admission cases
+10 mutant families
+3 explicit split labels: dev, test_family_heldout, test_fault_heldout
 ```
 
 Covered worlds:
@@ -107,6 +109,31 @@ The important shift is that the admission gate is now testing verifier validity,
 
 `scripts/package_benchmark.py --verify-all` now runs strict admission and fails the command if strict admission fails.
 
+The branch also now exposes the strict-suite quality contract as data:
+
+```text
+api_gym.lab_benchmark_quality.build_admission_matrix()
+api_gym.lab_strict_admission.run_strict_admission_suite(...).quality_summary
+scripts/package_benchmark.py --output .../admission_matrix.json
+```
+
+The admission matrix records one row per case:
+
+```text
+world
+scenario
+case_id
+case_kind
+mutant_family
+expected_failure_codes
+milestones
+split
+```
+
+This is not a final benchmark split strategy. It is a first enforceable split
+discipline gate: every strict case has an explicit split and every admission
+run reports pass counts by split and milestone.
+
 ## What This Does Not Prove
 
 This is not yet a scalable benchmark.
@@ -159,6 +186,13 @@ Executable/resettable environment is table stakes.
 State-based final verification is table stakes.
 We need task-scale, task-source discipline, split discipline, dynamic/milestone checks, collateral-damage checks, reproducible run exports, and baseline/failure analysis.
 ```
+
+These are translated quality dimensions, not exact feature names copied from
+each paper. For example, AppWorld's "unexpected changes" motivates our
+collateral-damage checks; ToolSandbox's intermediate/final milestones motivates
+our milestone verifier; tau2-bench's compositional generation motivates our
+family/split discipline. The goal is to match their level of evidence in a lab
+agent setting, not to imitate their implementation shape.
 
 The next checkpoint should therefore prove benchmark solidity, not just add more
 lab scenarios.
@@ -215,6 +249,22 @@ fault_recovery
 extra_retry_after_success
 ```
 
+This follow-up checkpoint adds the first benchmark-quality layer on top of that
+declaration layer:
+
+```text
+admission matrix
+milestone labels
+collateral-damage labels
+split labels
+quality summary over strict admission results
+packaged admission_matrix.json
+```
+
+That gives Zheng something concrete to review: whether the current split and
+milestone taxonomy is the right one, not just whether the runner happens to
+pass today.
+
 ## Review Questions
 
 The questions below are intentionally about benchmark design, training signal,
@@ -256,12 +306,16 @@ Release bar: what minimum evidence makes a Hugging Face preview credible.
 Next implementation:
 
 ```text
-produce an admission matrix: scenario x mutant family x exact expected failure-code set
-add milestone-level verifier outputs, not only final pass/fail
-add collateral-damage checks for unintended state changes
 add one controlled generator experiment for a low-biology family, such as resource refusal or stale evidence
-create a small held-out split by family or fault type, even before scaling task count
+make the generator emit the same admission-matrix fields as hand-authored cases
+measure whether generated mutants preserve exact expected failure-code sets
+add baseline-agent runs against the strict suite and summarize failure modes
 ```
+
+The immediate engineering slice covered the admission matrix, milestone labels,
+collateral labels, package export, and a small split assignment. The generator
+experiment comes next because those gates now exist; generation without these
+checks would only multiply unmeasured drift.
 
 After that:
 
