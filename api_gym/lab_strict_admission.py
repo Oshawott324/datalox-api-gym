@@ -1051,7 +1051,815 @@ def _seed_for_scenario(scenario: StrictScenario) -> int | None:
     return None
 
 
+# ── PCR + Reader xover runners ────────────────────────────────────────────
+
+
+def _star_pcr_reader_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "tc_close_lid", {})
+    _call(runtime, run_dir, results, "tc_set_lid_temp", {"temperature": 105.0})
+    _call(runtime, run_dir, results, "tc_get_block_temp", {})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 95.0})
+    _call(runtime, run_dir, results, "tc_get_block_temp", {})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 55.0})
+    _call(runtime, run_dir, results, "tc_get_block_temp", {})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 72.0})
+    _call(runtime, run_dir, results, "tc_get_block_temp", {})
+    _call(runtime, run_dir, results, "tc_deactivate", {})
+    _call(runtime, run_dir, results, "tc_open_lid", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "OD600 B1 inside control band after PCR amplification.",
+        },
+    )
+    return results
+
+
+def _star_pcr_reader_read_before_pcr(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "tc_close_lid", {})
+    _call(runtime, run_dir, results, "tc_set_lid_temp", {"temperature": 105.0})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 95.0})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 55.0})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 72.0})
+    _call(runtime, run_dir, results, "tc_deactivate", {})
+    _call(runtime, run_dir, results, "tc_open_lid", {})
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: submit a stale pre-PCR readout.",
+        },
+    )
+    return results
+
+
+def _star_pcr_reader_lid_not_closed(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    # Intentional: skip tc_close_lid
+    _call(runtime, run_dir, results, "tc_set_lid_temp", {"temperature": 105.0})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 95.0})
+    _call(runtime, run_dir, results, "tc_get_block_temp", {})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 55.0})
+    _call(runtime, run_dir, results, "tc_get_block_temp", {})
+    _call(runtime, run_dir, results, "tc_set_block_temp", {"temperature": 72.0})
+    _call(runtime, run_dir, results, "tc_get_block_temp", {})
+    _call(runtime, run_dir, results, "tc_deactivate", {})
+    _call(runtime, run_dir, results, "tc_open_lid", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: PCR without closing lid.",
+        },
+    )
+    return results
+
+
+# ── Pump + Scale xover runners ────────────────────────────────────────────
+
+
+def _star_pump_scale_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "scale_zero", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_tare", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 80, "duration_s": 10.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 150, "duration_s": 5.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 250, "duration_s": 3.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_halt", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "OD600 B1 inside control band after gravimetric cross-validation.",
+        },
+    )
+    return results
+
+
+def _star_pump_scale_skip_calibration(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    # Intentional: skip scale_zero and scale_tare
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 80, "duration_s": 10.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 150, "duration_s": 5.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 250, "duration_s": 3.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_halt", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: pump without scale calibration.",
+        },
+    )
+    return results
+
+
+def _star_pump_scale_no_halt(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "scale_zero", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_tare", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 80, "duration_s": 10.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 150, "duration_s": 5.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "pump_run_duration", {"speed_rpm": 250, "duration_s": 3.0})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    # Intentional: skip pump_halt
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: pump without halting.",
+        },
+    )
+    return results
+
+
+# ── HS + Reader xover runners ─────────────────────────────────────────────
+
+
+def _star_hs_reader_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "hs_set_temperature", {"temperature": 37.0})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_shake", {"speed_rpm": 300, "duration_s": 60})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_stop_shaking", {})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_deactivate", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "OD600 B1 inside control band after heat+shake incubation.",
+        },
+    )
+    return results
+
+
+def _star_hs_reader_no_temp_monitoring(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "hs_set_temperature", {"temperature": 37.0})
+    # Intentional: no hs_get_temperature calls — blind incubation!
+    _call(runtime, run_dir, results, "hs_shake", {"speed_rpm": 300, "duration_s": 60})
+    _call(runtime, run_dir, results, "hs_stop_shaking", {})
+    _call(runtime, run_dir, results, "hs_deactivate", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: incubate without temperature monitoring.",
+        },
+    )
+    return results
+
+
+def _star_hs_reader_read_before_incubation(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "hs_set_temperature", {"temperature": 37.0})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_shake", {"speed_rpm": 300, "duration_s": 60})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_stop_shaking", {})
+    _call(runtime, run_dir, results, "hs_get_temperature", {})
+    _call(runtime, run_dir, results, "hs_deactivate", {})
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: submit stale pre-incubation readout.",
+        },
+    )
+    return results
+
+
+# ── Centrifuge + Reader xover runners ────────────────────────────────────
+
+
+def _star_centrifuge_reader_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "centrifuge_open_door", {})
+    _call(runtime, run_dir, results, "centrifuge_go_to_bucket1", {})
+    _call(runtime, run_dir, results, "centrifuge_lock_bucket", {})
+    _call(runtime, run_dir, results, "centrifuge_close_door", {})
+    _call(runtime, run_dir, results, "centrifuge_lock_door", {})
+    _call(runtime, run_dir, results, "centrifuge_spin", {"g_force": 2000, "duration_s": 60})
+    _call(runtime, run_dir, results, "centrifuge_open_door", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "centrifuge_close_door", {})
+    _call(runtime, run_dir, results, "centrifuge_lock_door", {})
+    _call(runtime, run_dir, results, "centrifuge_spin", {"g_force": 8000, "duration_s": 120})
+    _call(runtime, run_dir, results, "centrifuge_open_door", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B2"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "OD600 B1 inside control band after differential centrifugation.",
+        },
+    )
+    return results
+
+
+def _star_centrifuge_reader_spin_without_lock(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "centrifuge_open_door", {})
+    _call(runtime, run_dir, results, "centrifuge_go_to_bucket1", {})
+    _call(runtime, run_dir, results, "centrifuge_lock_bucket", {})
+    _call(runtime, run_dir, results, "centrifuge_close_door", {})
+    # Intentional: skip centrifuge_lock_door — spin with unlocked door!
+    _call(runtime, run_dir, results, "centrifuge_spin", {"g_force": 2000, "duration_s": 60})
+    _call(runtime, run_dir, results, "centrifuge_open_door", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "centrifuge_close_door", {})
+    _call(runtime, run_dir, results, "centrifuge_lock_door", {})
+    _call(runtime, run_dir, results, "centrifuge_spin", {"g_force": 8000, "duration_s": 120})
+    _call(runtime, run_dir, results, "centrifuge_open_door", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B2"]},
+    )
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: spin without locking door.",
+        },
+    )
+    return results
+
+
+# ── Arm + Scale xover runners ─────────────────────────────────────────────
+
+
+def _star_arm_scale_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "scale_zero", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "arm_home", {})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_open_gripper", {"width_mm": 80.0})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "arm_move_to", {"x": 100, "y": 200, "z": 100})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_approach", {"x": 100, "y": 200, "z": 30, "access": "vertical"})
+    _call(runtime, run_dir, results, "arm_close_gripper", {"width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "arm_pick_up_resource",
+          {"x": 100, "y": 200, "z": 30, "plate_width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_move_to", {"x": 400, "y": 200, "z": 100})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_approach", {"x": 400, "y": 200, "z": 30, "access": "vertical"})
+    _call(runtime, run_dir, results, "arm_drop_resource", {"x": 400, "y": 200, "z": 30})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "scale_get_weight", {})
+    _call(runtime, run_dir, results, "arm_close_gripper", {"width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "arm_pick_up_resource",
+          {"x": 400, "y": 200, "z": 30, "plate_width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_move_to", {"x": 100, "y": 200, "z": 100})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_approach", {"x": 100, "y": 200, "z": 30})
+    _call(runtime, run_dir, results, "arm_drop_resource", {"x": 100, "y": 200, "z": 30})
+    _call(runtime, run_dir, results, "arm_move_to_safe", {})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "OD600 B1 inside control band after arm transport + gravimetric check.",
+        },
+    )
+    return results
+
+
+def _star_arm_scale_skip_weigh(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "scale_zero", {})
+    # Intentional: skip all scale_get_weight calls — no gravimetric verification!
+    _call(runtime, run_dir, results, "arm_home", {})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_open_gripper", {"width_mm": 80.0})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "arm_move_to", {"x": 100, "y": 200, "z": 100})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_approach", {"x": 100, "y": 200, "z": 30, "access": "vertical"})
+    _call(runtime, run_dir, results, "arm_close_gripper", {"width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "arm_pick_up_resource",
+          {"x": 100, "y": 200, "z": 30, "plate_width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_move_to", {"x": 400, "y": 200, "z": 100})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_approach", {"x": 400, "y": 200, "z": 30, "access": "vertical"})
+    _call(runtime, run_dir, results, "arm_drop_resource", {"x": 400, "y": 200, "z": 30})
+    _call(runtime, run_dir, results, "arm_close_gripper", {"width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "arm_pick_up_resource",
+          {"x": 400, "y": 200, "z": 30, "plate_width_mm": 85.0})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_move_to", {"x": 100, "y": 200, "z": 100})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_approach", {"x": 100, "y": 200, "z": 30})
+    _call(runtime, run_dir, results, "arm_drop_resource", {"x": 100, "y": 200, "z": 30})
+    _call(runtime, run_dir, results, "arm_move_to_safe", {})
+    _call(runtime, run_dir, results, "arm_get_position", {})
+    _call(runtime, run_dir, results, "arm_get_gripper_state", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "hold",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: transport without gravimetric verification.",
+        },
+    )
+    return results
+
+
+# ── TempCtrl + Reader xover runners ──────────────────────────────────────
+
+
+def _star_tempctrl_reader_oracle(runtime: WorldRuntime, run_dir: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 25.0})
+    _call(runtime, run_dir, results, "temp_controller_wait_for_temperature", {"timeout": 60.0})
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 37.0})
+    _call(runtime, run_dir, results, "temp_controller_wait_for_temperature", {"timeout": 60.0})
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 45.0})
+    _call(runtime, run_dir, results, "temp_controller_wait_for_temperature", {"timeout": 60.0})
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_deactivate", {})
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "OD600 B1 inside control band across 25/37/45C temperature ramp.",
+        },
+    )
+    return results
+
+
+def _star_tempctrl_reader_skip_temp_checks(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 25.0})
+    _call(runtime, run_dir, results, "temp_controller_wait_for_temperature", {"timeout": 60.0})
+    # Intentional: skip temp_controller_get_temperature — blind temperature!
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 37.0})
+    _call(runtime, run_dir, results, "temp_controller_wait_for_temperature", {"timeout": 60.0})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 45.0})
+    _call(runtime, run_dir, results, "temp_controller_wait_for_temperature", {"timeout": 60.0})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_deactivate", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: temperature ramp without verification.",
+        },
+    )
+    return results
+
+
+def _star_tempctrl_reader_read_before_stable(
+    runtime: WorldRuntime, run_dir: Path,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    _call(runtime, run_dir, results, "get_labware_state", {"labware_id": "assay_plate"})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 25.0})
+    # Intentional: skip wait_for_temperature — read before stable!
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 37.0})
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_set_temperature", {"temperature": 45.0})
+    _call(runtime, run_dir, results, "temp_controller_get_temperature", {})
+    _call(runtime, run_dir, results, "plate_reader_open", {})
+    _call(runtime, run_dir, results, "read_absorbance",
+          {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]})
+    _call(runtime, run_dir, results, "plate_reader_close", {})
+    _call(runtime, run_dir, results, "temp_controller_deactivate", {})
+    readout = _call(
+        runtime, run_dir, results, "read_absorbance",
+        {"plate_id": "assay_plate", "wavelength_nm": 600, "wells": ["B1"]},
+    )
+    _call(
+        runtime, run_dir, results, "submit_protocol",
+        {
+            "decision": "continue",
+            "evidence_readout_id": _readout_id(readout),
+            "target_well": "assay_plate:B1",
+            "rationale": "Intentional mutant: read before temperature stabilized.",
+        },
+    )
+    return results
+
+
 STRICT_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = (
+    StrictScenarioDecl(
+        "pylabrobot_star_v0",
+        "arm_scale_xover_qc",
+        _star_arm_scale_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "arm_homed",
+                "position_checks_ge7",
+                "gripper_checks_ge4",
+                "arm_transport_ops",
+                "drops_ge2",
+                "safe_position",
+                "scale_zeroed",
+                "scale_reads_ge3",
+                "weigh_while_on_scale",
+                "labware_inspected",
+                "readout",
+                "submitted",
+            ),
+            _mutant(
+                "skip_gravimetric",
+                "skip_weigh",
+                _star_arm_scale_skip_weigh,
+                "scale_reads_ge3",
+                "weigh_while_on_scale",
+            ),
+        ),
+    ),
+    StrictScenarioDecl(
+        "pylabrobot_star_v0",
+        "centrifuge_reader_xover_qc",
+        _star_centrifuge_reader_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "bucket_accessed",
+                "bucket_locked",
+                "door_opens_ge2",
+                "door_closes_ge2",
+                "door_locks_ge2",
+                "spins_ge2",
+                "door_locked_before_each_spin",
+                "two_g_forces",
+                "labware_before_spin",
+                "labware_between_spins",
+                "labware_after_spin",
+                "absorbance_reads_ge2",
+                "reader_opened",
+                "reader_closed",
+                "readout",
+                "submitted",
+            ),
+            _mutant(
+                "spin_without_lock",
+                "spin_without_lock",
+                _star_centrifuge_reader_spin_without_lock,
+                "door_locks_ge2",
+                "spins_ge2",
+                "two_g_forces",
+                "labware_before_spin",
+                "labware_between_spins",
+                "labware_after_spin",
+            ),
+        ),
+    ),
+    StrictScenarioDecl(
+        "pylabrobot_star_v0",
+        "tempctrl_reader_xover_qc",
+        _star_tempctrl_reader_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "temp_sets_ge3",
+                "wait_calls_ge3",
+                "temp_reads_ge3",
+                "tc_deactivated",
+                "absorbance_reads_ge3",
+                "reader_opens_ge3",
+                "reader_closes_ge3",
+                "temp_before_each_read",
+                "reader_open_read_close_cycles",
+                "labware_inspected",
+                "readout",
+                "submitted",
+            ),
+            _mutant(
+                "skip_temp_verification",
+                "skip_temp_checks",
+                _star_tempctrl_reader_skip_temp_checks,
+                "temp_reads_ge3",
+                "temp_before_each_read",
+            ),
+            _mutant(
+                "read_before_stable",
+                "read_before_stable",
+                _star_tempctrl_reader_read_before_stable,
+                "wait_calls_ge3",
+            ),
+        ),
+    ),
+    StrictScenarioDecl(
+        "pylabrobot_star_v0",
+        "hs_reader_xover_qc",
+        _star_hs_reader_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "hs_temp_set",
+                "temp_reads_ge5",
+                "hs_shake",
+                "hs_shake_stop",
+                "hs_deactivated",
+                "temp_before_shake",
+                "temp_during_shake",
+                "temp_after_shake",
+                "reader_opened",
+                "reader_closed",
+                "readout_after_incubation",
+                "labware_inspected",
+                "readout",
+                "submitted",
+            ),
+            _mutant(
+                "no_temp_monitoring",
+                "no_temp_monitoring",
+                _star_hs_reader_no_temp_monitoring,
+                "temp_reads_ge5",
+                "temp_before_shake",
+                "temp_during_shake",
+                "temp_after_shake",
+            ),
+            _mutant(
+                "stale_evidence",
+                "read_before_incubation",
+                _star_hs_reader_read_before_incubation,
+                "hs_deactivated_before_read",
+                "readout_after_incubation",
+            ),
+        ),
+    ),
+    StrictScenarioDecl(
+        "pylabrobot_star_v0",
+        "pump_scale_xover_qc",
+        _star_pump_scale_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "scale_zeroed",
+                "scale_tared",
+                "pump_ops_ge3",
+                "pump_halted",
+                "weight_readings_ge8",
+                "weight_after_each_pump",
+                "weight_stability",
+                "cumulative_weight_increasing",
+                "labware_before_pump",
+                "labware_after_pump",
+                "readout",
+                "submitted",
+            ),
+            _mutant(
+                "skip_calibration",
+                "skip_calibration",
+                _star_pump_scale_skip_calibration,
+                "scale_zeroed",
+                "scale_tared",
+            ),
+            _mutant(
+                "no_halt",
+                "no_halt",
+                _star_pump_scale_no_halt,
+                "pump_halted",
+            ),
+        ),
+    ),
     StrictScenarioDecl(
         "pylabrobot_lab_v0",
         "plate_transfer_qc",
@@ -1373,6 +2181,45 @@ STRICT_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = (
             ),
         ),
         seed=10001,
+    ),
+    StrictScenarioDecl(
+        "pylabrobot_star_v0",
+        "pcr_reader_xover_qc",
+        _star_pcr_reader_oracle,
+        (
+            _mutant(
+                "empty_plan",
+                "empty",
+                _empty,
+                "tc_lid_closed",
+                "tc_lid_temp_set",
+                "block_temp_sets_ge3",
+                "block_temp_reads_ge3",
+                "block_readback_paired",
+                "tc_deactivated",
+                "tc_lid_opened",
+                "reader_opened",
+                "reader_closed",
+                "readout_after_cycling",
+                "labware_inspected",
+                "readout",
+                "submitted",
+            ),
+            _mutant(
+                "stale_evidence",
+                "read_before_pcr",
+                _star_pcr_reader_read_before_pcr,
+                "block_temp_reads_ge3",
+                "block_readback_paired",
+                "readout_after_cycling",
+            ),
+            _mutant(
+                "lid_safety",
+                "lid_not_closed",
+                _star_pcr_reader_lid_not_closed,
+                "tc_lid_closed",
+            ),
+        ),
     ),
 )
 

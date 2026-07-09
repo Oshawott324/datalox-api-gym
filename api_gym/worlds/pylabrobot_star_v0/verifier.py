@@ -153,6 +153,12 @@ def verify_run(run_dir: Path) -> VerificationResult:
         "tilter_pump_xover_qc": _verify_tilter_pump_xover_qc,
         "barcode_storage_xover_qc": _verify_barcode_storage_xover_qc,
         "shaker_reader_xover_qc": _verify_shaker_reader_xover_qc,
+        "arm_scale_xover_qc": _verify_arm_scale_xover_qc,
+        "centrifuge_reader_xover_qc": _verify_centrifuge_reader_xover_qc,
+        "tempctrl_reader_xover_qc": _verify_tempctrl_reader_xover_qc,
+        "hs_reader_xover_qc": _verify_hs_reader_xover_qc,
+        "pump_scale_xover_qc": _verify_pump_scale_xover_qc,
+        "pcr_reader_xover_qc": _verify_pcr_reader_xover_qc,
         "arm_stale_state_combo_qc": _verify_arm_stale_state_combo_qc,
     }
     vfn = verifiers.get(scenario)
@@ -4309,6 +4315,534 @@ def _verify_shaker_reader_xover_qc(ls, exp):
     elif len(readouts) < 4:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(readouts)} absorbance reading(s) — optical verification failed."}
+    return checks, attrs
+
+
+def _verify_pump_scale_xover_qc(ls, exp):
+    """Pump+Scale xover: every pump operation gravimetrically cross-validated by the scale."""
+    checks = []; events = ls.events; attrs = {}
+    _add_terminal(checks, True, "dry_run", "STAR + pump/scale xover.")
+
+    sc_zeroed = any(e.get("event_type") == "scale.zeroed" for e in events)
+    sc_tared = any(e.get("event_type") == "scale.tared" for e in events)
+    sc_weighs = [e for e in events if e.get("event_type") == "scale.weight_read"]
+    all_pumps = [e for e in events if e.get("event_type") == "pump.run_duration"]
+    all_pumps.sort(key=lambda e: e.get("clock_time", 0))
+    pump_halted = any(e.get("event_type") == "pump.halted" for e in events)
+    labware_checks = [e for e in events if e.get("event_type") == "inspection.labware"]
+
+    _add_terminal(checks, sc_zeroed, "scale_zeroed",
+                  "Scale zeroed." if sc_zeroed else "Scale not zeroed!")
+    _add_terminal(checks, sc_tared, "scale_tared",
+                  "Scale tared." if sc_tared else "Scale not tared!")
+    _add_terminal(checks, len(all_pumps) >= 3, "pump_ops_ge3",
+                  f"Pump ops: {len(all_pumps)} (need >=3)." if len(all_pumps) >= 3
+                  else f"Only {len(all_pumps)} pump op(s) — insufficient!")
+    _add_terminal(checks, pump_halted, "pump_halted",
+                  "Pump halted." if pump_halted else "Pump never halted — safety!")
+
+    _add_terminal(checks, len(sc_weighs) >= 8, "weight_readings_ge8",
+                  f"Weight readings: {len(sc_weighs)} (need >=8)." if len(sc_weighs) >= 8
+                  else f"Only {len(sc_weighs)} reading(s) — insufficient gravimetric data!")
+
+    if all_pumps:
+        paired = sum(1 for p in all_pumps
+                     if any(w.get("clock_time", 0) > p.get("clock_time", 0) for w in sc_weighs))
+        _add_terminal(checks, paired >= len(all_pumps), "weight_after_each_pump",
+                      f"Weight after {paired}/{len(all_pumps)} pump ops."
+                      if paired >= len(all_pumps)
+                      else f"Only {paired}/{len(all_pumps)} pump ops had follow-up — blind pumping!")
+    else:
+        _add_terminal(checks, False, "weight_after_each_pump",
+                      "No pump ops — cannot verify weight tracking.")
+
+    if len(sc_weighs) >= 2:
+        weights = [(w.get("clock_time", 0), float(w.get("payload", {}).get("weight_g", 0)))
+                   for w in sc_weighs if w.get("payload", {}).get("weight_g") is not None]
+        unstable = sum(1 for i in range(1, len(weights))
+                       if abs(weights[i][1] - weights[i-1][1]) > 0.1)
+        _add_terminal(checks, unstable == 0 and len(weights) >= 2, "weight_stability",
+                      f"All {len(weights)-1} pairs stable." if unstable == 0
+                      else f"{unstable} unstable pair(s) (drift > 0.1g)!")
+        decreases = sum(1 for i in range(1, len(weights))
+                        if weights[i][1] + 0.001 < weights[i-1][1])
+        _add_terminal(checks, decreases == 0, "cumulative_weight_increasing",
+                      "Cumulative weight non-decreasing." if decreases == 0
+                      else f"Weight DECREASED {decreases} time(s)!")
+    else:
+        _add_terminal(checks, False, "weight_stability", "Too few readings.")
+        _add_terminal(checks, False, "cumulative_weight_increasing", "Too few readings.")
+
+    if all_pumps:
+        first_t = all_pumps[0].get("clock_time", 0)
+        last_t = all_pumps[-1].get("clock_time", 0)
+        before = [c for c in labware_checks if c.get("clock_time", 0) <= first_t]
+        after = [c for c in labware_checks if c.get("clock_time", 0) >= last_t]
+        _add_terminal(checks, len(before) >= 1, "labware_before_pump",
+                      f"Labware before: {len(before)}." if before else "No inspection before pumping!")
+        _add_terminal(checks, len(after) >= 1, "labware_after_pump",
+                      f"Labware after: {len(after)}." if after else "No inspection after pumping!")
+    else:
+        _add_terminal(checks, False, "labware_before_pump",
+                      "No pump ops — cannot verify labware timing.")
+        _add_terminal(checks, False, "labware_after_pump",
+                      "No pump ops — cannot verify labware timing.")
+
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    if sc_zeroed and sc_tared and len(sc_weighs) >= 8 and len(all_pumps) >= 3:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Gravimetric cross-validation: {len(all_pumps)} pump ops, "
+                           f"{len(sc_weighs)} weigh readings."}
+    elif len(sc_weighs) < 8:
+        attrs = {"label": "agent_error",
+                 "detail": f"Only {len(sc_weighs)} weigh readings — insufficient."}
+    return checks, attrs
+
+
+def _verify_hs_reader_xover_qc(ls, exp):
+    """HS+Reader xover: temp before/during/after shake, then optical endpoint verification."""
+    checks = []; events = ls.events; attrs = {}
+    _add_terminal(checks, True, "dry_run", "STAR + HS/reader xover.")
+
+    hs_temp_sets = [e for e in events if e.get("event_type") == "hs.temp_set"]
+    hs_temp_reads = [e for e in events if e.get("event_type") == "hs.temp_read"]
+    hs_shakes = [e for e in events if e.get("event_type") == "hs.shake"]
+    hs_stopped = any(e.get("event_type") == "hs.shake_stop" for e in events)
+    hs_deactivated = [e for e in events if e.get("event_type") == "hs.deactivated"]
+    reader_opened = any(e.get("event_type") == "reader.opened" for e in events)
+    reader_closed = any(e.get("event_type") == "reader.closed" for e in events)
+    readouts = [e for e in events if e.get("event_type") == "readout.created"]
+    labware_checks = [e for e in events if e.get("event_type") == "inspection.labware"]
+
+    _add_terminal(checks, len(hs_temp_sets) >= 1, "hs_temp_set",
+                  "HS temp set." if hs_temp_sets else "HS temp never set!")
+    _add_terminal(checks, len(hs_temp_reads) >= 5, "temp_reads_ge5",
+                  f"Temp reads: {len(hs_temp_reads)} (need >=5)." if len(hs_temp_reads) >= 5
+                  else f"Only {len(hs_temp_reads)} temp read(s) — insufficient monitoring!")
+    _add_terminal(checks, len(hs_shakes) >= 1, "hs_shake",
+                  f"Shake ops: {len(hs_shakes)}." if hs_shakes else "Never shook!")
+    _add_terminal(checks, hs_stopped, "hs_shake_stop",
+                  "Shake stopped." if hs_stopped else "Shake never stopped!")
+    _add_terminal(checks, len(hs_deactivated) >= 1, "hs_deactivated",
+                  "HS deactivated." if hs_deactivated else "HS never deactivated!")
+    _add_terminal(checks, reader_opened, "reader_opened",
+                  "Reader opened." if reader_opened else "Reader never opened!")
+    _add_terminal(checks, reader_closed, "reader_closed",
+                  "Reader closed." if reader_closed else "Reader never closed!")
+
+    # Temp checks before, during, after shake
+    if hs_shakes and hs_temp_reads:
+        shake_t = hs_shakes[0].get("clock_time", 0)
+        stop_t = [e for e in events if e.get("event_type") == "hs.shake_stop"]
+        stop_clock = stop_t[0].get("clock_time", 0) if stop_t else shake_t + 60
+
+        before = [r for r in hs_temp_reads if r.get("clock_time", 0) < shake_t]
+        during = [r for r in hs_temp_reads
+                  if shake_t <= r.get("clock_time", 0) <= stop_clock]
+        after = [r for r in hs_temp_reads if r.get("clock_time", 0) > stop_clock]
+
+        _add_terminal(checks, len(before) >= 1, "temp_before_shake",
+                      f"Before shake: {len(before)}." if before else "No temp check before shake!")
+        _add_terminal(checks, len(during) >= 1, "temp_during_shake",
+                      f"During shake: {len(during)}." if during else "No temp check during shake!")
+        _add_terminal(checks, len(after) >= 1, "temp_after_shake",
+                      f"After shake: {len(after)}." if after else "No temp check after shake!")
+    else:
+        _add_terminal(checks, False, "temp_before_shake", "No shake events to anchor timing.")
+        _add_terminal(checks, False, "temp_during_shake", "No shake events.")
+        _add_terminal(checks, False, "temp_after_shake", "No shake events.")
+
+    # HS deactivated BEFORE reader opened (safety)
+    if hs_deactivated and reader_opened:
+        hs_deact_t = hs_deactivated[-1].get("clock_time", 0)
+        ro_t = [e for e in events if e.get("event_type") == "reader.opened"][0].get("clock_time", 0)
+        _add_terminal(checks, hs_deact_t < ro_t, "hs_deactivated_before_read",
+                      "HS deactivated before reader access." if hs_deact_t < ro_t
+                      else "SAFETY: reader opened while HS active!")
+
+    # Readout after all HS operations
+    if readouts and hs_deactivated:
+        last_hs_t = max(e.get("clock_time", 0) for e in events
+                        if e.get("event_type", "").startswith("hs."))
+        readout_t = readouts[0].get("clock_time", 0)
+        _add_terminal(checks, readout_t > last_hs_t, "readout_after_incubation",
+                      "Readout after incubation complete." if readout_t > last_hs_t
+                      else "STALE: readout before incubation finished!")
+    elif readouts:
+        _add_terminal(checks, True, "readout_after_incubation",
+                      "Readout present (partial HS check skipped).")
+    else:
+        _add_terminal(checks, False, "readout_after_incubation",
+                      "No readout created.")
+
+    _add_terminal(checks, len(labware_checks) >= 1, "labware_inspected",
+                  f"Labware checks: {len(labware_checks)}." if labware_checks
+                  else "Never inspected labware!")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    if hs_temp_reads and hs_shakes and readouts:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Thermal-mechanical cross-validation: {len(hs_temp_reads)} temp reads "
+                           f"across before/during/after shake."}
+    elif len(hs_temp_reads) < 5:
+        attrs = {"label": "agent_error",
+                 "detail": f"Only {len(hs_temp_reads)} temp reads — thermal monitoring insufficient."}
+    return checks, attrs
+
+
+def _verify_tempctrl_reader_xover_qc(ls, exp):
+    """TempCtrl+Reader xover: temp verified before every absorbance read at 3 setpoints."""
+    checks = []; events = ls.events; attrs = {}
+    _add_terminal(checks, True, "dry_run", "STAR + temp_ctrl/reader xover.")
+
+    tc_sets = [e for e in events if e.get("event_type") == "tc.set_temp"]
+    tc_reads = [e for e in events if e.get("event_type") == "tc.read_temp"]
+    tc_waits = [e for e in events if e.get("event_type") == "tc.temp_reached"]
+    tc_deactivated = any(e.get("event_type") == "tc.deactivated"
+                         and e.get("object_type") == "temp_controller" for e in events)
+    reader_opens = [e for e in events if e.get("event_type") == "reader.opened"]
+    reader_closes = [e for e in events if e.get("event_type") == "reader.closed"]
+    readouts = [e for e in events if e.get("event_type") == "readout.created"]
+    labware_checks = [e for e in events if e.get("event_type") == "inspection.labware"]
+
+    _add_terminal(checks, len(tc_sets) >= 3, "temp_sets_ge3",
+                  f"Temp sets: {len(tc_sets)} (need >=3)." if len(tc_sets) >= 3
+                  else f"Only {len(tc_sets)} temp set(s) — incomplete ramp!")
+    _add_terminal(checks, len(tc_waits) >= 3, "wait_calls_ge3",
+                  f"Wait-for-temp calls: {len(tc_waits)} (need >=3)." if len(tc_waits) >= 3
+                  else f"Only {len(tc_waits)} wait call(s) — temperature may not be stable!")
+    _add_terminal(checks, len(tc_reads) >= 3, "temp_reads_ge3",
+                  f"Temp reads: {len(tc_reads)} (need >=3)." if len(tc_reads) >= 3
+                  else f"Only {len(tc_reads)} temp read(s) — blind heating!")
+    _add_terminal(checks, tc_deactivated, "tc_deactivated",
+                  "Temp controller deactivated." if tc_deactivated else "Never deactivated!")
+
+    _add_terminal(checks, len(readouts) >= 3, "absorbance_reads_ge3",
+                  f"Absorbance reads: {len(readouts)} (need >=3)." if len(readouts) >= 3
+                  else f"Only {len(readouts)} read(s) — insufficient data points!")
+    _add_terminal(checks, len(reader_opens) >= 3, "reader_opens_ge3",
+                  f"Reader opens: {len(reader_opens)}." if len(reader_opens) >= 3
+                  else f"Only {len(reader_opens)} reader open(s)!")
+    _add_terminal(checks, len(reader_closes) >= 3, "reader_closes_ge3",
+                  f"Reader closes: {len(reader_closes)}." if len(reader_closes) >= 3
+                  else f"Only {len(reader_closes)} reader close(s)!")
+
+    # Each absorbance read must be preceded by temp verification at that setpoint
+    if tc_sets and readouts:
+        valid = 0
+        for readout in readouts:
+            rt = readout.get("clock_time", 0)
+            # Find the most recent temp set + read pair before this readout
+            prior_sets = [s for s in tc_sets if s.get("clock_time", 0) < rt]
+            prior_reads = [r for r in tc_reads if r.get("clock_time", 0) < rt]
+            if prior_sets and prior_reads:
+                last_read = max(r.get("clock_time", 0) for r in prior_reads)
+                last_set = max(s.get("clock_time", 0) for s in prior_sets)
+                # Temp must have been read after the last set, before the readout
+                if last_read >= last_set:
+                    valid += 1
+        _add_terminal(checks, valid >= len(readouts), "temp_before_each_read",
+                      f"Temp verified before {valid}/{len(readouts)} reads."
+                      if valid >= len(readouts)
+                      else f"Only {valid}/{len(readouts)} reads had prior temp verification!")
+    else:
+        _add_terminal(checks, False, "temp_before_each_read",
+                      "No temp sets or readouts to cross-validate.")
+
+    # Reader open→read→close cycle for each temperature point
+    if reader_opens and reader_closes and readouts:
+        cycles = 0
+        for i in range(min(len(reader_opens), len(reader_closes), len(readouts))):
+            ro = reader_opens[i].get("clock_time", 0)
+            rd = readouts[i].get("clock_time", 0)
+            rc = reader_closes[i].get("clock_time", 0)
+            if ro < rd < rc:
+                cycles += 1
+        _add_terminal(checks, cycles >= 3, "reader_open_read_close_cycles",
+                      f"Reader open->read->close cycles: {cycles}." if cycles >= 3
+                      else f"Only {cycles} complete cycle(s) — broken reader access!")
+    else:
+        _add_terminal(checks, False, "reader_open_read_close_cycles",
+                      "No reader events or readouts — cannot verify cycles.")
+
+    _add_terminal(checks, len(labware_checks) >= 1, "labware_inspected",
+                  f"Labware checks: {len(labware_checks)}." if labware_checks
+                  else "Never inspected labware!")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    if tc_sets and tc_reads and readouts and tc_deactivated:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Multi-temperature cross-validation: {len(tc_reads)} temp reads "
+                           f"across {len(readouts)} absorbance reads at 3 setpoints."}
+    elif len(tc_reads) < 3:
+        attrs = {"label": "agent_error", "detail": "Insufficient temperature verification."}
+    return checks, attrs
+
+
+def _verify_centrifuge_reader_xover_qc(ls, exp):
+    """Centrifuge+Reader xover: door locked before each spin, labware inspected after each."""
+    checks = []; events = ls.events; attrs = {}
+    _add_terminal(checks, True, "dry_run", "STAR + centrifuge/reader xover.")
+
+    cf_doors_open = [e for e in events if e.get("event_type") == "centrifuge.door_opened"]
+    cf_doors_close = [e for e in events if e.get("event_type") == "centrifuge.door_closed"]
+    cf_doors_locked = [e for e in events if e.get("event_type") == "centrifuge.door_locked"]
+    cf_buckets = [e for e in events if e.get("event_type") == "centrifuge.bucket1"]
+    cf_bucket_locked = any(e.get("event_type") == "centrifuge.bucket_locked" for e in events)
+    cf_spins = [e for e in events if e.get("event_type") == "centrifuge.spin"]
+    reader_opened = any(e.get("event_type") == "reader.opened" for e in events)
+    reader_closed = any(e.get("event_type") == "reader.closed" for e in events)
+    readouts = [e for e in events if e.get("event_type") == "readout.created"]
+    labware_checks = [e for e in events if e.get("event_type") == "inspection.labware"]
+
+    _add_terminal(checks, len(cf_buckets) >= 1, "bucket_accessed",
+                  f"Bucket accessed: {len(cf_buckets)}." if cf_buckets else "Bucket never accessed!")
+    _add_terminal(checks, cf_bucket_locked, "bucket_locked",
+                  "Bucket locked." if cf_bucket_locked else "Bucket not locked!")
+    _add_terminal(checks, len(cf_doors_open) >= 2, "door_opens_ge2",
+                  f"Door opens: {len(cf_doors_open)}." if len(cf_doors_open) >= 2
+                  else f"Only {len(cf_doors_open)} door open(s)!")
+    _add_terminal(checks, len(cf_doors_close) >= 2, "door_closes_ge2",
+                  f"Door closes: {len(cf_doors_close)}." if len(cf_doors_close) >= 2
+                  else f"Only {len(cf_doors_close)} door close(s)!")
+    _add_terminal(checks, len(cf_doors_locked) >= 2, "door_locks_ge2",
+                  f"Door locks: {len(cf_doors_locked)}." if len(cf_doors_locked) >= 2
+                  else f"Only {len(cf_doors_locked)} lock(s) — unsafe!")
+    _add_terminal(checks, len(cf_spins) >= 2, "spins_ge2",
+                  f"Spins: {len(cf_spins)}." if len(cf_spins) >= 2
+                  else f"Only {len(cf_spins)} spin(s) — incomplete protocol!")
+
+    # Door locked before each spin
+    if cf_doors_locked and cf_spins:
+        valid = 0
+        for spin in cf_spins:
+            st = spin.get("clock_time", 0)
+            prior_locks = [l for l in cf_doors_locked if l.get("clock_time", 0) < st]
+            # There must not be an unlock (door_open) between the last lock and this spin
+            prior_opens = [o for o in cf_doors_open if o.get("clock_time", 0) < st]
+            if prior_locks:
+                last_lock = max(l.get("clock_time", 0) for l in prior_locks)
+                last_open = max(o.get("clock_time", 0) for o in prior_opens) if prior_opens else 0
+                if last_lock > last_open:
+                    valid += 1
+        _add_terminal(checks, valid >= len(cf_spins), "door_locked_before_each_spin",
+                      f"Door locked before {valid}/{len(cf_spins)} spins."
+                      if valid >= len(cf_spins)
+                      else f"Only {valid}/{len(cf_spins)} spins had door locked!")
+    else:
+        _add_terminal(checks, False, "door_locked_before_each_spin",
+                      "No locks or spins — cannot verify safety interlock.")
+
+    # Two different g-forces
+    if len(cf_spins) >= 2:
+        gs = [s.get("payload", {}).get("g_force", 0) for s in cf_spins]
+        unique = len(set(gs))
+        _add_terminal(checks, unique >= 2, "two_g_forces",
+                      f"G-forces: {gs} ({unique} unique)." if unique >= 2
+                      else f"Same g-force used twice: {gs} — no differential centrifugation!")
+    else:
+        _add_terminal(checks, False, "two_g_forces",
+                      f"Only {len(cf_spins)} spin(s) — need >=2 for g-force comparison.")
+
+    # Labware: before first spin, between spins, after last spin
+    if len(cf_spins) >= 2:
+        first_spin = cf_spins[0].get("clock_time", 0)
+        last_spin = cf_spins[-1].get("clock_time", 0)
+        before = [c for c in labware_checks if c.get("clock_time", 0) <= first_spin]
+        between = [c for c in labware_checks
+                   if first_spin < c.get("clock_time", 0) < last_spin]
+        after = [c for c in labware_checks if c.get("clock_time", 0) >= last_spin]
+        _add_terminal(checks, len(before) >= 1, "labware_before_spin",
+                      f"Before spin: {len(before)}." if before else "No inspection before spin!")
+        _add_terminal(checks, len(between) >= 1, "labware_between_spins",
+                      f"Between spins: {len(between)}." if between else "No inspection between spins!")
+        _add_terminal(checks, len(after) >= 1, "labware_after_spin",
+                      f"After spin: {len(after)}." if after else "No inspection after spin!")
+    else:
+        _add_terminal(checks, False, "labware_before_spin", "No spins — cannot anchor timing.")
+        _add_terminal(checks, False, "labware_between_spins", "No spins — cannot anchor timing.")
+        _add_terminal(checks, False, "labware_after_spin", "No spins — cannot anchor timing.")
+
+    _add_terminal(checks, len(readouts) >= 2, "absorbance_reads_ge2",
+                  f"Absorbance reads: {len(readouts)}." if len(readouts) >= 2
+                  else f"Only {len(readouts)} read(s)!")
+    _add_terminal(checks, reader_opened, "reader_opened",
+                  "Reader opened." if reader_opened else "Reader never opened!")
+    _add_terminal(checks, reader_closed, "reader_closed",
+                  "Reader closed." if reader_closed else "Reader never closed!")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    if cf_spins and readouts and cf_doors_locked:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Differential centrifugation cross-validated: {len(cf_spins)} spins, "
+                           f"{len(readouts)} reads."}
+    elif not cf_doors_locked:
+        attrs = {"label": "agent_error", "detail": "Door never locked — centrifuge safety violation."}
+    return checks, attrs
+
+
+def _verify_arm_scale_xover_qc(ls, exp):
+    """Arm+Scale xover: arm transports plate to scale, weight cross-validates placement."""
+    checks = []; events = ls.events; attrs = {}
+    _add_terminal(checks, True, "dry_run", "STAR + arm/scale xover.")
+
+    arm_positions = [e for e in events if e.get("event_type") == "arm.position_read"]
+    arm_gripper = [e for e in events if e.get("event_type") == "arm.gripper_state"]
+    arm_homed = any(e.get("event_type") == "arm.homed" for e in events)
+    arm_picked = [e for e in events if e.get("event_type") == "arm.picked_up"]
+    arm_dropped = [e for e in events if e.get("event_type") == "arm.dropped"]
+    arm_safed = [e for e in events if e.get("event_type") == "arm.safe"]
+    sc_zeroed = any(e.get("event_type") == "scale.zeroed" for e in events)
+    sc_weighs = [e for e in events if e.get("event_type") == "scale.weight_read"]
+    labware_checks = [e for e in events if e.get("event_type") == "inspection.labware"]
+
+    _add_terminal(checks, arm_homed, "arm_homed",
+                  "Arm homed." if arm_homed else "Arm never homed!")
+    _add_terminal(checks, len(arm_positions) >= 7, "position_checks_ge7",
+                  f"Position checks: {len(arm_positions)} (need >=7)." if len(arm_positions) >= 7
+                  else f"Only {len(arm_positions)} position checks — blind movement!")
+    _add_terminal(checks, len(arm_gripper) >= 4, "gripper_checks_ge4",
+                  f"Gripper checks: {len(arm_gripper)} (need >=4)." if len(arm_gripper) >= 4
+                  else f"Only {len(arm_gripper)} gripper checks!")
+    _add_terminal(checks, len(arm_picked) >= 1 or len(arm_dropped) >= 2, "arm_transport_ops",
+                  f"Pickups: {len(arm_picked)}, drops: {len(arm_dropped)}."
+                  if arm_picked or arm_dropped
+                  else "No arm transport operations!")
+    _add_terminal(checks, len(arm_dropped) >= 2, "drops_ge2",
+                  f"Drops: {len(arm_dropped)}." if len(arm_dropped) >= 2
+                  else f"Only {len(arm_dropped)} drop(s)!")
+    _add_terminal(checks, len(arm_safed) >= 1, "safe_position",
+                  f"Safe positions: {len(arm_safed)}." if arm_safed
+                  else "Never moved to safe!")
+
+    _add_terminal(checks, sc_zeroed, "scale_zeroed",
+                  "Scale zeroed." if sc_zeroed else "Scale not zeroed!")
+    _add_terminal(checks, len(sc_weighs) >= 3, "scale_reads_ge3",
+                  f"Scale reads: {len(sc_weighs)} (need >=3)." if len(sc_weighs) >= 3
+                  else f"Only {len(sc_weighs)} scale read(s) — insufficient!")
+
+    # Scale reads must occur between first drop and last drop (plate on scale)
+    if arm_dropped and sc_weighs:
+        drop_first = arm_dropped[0].get("clock_time", 0)
+        drop_last = arm_dropped[-1].get("clock_time", 0)
+        on_scale = [w for w in sc_weighs
+                    if drop_first <= w.get("clock_time", 0) <= drop_last]
+        _add_terminal(checks, len(on_scale) >= 3, "weigh_while_on_scale",
+                      f"Weight reads while plate on scale: {len(on_scale)}."
+                      if len(on_scale) >= 3
+                      else f"Only {len(on_scale)} read(s) while on scale — missed the window!")
+    else:
+        _add_terminal(checks, False, "weigh_while_on_scale",
+                      "No drops or reads — cannot verify weigh timing.")
+
+    _add_terminal(checks, len(labware_checks) >= 1, "labware_inspected",
+                  f"Labware checks: {len(labware_checks)}." if labware_checks
+                  else "Never inspected labware!")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    if arm_positions and arm_gripper and sc_weighs:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"Arm+scale cross-validation: {len(arm_positions)} pos checks, "
+                           f"{len(sc_weighs)} weigh reads."}
+    elif len(sc_weighs) < 3:
+        attrs = {"label": "agent_error", "detail": "Insufficient weight verification."}
+    return checks, attrs
+
+
+def _verify_pcr_reader_xover_qc(ls, exp):
+    """PCR+Reader xover: temp cross-validated at every PCR step, endpoint absorbance after cycling."""
+    checks = []; events = ls.events; attrs = {}
+    _add_terminal(checks, True, "dry_run", "STAR + PCR/reader xover.")
+
+    tc_lid_closed = any(e.get("event_type") == "tc.lid_closed" for e in events)
+    tc_lid_opened = any(e.get("event_type") == "tc.lid_opened" for e in events)
+    tc_lid_temp_set = any(e.get("event_type") == "tc.lid_temp_set" for e in events)
+    tc_block_sets = [e for e in events if e.get("event_type") == "tc.block_temp_set"]
+    tc_block_reads = [e for e in events if e.get("event_type") == "tc.block_temp_read"]
+    tc_deactivated = any(e.get("event_type") == "tc.deactivated" for e in events)
+    reader_opened = any(e.get("event_type") == "reader.opened" for e in events)
+    reader_closed = any(e.get("event_type") == "reader.closed" for e in events)
+    readouts = [e for e in events if e.get("event_type") == "readout.created"]
+    labware_checks = [e for e in events if e.get("event_type") == "inspection.labware"]
+
+    _add_terminal(checks, tc_lid_closed, "tc_lid_closed",
+                  "TC lid closed." if tc_lid_closed else "TC lid never closed — unsafe!")
+    _add_terminal(checks, tc_lid_temp_set, "tc_lid_temp_set",
+                  "TC lid temp set." if tc_lid_temp_set else "TC lid temp not set!")
+    if tc_lid_closed and tc_block_sets:
+        lid_t = [e for e in events if e.get("event_type") == "tc.lid_closed"][0].get("clock_time", 0)
+        first_heat_t = tc_block_sets[0].get("clock_time", 0)
+        _add_terminal(checks, lid_t < first_heat_t, "lid_closed_before_heat",
+                      "Lid closed before block heating." if lid_t < first_heat_t
+                      else "SAFETY VIOLATION: block heated before lid closed!")
+
+    _add_terminal(checks, len(tc_block_sets) >= 3, "block_temp_sets_ge3",
+                  f"Block temp sets: {len(tc_block_sets)} (need >=3)." if len(tc_block_sets) >= 3
+                  else f"Only {len(tc_block_sets)} block set(s) — PCR protocol incomplete!")
+    _add_terminal(checks, len(tc_block_reads) >= 3, "block_temp_reads_ge3",
+                  f"Block temp reads: {len(tc_block_reads)} (need >=3)." if len(tc_block_reads) >= 3
+                  else f"Only {len(tc_block_reads)} block read(s) — no cross-validation!")
+
+    if tc_block_sets and tc_block_reads:
+        paired = 0
+        for bset in tc_block_sets:
+            st = bset.get("clock_time", 0)
+            after = [r for r in tc_block_reads if r.get("clock_time", 0) > st]
+            if after:
+                paired += 1
+        _add_terminal(checks, paired >= len(tc_block_sets), "block_readback_paired",
+                      f"Readback after {paired}/{len(tc_block_sets)} block sets."
+                      if paired >= len(tc_block_sets)
+                      else f"Only {paired}/{len(tc_block_sets)} sets had readback — blind ramps!")
+    else:
+        _add_terminal(checks, False, "block_readback_paired",
+                      "No block temp sets or reads — cannot cross-validate.")
+
+    _add_terminal(checks, tc_deactivated, "tc_deactivated",
+                  "TC deactivated." if tc_deactivated else "TC never deactivated!")
+    _add_terminal(checks, tc_lid_opened, "tc_lid_opened",
+                  "TC lid opened." if tc_lid_opened else "TC lid never opened after PCR!")
+    _add_terminal(checks, reader_opened, "reader_opened",
+                  "Reader opened." if reader_opened else "Reader never opened!")
+    _add_terminal(checks, reader_closed, "reader_closed",
+                  "Reader closed." if reader_closed else "Reader never closed!")
+
+    if readouts and tc_block_sets and tc_deactivated:
+        last_tc_t = max(
+            [e.get("clock_time", 0) for e in events
+             if e.get("event_type") in ("tc.block_temp_set", "tc.block_temp_read",
+                                         "tc.deactivated", "tc.lid_opened")],
+            default=0,
+        )
+        readout_t = readouts[0].get("clock_time", 0)
+        _add_terminal(checks, readout_t > last_tc_t, "readout_after_cycling",
+                      "Readout after PCR cycling complete." if readout_t > last_tc_t
+                      else "STALE READOUT: absorbance read before PCR finished!")
+    elif readouts:
+        _add_terminal(checks, True, "readout_after_cycling",
+                      "Readout present (partial TC check skipped).")
+    else:
+        _add_terminal(checks, False, "readout_after_cycling",
+                      "No readout created — cannot verify temporal ordering.")
+
+    _add_terminal(checks, len(labware_checks) >= 1, "labware_inspected",
+                  f"Labware checks: {len(labware_checks)}." if labware_checks
+                  else "Never inspected labware!")
+    _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
+    _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    if tc_block_sets and tc_block_reads and readouts and tc_lid_closed:
+        attrs = {"label": "success_despite_fault",
+                 "detail": f"PCR cross-validated: {len(tc_block_reads)} temp reads, "
+                           f"endpoint absorbance confirmed."}
+    elif not tc_lid_closed:
+        attrs = {"label": "agent_error", "detail": "Lid never closed — PCR safety violation."}
     return checks, attrs
 
 

@@ -3344,6 +3344,360 @@ SHAKER_READER_XOVER_QC = TaskSpec(
     stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
 )
 
+PCR_READER_XOVER_QC = TaskSpec(
+    scenario="pcr_reader_xover_qc",
+    objective="Deep integration: run PCR thermal cycling with temperature cross-validation "
+              "at every step, then verify amplification by endpoint absorbance.",
+    prompt=(
+        "A Thermocycler and a Plate Reader are available. You must run a PCR "
+        "protocol with temperature verification at every thermal step, then detect "
+        "the amplification product by endpoint absorbance.\n\n"
+        "== Phase 1: Pre-PCR inspection and safety setup ==\n"
+        "1.  get_labware_state(labware_id='assay_plate') — inspect plate BEFORE PCR.\n"
+        "2.  tc_close_lid — SAFETY: lid MUST be closed before any heating.\n"
+        "3.  tc_set_lid_temp(temperature=105.0) — set heated lid to prevent condensation.\n"
+        "4.  tc_get_block_temp — verify starting block temperature.\n\n"
+        "== Phase 2: PCR thermal cycling (cross-validate EVERY step) ==\n"
+        "5.  tc_set_block_temp(temperature=95.0) — denaturation step.\n"
+        "6.  tc_get_block_temp — CROSS-CHECK: is block at 95?C?\n"
+        "7.  tc_set_block_temp(temperature=55.0) — annealing step.\n"
+        "8.  tc_get_block_temp — CROSS-CHECK: is block at 55?C?\n"
+        "9.  tc_set_block_temp(temperature=72.0) — extension step.\n"
+        "10. tc_get_block_temp — CROSS-CHECK: is block at 72?C?\n"
+        "11. tc_deactivate — end thermal cycling.\n\n"
+        "== Phase 3: Endpoint detection (verify amplification) ==\n"
+        "12. tc_open_lid — SAFETY: lid MUST be open before plate access.\n"
+        "13. plate_reader_open — open the reader.\n"
+        "14. read_absorbance(assay_plate, 600nm, B1) — endpoint detection of PCR product.\n"
+        "15. plate_reader_close — close the reader.\n"
+        "16. get_labware_state(labware_id='assay_plate') — final plate inspection.\n\n"
+        "== Phase 4: Submit ==\n"
+        "17. Submit against control band [0.75, 0.9].\n\n"
+        "CROSS-VALIDATION RULES:\n"
+        "- EVERY block temperature change MUST be verified with a get_block_temp readback.\n"
+        "- Lid MUST be closed BEFORE any heating and opened BEFORE plate access.\n"
+        "- The absorbance readout MUST occur AFTER all thermal cycling is complete.\n"
+        "- At least 3 block temperature sets AND 3 reads are required."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={"assay_plate": {"B1": {"contents": "pcr_master_mix", "volume_ul": 50}}},
+    expected={
+        "use_thermocycler": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "tc_lid_temp": 105.0,
+        "tc_block_temps": [95.0, 55.0, 72.0],
+        "require_lid_closed_before_heat": True,
+        "require_block_temp_sets_ge": 3,
+        "require_block_temp_reads_ge": 3,
+        "require_lid_opened_before_read": True,
+        "require_readout_after_cycling": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+PUMP_SCALE_XOVER_QC = TaskSpec(
+    scenario="pump_scale_xover_qc",
+    objective="Deep integration: pump liquid at three different speed/duration settings, "
+              "with the scale independently cross-validating every dispense by cumulative weight.",
+    prompt=(
+        "A Peristaltic Pump and an Analytical Balance are available. You must pump "
+        "liquid at three progressively different speed/duration settings, with the "
+        "SCALE independently cross-validating every dispense by cumulative weight.\n\n"
+        "== Phase 1: Scale calibration ==\n"
+        "1.  scale_zero — set absolute zero reference.\n"
+        "2.  scale_get_weight — verify zero (should read ~0.000 g).\n"
+        "3.  scale_tare — tare with empty container.\n"
+        "4.  scale_get_weight — verify tare (should read ~0.000 g).\n\n"
+        "== Phase 2: First pump — low speed, long duration (verify by weight) ==\n"
+        "5.  get_labware_state(labware_id='assay_plate') — inspect BEFORE pumping.\n"
+        "6.  pump_run_duration(speed_rpm=80, duration_s=10.0) — slow pump for 10s.\n"
+        "7.  scale_get_weight — CROSS-VALIDATE reading #1: weight increase confirms flow.\n"
+        "8.  scale_get_weight — reading #2: stability check (drift < 0.01 g).\n"
+        "9.  scale_get_weight — reading #3: third confirmation.\n\n"
+        "== Phase 3: Second pump — medium speed (verify cumulative weight) ==\n"
+        "10. pump_run_duration(speed_rpm=150, duration_s=5.0) — faster pump for 5s.\n"
+        "11. scale_get_weight — CROSS-VALIDATE: cumulative weight must increase.\n"
+        "12. scale_get_weight — stability check.\n"
+        "13. scale_get_weight — third confirmation.\n\n"
+        "== Phase 4: Third pump — high speed (final cumulative verification) ==\n"
+        "14. pump_run_duration(speed_rpm=250, duration_s=3.0) — highest speed for 3s.\n"
+        "15. scale_get_weight — cumulative weight must increase further.\n"
+        "16. scale_get_weight — stability check.\n"
+        "17. pump_halt — safety: stop pump after all operations.\n\n"
+        "== Phase 5: Final verification ==\n"
+        "18. get_labware_state(labware_id='assay_plate') — inspect after all pumping.\n"
+        "19. read_absorbance(assay_plate, 600nm, B1).\n"
+        "20. Submit against control band [0.75, 0.9].\n\n"
+        "CROSS-VALIDATION RULES:\n"
+        "- EVERY pump operation MUST be followed by at least 2 scale weight readings.\n"
+        "- Cumulative weight MUST increase monotonically (pumping is additive).\n"
+        "- Scale MUST be zeroed AND tared before the first pump operation.\n"
+        "- Three different pump speeds MUST be used (progressive speed test).\n"
+        "- Pump MUST be halted at the end (safety).\n"
+        "- Total weight readings >= 8 across the entire protocol."
+    ),
+    initial_volumes={"assay_plate.B1": 0.0},
+    well_metadata={"assay_plate": {"B1": {"contents": "empty_well", "volume_ul": 0}}},
+    expected={
+        "use_pump": True, "use_scale": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "pump_speeds": [80, 150, 250],
+        "require_zero_and_tare": True,
+        "require_pump_ops_ge": 3,
+        "require_weight_readings_ge": 8,
+        "require_weight_after_each_pump": True,
+        "require_weight_stability": True,
+        "require_cumulative_increasing": True,
+        "require_pump_halt": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+HS_READER_XOVER_QC = TaskSpec(
+    scenario="hs_reader_xover_qc",
+    objective="Deep integration: incubate with heat+shake in HeaterShaker, then verify "
+              "incubation effect optically — thermal-mechanical cross-validated by absorbance.",
+    prompt=(
+        "A HeaterShaker and a Plate Reader are available. You must incubate a plate "
+        "with both heating AND shaking, verifying temperature at every step, then "
+        "optically confirm the incubation effect by endpoint absorbance.\n\n"
+        "== Phase 1: Pre-incubation temperature setup ==\n"
+        "1.  get_labware_state(labware_id='assay_plate') — inspect BEFORE incubation.\n"
+        "2.  hs_set_temperature(temperature=37.0) — set incubation temperature.\n"
+        "3.  hs_get_temperature — CROSS-CHECK: verify HS is heating toward 37?C.\n"
+        "4.  hs_get_temperature — stability check: confirm temperature reached.\n\n"
+        "== Phase 2: Shake incubation with temperature monitoring ==\n"
+        "5.  hs_shake(speed=300, duration_s=60) — shake at 300 rpm for 60s.\n"
+        "6.  hs_get_temperature — CROSS-CHECK: verify temperature maintained DURING shaking.\n"
+        "7.  hs_get_temperature — second check: temperature stable through shake.\n\n"
+        "== Phase 3: Post-shake temperature verification ==\n"
+        "8.  hs_stop_shaking — stop the shaking.\n"
+        "9.  hs_get_temperature — CROSS-CHECK: verify temperature still at 37?C after shake.\n"
+        "10. hs_get_temperature — final stability confirmation.\n\n"
+        "== Phase 4: Optical endpoint detection ==\n"
+        "11. hs_deactivate — shut down HeaterShaker before plate access.\n"
+        "12. plate_reader_open — open the reader.\n"
+        "13. read_absorbance(assay_plate, 600nm, B1) — endpoint detection after incubation.\n"
+        "14. plate_reader_close — close the reader.\n"
+        "15. get_labware_state(labware_id='assay_plate') — final inspection.\n\n"
+        "== Phase 5: Submit ==\n"
+        "16. Submit against control band [0.75, 0.9].\n\n"
+        "CROSS-VALIDATION RULES:\n"
+        "- Temperature MUST be checked BEFORE shake, DURING shake, and AFTER shake stop.\n"
+        "- HS MUST be deactivated BEFORE opening the plate reader (safety).\n"
+        "- The absorbance readout MUST occur AFTER all HS operations are complete.\n"
+        "- At least 5 temperature reads across all three phases."
+    ),
+    initial_volumes={"assay_plate.B1": 100.0},
+    well_metadata={"assay_plate": {"B1": {"contents": "cell_culture", "volume_ul": 100}}},
+    expected={
+        "use_heater_shaker": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "hs_target_temp": 37.0, "hs_shake_speed": 300, "hs_shake_duration": 60,
+        "require_temp_reads_ge": 5,
+        "require_temp_before_during_after_shake": True,
+        "require_hs_deactivated_before_read": True,
+        "require_readout_after_incubation": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+TEMPCTRL_READER_XOVER_QC = TaskSpec(
+    scenario="tempctrl_reader_xover_qc",
+    objective="Deep integration: measure absorbance at three temperature points, "
+              "cross-validating that each read only happens after temperature stabilizes.",
+    prompt=(
+        "A Temperature Controller and a Plate Reader are available. You must measure "
+        "absorbance at three different temperatures (25, 37, 45?C), cross-validating "
+        "that each optical reading only occurs AFTER the temperature has stabilized.\n\n"
+        "== Phase 1: Initial inspection ==\n"
+        "1.  get_labware_state(labware_id='assay_plate') — inspect before temperature ramp.\n\n"
+        "== Phase 2: Baseline reading at 25?C ==\n"
+        "2.  temp_controller_set_temperature(temperature=25.0) — set to 25?C.\n"
+        "3.  temp_controller_wait_for_temperature(timeout=60.0) — wait for stabilization.\n"
+        "4.  temp_controller_get_temperature — CROSS-CHECK: verify at 25?C.\n"
+        "5.  plate_reader_open\n"
+        "6.  read_absorbance(assay_plate, 600nm, B1) — baseline at 25?C.\n"
+        "7.  plate_reader_close\n\n"
+        "== Phase 3: Physiological temperature at 37?C ==\n"
+        "8.  temp_controller_set_temperature(temperature=37.0) — ramp to 37?C.\n"
+        "9.  temp_controller_wait_for_temperature(timeout=60.0) — wait for stabilization.\n"
+        "10. temp_controller_get_temperature — CROSS-CHECK: verify at 37?C.\n"
+        "11. temp_controller_get_temperature — stability check: temp holding?\n"
+        "12. plate_reader_open\n"
+        "13. read_absorbance(assay_plate, 600nm, B1) — reading at 37?C.\n"
+        "14. plate_reader_close\n\n"
+        "== Phase 4: Heat stress at 45?C ==\n"
+        "15. temp_controller_set_temperature(temperature=45.0) — ramp to 45?C.\n"
+        "16. temp_controller_wait_for_temperature(timeout=60.0) — wait for stabilization.\n"
+        "17. temp_controller_get_temperature — CROSS-CHECK: verify at 45?C.\n"
+        "18. temp_controller_get_temperature — stability check.\n"
+        "19. plate_reader_open\n"
+        "20. read_absorbance(assay_plate, 600nm, B1) — reading at 45?C.\n"
+        "21. plate_reader_close\n\n"
+        "== Phase 5: Cleanup and submit ==\n"
+        "22. temp_controller_deactivate — return to ambient.\n"
+        "23. get_labware_state(labware_id='assay_plate') — final inspection.\n"
+        "24. Submit against control band [0.75, 0.9].\n\n"
+        "CROSS-VALIDATION RULES:\n"
+        "- EVERY temperature set MUST be followed by wait_for_temperature AND get_temperature.\n"
+        "- Absorbance MUST only be read AFTER temperature has been verified at that setpoint.\n"
+        "- At least 3 absorbance readings (one per temperature).\n"
+        "- Reader MUST be opened and closed for each reading (3 open+close cycles).\n"
+        "- Temperature controller MUST be deactivated at the end."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={"assay_plate": {"B1": {"contents": "temperature_sensitive_sample", "volume_ul": 50}}},
+    expected={
+        "use_temp_controller": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "temperatures": [25.0, 37.0, 45.0],
+        "require_temp_sets_ge": 3,
+        "require_temp_reads_ge": 3,
+        "require_wait_calls_ge": 3,
+        "require_absorbance_reads_ge": 3,
+        "require_temp_before_each_read": True,
+        "require_reader_cycles": 3,
+        "require_deactivate_at_end": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+CENTRIFUGE_READER_XOVER_QC = TaskSpec(
+    scenario="centrifuge_reader_xover_qc",
+    objective="Deep integration: spin down particulate at two g-force levels with "
+              "door safety checks, then verify optically by endpoint absorbance.",
+    prompt=(
+        "A Centrifuge and a Plate Reader are available. You must spin down a "
+        "sample at two g-force levels with full safety interlock verification, "
+        "then optically confirm pelleting by endpoint absorbance.\n\n"
+        "== Phase 1: Pre-spin inspection and safety setup ==\n"
+        "1.  get_labware_state(labware_id='assay_plate') — inspect BEFORE spin.\n"
+        "2.  centrifuge_open_door — ensure door can open.\n"
+        "3.  centrifuge_go_to_bucket1 — position bucket 1 for access.\n"
+        "4.  centrifuge_lock_bucket — lock the bucket.\n"
+        "5.  centrifuge_close_door — close the centrifuge door.\n"
+        "6.  centrifuge_lock_door — SAFETY: lock door before spinning.\n\n"
+        "== Phase 2: First spin — low g (with cross-checks) ==\n"
+        "7.  centrifuge_spin(g_force=2000, duration_s=60) — low-g spin.\n"
+        "8.  centrifuge_open_door — open after spin complete.\n"
+        "9.  get_labware_state(labware_id='assay_plate') — CROSS-CHECK after first spin.\n\n"
+        "== Phase 3: Second spin — high g (with cross-checks) ==\n"
+        "10. centrifuge_close_door — close door.\n"
+        "11. centrifuge_lock_door — SAFETY: re-lock before second spin.\n"
+        "12. centrifuge_spin(g_force=8000, duration_s=120) — high-g spin.\n"
+        "13. centrifuge_open_door — open after spin complete.\n"
+        "14. get_labware_state(labware_id='assay_plate') — CROSS-CHECK after second spin.\n\n"
+        "== Phase 4: Optical endpoint detection ==\n"
+        "15. plate_reader_open — open the reader.\n"
+        "16. read_absorbance(assay_plate, 600nm, B1) — endpoint reading of supernatant.\n"
+        "17. read_absorbance(assay_plate, 600nm, B2) — adjacent well comparison.\n"
+        "18. plate_reader_close — close the reader.\n\n"
+        "== Phase 5: Submit ==\n"
+        "19. Submit against control band [0.75, 0.9].\n\n"
+        "CROSS-VALIDATION RULES:\n"
+        "- Door MUST be locked before EVERY spin (2 lock+spin cycles).\n"
+        "- Labware MUST be inspected BEFORE the first spin, BETWEEN spins, and AFTER the last spin.\n"
+        "- Two different g-forces MUST be used (2000g and 8000g).\n"
+        "- At least 2 absorbance readings for endpoint comparison.\n"
+        "- Reader MUST be opened and closed."
+    ),
+    initial_volumes={"assay_plate.B1": 200.0, "assay_plate.B2": 200.0},
+    well_metadata={
+        "assay_plate": {
+            "B1": {"contents": "cell_suspension", "volume_ul": 200},
+            "B2": {"contents": "cell_suspension", "volume_ul": 200},
+        },
+    },
+    expected={
+        "use_centrifuge": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "g_forces": [2000, 8000],
+        "require_door_locked_before_each_spin": True,
+        "require_spins_ge": 2,
+        "require_labware_checks_ge": 3,
+        "require_absorbance_reads_ge": 2,
+        "require_reader_open_close": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
+ARM_SCALE_XOVER_QC = TaskSpec(
+    scenario="arm_scale_xover_qc",
+    objective="Deep integration: robot arm physically transports a plate onto the "
+              "analytical balance, with position checks at every waypoint and "
+              "gravimetric cross-validation after placement.",
+    prompt=(
+        "A Robot Arm and an Analytical Balance are available. You must physically "
+        "transport the assay_plate onto the scale using the arm, verify its weight, "
+        "then return it — with position/gripper verification at EVERY waypoint.\n\n"
+        "== Phase 1: Initial inspection and scale calibration ==\n"
+        "1.  get_labware_state(labware_id='assay_plate') — inspect before transport.\n"
+        "2.  scale_zero — calibrate the scale.\n"
+        "3.  scale_get_weight — verify zero (should read ~0.000 g).\n\n"
+        "== Phase 2: Arm picks up plate (with cross-checks) ==\n"
+        "4.  arm_home — initialize arm.\n"
+        "5.  arm_get_position — CROSS-CHECK: verify at home (0, 0, ~150).\n"
+        "6.  arm_open_gripper(width_mm=80.0) — prepare gripper.\n"
+        "7.  arm_get_gripper_state — verify gripper is open.\n"
+        "8.  arm_move_to(x=100, y=200, z=100) — move above carrier.\n"
+        "9.  arm_get_position — verify at pick-up position.\n"
+        "10. arm_approach(x=100, y=200, z=30, access='vertical')\n"
+        "11. arm_close_gripper(width_mm=85.0)\n"
+        "12. arm_get_gripper_state — MUST be closed before pickup!\n"
+        "13. arm_pick_up_resource(x=100, y=200, z=30, plate_width_mm=85.0)\n\n"
+        "== Phase 3: Transport to scale (with cross-checks) ==\n"
+        "14. arm_get_position — verify plate is lifted.\n"
+        "15. arm_move_to(x=400, y=200, z=100) — transport to scale area.\n"
+        "16. arm_get_position — verify at scale position.\n"
+        "17. arm_approach(x=400, y=200, z=30, access='vertical')\n"
+        "18. arm_drop_resource(x=400, y=200, z=30) — place plate ON the scale.\n\n"
+        "== Phase 4: Gravimetric cross-validation ==\n"
+        "19. scale_get_weight — CROSS-VALIDATE reading #1: weight of plate.\n"
+        "20. scale_get_weight — reading #2: stability check.\n"
+        "21. scale_get_weight — reading #3: third confirmation.\n\n"
+        "== Phase 5: Arm retrieves and returns plate ==\n"
+        "22. arm_close_gripper(width_mm=85.0)\n"
+        "23. arm_get_gripper_state — verify closed.\n"
+        "24. arm_pick_up_resource(x=400, y=200, z=30, plate_width_mm=85.0)\n"
+        "25. arm_get_position — verify picked up from scale.\n"
+        "26. arm_move_to(x=100, y=200, z=100) — return to carrier.\n"
+        "27. arm_get_position — verify at carrier.\n"
+        "28. arm_approach(x=100, y=200, z=30)\n"
+        "29. arm_drop_resource(x=100, y=200, z=30)\n"
+        "30. arm_move_to_safe\n"
+        "31. arm_get_position — verify arm is safe.\n"
+        "32. arm_get_gripper_state — verify gripper released.\n\n"
+        "== Phase 6: Final ==\n"
+        "33. get_labware_state(labware_id='assay_plate') — final inspection.\n"
+        "34. read_absorbance(assay_plate, 600nm, B1).\n"
+        "35. Submit against control band [0.75, 0.9].\n\n"
+        "CROSS-VALIDATION RULES:\n"
+        "- EVERY arm movement MUST be bracketed by position checks.\n"
+        "- EVERY grip operation MUST be bracketed by gripper_state checks.\n"
+        "- Scale MUST read weight >=3 times while the plate is on it.\n"
+        "- At least 8 position checks and 5 gripper checks total."
+    ),
+    initial_volumes={"assay_plate.B1": 50.0},
+    well_metadata={"assay_plate": {"B1": {"contents": "pre_loaded_sample", "volume_ul": 50}}},
+    expected={
+        "use_arm": True, "use_scale": True,
+        "target_well": "assay_plate.B1", "wavelength_nm": 600,
+        "require_position_checks_ge": 7,
+        "require_gripper_checks_ge": 4,
+        "require_scale_reads_ge": 3,
+        "require_drops_ge": 2,
+        "require_zero": True,
+        "control_band": {"min": 0.75, "max": 0.9},
+    },
+    stochastic_config={"od600_noise": True, "noise_sigma": 0.03},
+)
+
 HS_THERMOCYCLER_XOVER_QC = TaskSpec(
     scenario="hs_thermocycler_xover_qc",
     objective="Deep integration: pre-incubation in HeaterShaker then PCR in Thermocycler, "
