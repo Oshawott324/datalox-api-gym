@@ -52,10 +52,21 @@ class StrictScenario:
 
 def run_strict_admission_suite(*, out_dir: Path) -> dict[str, Any]:
     """Run oracle, empty, and mutant cases for the strict lab admission set."""
+    from api_gym.lab_benchmark_quality import (
+        build_admission_matrix,
+        build_milestone_results,
+        summarize_quality_results,
+    )
+
     out_dir = out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
+    quality_rows = {
+        (row["world"], row["scenario"], row["case_id"]): row
+        for row in build_admission_matrix()["rows"]
+    }
 
     scenario_results: list[dict[str, Any]] = []
+    all_case_results: list[dict[str, Any]] = []
     passed_cases = 0
     failed_cases = 0
     case_index = 0
@@ -88,26 +99,37 @@ def run_strict_admission_suite(*, out_dir: Path) -> dict[str, Any]:
                 verification.ok is case_spec.expected_verifier_ok
                 and matched_expected_failure_codes
             )
+            quality_row = quality_rows[
+                (scenario_spec.world, scenario_spec.scenario, case_spec.case_id)
+            ]
             if case_ok:
                 passed_cases += 1
             else:
                 failed_cases += 1
 
-            case_results.append(
-                {
-                    "world": scenario_spec.world,
-                    "scenario": scenario_spec.scenario,
-                    "case_id": case_spec.case_id,
-                    "run_dir": str(episode.run_dir),
-                    "verifier_ok": verification.ok,
-                    "expected_verifier_ok": case_spec.expected_verifier_ok,
-                    "expected_failure_codes": list(case_spec.expected_failure_codes),
-                    "failed_check_names": failed_check_names,
-                    "matched_expected_failure_codes": matched_expected_failure_codes,
-                    "ok": case_ok,
-                    "tool_results": tool_results,
-                }
-            )
+            case_result = {
+                "world": scenario_spec.world,
+                "scenario": scenario_spec.scenario,
+                "case_id": case_spec.case_id,
+                "run_dir": str(episode.run_dir),
+                "verifier_ok": verification.ok,
+                "expected_verifier_ok": case_spec.expected_verifier_ok,
+                "expected_failure_codes": list(case_spec.expected_failure_codes),
+                "failed_check_names": failed_check_names,
+                "matched_expected_failure_codes": matched_expected_failure_codes,
+                "ok": case_ok,
+                "split": quality_row["split"],
+                "milestones": list(quality_row["milestones"]),
+                "milestone_results": build_milestone_results(
+                    milestone_ids=quality_row["milestones"],
+                    expected_failure_codes=case_spec.expected_failure_codes,
+                    failed_check_names=failed_check_names,
+                    admission_ok=case_ok,
+                ),
+                "tool_results": tool_results,
+            }
+            case_results.append(case_result)
+            all_case_results.append(case_result)
 
         scenario_results.append(
             {
@@ -127,6 +149,7 @@ def run_strict_admission_suite(*, out_dir: Path) -> dict[str, Any]:
     return {
         "ok": failed_cases == 0,
         "summary": summary,
+        "quality_summary": summarize_quality_results(all_case_results),
         "scenarios": scenario_results,
     }
 

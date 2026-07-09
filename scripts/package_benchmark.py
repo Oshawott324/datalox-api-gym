@@ -19,6 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from api_gym.worlds.pylabrobot_lab_v0.sampler import SCENARIOS, sample_episode
 from api_gym.lab_strict_admission import run_strict_admission_suite
+from api_gym.lab_benchmark_quality import build_admission_matrix
 
 
 def main() -> None:
@@ -80,6 +81,11 @@ def package_benchmark(output_dir: str) -> None:
         tasks.append(ep.task)
     (out / "tasks.jsonl").write_text(
         "\n".join(json.dumps(t, ensure_ascii=False) for t in tasks) + "\n",
+        encoding="utf-8",
+    )
+    (out / "admission_matrix.json").write_text(
+        json.dumps(build_admission_matrix(), ensure_ascii=False, indent=2, sort_keys=True)
+        + "\n",
         encoding="utf-8",
     )
     print(f"Packaged {len(tasks)} tasks to {out / 'tasks.jsonl'}")
