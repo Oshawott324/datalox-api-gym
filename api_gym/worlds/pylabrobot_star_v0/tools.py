@@ -2299,7 +2299,7 @@ def _temp_controller_get_temperature(ls: LabState, _a: dict) -> dict:
 
 
 def _temp_controller_deactivate(ls: LabState, _a: dict) -> dict:
-    return services.tc_deactivate(ls)
+    return services.temp_control_deactivate(ls)
 
 
 def _temp_controller_wait_for_temperature(ls: LabState, a: dict) -> dict:

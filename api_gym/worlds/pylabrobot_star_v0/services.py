@@ -1574,7 +1574,7 @@ def tc_get_temperature(lab_state: LabState) -> dict[str, Any]:
     return _ok(resp)
 
 
-def tc_deactivate(lab_state: LabState) -> dict[str, Any]:
+def temp_control_deactivate(lab_state: LabState) -> dict[str, Any]:
     """Deactivate the temperature controller (return to ambient).
 
     PLR: ``TemperatureController.deactivate()``.
