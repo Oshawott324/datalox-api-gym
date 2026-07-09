@@ -1,6 +1,6 @@
 # LabLongRun Strict Admission: Current State and Next Actions
 
-Date: 2026-07-08
+Date: 2026-07-09
 Branch: `codex/strict-admission`
 Base: `origin/unitelabs-api-grounding-wz`
 
@@ -29,9 +29,9 @@ It does not inspect hidden mutable state directly from the admission harness.
 Current strict suite:
 
 ```text
-8 scenarios
-36 admission cases
-10 mutant families
+9 scenarios
+44 admission cases
+14 mutant families
 3 explicit split labels: dev, test_family_heldout, test_fault_heldout
 ```
 
@@ -46,6 +46,7 @@ Covered scenario types:
 
 ```text
 plate transfer decision
+OD600 serial dilution workflow
 stale/provenance read-before-transfer
 limited tips refusal
 low reagent refusal
@@ -103,6 +104,10 @@ busy instrument error then giving up
 using a pre-transfer readout after recovery
 wrong final decision after a valid recovered readout
 extra successful readout after recovery
+flat fake OD600 dilution readout
+missing mix_after during serial dilution
+post-dilution liquid handling that mutates dilution wells before readout
+submitted readout that does not cover the full dilution series
 ```
 
 The important shift is that the admission gate is now testing verifier validity, not only task sampling.
@@ -199,25 +204,46 @@ lab scenarios.
 
 ## What Changed In This Checkpoint
 
-We did the recommended next slice:
+We added the first biology-grounded composite family:
 
 ```text
-instrument_fault_star_qc
+pylabrobot_lab_v0::serial_dilution_qc
 ```
 
-In plain English: the agent transfers liquid, the plate reader first says it is
-busy, the agent must retry, recover one valid OD600 reading, and make the
-decision from that recovered evidence.
+In plain English: the agent performs a 5-step OD600 serial dilution. It must
+transfer 50 uL through the chain A1 -> B1 -> B2 -> B3 -> B4 -> B5, use and
+discard a fresh tip at each step, request mixing after each dispense, read B1-B5
+after the completed dilution, and submit the final decision from that submitted
+readout.
 
-The strict suite now includes these cases for the family:
+This replaces a weak prompt-shaped version of serial dilution. The old readout
+model returned 0.82 for every filled dilution well, so a dilution curve could
+look valid without any real dilution semantics. The new model propagates OD600
+through volume-weighted mixing:
 
 ```text
-oracle: transfer -> busy read -> successful retry -> correct submit
+B1 = 0.5
+B2 = 0.25
+B3 = 0.125
+B4 = 0.0625
+B5 = 0.0312
+```
+
+The same semantics are mirrored into the OT-2 visualizer service path, so the
+visual demo and benchmark verifier no longer tell different stories for this
+family.
+
+The strict suite now includes these cases for the serial dilution family:
+
+```text
+oracle: correct dilution chain -> submitted OD600 readout -> correct continue
 empty: no work
-no_retry_after_busy: gives up after the recoverable busy error
-read_before_transfer_then_retry: uses a recovered but stale pre-transfer reading
-wrong_decision_after_recovery: reads correctly but chooses the wrong final action
-extra_read_after_success: keeps reading after recovery instead of stopping cleanly
+read_before_dilution: submits a pre-dilution readout
+tip_reuse_between_steps: omits required discard discipline between steps
+missing_mix_after_dispense: omits mix_after during dilution dispenses
+post_dilution_mutation: mutates a dilution well after the chain before readout
+missing_terminal_readout: completes the chain but never reads/submits evidence
+wrong_decision: reads a valid curve but chooses hold
 ```
 
 We also added a first mutant-declaration layer:
@@ -247,9 +273,13 @@ non96_workaround_attempt
 failed_tool_then_false_success
 fault_recovery
 extra_retry_after_success
+tip_reuse_between_steps
+missing_mix_after_dispense
+post_dilution_mutation
+missing_terminal_readout
 ```
 
-This follow-up checkpoint adds the first benchmark-quality layer on top of that
+This checkpoint also keeps the benchmark-quality layer on top of that
 declaration layer:
 
 ```text
@@ -261,9 +291,9 @@ quality summary over strict admission results
 packaged admission_matrix.json
 ```
 
-That gives Zheng something concrete to review: whether the current split and
-milestone taxonomy is the right one, not just whether the runner happens to
-pass today.
+That gives Zheng something concrete to review: whether the current biological
+family, split, milestone taxonomy, and failure-code discipline are the right
+ones, not just whether the runner happens to pass today.
 
 ## Review Questions
 
@@ -306,16 +336,18 @@ Release bar: what minimum evidence makes a Hugging Face preview credible.
 Next implementation:
 
 ```text
-add one controlled generator experiment for a low-biology family, such as resource refusal or stale evidence
+abstract this OD600 serial dilution family into a small family template
+generate controlled variants over stock OD, dilution length, target wells, and held-out mutants
 make the generator emit the same admission-matrix fields as hand-authored cases
-measure whether generated mutants preserve exact expected failure-code sets
+measure whether generated variants preserve exact expected failure-code sets
 add baseline-agent runs against the strict suite and summarize failure modes
 ```
 
-The immediate engineering slice covered the admission matrix, milestone labels,
-collateral labels, package export, and a small split assignment. The generator
-experiment comes next because those gates now exist; generation without these
-checks would only multiply unmeasured drift.
+The immediate engineering slice now covers one real composite biological family
+plus the admission matrix, milestone labels, collateral labels, package export,
+and a small split assignment. The generator experiment comes next because those
+gates now exist; generation without these checks would only multiply unmeasured
+drift.
 
 After that:
 
@@ -342,10 +374,10 @@ For the next engineering step, this is mostly systems/verifier work, not biology
 
 ## Bottom Line
 
-The current branch is a good Phase 0 verifier-validity checkpoint.
+The current branch is a stronger Phase 0 verifier-validity checkpoint than the
+previous instrument-only slice.
 
-The next serious move is not more demo polish. It is turning the new
-declaration layer into an admission matrix, milestone verifier, collateral
-damage checker, and one small generator experiment, so we can tell whether this
-scales beyond hand-authored examples and reaches the solidity of recent
-agent-environment papers.
+The next serious move is not more demo polish. It is abstracting the OD600
+serial dilution family into generated but admission-checked variants, so we can
+tell whether this scales beyond hand-authored examples while preserving the
+solidity expected from recent agent-environment papers.

@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -190,7 +191,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int,
         deck=deck, liquid_handler=lh,
         plate=assay_plate, source_plate=source_plate, tip_rack=tip_rack,
         setup_done=True,
-        well_metadata=spec.well_metadata,
+        well_metadata=deepcopy(spec.well_metadata),
         deck_info={
             "deck_name": deck.name,
             "plate_name": assay_plate.name,
@@ -202,7 +203,7 @@ def _build_from_spec(spec: TaskSpec, out_dir: Path, seed: int,
     )
 
     # ── Hidden expected resolution ──────────────────────────────────────
-    expected = dict(spec.expected)
+    expected = deepcopy(spec.expected)
     expected["scenario"] = scenario
     lab_state.insert_event(
         event_type="expected_resolution.created",
@@ -417,8 +418,9 @@ SERIAL_DILUTION_QC = TaskSpec(
         "diluent/buffer. Transfer 50 uL from the stock (A1) to B1 (1:2), then 50 uL from "
         "B1 to B2 (1:4), B2 to B3 (1:8), B3 to B4 (1:16), B4 to B5 (1:32). Use a fresh "
         "tip for each transfer step to avoid cross-contamination. Mix each well after "
-        "dispensing. After all transfers, read OD600 of all 6 wells (A1 and B1-B5) and "
-        "submit your decision on whether the dilution curve is valid."
+        "dispensing, including B5. Discard the used tip after every dispense, including "
+        "the final dilution transfer. After all transfers, read OD600 of B1-B5 at 600 nm and submit "
+        "your decision using that dilution-series readout."
     ),
     initial_volumes={
         "source_plate.A1": 200.0,
@@ -426,13 +428,44 @@ SERIAL_DILUTION_QC = TaskSpec(
         "assay_plate.B3": 50.0, "assay_plate.B4": 50.0, "assay_plate.B5": 50.0,
     },
     well_metadata={
-        "source_plate": {"A1": {"contents": "concentrated_stock", "volume_ul": 200}},
+        "source_plate": {
+            "A1": {
+                "contents": "concentrated_stock",
+                "volume_ul": 200,
+                "od600": 1.0,
+            }
+        },
         "assay_plate": {
-            "B1": {"contents": "diluent", "purpose": "dilution_1_2", "initial_volume_ul": 50},
-            "B2": {"contents": "diluent", "purpose": "dilution_1_4", "initial_volume_ul": 50},
-            "B3": {"contents": "diluent", "purpose": "dilution_1_8", "initial_volume_ul": 50},
-            "B4": {"contents": "diluent", "purpose": "dilution_1_16", "initial_volume_ul": 50},
-            "B5": {"contents": "diluent", "purpose": "dilution_1_32", "initial_volume_ul": 50},
+            "B1": {
+                "contents": "diluent",
+                "purpose": "dilution_1_2",
+                "initial_volume_ul": 50,
+                "od600": 0.0,
+            },
+            "B2": {
+                "contents": "diluent",
+                "purpose": "dilution_1_4",
+                "initial_volume_ul": 50,
+                "od600": 0.0,
+            },
+            "B3": {
+                "contents": "diluent",
+                "purpose": "dilution_1_8",
+                "initial_volume_ul": 50,
+                "od600": 0.0,
+            },
+            "B4": {
+                "contents": "diluent",
+                "purpose": "dilution_1_16",
+                "initial_volume_ul": 50,
+                "od600": 0.0,
+            },
+            "B5": {
+                "contents": "diluent",
+                "purpose": "dilution_1_32",
+                "initial_volume_ul": 50,
+                "od600": 0.0,
+            },
         },
     },
     expected={
@@ -441,6 +474,28 @@ SERIAL_DILUTION_QC = TaskSpec(
                            "assay_plate.B4", "assay_plate.B5"],
         "transfer_volume_ul": 50, "wavelength_nm": 600,
         "expected_transfers": 5, "expected_tips_used": 5,
+        "expected_dilution_edges": [
+            ("source_plate:A1", "assay_plate:B1"),
+            ("assay_plate:B1", "assay_plate:B2"),
+            ("assay_plate:B2", "assay_plate:B3"),
+            ("assay_plate:B3", "assay_plate:B4"),
+            ("assay_plate:B4", "assay_plate:B5"),
+        ],
+        "expected_od600_values": {
+            "B1": 0.5,
+            "B2": 0.25,
+            "B3": 0.125,
+            "B4": 0.0625,
+            "B5": 0.0312,
+        },
+        "expected_final_dilution_volumes_ul": {
+            "assay_plate:B1": 50,
+            "assay_plate:B2": 50,
+            "assay_plate:B3": 50,
+            "assay_plate:B4": 50,
+            "assay_plate:B5": 100,
+        },
+        "expected_decision": "continue",
         "expected_od600_order": "decreasing",
     },
 )
