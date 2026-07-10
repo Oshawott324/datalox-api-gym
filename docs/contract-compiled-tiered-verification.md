@@ -29,6 +29,12 @@ This should be treated as a falsifiable systems experiment. If each new family
 still requires mostly new primitives or custom Python, the abstraction is not
 working.
 
+A second requirement is equally important: a task is not long-horizon merely
+because it contains many tool calls. A credible long-horizon lab task must
+contain elapsed biological time, delayed state changes, repeated observations,
+instrument contention, and decisions that depend on evidence produced much
+earlier in the run.
+
 ## Why Test This Now
 
 The current `pylabrobot_star_v0` verifier has:
@@ -48,6 +54,196 @@ instances of the same temporal-precedence operation.
 This is evidence that a reusable layer may exist. It is not evidence that the
 layer will preserve scientific validity. That must be demonstrated with
 held-out families and mutation tests.
+
+## Long-Horizon Realism Requirement
+
+The present storage and incubation scenarios are useful API-sequencing tests,
+but they are not yet realistic long-horizon experiments.
+
+In the current dry-run backend:
+
+```text
+setting incubator temperature immediately sets current temperature
+starting shaking changes a boolean immediately
+store and retrieve operations only update location and capacity
+the stated incubation period has no modeled biological effect
+the full-workflow scenario represents incubation with a workflow note
+```
+
+Real incubator and plate-reader operation is materially different. PyLabRobot's
+documented incubator surfaces include temperature ramping and waiting for target
+temperature, plate-presence sensing, controlled loading trays, shaking, and
+queued commands when units share a connection. Supported plate readers expose
+plate loading, absorbance reads, heating, and shaking. Vendor growth-curve
+protocols use these capabilities for repeated OD600 measurements over many
+hours.
+
+Therefore, the first serious long-horizon family should include:
+
+```text
+hours of logical experiment time rather than wall-clock sleep
+asynchronous instrument jobs with queued, running, completed, and failed states
+temperature and shaking exposure over intervals, not only set-point events
+biological state that evolves while time advances
+repeated measurements with allowed cadence windows
+exclusive instruments and scheduling conflicts
+conditional decisions from fresh measurements
+replanning after delayed, failed, or missed operations
+sample identity and provenance across every move and read
+durable pause and resume while jobs and biological time continue
+```
+
+A 50-step protocol that executes immediately is still a short-horizon state
+machine. An 8-hour campaign with only 15 agent decisions can be genuinely
+long-horizon if early choices alter later observations and recovery options.
+
+### Realism evidence
+
+Every modeled behavior should carry a source status:
+
+| Source status | Appropriate use |
+| --- | --- |
+| `provider_documented` | Action contract, units, preconditions, and documented job states |
+| `protocol_documented` | Workflow order, timing windows, controls, and measurement cadence |
+| `probe_observed` | Response bodies, timing, state transitions, and error behavior from a local or test system |
+| `partner_capture` | Redacted production traces, queue behavior, failure frequency, and instrument timing |
+| `assumption_for_calibration` | Explicitly provisional behavior that cannot support a realism claim by itself |
+
+The environment should not invent undocumented fault probabilities or physical
+parameters. A provisional model may be used to test infrastructure, but a paper
+release should identify which dynamics are trace-grounded and which remain
+assumptions.
+
+## Concrete Long-Horizon Family
+
+The proposed first family is an automated microbial growth campaign in a
+96-well plate. It is close to the existing OD600 work while introducing the
+missing long-horizon structure.
+
+### Workcell topology
+
+The world must select one real topology rather than combining every available
+PyLabRobot module into a fictional workcell.
+
+Two legitimate topologies are:
+
+1. An integrated plate reader with heating and shaking, where the plate remains
+   inside the reader during the kinetic run.
+2. A separate incubator-shaker, robotic transport, and plate reader, where the
+   plate moves between instruments.
+
+The integrated-reader topology is the stronger v0 because public documentation
+already establishes the relevant operations. The separate workcell is more
+agentically complex, but should only be released after an end-to-end provider
+specification, local probe, or partner capture establishes transport, queue,
+location, and interlock semantics. The presence of separate PyLabRobot APIs is
+not enough evidence that a particular combination exists as an operating
+workcell.
+
+### Operational objective
+
+The agent must prepare or inspect a plate containing blanks, controls, and
+replicate cultures; place it under controlled incubation and shaking; obtain
+scheduled OD600 measurements over an 8-12 hour logical run; recover from
+instrument contention or a failed read; and submit a final growth/QC decision
+from the current plate and complete measurement series.
+
+The exact temperatures, shaking settings, plate volumes, read cadence, and
+acceptance bands must come from the selected protocol source pack. They should
+not be guessed in the task generator.
+
+The agent-facing task should provide the scientific objective, SOP or protocol
+artifact, plate map, instrument capabilities, current queue, and acceptance
+criteria. It should not enumerate the correct tool sequence. Multiple valid
+plans should be accepted when they satisfy the same operational and scientific
+invariants.
+
+### State model
+
+```text
+plates:
+  barcode, location, well map, volume, seal/lid state, lineage version
+cultures:
+  condition, replicate group, hidden trace identifier, current biological time
+incubator:
+  door, occupied sites, target/current temperature, shaking state, queue
+reader:
+  loaded plate, availability, queue, active job, read capabilities
+jobs:
+  requested_at, start_at, expected_end_at, status, result reference
+measurements:
+  plate version, well, logical sample time, observed value, provenance
+clock:
+  current logical time and pending scheduled events
+session:
+  durable checkpoint, active jobs, and observations available after resume
+```
+
+Biological dynamics should initially replay or interpolate source-grounded
+growth traces with seeded measurement noise. A hand-written logistic curve can
+be an infrastructure fixture, but it should not be presented as grounded assay
+behavior. Temperature, shaking, evaporation, or oxygen-transfer effects should
+only modify the curve when corresponding evidence exists.
+
+### Agent-visible operations
+
+The family should compose documented PyLabRobot instrument operations with an
+explicitly benchmark-local orchestration surface:
+
+```text
+inspect plate, labware, instrument, and queue state
+store and retrieve a plate
+set and read temperature
+start and stop shaking
+load, close, read, open, and unload the plate reader
+submit and inspect asynchronous jobs
+advance logical time to the next event or an allowed deadline
+record a protocol deviation or recovery decision
+submit the final campaign decision with cited measurements
+```
+
+The scheduler and logical-time operations must be labelled benchmark-local
+unless they are grounded in a real provider API. They must not be described as
+PyLabRobot methods when PyLabRobot does not expose those semantics.
+
+### Fault and replanning cases
+
+Initial admitted faults should be deterministic schedules derived from
+documented behavior or recorded traces:
+
+```text
+reader busy when a cadence window opens
+temperature reaches target later than expected
+one read job fails or returns a partial plate result
+plate barcode or location does not match the planned plate
+an observation becomes stale after the plate is moved or modified
+a measurement window is missed and must be rescheduled or declared
+```
+
+The task should include acceptable near-misses. For example, a transient busy
+reader followed by a rescheduled read inside the allowed window is valid; an
+agent should not fail merely because the nominal timestamp was missed by a
+small documented tolerance.
+
+### Verification obligations
+
+```text
+correct plate identity and sample lineage at every read
+required blanks, controls, and replicates present
+temperature and shaking exposure held for required intervals
+measurement cadence covers the required logical-time windows
+no overlapping use of an exclusive instrument
+failed or partial jobs are not treated as complete evidence
+the final series comes from the current plate version
+the final decision is supported by the complete fresh series
+unrelated plates, samples, and instrument state remain unchanged
+```
+
+This family introduces real pressure on the compiler. In addition to the OD600
+family's existing coverage, provenance, freshness, resource, numeric-trend, and
+decision primitives, it likely requires interval coverage, cumulative exposure,
+asynchronous job lifecycle, deadline windows, exclusive-resource scheduling,
+and threshold-crossing causality.
 
 ## Proposed Boundary
 
@@ -131,6 +327,10 @@ as a general language in advance. Likely primitive classes include:
 | Numeric range or tolerance | Temperature or measurement is within tolerance |
 | Numeric trend or ratio | Serial-dilution measurements follow the expected curve |
 | Bounded retry and recovery | Retry follows a transient fault and then stops |
+| Interval or cumulative exposure | Culture remained in the required temperature band long enough |
+| Cadence or deadline coverage | Measurements cover every required logical-time window |
+| Asynchronous job lifecycle | Only completed jobs may supply final evidence |
+| Exclusive-resource scheduling | Two plates do not occupy one reader at the same time |
 | Decision consistency | Final decision is supported by submitted evidence |
 | Collateral-change exclusion | Unrelated resources were not mutated |
 
@@ -225,16 +425,19 @@ The following ranges are hypotheses to test, not promised results:
 | Held-out family | Predicted `R_type` |
 | --- | ---: |
 | Another liquid-handling or QC family | 70-85% |
-| Plate-reader kinetics after OD600 dilution | 60-75% |
+| Simple plate-reader kinetics after OD600 dilution | 60-75% |
+| Real incubation and growth campaign after OD600 dilution | 45-60% |
 | A different instrument workflow | 40-60% |
 | A cross-provider campaign or API workflow | 25-50% |
+| Next long-horizon family after the growth campaign | 60-75% |
 | Marginal family after 6-8 representative lab families | 65-80% |
 
-For OD600 dilution followed by plate-reader kinetics, the point estimate is
-approximately 68%. Ordering, coverage, freshness, provenance, numeric trend,
-and decision consistency should transfer. Sampling-interval tolerance,
-incubation stability, and replicate or slope interpretation would probably be
-new.
+For OD600 dilution followed by simple plate-reader kinetics, the point estimate
+remains approximately 68%. That estimate falls to roughly 52% for the realistic
+growth campaign because asynchronous jobs, interval exposure, cadence windows,
+and instrument scheduling are genuinely new primitive requirements. A lower
+first reuse score is preferable to obtaining a high score from a task that is
+not actually long-horizon.
 
 Clause-weighted reuse may reach 75-85% because the same primitives repeat over
 many wells and time points. That number should not be reported alone.
@@ -287,25 +490,33 @@ mutant rejection, near-miss acceptance, and exact failure-code sets.
 This tests contract parameterization, but it does not establish cross-family
 reuse.
 
-### Step 4: Freeze and test held-out families
+### Step 4: Build the realistic long-horizon probe
 
-Freeze the catalog after the dilution family. Then use two held-out probes:
+Freeze the catalog after the dilution family. Implement the microbial growth
+campaign as the first held-out probe and record every required new primitive.
+Its protocol, dynamics, and instrument behavior must include the source-status
+evidence described above.
 
-1. An adjacent measurement family, such as plate-reader kinetics or a
-   shaker-reader QC workflow.
-2. A dissimilar cross-instrument family, such as centrifuge-scale QC.
+This is the main test of whether the compiler can express real asynchronous and
+temporal obligations, not merely repeated liquid-handling checks.
+
+### Step 5: Test a dissimilar held-out family
+
+After recording the growth-campaign result, freeze the catalog again and use a
+dissimilar cross-instrument probe such as centrifuge-scale QC. This separates
+reuse from biological similarity.
 
 For each probe, record reused primitives, new primitives, adapter work, contract
 work, mutant coverage, and latency. Do not redesign the first-family catalog
 after seeing the held-out family without recording that revision as a new
 catalog version.
 
-### Step 5: Evaluate the result
+### Step 6: Evaluate the result
 
 Evidence in favor of the approach would include:
 
 ```text
-adjacent-family R_type at or above 60%
+real growth-campaign R_type at or above 45%
 cross-instrument R_type at or above 40%
 all admitted target mutants caught with exact failure codes
 near-miss cases accepted
@@ -316,7 +527,7 @@ fewer new primitives and less authoring effort on later families
 Evidence against the approach would include:
 
 ```text
-adjacent-family R_type below 50%
+real growth-campaign R_type below 40%
 most families requiring custom code or family-named primitives
 high reuse achieved only by dropping scientifically important checks
 domain adapters dominating authoring effort without declining
@@ -372,6 +583,16 @@ benchmark artifact, where the existing strict-admission plan may be sufficient
 and cheaper.
 
 The recommended checkpoint is intentionally small: profile the existing
-verifier, compile the OD600 family, then test one adjacent and one dissimilar
-held-out family. That is enough to decide whether the reuse hypothesis has real
-support before committing to a general framework.
+verifier, compile the OD600 family, then test one realistic incubation/growth
+campaign and one dissimilar held-out family. That is enough to decide whether
+the reuse hypothesis and the long-horizon realism claim have real support before
+committing to a general framework.
+
+## Grounding References
+
+- [PyLabRobot Inheco incubator-shaker documentation](https://docs.pylabrobot.org/dev/user_guide/01_material-handling/storage/inheco/incubator_shaker.html)
+- [PyLabRobot plate-reader documentation](https://docs.pylabrobot.org/stable/user_guide/02_analytical/plate-reading/plate-reading.html)
+- [PyLabRobot Synergy H1 documentation](https://docs.pylabrobot.org/stable/user_guide/02_analytical/plate-reading/synergyh1.html)
+- [PyLabRobot Cytomat incubator documentation](https://docs.pylabrobot.org/stable/user_guide/01_material-handling/storage/cytomat.html)
+- [Tecan technical note: bacterial growth studies with heating and permanent shaking](https://www.tecan.com/hubfs/HubDB/Te-DocDB/pdf/AN_Infinite200PRO_Bacterial%20growth_31012012.pdf)
+- [Tecan technical note: eight-hour OD600 growth curves](https://www.tecan.com/hubfs/HubDB/Te-DocDB/pdf/TN_Optimizing-bacterial_growth-studies_402030.pdf)
