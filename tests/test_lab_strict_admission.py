@@ -210,10 +210,25 @@ def test_strict_admission_matches_exact_failed_check_sets(tmp_path: Path) -> Non
 
 
 def test_strict_admission_declarations_expose_mutant_families() -> None:
-    from api_gym.lab_strict_admission import STRICT_SCENARIOS, STRICT_SCENARIO_DECLS
+    from api_gym.lab_strict_admission import (
+        EXPERIMENTAL_SCENARIO_DECLS,
+        STRICT_SCENARIOS,
+        STRICT_SCENARIO_DECLS,
+    )
 
     assert len(STRICT_SCENARIOS) == 9
     assert len(STRICT_SCENARIO_DECLS) == 9
+    assert {decl.scenario for decl in EXPERIMENTAL_SCENARIO_DECLS} == {
+        "arm_scale_xover_qc",
+        "centrifuge_reader_xover_qc",
+        "tempctrl_reader_xover_qc",
+        "hs_reader_xover_qc",
+        "pump_scale_xover_qc",
+        "pcr_reader_xover_qc",
+    }
+    assert not {
+        decl.scenario for decl in EXPERIMENTAL_SCENARIO_DECLS
+    } & {decl.scenario for decl in STRICT_SCENARIO_DECLS}
 
     expanded = {
         (scenario.world, scenario.scenario): [case.case_id for case in scenario.cases]

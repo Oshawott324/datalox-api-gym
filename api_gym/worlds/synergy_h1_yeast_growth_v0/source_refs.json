@@ -1,0 +1,59 @@
+{
+  "agilent_app_note": {
+    "title": "Monitoring Growth of Beer Brewing Strains of Saccharomyces cerevisiae",
+    "type": "pdf",
+    "url": "https://www.agilent.com/cs/library/applications/monitoring-growth-of-saccharomyces-cerevisiae-5994-3284EN-agilent.pdf",
+    "locators": {
+      "workflow": "pages 2-3: measurements every two minutes, continuous orbital shaking, setting 559 (1 mm amplitude), 30 C, 600 nm light scatter",
+      "dilution_experiment": "page 3: 200 uL aliquots in replicates of eight",
+      "duration": "page 3: experiment completed 20 hours later",
+      "sealed_plate": "page 7: adhesive sealers are necessary for long kinetic assays; 200 uL works well in 96-well flat-bottom plates"
+    }
+  },
+  "agilent_technical_details": {
+    "title": "Agilent BioTek Synergy H1 Technical Details",
+    "type": "pdf",
+    "url": "https://www.agilent.com/cs/library/specifications/public/Synergy-H1-technical-details-5994-3583EN-agilent.pdf",
+    "locators": {
+      "general": "page 1: kinetic read method, 6- to 384-well plates, incubation, and orbital shaking",
+      "absorbance": "page 1: absorbance wavelength range 230 to 999 nm in 1 nm increments"
+    }
+  },
+  "pylabrobot_synergy_h1_docs": {
+    "title": "PyLabRobot 0.2.1 Synergy H1 documentation",
+    "type": "web",
+    "url": "https://docs.pylabrobot.org/stable/user_guide/02_analytical/plate-reading/synergyh1.html",
+    "locators": {
+      "resource_assignment": "assign a plate child resource before close so tray and well positioning are known",
+      "operations": "open/close, absorbance reading, shaking, temperature set/get/stop"
+    }
+  },
+  "plr_0_2_1_local_signatures": {
+    "title": "Locally inspected installed PyLabRobot 0.2.1 backend",
+    "type": "local_verification",
+    "package": "pylabrobot",
+    "version": "0.2.1",
+    "class": "pylabrobot.plate_reading.SynergyH1Backend",
+    "signatures": [
+      "open(slow=False)",
+      "close(plate, slow=False)",
+      "read_absorbance(plate, wells, wavelength)",
+      "set_temperature(temperature)",
+      "get_current_temperature()",
+      "shake(shake_type, frequency)",
+      "stop_shaking()",
+      "stop_heating_or_cooling()"
+    ],
+    "shake_mapping_note": "BioTekPlateReaderBackend.shake calls frequency a device setting in the range 1..6; its source comment maps setting 3 to 567 CPM and setting 1 to 1096 CPM. It does not expose independent CPM and amplitude arguments."
+  },
+  "benchmark_projection": {
+    "title": "synergy_h1_yeast_growth_v0 projection contract",
+    "type": "local_contract",
+    "path": "projection_contract.md",
+    "locators": {
+      "observation_count": "The inclusive t=0 through t=20h schedule contains 601 observations.",
+      "logical_time": "All progression is benchmark-local logical time.",
+      "calibration": "Temperature ramp and absorbance curve are deterministic calibration assumptions, not biological claims."
+    }
+  }
+}
