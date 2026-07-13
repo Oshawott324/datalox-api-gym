@@ -1673,7 +1673,7 @@ def _star_tempctrl_reader_read_before_stable(
     return results
 
 
-STRICT_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = (
+_ALL_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = (
     StrictScenarioDecl(
         "pylabrobot_star_v0",
         "arm_scale_xover_qc",
@@ -2221,6 +2221,35 @@ STRICT_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = (
             ),
         ),
     ),
+)
+
+
+# These scenarios exercise real tool surfaces, but their end-to-end scientific
+# workflows are not yet backed by a protocol-level projection contract. Keep
+# them available for development without presenting them as strict benchmark
+# evidence. In particular, PCR output cannot be validated with OD600, and the
+# other cross-instrument sequences still need task-specific protocol grounding.
+_EXPERIMENTAL_CHOREOGRAPHY_SCENARIO_IDS = frozenset(
+    {
+        "arm_scale_xover_qc",
+        "centrifuge_reader_xover_qc",
+        "tempctrl_reader_xover_qc",
+        "hs_reader_xover_qc",
+        "pump_scale_xover_qc",
+        "pcr_reader_xover_qc",
+    }
+)
+
+EXPERIMENTAL_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = tuple(
+    decl
+    for decl in _ALL_SCENARIO_DECLS
+    if decl.scenario in _EXPERIMENTAL_CHOREOGRAPHY_SCENARIO_IDS
+)
+
+STRICT_SCENARIO_DECLS: tuple[StrictScenarioDecl, ...] = tuple(
+    decl
+    for decl in _ALL_SCENARIO_DECLS
+    if decl.scenario not in _EXPERIMENTAL_CHOREOGRAPHY_SCENARIO_IDS
 )
 
 
