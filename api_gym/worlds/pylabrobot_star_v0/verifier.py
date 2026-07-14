@@ -24,6 +24,14 @@ from api_gym.worlds.pylabrobot_lab_v0.verifier import (
 from api_gym.worlds.pylabrobot_star_v0.state import (
     RUN_METADATA_NAME, STATE_JSON_NAME, LabState,
 )
+from api_gym.worlds.pylabrobot_star_v0.environment import (
+    is_reader_safe, is_centrifuge_safe, is_shaker_safe,
+    is_sealer_safe, is_peeler_safe, is_hs_before_tc,
+    is_pump_halted_before_tilter,
+    is_plate_where_it_should_be, is_incubation_chain_complete,
+    is_pcr_chain_complete, is_seal_peel_chain_complete,
+    is_plate_weighing_valid,
+)
 
 
 def verify_run(run_dir: Path) -> VerificationResult:
@@ -189,6 +197,20 @@ def _expected_resolution(lab_state: LabState) -> dict[str, Any] | None:
     return None
 
 
+# ── EnvironmentState helper ───────────────────────────────────────────
+
+def _get_env(ls: LabState) -> "EnvironmentState":
+    """Build an EnvironmentState snapshot from the event log.
+
+    Returns a queryable snapshot with three layers:
+      L1: env.<instrument>.<field>.value  — per-instrument state
+      L2: env.cross.<fact>.value          — cross-instrument derivations
+      L3: is_<predicate>(env)             — reusable predicate functions
+    """
+    from api_gym.worlds.pylabrobot_star_v0.environment import EnvironmentState
+    return EnvironmentState.from_events(ls.events)
+
+
 def _add_temporal(checks: list, ok: bool, name: str, msg: str) -> None:
     """Add a check with predicate_type='temporal' marker."""
     checks.append({"ok": bool(ok), "name": name, "message": msg, "predicate_type": "temporal"})
@@ -224,6 +246,7 @@ def _verify_plate_transfer_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
     # Terminal checks
     _add_terminal(checks, True, "dry_run", "STAR chatterbox — no live hardware.")
+    env = _get_env(ls)
 
     dispenses = [t for t in ls.transfers if t.get("type") == "dispense"]
     tx_ok = any(t.get("volume_ul") == vol and target_well in t.get("target_well", "")
@@ -273,6 +296,7 @@ def _verify_serial_dilution_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     dispenses = [t for t in ls.transfers if t.get("type") == "dispense"]
     tx_ok = len(dispenses) >= exp.get("expected_transfers", 5)
@@ -323,6 +347,7 @@ def _verify_serial_dilution_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 def _verify_trough_to_plate_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
     exp_tx = exp.get("expected_transfers", 10)
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     tx_ok = len(disp) >= exp_tx
@@ -338,6 +363,7 @@ def _verify_parallel_stamp_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     a96 = [t for t in ls.transfers if t.get("type") == "aspirate96"]
     d96 = [t for t in ls.transfers if t.get("type") == "dispense96"]
@@ -371,6 +397,7 @@ def _verify_multi_channel_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     tx_ok = len(disp) >= exp.get("expected_transfers", 4)
@@ -398,6 +425,7 @@ def _verify_iswap_plate_move_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     events = ls.events
     attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
@@ -418,6 +446,7 @@ def _verify_iswap_plate_move_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 def _verify_tube_transfer_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
     exp_tx = exp.get("expected_transfers", 3)
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= exp_tx, "transfers",
@@ -431,6 +460,7 @@ def _verify_stamp_replicate_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     a96 = [t for t in ls.transfers if t.get("type") == "aspirate96"]
     d96 = [t for t in ls.transfers if t.get("type") == "dispense96"]
@@ -454,6 +484,7 @@ def _verify_stamp_replicate_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 def _verify_limited_tips_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
     _add_terminal_intent_check(checks, ls)
     max_tx = exp.get("max_transfers_possible", 2)
     required_tips = len(exp.get("target_wells", []))
@@ -490,6 +521,7 @@ def _verify_limited_tips_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 def _verify_low_reagent_trough_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
     _add_terminal_intent_check(checks, ls)
     checks.append(_labware_inspection_check(ls, "reagent_trough"))
     available = exp.get("available_volume_ul", 30)
@@ -530,6 +562,7 @@ def _verify_low_reagent_trough_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 def _verify_multi_plate_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     exp_tx = exp.get("expected_transfers", 2)
     _add_terminal(checks, len(disp) >= exp_tx, "transfers",
@@ -543,6 +576,7 @@ def _verify_full_workflow_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     tx_ok = len(disp) >= exp.get("expected_transfers", 6)
@@ -582,6 +616,7 @@ def _verify_borderline_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     """Borderline OD600 with noise — Direction 2: ambiguous attribution."""
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox + od600_noise.")
+    env = _get_env(ls)
 
     band = exp.get("control_band", {"min": 0.75, "max": 0.9})
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
@@ -616,6 +651,7 @@ def _verify_noisy_readout_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox + od600_noise.")
+    env = _get_env(ls)
 
     _add_terminal(checks, len(ls.readouts) >= 2, "multiple_readouts",
                   f"{len(ls.readouts)} readouts (need >=2 for noise averaging).")
@@ -638,6 +674,7 @@ def _verify_instrument_fault_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
     band = exp.get("control_band", {"min": 0.75, "max": 0.9})
     target_well = exp.get("target_well", "assay_plate.B1").replace(":", ".").split(".")[-1]
     _add_terminal(checks, True, "dry_run", "STAR chatterbox + fault injection.")
+    env = _get_env(ls)
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
@@ -738,6 +775,7 @@ def _verify_stale_deck_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox — deck may change externally.")
+    env = _get_env(ls)
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
@@ -783,6 +821,7 @@ def _verify_liquid_switch_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     """Liquid switch scenario — agent must discard tips between incompatible liquids."""
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= exp.get("expected_transfers", 2),
@@ -824,6 +863,7 @@ def _verify_iswap_lid_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    env = _get_env(ls)
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
     moved = [e for e in ls.events if e.get("event_type") == "plate.moved"]
@@ -838,6 +878,7 @@ def _verify_iswap_lid_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
 
 def _verify_tip_exhaustion_96_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
+    env = _get_env(ls)
     _add_terminal_intent_check(checks, ls)
     available = exp.get("available_tips", 10)
     checks.append(_labware_inspection_check(ls, "tip_rack_01"))
@@ -894,6 +935,7 @@ def _verify_low_reagent_well_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     total = sum(t.get("volume_ul", 0) for t in disp)
     ok = total <= available
+    env = _get_env(ls)
     _add_terminal(checks, ok, "no_overdrawn",
                   f"{total}uL <= {available}uL." if ok else f"{total}uL > {available}uL — overdrawn.")
     attrs = {"label": "agent_error",
@@ -904,6 +946,7 @@ def _verify_low_reagent_well_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
 def _verify_fault_and_noise_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = [{"ok": True, "name": "dry_run", "message": "STAR + fault + noise.", "predicate_type": "terminal"}]
     events = ls.events
+    env = _get_env(ls)
     _add_terminal(checks, len(ls.readouts) >= 2, "multiple_readouts",
                   f"{len(ls.readouts)} readouts (need >=2).")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
@@ -924,6 +967,7 @@ def _verify_stale_after_move_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
     events = ls.events
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
+    env = _get_env(ls)
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
     moved = [e for e in events if e.get("event_type") == "plate.moved"]
@@ -948,6 +992,7 @@ def _verify_stale_after_move_star_qc(ls: LabState, exp: dict) -> tuple[list, dic
 def _verify_three_liquid_star_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = [{"ok": True, "name": "dry_run", "message": "STAR chatterbox.", "predicate_type": "terminal"}]
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
+    env = _get_env(ls)
     _add_terminal(checks, len(disp) >= exp.get("expected_transfers", 3),
                   "transfers", f"{len(disp)} transfers.")
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
@@ -971,6 +1016,7 @@ def _verify_workspace_protocol_star_qc(ls: LabState, exp: dict) -> tuple[list, d
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox + workspace files.")
+    env = _get_env(ls)
 
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
@@ -1011,6 +1057,7 @@ def _verify_tip_return_reuse_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     """Tip return/reuse: agent must return clean tips, discard contaminated ones."""
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= exp.get("expected_transfers", 3),
                   "transfers", f"{len(disp)} transfers.")
@@ -1046,6 +1093,7 @@ def _verify_multi_dispense_transfer_qc(ls: LabState, exp: dict) -> tuple[list, d
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     # Check for transfer.completed events (the efficient transfer tool)
     transfers = [e for e in events if e.get("event_type") == "transfer.completed"]
@@ -1071,6 +1119,7 @@ def _verify_lid_handling_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     lid_moves = [e for e in events if e.get("event_type") == "lid.moved"]
     _add_terminal(checks, len(lid_moves) >= 2,
@@ -1099,6 +1148,7 @@ def _verify_plate_stamp_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR 96-head stamp.")
+    env = _get_env(ls)
 
     # Check stamp event
     stamps = [e for e in events if e.get("event_type") == "stamp.completed"]
@@ -1128,6 +1178,7 @@ def _verify_mounted_tips_query_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     checks = []
     events = ls.events
     _add_terminal(checks, True, "dry_run", "STAR chatterbox.")
+    env = _get_env(ls)
 
     # Check that get_mounted_tips was called
     head_checks = [e for e in events if e.get("event_type") == "inspection.mounted_tips"]
@@ -1225,6 +1276,10 @@ def _verify_pump_fill_trough_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
         attrs = {"label": "agent_error",
                  "detail": "Agent never used the pump."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.pump.running.value is False, "env_pump_stopped", "Env: pump halted." if not env.pump.running.value else "Env: pump still running!")
+
     return checks, attrs
 
 
@@ -1282,6 +1337,10 @@ def _verify_pump_calibrated_dispense_qc(ls: LabState, exp: dict) -> tuple[list, 
         attrs = {"label": "agent_error",
                  "detail": "Agent used wrong pump method (should use pump_run_volume)."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.pump.running.value is False, "env_pump_stopped", "Env: pump halted." if not env.pump.running.value else "Env: pump still running!")
+
     return checks, attrs
 
 
@@ -1337,6 +1396,10 @@ def _verify_pump_halt_recovery_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     elif halts and run_events and tx_ok:
         attrs = {"label": "success_despite_fault",
                  "detail": "Agent correctly halted and restarted — recovery successful."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.pump.running.value is False, "env_pump_stopped", "Env: pump halted." if not env.pump.running.value else "Env: pump still running!")
 
     return checks, attrs
 
@@ -1410,6 +1473,10 @@ def _verify_pump_multi_step_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(disp)}/3 transfers completed."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.pump.running.value is False, "env_pump_stopped", "Env: pump halted." if not env.pump.running.value else "Env: pump still running!")
+
     return checks, attrs
 
 
@@ -1420,6 +1487,7 @@ def _verify_fluorescence_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     """Fluorescence measurement: correct read mode must be used."""
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR + fluorescence reader.")
+    env = _get_env(ls)
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
     fluor_reads = [r for r in ls.readouts if r.get("mode") == "fluorescence"]
@@ -1435,6 +1503,7 @@ def _verify_luminescence_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     """Luminescence measurement: correct read mode, no excitation needed."""
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR + luminescence reader.")
+    env = _get_env(ls)
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
     lum_reads = [r for r in ls.readouts if r.get("mode") == "luminescence"]
@@ -1472,6 +1541,11 @@ def _verify_reader_door_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
                       f"Close@{c_t:.0f}s → read@{r_t:.0f}s → open@{o_t:.0f}s.")
 
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.centrifuge.spinning.value is False, "env_not_spinning", "Env: not spinning at end." if not env.centrifuge.spinning.value else "Env: still spinning!")
+    _add_terminal(checks, env.centrifuge.door_open.value is True, "env_door_open_at_end", "Env: door open at end." if env.centrifuge.door_open.value else "Env: door still closed!")
     return checks, {}
 
 
@@ -1479,6 +1553,7 @@ def _verify_multi_mode_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     """Multi-mode read: both absorbance and fluorescence on same plate."""
     checks = []
     _add_terminal(checks, True, "dry_run", "STAR + multi-mode reader.")
+    env = _get_env(ls)
     disp = [t for t in ls.transfers if t.get("type") == "dispense"]
     _add_terminal(checks, len(disp) >= 1, "transfer", f"{len(disp)} transfer(s).")
 
@@ -1553,6 +1628,10 @@ def _verify_gravimetric_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
         attrs = {"label": "agent_error",
                  "detail": "Missing before/after weigh — gravimetric verification incomplete."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.scale.zeroed.value is True or env.scale.tared.value is True, "env_scale_calibrated", "Env: scale calibrated." if (env.scale.zeroed.value or env.scale.tared.value) else "Env: scale not calibrated!")
+
     return checks, attrs
 
 
@@ -1598,6 +1677,10 @@ def _verify_tare_weigh_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     if not tared:
         attrs = {"label": "agent_error",
                  "detail": "Agent skipped tare — reading gross weight instead of net."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.scale.zeroed.value is True or env.scale.tared.value is True, "env_scale_calibrated", "Env: scale calibrated." if (env.scale.zeroed.value or env.scale.tared.value) else "Env: scale not calibrated!")
 
     return checks, attrs
 
@@ -1650,6 +1733,10 @@ def _verify_zero_scale_qc(ls: LabState, exp: dict) -> tuple[list, dict]:
     elif not zeroed and not tared:
         attrs = {"label": "agent_error",
                  "detail": "Agent skipped all scale calibration."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.scale.zeroed.value is True or env.scale.tared.value is True, "env_scale_calibrated", "Env: scale calibrated." if (env.scale.zeroed.value or env.scale.tared.value) else "Env: scale not calibrated!")
 
     return checks, attrs
 
@@ -1788,6 +1875,11 @@ def _verify_arm_plate_transfer_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent left arm in unsafe position after transfer."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.arm.homed.value is True, "env_arm_homed", "Env: arm homed." if env.arm.homed.value else "Env: arm never homed.")
+    _add_terminal(checks, env.arm.gripper_open.value is True, "env_gripper_released", "Env: gripper released at end." if env.arm.gripper_open.value else "Env: gripper still holding!")
+
     return checks, attrs
 
 
@@ -1896,6 +1988,11 @@ def _verify_arm_halt_recovery_qc(ls, exp):
     elif not homed:
         attrs = {"label": "agent_error",
                  "detail": "Agent operated arm without homing first — position unknown."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.arm.homed.value is True, "env_arm_homed", "Env: arm homed." if env.arm.homed.value else "Env: arm never homed.")
+    _add_terminal(checks, env.arm.gripper_open.value is True, "env_gripper_released", "Env: gripper released at end." if env.arm.gripper_open.value else "Env: gripper still holding!")
 
     return checks, attrs
 
@@ -2048,6 +2145,11 @@ def _verify_arm_position_verify_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent never queried gripper state — operating blind."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.arm.homed.value is True, "env_arm_homed", "Env: arm homed." if env.arm.homed.value else "Env: arm never homed.")
+    _add_terminal(checks, env.arm.gripper_open.value is True, "env_gripper_released", "Env: gripper released at end." if env.arm.gripper_open.value else "Env: gripper still holding!")
+
     return checks, attrs
 
 
@@ -2134,6 +2236,11 @@ def _verify_seal_plate_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent sealed without setting temperature — seal may be ineffective."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.sealer.heater_on.value is True, "env_sealer_heated", "Env: sealer was heated." if env.sealer.heater_on.value else "Env: sealer never heated.")
+    ok, msg = is_sealer_safe(env); _add_terminal(checks, ok, "l3_sealer_safe", msg)
+
     return checks, attrs
 
 
@@ -2209,6 +2316,11 @@ def _verify_seal_temp_verify_qc(ls, exp):
     elif not temp_reads and sealed:
         attrs = {"label": "agent_error",
                  "detail": "Agent sealed without any temperature check — risk of incorrect sealing."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.sealer.heater_on.value is True, "env_sealer_heated", "Env: sealer was heated." if env.sealer.heater_on.value else "Env: sealer never heated.")
+    ok, msg = is_sealer_safe(env); _add_terminal(checks, ok, "l3_sealer_safe", msg)
 
     return checks, attrs
 
@@ -2288,6 +2400,13 @@ def _verify_seal_door_safety_qc(ls, exp):
         attrs = {"label": "success_despite_fault",
                  "detail": "Agent correctly followed door safety protocol: close→seal→open."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.centrifuge.spinning.value is False, "env_not_spinning", "Env: not spinning at end." if not env.centrifuge.spinning.value else "Env: still spinning!")
+    _add_terminal(checks, env.centrifuge.door_open.value is True, "env_door_open_at_end", "Env: door open at end." if env.centrifuge.door_open.value else "Env: door still closed!")
+    _add_terminal(checks, env.sealer.heater_on.value is True, "env_sealer_heated", "Env: sealer was heated." if env.sealer.heater_on.value else "Env: sealer never heated.")
+    ok, msg = is_sealer_safe(env); _add_terminal(checks, ok, "l3_sealer_safe", msg)
+
     return checks, attrs
 
 
@@ -2364,6 +2483,11 @@ def _verify_peel_plate_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent peeled without loading plate via conveyor — how did plate get there?"}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.peeler.seal_present.value is False, "env_seal_removed", "Env: seal removed." if not env.peeler.seal_present.value else "Env: seal still present!")
+    ok, msg = is_peeler_safe(env); _add_terminal(checks, ok, "l3_peeler_safe", msg)
+
     return checks, attrs
 
 
@@ -2432,6 +2556,11 @@ def _verify_peel_tape_monitor_qc(ls, exp):
     elif peeled and len(tape_checks) < 2:
         attrs = {"label": "agent_error",
                  "detail": "Agent peeled without sufficient tape/status monitoring."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.peeler.seal_present.value is False, "env_seal_removed", "Env: seal removed." if not env.peeler.seal_present.value else "Env: seal still present!")
+    ok, msg = is_peeler_safe(env); _add_terminal(checks, ok, "l3_peeler_safe", msg)
 
     return checks, attrs
 
@@ -2505,6 +2634,11 @@ def _verify_peel_no_seal_qc(ls, exp):
         attrs = {"label": "ambiguous",
                  "detail": "Could not determine correctness — insufficient seal check data."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.peeler.seal_present.value is False, "env_seal_removed", "Env: seal removed." if not env.peeler.seal_present.value else "Env: seal still present!")
+    ok, msg = is_peeler_safe(env); _add_terminal(checks, ok, "l3_peeler_safe", msg)
+
     return checks, attrs
 
 
@@ -2572,6 +2706,12 @@ def _verify_shaker_mix_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent shook without locking — plate may have been ejected."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.shaker.shaking.value is False, "env_shake_stopped", "Env: shaking stopped." if not env.shaker.shaking.value else "Env: still shaking!")
+    _add_terminal(checks, env.shaker.plate_locked.value is False, "env_plate_unlocked", "Env: plate unlocked." if not env.shaker.plate_locked.value else "Env: plate still locked!")
+    ok, msg = is_shaker_safe(env); _add_terminal(checks, ok, "l3_shaker_safe", msg)
+
     return checks, attrs
 
 
@@ -2627,6 +2767,12 @@ def _verify_shaker_lock_safety_qc(ls, exp):
     elif locked and shaking and unlocked:
         attrs = {"label": "success_despite_fault",
                  "detail": "Agent correctly followed lock safety protocol: lock→shake→unlock."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.shaker.shaking.value is False, "env_shake_stopped", "Env: shaking stopped." if not env.shaker.shaking.value else "Env: still shaking!")
+    _add_terminal(checks, env.shaker.plate_locked.value is False, "env_plate_unlocked", "Env: plate unlocked." if not env.shaker.plate_locked.value else "Env: plate still locked!")
+    ok, msg = is_shaker_safe(env); _add_terminal(checks, ok, "l3_shaker_safe", msg)
 
     return checks, attrs
 
@@ -2695,6 +2841,12 @@ def _verify_shaker_continuous_qc(ls, exp):
     elif shaking and not locked:
         attrs = {"label": "agent_error",
                  "detail": "Agent shook without locking — safety violation."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.shaker.shaking.value is False, "env_shake_stopped", "Env: shaking stopped." if not env.shaker.shaking.value else "Env: still shaking!")
+    _add_terminal(checks, env.shaker.plate_locked.value is False, "env_plate_unlocked", "Env: plate unlocked." if not env.shaker.plate_locked.value else "Env: plate still locked!")
+    ok, msg = is_shaker_safe(env); _add_terminal(checks, ok, "l3_shaker_safe", msg)
 
     return checks, attrs
 
@@ -2766,6 +2918,10 @@ def _verify_temp_control_incubate_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent left temperature controller active after use."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.temp_controller.active.value is False, "env_tc_deactivated", "Env: temp controller deactivated." if not env.temp_controller.active.value else "Env: temp controller still active!")
+
     return checks, attrs
 
 
@@ -2834,6 +2990,10 @@ def _verify_temp_control_verify_qc(ls, exp):
     elif not temp_reads:
         attrs = {"label": "agent_error",
                  "detail": "Agent never checked temperature — operating blind."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.temp_controller.active.value is False, "env_tc_deactivated", "Env: temp controller deactivated." if not env.temp_controller.active.value else "Env: temp controller still active!")
 
     return checks, attrs
 
@@ -2912,6 +3072,10 @@ def _verify_temp_control_timeout_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent never verified temperature after wait — blind trust."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.temp_controller.active.value is False, "env_tc_deactivated", "Env: temp controller deactivated." if not env.temp_controller.active.value else "Env: temp controller still active!")
+
     return checks, attrs
 
 
@@ -2979,6 +3143,10 @@ def _verify_tilter_drain_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent did not return tilter to level — pipetting on tilted plate risks inaccuracy."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, abs(env.tilter.angle.value) < 2.0, "env_tilter_level", "Env: tilter near level." if abs(env.tilter.angle.value) < 2.0 else f"Env: tilter at {env.tilter.angle.value} deg!")
+
     return checks, attrs
 
 
@@ -3038,6 +3206,10 @@ def _verify_tilter_multi_angle_qc(ls, exp):
     elif not tilts and angle_sets:
         attrs = {"label": "agent_error",
                  "detail": "Agent only used absolute set_angle — should also demonstrate relative tilt."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, abs(env.tilter.angle.value) < 2.0, "env_tilter_level", "Env: tilter near level." if abs(env.tilter.angle.value) < 2.0 else f"Env: tilter at {env.tilter.angle.value} deg!")
 
     return checks, attrs
 
@@ -3111,6 +3283,10 @@ def _verify_tilter_safety_qc(ls, exp):
         attrs = {"label": "success_despite_fault",
                  "detail": "Agent followed tilter safety protocol: safe angle, verified, returned to level."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, abs(env.tilter.angle.value) < 2.0, "env_tilter_level", "Env: tilter near level." if abs(env.tilter.angle.value) < 2.0 else f"Env: tilter at {env.tilter.angle.value} deg!")
+
     return checks, attrs
 
 
@@ -3179,6 +3355,10 @@ def _verify_storage_store_retrieve_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent stored plate but never retrieved it — plate abandoned in storage."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.storage.door_open.value is False, "env_storage_door_closed", "Env: storage door closed." if not env.storage.door_open.value else "Env: storage door open!")
+
     return checks, attrs
 
 
@@ -3243,6 +3423,10 @@ def _verify_storage_env_monitor_qc(ls, exp):
     elif len(temp_reads) < 3:
         attrs = {"label": "agent_error",
                  "detail": f"Agent only checked temp {len(temp_reads)} time(s) — must monitor before, during, and after shaking."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.storage.door_open.value is False, "env_storage_door_closed", "Env: storage door closed." if not env.storage.door_open.value else "Env: storage door open!")
 
     return checks, attrs
 
@@ -3312,6 +3496,10 @@ def _verify_storage_capacity_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent stored without checking capacity — risk of overflow."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.storage.door_open.value is False, "env_storage_door_closed", "Env: storage door closed." if not env.storage.door_open.value else "Env: storage door open!")
+
     return checks, attrs
 
 
@@ -3356,6 +3544,10 @@ def _verify_powder_dispense_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent skipped powder dispensing — missing reagent."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.powder_dispenser.dispense_count > 0, "env_powder_dispensed", f"Env: {env.powder_dispenser.dispense_count} dispenses." if env.powder_dispenser.dispense_count > 0 else "Env: no powder dispensed!")
+
     return checks, attrs
 
 
@@ -3393,6 +3585,10 @@ def _verify_powder_multi_dispense_qc(ls, exp):
     elif single:
         attrs = {"label": "agent_error",
                  "detail": "Agent used single-dispense for multiple wells — should use powder_dispense_multi."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.powder_dispenser.dispense_count > 0, "env_powder_dispensed", f"Env: {env.powder_dispenser.dispense_count} dispenses." if env.powder_dispenser.dispense_count > 0 else "Env: no powder dispensed!")
 
     return checks, attrs
 
@@ -3447,6 +3643,10 @@ def _verify_powder_amount_validate_qc(ls, exp):
         attrs = {"label": "success_despite_fault",
                  "detail": "Agent used a valid amount without errors."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.powder_dispenser.dispense_count > 0, "env_powder_dispensed", f"Env: {env.powder_dispenser.dispense_count} dispenses." if env.powder_dispenser.dispense_count > 0 else "Env: no powder dispensed!")
+
     return checks, attrs
 
 
@@ -3492,6 +3692,10 @@ def _verify_barcode_scan_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Agent skipped barcode scan — no identity verification."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.barcode_scanner.scan_count > 0, "env_barcode_scanned", f"Env: {env.barcode_scanner.scan_count} scans." if env.barcode_scanner.scan_count > 0 else "Env: nothing scanned!")
+
     return checks, attrs
 
 
@@ -3535,6 +3739,10 @@ def _verify_barcode_multi_scan_qc(ls, exp):
     elif scan_count == 1:
         attrs = {"label": "agent_error",
                  "detail": "Agent only scanned one plate — traceability incomplete."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.barcode_scanner.scan_count > 0, "env_barcode_scanned", f"Env: {env.barcode_scanner.scan_count} scans." if env.barcode_scanner.scan_count > 0 else "Env: nothing scanned!")
 
     return checks, attrs
 
@@ -3588,6 +3796,10 @@ def _verify_barcode_verify_qc(ls, exp):
             attrs = {"label": "success_despite_fault",
                      "detail": "Agent scanned and verified correct barcode before proceeding."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.barcode_scanner.scan_count > 0, "env_barcode_scanned", f"Env: {env.barcode_scanner.scan_count} scans." if env.barcode_scanner.scan_count > 0 else "Env: nothing scanned!")
+
     return checks, attrs
 
 
@@ -3633,6 +3845,11 @@ def _verify_arm_reader_xover_qc(ls, exp):
 
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    env = _get_env(ls)
+    _add_terminal(checks, env.arm.homed.value is True, "env_arm_homed",
+                  "Env: arm homed." if env.arm.homed.value else "Env: arm never homed.")
+    _add_terminal(checks, env.arm.gripper_open.value is True, "env_gripper_released",
+                  "Env: gripper released at end." if env.arm.gripper_open.value else "Env: gripper still holding!")
 
     if len(arm_positions) >= 8 and len(arm_gripper) >= 5:
         attrs = {"label": "success_despite_fault",
@@ -3682,12 +3899,20 @@ def _verify_centrifuge_scale_xover_qc(ls, exp):
     _add_terminal(checks, len(ls.transfers) >= 1, "transfer", "Transfer done.")
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
+    env = _get_env(ls)
+    _add_terminal(checks, env.centrifuge.spinning.value is False, "env_not_spinning",
+                  "Env: not spinning at end." if not env.centrifuge.spinning.value else "Env: still spinning!")
+    _add_terminal(checks, env.scale.zeroed.value is True, "env_scale_zeroed",
+                  "Env: scale zeroed." if env.scale.zeroed.value else "Env: scale not zeroed.")
 
     if cf_spun and len(sc_weighs) >= 3 and sc_zeroed:
         attrs = {"label": "success_despite_fault",
                  "detail": f"Cross-validated: labware before/after spin, {len(sc_weighs)} weigh readings."}
     elif len(sc_weighs) < 3:
         attrs = {"label": "agent_error", "detail": "Insufficient weigh readings."}
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_centrifuge_safe(env); _add_terminal(checks, ok, "l3_centrifuge_safe", msg)
     return checks, attrs
 
 
@@ -3824,6 +4049,21 @@ def _verify_sealer_peeler_xover_qc(ls, exp):
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
 
+    # ── EnvironmentState cross-checks ─────────────────────────────────
+    env = _get_env(ls)
+    _add_terminal(checks, env.sealer.heater_on.value is True,
+                  "env_sealer_heated",
+                  "Env: sealer heater was on." if env.sealer.heater_on.value
+                  else "Env: sealer heater never turned on.")
+    _add_terminal(checks, env.peeler.seal_present.value is False,
+                  "env_seal_removed",
+                  "Env: seal removed (peeler confirms no seal)." if not env.peeler.seal_present.value
+                  else "Env: seal still present — peel may not have completed.")
+    _add_terminal(checks, env.peeler.conveyor_in.value is False,
+                  "env_conveyor_out",
+                  "Env: conveyor out (plate unloaded)." if not env.peeler.conveyor_in.value
+                  else "Env: plate still in peeler conveyor.")
+
     # ── Attribution ───────────────────────────────────────────────────
     if len(peeler_seal_checks) >= 2 and len(sealer_temp_reads) >= 3 and sealer_sealed:
         attrs = {"label": "success_despite_fault",
@@ -3832,6 +4072,9 @@ def _verify_sealer_peeler_xover_qc(ls, exp):
     elif len(peeler_seal_checks) < 2:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(peeler_seal_checks)} seal check(s) — cross-validation failed."}
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_seal_peel_chain_complete(env); _add_terminal(checks, ok, "l3_seal_validated", msg)
     return checks, attrs
 
 
@@ -3945,6 +4188,12 @@ def _verify_powder_scale_xover_qc(ls, exp):
     elif len(sc_weighs) < 8:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(sc_weighs)} weight readings — insufficient cross-validation."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.powder_dispenser.dispense_count > 0, "env_powder_dispensed", f"Env: {env.powder_dispenser.dispense_count} dispenses." if env.powder_dispenser.dispense_count > 0 else "Env: no powder dispensed!")
+    _add_terminal(checks, env.scale.zeroed.value is True or env.scale.tared.value is True, "env_scale_calibrated", "Env: scale calibrated." if (env.scale.zeroed.value or env.scale.tared.value) else "Env: scale not calibrated!")
+    ok, msg = is_plate_weighing_valid(env); _add_terminal(checks, ok, "l3_plate_weighed", msg)
     return checks, attrs
 
 
@@ -4081,6 +4330,12 @@ def _verify_tilter_pump_xover_qc(ls, exp):
     elif len(tilt_reads) < 5:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(tilt_reads)} angle reads — insufficient angular verification."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, abs(env.tilter.angle.value) < 2.0, "env_tilter_level", "Env: tilter near level." if abs(env.tilter.angle.value) < 2.0 else f"Env: tilter at {env.tilter.angle.value} deg!")
+    _add_terminal(checks, env.pump.running.value is False, "env_pump_stopped", "Env: pump halted." if not env.pump.running.value else "Env: pump still running!")
+    ok, msg = is_pump_halted_before_tilter(env); _add_terminal(checks, ok, "l3_pump_before_tilter", msg)
     return checks, attrs
 
 
@@ -4208,6 +4463,11 @@ def _verify_barcode_storage_xover_qc(ls, exp):
         else:
             attrs = {"label": "agent_error",
                      "detail": f"Identity mismatch: {all_ids} — wrong plate retrieved!"}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.storage.door_open.value is False, "env_storage_door_closed", "Env: storage door closed." if not env.storage.door_open.value else "Env: storage door open!")
+    _add_terminal(checks, env.barcode_scanner.scan_count > 0, "env_barcode_scanned", f"Env: {env.barcode_scanner.scan_count} scans." if env.barcode_scanner.scan_count > 0 else "Env: nothing scanned!")
     return checks, attrs
 
 
@@ -4315,6 +4575,14 @@ def _verify_shaker_reader_xover_qc(ls, exp):
     elif len(readouts) < 4:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(readouts)} absorbance reading(s) — optical verification failed."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.shaker.shaking.value is False, "env_shake_stopped", "Env: shaking stopped." if not env.shaker.shaking.value else "Env: still shaking!")
+    _add_terminal(checks, env.shaker.plate_locked.value is False, "env_plate_unlocked", "Env: plate unlocked." if not env.shaker.plate_locked.value else "Env: plate still locked!")
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_shaker_safe(env); _add_terminal(checks, ok, "l3_shaker_safe", msg)
     return checks, attrs
 
 
@@ -4398,6 +4666,12 @@ def _verify_pump_scale_xover_qc(ls, exp):
     elif len(sc_weighs) < 8:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(sc_weighs)} weigh readings — insufficient."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.pump.running.value is False, "env_pump_stopped", "Env: pump halted." if not env.pump.running.value else "Env: pump still running!")
+    _add_terminal(checks, env.scale.zeroed.value is True or env.scale.tared.value is True, "env_scale_calibrated", "Env: scale calibrated." if (env.scale.zeroed.value or env.scale.tared.value) else "Env: scale not calibrated!")
+    ok, msg = is_plate_weighing_valid(env); _add_terminal(checks, ok, "l3_plate_weighed", msg)
     return checks, attrs
 
 
@@ -4490,6 +4764,15 @@ def _verify_hs_reader_xover_qc(ls, exp):
     elif len(hs_temp_reads) < 5:
         attrs = {"label": "agent_error",
                  "detail": f"Only {len(hs_temp_reads)} temp reads — thermal monitoring insufficient."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.heater_shaker.shaking.value is False, "env_hs_stopped", "Env: HS shake stopped." if not env.heater_shaker.shaking.value else "Env: HS still shaking!")
+    _add_terminal(checks, env.heater_shaker.active.value is False, "env_hs_deactivated", "Env: HS deactivated." if not env.heater_shaker.active.value else "Env: HS still active!")
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_reader_safe(env);    _add_terminal(checks, ok, "l3_reader_safe", msg)
+    ok, msg = is_incubation_chain_complete(env); _add_terminal(checks, ok, "l3_incubation_done", msg)
     return checks, attrs
 
 
@@ -4580,6 +4863,13 @@ def _verify_tempctrl_reader_xover_qc(ls, exp):
                            f"across {len(readouts)} absorbance reads at 3 setpoints."}
     elif len(tc_reads) < 3:
         attrs = {"label": "agent_error", "detail": "Insufficient temperature verification."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.temp_controller.active.value is False, "env_tc_deactivated", "Env: temp controller deactivated." if not env.temp_controller.active.value else "Env: temp controller still active!")
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_reader_safe(env); _add_terminal(checks, ok, "l3_reader_safe", msg)
     return checks, attrs
 
 
@@ -4677,12 +4967,32 @@ def _verify_centrifuge_reader_xover_qc(ls, exp):
     _add_terminal(checks, len(ls.readouts) > 0, "readout", "Readout recorded.")
     _add_terminal(checks, len(ls.submissions) > 0, "submitted", "Submitted.")
 
+    # ── EnvironmentState cross-checks ─────────────────────────────────
+    env = _get_env(ls)
+    _add_terminal(checks, env.centrifuge.door_locked.value is False,
+                  "env_door_unlocked_at_end",
+                  "Env: centrifuge door unlocked at end (safe)." if not env.centrifuge.door_locked.value
+                  else "Env: centrifuge door STILL LOCKED — unsafe end state!")
+    _add_terminal(checks, env.centrifuge.spinning.value is False,
+                  "env_not_spinning",
+                  "Env: centrifuge not spinning at end." if not env.centrifuge.spinning.value
+                  else "Env: centrifuge still spinning at end!")
+    if env.plate_locations.get("assay_plate"):
+        loc = env.plate_locations["assay_plate"].location
+        _add_terminal(checks, loc == "carrier",
+                      "env_plate_returned",
+                      f"Env: plate at {loc}." if loc == "carrier"
+                      else f"Env: plate left at {loc} — not returned to carrier!")
+
     if cf_spins and readouts and cf_doors_locked:
         attrs = {"label": "success_despite_fault",
                  "detail": f"Differential centrifugation cross-validated: {len(cf_spins)} spins, "
                            f"{len(readouts)} reads."}
     elif not cf_doors_locked:
         attrs = {"label": "agent_error", "detail": "Door never locked — centrifuge safety violation."}
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_centrifuge_safe(env); _add_terminal(checks, ok, "l3_centrifuge_safe", msg)
     return checks, attrs
 
 
@@ -4752,6 +5062,15 @@ def _verify_arm_scale_xover_qc(ls, exp):
                            f"{len(sc_weighs)} weigh reads."}
     elif len(sc_weighs) < 3:
         attrs = {"label": "agent_error", "detail": "Insufficient weight verification."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.arm.homed.value is True, "env_arm_homed", "Env: arm homed." if env.arm.homed.value else "Env: arm never homed.")
+    _add_terminal(checks, env.arm.gripper_open.value is True, "env_gripper_released", "Env: gripper released at end." if env.arm.gripper_open.value else "Env: gripper still holding!")
+    _add_terminal(checks, env.scale.zeroed.value is True or env.scale.tared.value is True, "env_scale_calibrated", "Env: scale calibrated." if (env.scale.zeroed.value or env.scale.tared.value) else "Env: scale not calibrated!")
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_plate_where_it_should_be(env, "carrier"); _add_terminal(checks, ok, "l3_plate_returned", msg)
     return checks, attrs
 
 
@@ -4843,6 +5162,15 @@ def _verify_pcr_reader_xover_qc(ls, exp):
                            f"endpoint absorbance confirmed."}
     elif not tc_lid_closed:
         attrs = {"label": "agent_error", "detail": "Lid never closed — PCR safety violation."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.thermocycler.lid_open.value is True, "env_tc_lid_open", "Env: TC lid open at end." if env.thermocycler.lid_open.value else "Env: TC lid still closed!")
+    _add_terminal(checks, env.thermocycler.active.value is False, "env_tc_deactivated", "Env: TC deactivated." if not env.thermocycler.active.value else "Env: TC still active!")
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_reader_safe(env); _add_terminal(checks, ok, "l3_reader_safe", msg)
+    ok, msg = is_pcr_chain_complete(env); _add_terminal(checks, ok, "l3_pcr_done", msg)
     return checks, attrs
 
 
@@ -4961,6 +5289,17 @@ def _verify_hs_thermocycler_xover_qc(ls, exp):
     elif total_temp_reads < 6:
         attrs = {"label": "agent_error",
                  "detail": f"Only {total_temp_reads} total temp reads — insufficient cross-validation."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.heater_shaker.shaking.value is False, "env_hs_stopped", "Env: HS shake stopped." if not env.heater_shaker.shaking.value else "Env: HS still shaking!")
+    _add_terminal(checks, env.heater_shaker.active.value is False, "env_hs_deactivated", "Env: HS deactivated." if not env.heater_shaker.active.value else "Env: HS still active!")
+    _add_terminal(checks, env.thermocycler.lid_open.value is True, "env_tc_lid_open", "Env: TC lid open at end." if env.thermocycler.lid_open.value else "Env: TC lid still closed!")
+    _add_terminal(checks, env.thermocycler.active.value is False, "env_tc_deactivated", "Env: TC deactivated." if not env.thermocycler.active.value else "Env: TC still active!")
+
+    # L2/L3 Cross-instrument checks
+    ok, msg = is_incubation_chain_complete(env); _add_terminal(checks, ok, "l3_incubation_done", msg)
+    ok, msg = is_pcr_chain_complete(env); _add_terminal(checks, ok, "l3_pcr_done", msg)
     return checks, attrs
 
 
@@ -5004,6 +5343,11 @@ def _verify_arm_stale_state_combo_qc(ls, exp):
             attrs = {"label": "success_despite_fault", "detail": "Agent re-inspected after move."}
         else:
             attrs = {"label": "agent_error", "detail": "STALE-STATE VIOLATION: no re-inspect."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.arm.homed.value is True, "env_arm_homed", "Env: arm homed." if env.arm.homed.value else "Env: arm never homed.")
+    _add_terminal(checks, env.arm.gripper_open.value is True, "env_gripper_released", "Env: gripper released at end." if env.arm.gripper_open.value else "Env: gripper still holding!")
     return checks, attrs
 
 
@@ -5051,6 +5395,12 @@ def _verify_spin_down_qc(ls, exp):
         attrs = {"label": "agent_recovery_failure",
                  "detail": "Agent spun without locking door — safety violation."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.centrifuge.spinning.value is False, "env_not_spinning", "Env: not spinning at end." if not env.centrifuge.spinning.value else "Env: still spinning!")
+    _add_terminal(checks, env.centrifuge.door_open.value is True, "env_door_open_at_end", "Env: door open at end." if env.centrifuge.door_open.value else "Env: door still closed!")
+    ok, msg = is_centrifuge_safe(env); _add_terminal(checks, ok, "l3_centrifuge_safe", msg)
+
     return checks, attrs
 
 
@@ -5060,7 +5410,7 @@ def _verify_balanced_load_qc(ls, exp):
     events = ls.events
     attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + centrifuge balanced load.")
-
+    env = _get_env(ls)
     b1 = any(e.get("event_type") == "centrifuge.bucket1" for e in events)
     b2 = any(e.get("event_type") == "centrifuge.bucket2" for e in events)
     both = b1 and b2
@@ -5092,6 +5442,7 @@ def _verify_balanced_load_qc(ls, exp):
     if not both:
         attrs = {"label": "agent_error",
                  "detail": "Unbalanced load — both buckets must be loaded before spinning."}
+    ok, msg = is_centrifuge_safe(env); _add_terminal(checks, ok, "l3_centrifuge_safe", msg)
 
     return checks, attrs
 
@@ -5142,6 +5493,12 @@ def _verify_door_safety_qc(ls, exp):
         attrs = {"label": "success_despite_fault",
                  "detail": "Agent correctly locked door then spun — safety protocol followed."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.centrifuge.spinning.value is False, "env_not_spinning", "Env: not spinning at end." if not env.centrifuge.spinning.value else "Env: still spinning!")
+    _add_terminal(checks, env.centrifuge.door_open.value is True, "env_door_open_at_end", "Env: door open at end." if env.centrifuge.door_open.value else "Env: door still closed!")
+    ok, msg = is_centrifuge_safe(env); _add_terminal(checks, ok, "l3_centrifuge_safe", msg)
+
     return checks, attrs
 
 
@@ -5151,6 +5508,7 @@ def _verify_heat_incubate_qc(ls, exp):
     events = ls.events
     attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + heater/shaker incubate.")
+    env = _get_env(ls)
 
     temp_set = any(e.get("event_type") == "hs.temp_set" for e in events)
     temp_reads = [e for e in events if e.get("event_type") == "hs.temp_read"]
@@ -5179,6 +5537,7 @@ def _verify_heat_incubate_qc(ls, exp):
     if len(temp_reads) < 2:
         attrs = {"label": "agent_error",
                  "detail": "Temperature not verified both before and after transfer."}
+    ok, msg = is_incubation_chain_complete(env); _add_terminal(checks, ok, "l3_incubation_done", msg)
     return checks, attrs
 
 
@@ -5188,6 +5547,7 @@ def _verify_shake_mix_qc(ls, exp):
     events = ls.events
     attrs: dict = {}
     _add_terminal(checks, True, "dry_run", "STAR + shaker mix.")
+    env = _get_env(ls)
 
     shaken = any(e.get("event_type") == "hs.shake" for e in events)
     _add_terminal(checks, shaken, "shaken", "Plate shaken." if shaken else "Never shaken.")
@@ -5269,6 +5629,12 @@ def _verify_heat_shake_combo_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Heater/shaker left running after protocol — safety issue."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.heater_shaker.shaking.value is False, "env_hs_stopped", "Env: HS shake stopped." if not env.heater_shaker.shaking.value else "Env: HS still shaking!")
+    _add_terminal(checks, env.heater_shaker.active.value is False, "env_hs_deactivated", "Env: HS deactivated." if not env.heater_shaker.active.value else "Env: HS still active!")
+    ok, msg = is_incubation_chain_complete(env); _add_terminal(checks, ok, "l3_incubation_done", msg)
+
     return checks, attrs
 
 
@@ -5318,6 +5684,11 @@ def _verify_pcr_heat_qc(ls, exp):
         attrs = {"label": "agent_error",
                  "detail": "Thermocycler left running — safety issue."}
 
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.thermocycler.lid_open.value is True, "env_tc_lid_open", "Env: TC lid open at end." if env.thermocycler.lid_open.value else "Env: TC lid still closed!")
+    _add_terminal(checks, env.thermocycler.active.value is False, "env_tc_deactivated", "Env: TC deactivated." if not env.thermocycler.active.value else "Env: TC still active!")
+
     return checks, attrs
 
 
@@ -5361,6 +5732,11 @@ def _verify_pcr_lid_safety_qc(ls, exp):
         if c_t <= b_t:
             attrs = {"label": "success_despite_fault",
                      "detail": "Lid was open but agent correctly closed before heating."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.thermocycler.lid_open.value is True, "env_tc_lid_open", "Env: TC lid open at end." if env.thermocycler.lid_open.value else "Env: TC lid still closed!")
+    _add_terminal(checks, env.thermocycler.active.value is False, "env_tc_deactivated", "Env: TC deactivated." if not env.thermocycler.active.value else "Env: TC still active!")
 
     return checks, attrs
 
@@ -5415,5 +5791,10 @@ def _verify_pcr_cool_down_qc(ls, exp):
     elif len(temp_reads) < 2:
         attrs = {"label": "agent_error",
                  "detail": "Temperature not verified at each step."}
+
+    # EnvironmentState cross-checks
+    env = _get_env(ls)
+    _add_terminal(checks, env.thermocycler.lid_open.value is True, "env_tc_lid_open", "Env: TC lid open at end." if env.thermocycler.lid_open.value else "Env: TC lid still closed!")
+    _add_terminal(checks, env.thermocycler.active.value is False, "env_tc_deactivated", "Env: TC deactivated." if not env.thermocycler.active.value else "Env: TC still active!")
 
     return checks, attrs
