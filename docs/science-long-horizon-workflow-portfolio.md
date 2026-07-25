@@ -3,6 +3,10 @@
 Date: 2026-07-25
 Status: execution proposal
 
+Concrete file-level work packets, commands, admission gates, and the first
+ten-day sequence are in
+[`science-workflow-portfolio-implementation.md`](science-workflow-portfolio-implementation.md).
+
 ## Decision
 
 Build a portfolio of executable scientific workflows, not one oversized
@@ -855,4 +859,3 @@ Do not substitute more task count for a failed grounding gate.
   https://www.agilent.com/cs/library/specifications/public/Synergy-H1-technical-details-5994-3583EN-agilent.pdf
 - Public OD600 example with time, replicate, and measurement cadence:
   https://datadryad.org/dataset/doi:10.5061/dryad.stqjq2chf
-
