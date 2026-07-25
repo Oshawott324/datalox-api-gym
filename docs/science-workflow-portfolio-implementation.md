@@ -45,7 +45,7 @@ another session runtime to API Gym.
 `datalox-api-gym` owns:
 
 - canonical provider/API source packs;
-- source-grounded transition, verifier, and reward atoms;
+- source-grounded provider transitions and deterministic verifier signals;
 - science world bundle source;
 - world-specific state, dynamics, fact adapters, and task families;
 - deterministic world builders and mutation suites.
@@ -174,87 +174,89 @@ datalox-rollout-collector:
 Do not mix the provider capture, world composition, and dataset packaging work
 into one commit or pull request.
 
-## Step 1: Add Construction-Ready Source-Pack Records
+## Step 1: Lock The Transition, Outcome, And Reward Boundaries
 
-The current API Gym source-pack validator supports arbitrary record files, but
-it only has typed validation for operations, schemas, examples, response
-cases, probes, errors, and world candidates.
-
-Add four optional construction records without changing existing packs:
+Do not add a new source-pack schema before the first provider implementation.
+The current source-pack records are sufficient for initial capture:
 
 ```text
-transition_atoms.jsonl
-verifier_atoms.jsonl
-reward_atoms.jsonl
-known_gaps.jsonl
+operations.jsonl
+schemas.jsonl
+response_cases.jsonl
+probes.jsonl
+observed_errors.jsonl
+world_candidates.jsonl
 ```
 
-### Files to change
+A typed provider transition is environment construction metadata. It describes
+the state effect that was observed or implemented for one provider operation:
 
 ```text
-source_packs/apis/schema.md
-api_gym/source_packs.py
-tests/test_source_packs.py
-tests/fixtures/source_packs/
+operation
+  + preconditions
+  + state effects
+  + emitted facts
+  + grounding references
 ```
 
-### Minimal record contracts
-
-`transition_atoms.jsonl`:
+For example, a successful Opentrons analysis creation may establish:
 
 ```json
 {
-  "id": "transition:opentrons.create_analysis",
-  "source_pack_id": "api.opentrons.<version>",
   "operation_ref": "operation:createAnalysis",
-  "grounding_level": "G2_LOCAL_PROBE",
   "preconditions": [
     {"fact": "protocol.exists", "value": true}
   ],
   "effects": [
     {"fact": "analysis.status", "value": "pending"},
     {"fact": "analysis.protocol_id", "from_request": "/protocolId"}
-  ],
-  "source_refs": [
-    {"kind": "probe", "path": "raw/probes/create_analysis_success.json"}
   ]
 }
 ```
 
-`verifier_atoms.jsonl`:
+This is useful because a resettable world needs read-after-write state,
+asynchronous dynamics, mutation generation, and deterministic verification.
+It is not a training reward and it is not necessary to encode every provider
+transition declaratively before building the first world.
 
-```json
-{
-  "id": "verifier:opentrons.analysis_succeeded",
-  "source_pack_id": "api.opentrons.<version>",
-  "requires_facts": [
-    "analysis.status",
-    "analysis.errors",
-    "analysis.protocol_id"
-  ],
-  "clause_type": "state_equals",
-  "default_failure_code": "opentrons.analysis_not_successful",
-  "source_refs": [
-    {"kind": "probe", "path": "raw/probes/analysis_terminal_success.json"}
-  ]
-}
+For AMR, implement transitions directly in the provider-shaped world handlers
+and prove each effect with:
+
+- a G2 capture or source-executed provider contract;
+- a transition unit test;
+- read-after-write behavior;
+- reset determinism;
+- a negative or invalid-transition case.
+
+After both AMR and growth pass, extract only provider transitions that are
+actually reused. At that point, add optional `transition_atoms.jsonl` and
+`verifier_atoms.jsonl` records if they reduce duplicated world code. Do not add
+`reward_atoms.jsonl`.
+
+The environment produces:
+
+```text
+deterministic verifier assertions
+stable failure codes
+diagnostic outcome vectors
+evidence references
 ```
 
-`reward_atoms.jsonl`:
+The training team owns:
 
-```json
-{
-  "id": "reward:opentrons.valid_analysis",
-  "source_pack_id": "api.opentrons.<version>",
-  "verifier_atom_refs": ["verifier:opentrons.analysis_succeeded"],
-  "value": 1.0,
-  "aggregation": "all_required",
-  "source_refs": [
-    {"kind": "contract", "path": "verifier_atoms.jsonl"}
-  ]
-}
+```text
+scalar reward
+component weights
+reward shaping
+temporal credit assignment
+penalty schedules
+curriculum and sampling policy
 ```
 
+The world may emit a boolean pass and per-obligation outcomes. It must not
+decide how a training pipeline converts those outcomes into reward.
+
+The one optional record worth adding during provider capture is
 `known_gaps.jsonl`:
 
 ```json
@@ -275,29 +277,13 @@ tests/fixtures/source_packs/
 }
 ```
 
-### Validation requirements
+If `known_gaps.jsonl` is added, extend `validate_source_pack()` only enough to
+require:
 
-Extend `validate_source_pack()` so it fails when:
-
-- an atom references an absent operation or verifier atom;
-- `grounding_level` is absent or not G0-G4;
 - `source_refs` are missing;
-- a transition atom has no declared effects;
-- a verifier atom has no required facts or failure code;
-- a reward atom references a missing verifier atom;
 - a known gap has no `forbidden_claims`.
 
-Do not make these four files mandatory for legacy packs. A new pack is called
-construction-ready only when all four exist and pass.
-
-### Acceptance command
-
-```bash
-python -m pytest \
-  tests/test_source_packs.py \
-  tests/test_source_pack_to_environment_framework.py \
-  -q
-```
+Do not make this record mandatory for legacy packs.
 
 ## Step 2: Capture eLabFTW As G2
 
@@ -427,15 +413,13 @@ source_packs/apis/elabftw/<capture-date>/
   response_cases.jsonl
   probes.jsonl
   observed_errors.jsonl
-  transition_atoms.jsonl
-  verifier_atoms.jsonl
-  reward_atoms.jsonl
   known_gaps.jsonl
   world_candidates.jsonl
 ```
 
 The source pack must cite the runtime capture record and its SHA-256 digest.
 Do not cite the local shadow as evidence of physical or production behavior.
+The first world implementation remains the executable transition contract.
 
 ### eLabFTW exit gate
 
@@ -1040,7 +1024,40 @@ authoring time
 
 Do not estimate a reuse percentage before both worlds pass.
 
-## Step 8: Extract The Small Verifier Compiler
+## Step 8: Extract Only The Reused Transition And Verifier Layers
+
+First compare the eLabFTW and reader/Opentrons handlers in the two admitted
+worlds. Move a provider transition into a reusable capsule only when the same
+operation, preconditions, effects, and error semantics are needed again:
+
+```text
+api_gym/provider_components/
+  elabftw/
+    operations.py
+    transitions.py
+    facts.py
+  opentrons/
+    operations.py
+    transitions.py
+    facts.py
+```
+
+A typed transition may be a Python dataclass and handler rather than JSON. It
+must declare:
+
+```text
+operation ref
+accepted request type
+precondition facts
+state mutation scope
+emitted fact names
+source refs and grounding level
+```
+
+Keep complex effects in tested code. Do not force asynchronous jobs, artifact
+lineage, or rollback behavior into a shallow declarative format merely to call
+it a compiler. Optional `transition_atoms.jsonl` should be an index over the
+tested capsule, not a second implementation of its behavior.
 
 Only after AMR and growth pass, extract repeated construction logic into:
 
@@ -1374,23 +1391,16 @@ Contents:
 - refreshed provider world;
 - fail-closed hardware boundary tests.
 
-### API Gym PR 1: construction-ready source-pack records
-
-Contents:
-
-- optional atom schemas;
-- validator and tests;
-- no provider data yet.
-
-### API Gym PR 2: refreshed provider packs
+### API Gym PR 1: refreshed provider packs
 
 Contents:
 
 - eLabFTW G2 pack;
 - refreshed Opentrons G2 pack;
+- explicit known gaps and forbidden claims;
 - exact citations to runtime capture digests.
 
-### API Gym PR 3: AMR vertical slice
+### API Gym PR 2: AMR vertical slice
 
 Contents:
 
@@ -1400,7 +1410,7 @@ Contents:
 - deterministic build;
 - admission and performance report.
 
-### API Gym PR 4: growth transfer world
+### API Gym PR 3: growth transfer world
 
 Contents:
 
@@ -1409,13 +1419,15 @@ Contents:
 - three reviewed families;
 - transfer and performance measurements.
 
-### API Gym PR 5: verifier compiler extraction
+### API Gym PR 4: transition and verifier extraction
 
 Contents:
 
+- only provider transitions demonstrated as reusable by both worlds;
 - only abstractions demonstrated by AMR and growth;
 - clause validation;
 - mutation contract validation;
+- deterministic outcome signals, not training rewards;
 - no scientific thresholds in generic code.
 
 ### Later PRs
@@ -1457,7 +1469,7 @@ sources or focused domain review before they become contracts.
 
 ### Days 1-2
 
-- add construction-ready source-pack records and validation;
+- record the transition/outcome/reward ownership boundary;
 - start pinned eLabFTW locally;
 - capture one experiment create/read/update cycle and one permission failure.
 

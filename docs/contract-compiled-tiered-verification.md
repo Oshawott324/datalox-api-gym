@@ -535,10 +535,9 @@ mutation catch rate or specificity falling after compilation
 catalog growth remaining roughly linear with family count
 ```
 
-## Reward Use
+## Outcome Signal Boundary
 
-The compiled checks should initially emit a diagnostic vector rather than an
-unvalidated dense reward:
+The compiled checks emit deterministic outcome evidence:
 
 ```text
 terminal success
@@ -550,10 +549,11 @@ collateral state changes
 efficiency counters
 ```
 
-These signals can support debugging, trajectory filtering, curriculum design,
-and failure analysis. A signal should become a shaped training reward only
-after adversarial validation shows that optimizing it does not create an easier
-but incorrect policy. The trusted terminal verifier remains the reward anchor.
+These signals can support debugging, trajectory filtering, and failure
+analysis. API Gym does not convert them into scalar or shaped rewards. The
+training team owns reward weights, shaping, temporal credit assignment,
+curriculum design, and adversarial validation of any reward derived from these
+signals. The trusted terminal verifier remains the correctness anchor.
 
 ## What Would Be Paper-Worthy
 
@@ -565,7 +565,7 @@ reduces marginal verifier-authoring cost
 transfers to held-out task families
 preserves or improves mutation-based validity
 reduces verifier latency through incremental evaluation
-produces useful diagnostics without weakening the terminal reward
+produces useful diagnostics without weakening terminal correctness
 ```
 
 The contribution would then be a verified environment-compilation method for

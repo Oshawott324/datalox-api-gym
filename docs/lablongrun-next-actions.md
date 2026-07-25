@@ -329,7 +329,8 @@ Immediate discussion focus:
 
 ```text
 Primary objective: training data, eval credibility, or AI-lab workflow realism.
-Reward drift risk: how to keep tasks and verifiers aligned as the benchmark scales.
+Verifier-contract drift risk: how to keep generated tasks and deterministic
+outcome checks aligned as the benchmark scales.
 Release bar: what minimum evidence makes a Hugging Face preview credible.
 ```
 

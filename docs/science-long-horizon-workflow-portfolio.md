@@ -709,7 +709,7 @@ The strongest paper claim is:
 - state and dynamics specific to each world;
 - task-family contracts;
 - domain fact adapters;
-- verifier and reward atoms;
+- deterministic verifier outcomes and diagnostic evidence;
 - executable world composition.
 
 `datalox-rollout-collector`
@@ -718,6 +718,9 @@ The strongest paper claim is:
 - public/private and train/dev/test splits;
 - rollout packaging and quality reports;
 - leaderboard input artifacts.
+
+The training team, outside these repositories, owns scalar rewards, component
+weights, shaping, temporal credit assignment, and curriculum policy.
 
 Do not add another generic session runtime or capture mechanism to API Gym.
 
