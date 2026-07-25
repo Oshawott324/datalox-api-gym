@@ -33,9 +33,9 @@ api-gym session finalize --run runs/demo --json
 
 ## What's Real Today
 
-- Three complete worlds: a dry-run lab plate-QC world, a billing/support-ops
-  world with HTTP serving, and a shape-grounded Automata LINQ workflow-planning
-  dry-run world.
+- Six registered worlds: billing/support operations, UniteLabs plate QC,
+  Automata LINQ workflow planning, PyLabRobot OT-2 and STAR dry-run worlds, and
+  a Synergy H1 yeast-growth workflow.
 - A dry-run API gate over 31 source-grounded providers, 134 operations, and 179
   sourced response cases. An agent can call an original-shaped API and get a
   sourced response back instead of hitting the live service.
@@ -45,8 +45,10 @@ api-gym session finalize --run runs/demo --json
 
 ## What's Early
 
-- The lab world's API semantics are not yet grounded in a real vendor contract.
-- Three worlds and a seed dataset: early, with no model-lift claims.
+- UniteLabs semantics are not yet grounded in a real vendor contract. The
+  PyLabRobot worlds use real library methods, but their dry-run dynamics remain
+  controlled projections rather than claims about physical hardware.
+- Six worlds and a seed dataset: early, with no model-lift claims.
 - Verifiers check workflow invariants and tool evidence, not scientific
   correctness.
 
@@ -84,6 +86,28 @@ source-grounded APIs.
   repair, and live-action boundary enforcement
 - not high-fidelity Automata runtime behavior; no live tenant, workcell, or
   hardware execution
+
+`pylabrobot_lab_v0`
+
+- Opentrons OT-2 dry-run projection through PyLabRobot
+- 20 seeded scenarios with stochastic and fault schedules
+- temporal and final-state verification
+
+`pylabrobot_star_v0`
+
+- Hamilton STAR dry-run projection through PyLabRobot
+- 91 scenarios, 101 tools, and 16 instrument categories
+- tiered event-derived state plus strict oracle and mutant admission
+
+`synergy_h1_yeast_growth_v0`
+
+- long-running plate-reader workflow with incubation, cadence, and freshness
+  constraints
+- source references and explicit projection assumptions
+- deterministic admission over oracle and known-bad plans
+
+See [LabLongRun benchmark](docs/lablongrun-benchmark.md) for the detailed
+scenario catalog, architecture, trajectory runner, and admission workflow.
 
 ## Quickstart
 
@@ -232,6 +256,7 @@ API Gym does not own:
 
 ```text
 api_gym/                 Python package and world runtime surfaces
+gen_trajectory/          LabLongRun trajectory runner and demo
 source_packs/apis/       Raw and normalized API source substrate
 worlds/                  World specs, grounding notes, evidence, and policies
 website/                 VitePress documentation

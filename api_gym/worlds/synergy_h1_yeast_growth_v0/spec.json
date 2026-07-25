@@ -1,0 +1,23 @@
+{
+  "id": "synergy_h1_yeast_growth_v0",
+  "world": "synergy_h1_yeast_growth_v0",
+  "title": "Agilent BioTek Synergy H1 Yeast Growth Dry Run",
+  "version": "0.1.0",
+  "scenario": "yeast_growth_20h_kinetic",
+  "runtime": {"package": "api_gym.worlds.synergy_h1_yeast_growth_v0", "state_db": "state.sqlite", "time": "logical_only", "physical_execution": false},
+  "schedule": {"start_included": true, "end_included": true, "observations": 601, "source_status": "benchmark_defined", "source_ref": "benchmark_projection"},
+  "tools": [
+    {"name": "inspect_workcell", "grounding": "benchmark_local"},
+    {"name": "reader_open", "grounding": "plr_backend"},
+    {"name": "reader_load_plate", "grounding": "plr_resource_holder_assignment"},
+    {"name": "reader_close", "grounding": "plr_backend"},
+    {"name": "reader_set_temperature", "grounding": "plr_backend"},
+    {"name": "reader_get_temperature", "grounding": "plr_backend_with_calibration_assumption"},
+    {"name": "reader_start_shaking", "grounding": "plr_backend_with_setting_3_bridge_assumption"},
+    {"name": "reader_stop_shaking", "grounding": "plr_backend"},
+    {"name": "reader_stop_temperature", "grounding": "plr_backend"},
+    {"name": "advance_logical_time", "grounding": "benchmark_local"},
+    {"name": "reader_read_absorbance", "grounding": "plr_backend_with_calibration_assumption"},
+    {"name": "submit_growth_decision", "grounding": "benchmark_local"}
+  ]
+}
