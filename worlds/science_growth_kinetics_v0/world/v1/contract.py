@@ -168,7 +168,10 @@ TOOLS = (
     },
     {
         "id": "pylabrobot.get_kinetic_read",
-        "description": "Read kinetic-run status, completeness, provenance, and OD600 series.",
+        "description": (
+            "Read kinetic-run status, provenance, and a bounded OD600 summary "
+            "with a digest of the authoritative series."
+        ),
         "list_roles": [DEFAULT_ROLE],
         "invoke_roles": [DEFAULT_ROLE],
         "input_schema": schema(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import subprocess
 import sys
@@ -158,6 +159,41 @@ def test_low_resource_error_is_structured_and_backup_transfer_executes(
         backend.close()
 
 
+def test_provider_bridge_executes_inside_async_mcp_context(tmp_path: Path) -> None:
+    run_dir = tmp_path / "async-run"
+    initialize_world_bundle_session(
+        source_bundle_dir=WORLD,
+        run_dir=run_dir,
+        episode_id="growth-kinetics-000",
+    )
+    backend = WorldBundleBackend(run_dir=run_dir)
+    actor = ActorContext("science-agent", "scientist_agent")
+
+    async def invoke_transfer() -> object:
+        return backend.handle(
+            backend.request_for_tool(
+                "pylabrobot.transfer",
+                {
+                    "source_well": "A1",
+                    "target_well": "A1",
+                    "tip_spot": "A1",
+                    "volume_ul": 200.0,
+                },
+                actor=actor,
+            )
+        )
+
+    try:
+        response = asyncio.run(invoke_transfer())
+        assert response is not None
+        assert response.status_code == 200
+        assert response.body["provider_execution"]["grounding_level"] == (
+            "simulator_executed"
+        )
+    finally:
+        backend.close()
+
+
 def test_reference_verification_is_vector_only_and_fast(tmp_path: Path) -> None:
     trajectories = json.loads(TRAJECTORIES.read_text())["trajectories"]
     reference = next(
@@ -190,6 +226,19 @@ def test_reference_verification_is_vector_only_and_fast(tmp_path: Path) -> None:
         assert len(payload["checks"]) == 11
         assert "reward" not in payload
         assert "score" not in payload
+
+        readback = backend.handle(
+            backend.request_for_tool(
+                "pylabrobot.get_kinetic_read",
+                {"job_id": "run-001"},
+                actor=actor,
+            )
+        )
+        assert readback is not None
+        assert "series" not in readback.body
+        assert readback.body["series_summary"]["well_count"] == 9
+        assert readback.body["series_summary"]["total_values"] == 5409
+        assert len(json.dumps(readback.body)) < 10_000
 
         timings = []
         for _ in range(30):

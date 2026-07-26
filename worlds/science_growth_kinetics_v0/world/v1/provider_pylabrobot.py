@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+import fcntl
 import hashlib
 import io
 import math
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from contextlib import redirect_stderr, redirect_stdout
 from importlib.metadata import version
-from typing import Any, Mapping
+from pathlib import Path
+from typing import Any, Callable, Coroutine, Iterator, Mapping, TypeVar
 
 from pylabrobot.liquid_handling import LiquidHandler
 from pylabrobot.liquid_handling.backends import OpentronsOT2Simulator
@@ -27,6 +32,7 @@ from pylabrobot.resources.opentrons import OTDeck, opentrons_96_tiprack_300ul
 from pylabrobot.storage import Incubator, IncubatorChatterboxBackend
 
 PINNED_PYLABROBOT_VERSION = "0.2.1"
+_ResultT = TypeVar("_ResultT")
 
 
 class PyLabRobotBridgeError(RuntimeError):
@@ -57,8 +63,8 @@ def run_ot2_transfer(
 ) -> dict[str, Any]:
     """Execute one tracked pick/aspirate/dispense/return sequence locally."""
     _require_version()
-    return asyncio.run(
-        _run_ot2_transfer(
+    return _run_provider_coroutine(
+        lambda: _run_ot2_transfer(
             source_volumes_ul=source_volumes_ul,
             target_volumes_ul=target_volumes_ul,
             tip_availability=tip_availability,
@@ -157,8 +163,8 @@ def run_incubator_load(
 ) -> dict[str, Any]:
     """Execute a bounded Chatterbox incubator load and configuration sequence."""
     _require_version()
-    return asyncio.run(
-        _run_incubator_load(
+    return _run_provider_coroutine(
+        lambda: _run_incubator_load(
             plate_name=plate_name,
             temperature_c=temperature_c,
             shaking_hz=shaking_hz,
@@ -221,7 +227,9 @@ async def _run_incubator_load(
 def run_incubator_release(*, plate_name: str) -> dict[str, Any]:
     """Execute a bounded Chatterbox fetch from an incubator site."""
     _require_version()
-    return asyncio.run(_run_incubator_release(plate_name=plate_name))
+    return _run_provider_coroutine(
+        lambda: _run_incubator_release(plate_name=plate_name)
+    )
 
 
 async def _run_incubator_release(*, plate_name: str) -> dict[str, Any]:
@@ -269,8 +277,8 @@ def run_plate_reader_absorbance(
 ) -> dict[str, Any]:
     """Execute one Chatterbox absorbance read without claiming assay fidelity."""
     _require_version()
-    return asyncio.run(
-        _run_plate_reader_absorbance(
+    return _run_provider_coroutine(
+        lambda: _run_plate_reader_absorbance(
             plate_name=plate_name,
             wells=wells,
             wavelength_nm=wavelength_nm,
@@ -371,6 +379,37 @@ def _require_version() -> None:
             f"Expected PyLabRobot {PINNED_PYLABROBOT_VERSION}, found {installed}.",
             details={"expected": PINNED_PYLABROBOT_VERSION, "installed": installed},
         )
+
+
+def _run_provider_coroutine(
+    coroutine_factory: Callable[[], Coroutine[Any, Any, _ResultT]],
+) -> _ResultT:
+    with _provider_execution_lock():
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(coroutine_factory())
+        with ThreadPoolExecutor(
+            max_workers=1,
+            thread_name_prefix="datalox-pylabrobot",
+        ) as executor:
+            return executor.submit(
+                lambda: asyncio.run(coroutine_factory())
+            ).result()
+
+
+@contextmanager
+def _provider_execution_lock() -> Iterator[None]:
+    lock_path = (
+        Path(tempfile.gettempdir())
+        / f"datalox-pylabrobot-{PINNED_PYLABROBOT_VERSION}.lock"
+    )
+    with lock_path.open("a+b") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _normalize_error(error: Exception, *, operation: str) -> PyLabRobotBridgeError:

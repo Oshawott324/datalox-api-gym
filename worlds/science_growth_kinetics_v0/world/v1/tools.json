@@ -296,7 +296,7 @@
       ]
     },
     {
-      "description": "Read kinetic-run status, completeness, provenance, and OD600 series.",
+      "description": "Read kinetic-run status, provenance, and a bounded OD600 summary with a digest of the authoritative series.",
       "id": "pylabrobot.get_kinetic_read",
       "input_schema": {
         "additionalProperties": false,

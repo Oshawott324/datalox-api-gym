@@ -12,7 +12,7 @@
   ],
   "hardware_execution_allowed": false,
   "network_access_required": false,
-  "provider_bridge_source_sha256": "sha256:80c6447579ee270cdb1d10693f04cac8a52e5d88d68fe88c21f7d11d65da49ff",
+  "provider_bridge_source_sha256": "sha256:9a709c058c017e515eae2584f767adfbb7604e192f06be7301a44c0e4b06ad90",
   "provider_projects": [
     "eLabFTW",
     "PyLabRobot"

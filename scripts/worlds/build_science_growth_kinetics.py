@@ -860,6 +860,9 @@ def build() -> None:
         "interval, deterministic logistic values, reader-busy timing, partial-run "
         "fault, and revision-bump timing are benchmark-defined. They are workflow "
         "fixtures, not biological or production-frequency claims.\n\n"
+        "The complete deterministic OD600 series remains in authoritative world "
+        "state for verification. Agent readback returns a bounded per-well summary "
+        "and SHA-256 digest so a 5,409-value payload does not dominate model context.\n\n"
         "Plate transport between independent fixtures is state-projected; no robot "
         "arm is executed. Live hardware and network calls are inexpressible.\n",
         encoding="utf-8",

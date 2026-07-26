@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import re
@@ -685,7 +686,13 @@ class ScienceGrowthKineticsWorld(WorldImplementationV1):
                 "Kinetic job does not exist.",
                 details={"job_id": job_id},
             )
-        return deepcopy(job), 200, (), None
+        result = {
+            key: deepcopy(value)
+            for key, value in job.items()
+            if key != "series"
+        }
+        result["series_summary"] = _series_summary(job["series"])
+        return result, 200, (), None
 
     @staticmethod
     def _advance_clock(
@@ -920,6 +927,30 @@ def _argument_value_error(name: str, value: Any) -> None:
         f"{name} is outside the declared contract.",
         details={"field": name, "received": value},
     )
+
+
+def _series_summary(series: Mapping[str, list[float]]) -> dict[str, Any]:
+    canonical = json.dumps(
+        series,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode()
+    return {
+        "sha256": hashlib.sha256(canonical).hexdigest(),
+        "well_count": len(series),
+        "total_values": sum(len(values) for values in series.values()),
+        "wells": {
+            well: {
+                "observation_count": len(values),
+                "first": values[0] if values else None,
+                "last": values[-1] if values else None,
+                "minimum": min(values) if values else None,
+                "maximum": max(values) if values else None,
+            }
+            for well, values in sorted(series.items())
+        },
+    }
 
 
 def create_world() -> ScienceGrowthKineticsWorld:
