@@ -1,0 +1,3 @@
+# Growth kinetics dry run
+
+Read the eLabFTW protocol before acting and again after advancing time. Inspect tracked resources, use one clean tip per transfer, and use only declared backup sources. Treat provider errors as state evidence. Logical time does not sleep. Confirm incubation stabilization before release. A partial kinetic result is not recoverable by documentation; rerun the complete 20-hour method. Record only a complete job whose plate barcode and protocol revision remain current. eLabFTW PATCH metadata must be a JSON string. Never claim that Chatterbox values are physical measurements or that the benchmark curve predicts biology.

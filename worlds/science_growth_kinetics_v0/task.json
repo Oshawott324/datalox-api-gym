@@ -1,0 +1,12 @@
+{
+  "instructions": "Read eLabFTW protocol experiment 1100. Inspect the tracked deck and prepare every declared assay well with a unique clean tip; use a declared backup source when needed. Load and stabilize the plate, then release it and start the exact current OD600 kinetic method. The reader may be busy, return a partial first run, or the protocol may be revised while time advances. Recover using current provider state. After one complete, current 601-observation series exists, create an eLabFTW experiment, patch it with title/body/JSON-string metadata, and read it back. Metadata must include qc_status='accepted', plate_barcode, protocol_revision, kinetic_job_id, observation_count=601, and expected_wells.",
+  "success_criteria": [
+    "Every protocol well contains 200 uL from an allowed source.",
+    "Every transfer uses a distinct clean tip and executes the OT-2 simulator.",
+    "The plate is stabilized at 30 C before reader release.",
+    "A complete current OD600 series covers all nine wells at 120-second cadence for 20 hours.",
+    "The eLabFTW result record cites the current plate, protocol revision, and complete job."
+  ],
+  "task_id": "growth-kinetics-000",
+  "title": "Run and document a dry-run yeast growth kinetics assay"
+}

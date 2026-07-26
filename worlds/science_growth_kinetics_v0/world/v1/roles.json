@@ -1,0 +1,8 @@
+{
+  "roles": [
+    {
+      "description": "Executes and documents a dry-run microbial growth workflow.",
+      "id": "scientist_agent"
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+{
+  "tools": [
+    {
+      "description": "Read one existing eLabFTW experiment or result record.",
+      "id": "elabftw.get_experiment",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "experiment_id": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "experiment_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "scientific_record",
+      "source_refs": [
+        "elabftw_reference_capture"
+      ]
+    },
+    {
+      "description": "Create an empty eLabFTW result experiment and return its location.",
+      "id": "elabftw.create_experiment",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "scientific_record",
+      "source_refs": [
+        "elabftw_reference_capture"
+      ]
+    },
+    {
+      "description": "Patch a created eLabFTW result with title, body, and JSON-string metadata.",
+      "id": "elabftw.patch_experiment",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "experiment_id": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "metadata": {
+            "minLength": 2,
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "title",
+          "body",
+          "metadata"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "scientific_record",
+      "source_refs": [
+        "elabftw_reference_capture"
+      ]
+    },
+    {
+      "description": "Inspect tracked source volumes, assay wells, and clean-tip availability.",
+      "id": "pylabrobot.inspect_deck",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "liquid_handling",
+      "source_refs": [
+        "pylabrobot_executed_source_pack"
+      ]
+    },
+    {
+      "description": "Execute one OT-2 simulator transfer with a selected clean disposable tip.",
+      "id": "pylabrobot.transfer",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "source_well": {
+            "pattern": "^[A-H](?:[1-9]|1[0-2])$",
+            "type": "string"
+          },
+          "target_well": {
+            "pattern": "^[A-H](?:[1-9]|1[0-2])$",
+            "type": "string"
+          },
+          "tip_spot": {
+            "pattern": "^[A-H](?:[1-9]|1[0-2])$",
+            "type": "string"
+          },
+          "volume_ul": {
+            "exclusiveMinimum": 0,
+            "maximum": 300,
+            "type": "number"
+          }
+        },
+        "required": [
+          "source_well",
+          "target_well",
+          "tip_spot",
+          "volume_ul"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "liquid_handling",
+      "source_refs": [
+        "pylabrobot_executed_source_pack"
+      ]
+    },
+    {
+      "description": "Execute the incubator Chatterbox load, temperature, and shaking calls.",
+      "id": "pylabrobot.incubator_load",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "plate_barcode": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "shaking_hz": {
+            "exclusiveMinimum": 0,
+            "maximum": 10,
+            "type": "number"
+          },
+          "temperature_c": {
+            "maximum": 45,
+            "minimum": 20,
+            "type": "number"
+          }
+        },
+        "required": [
+          "plate_barcode",
+          "temperature_c",
+          "shaking_hz"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "incubation",
+      "source_refs": [
+        "pylabrobot_executed_source_pack",
+        "agilent_growth_protocol"
+      ]
+    },
+    {
+      "description": "Read plate location and benchmark-defined stabilization status.",
+      "id": "pylabrobot.incubator_status",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "incubation",
+      "source_refs": [
+        "growth_projection_contract"
+      ]
+    },
+    {
+      "description": "Execute the incubator Chatterbox plate-fetch calls after stabilization.",
+      "id": "pylabrobot.incubator_release",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "plate_barcode": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "plate_barcode"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "incubation",
+      "source_refs": [
+        "pylabrobot_executed_source_pack"
+      ]
+    },
+    {
+      "description": "Execute a Chatterbox OD600 read and schedule the benchmark kinetic series.",
+      "id": "pylabrobot.start_kinetic_read",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_seconds": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "interval_seconds": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "plate_barcode": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "protocol_revision": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "wavelength_nm": {
+            "maximum": 999,
+            "minimum": 230,
+            "type": "integer"
+          },
+          "wells": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "plate_barcode",
+          "protocol_revision",
+          "wells",
+          "wavelength_nm",
+          "interval_seconds",
+          "duration_seconds"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "plate_reading",
+      "source_refs": [
+        "pylabrobot_executed_source_pack",
+        "agilent_growth_protocol",
+        "growth_projection_contract"
+      ]
+    },
+    {
+      "description": "Read kinetic-run status, completeness, provenance, and OD600 series.",
+      "id": "pylabrobot.get_kinetic_read",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "pattern": "^run-[0-9]{3}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "plate_reading",
+      "source_refs": [
+        "growth_projection_contract"
+      ]
+    },
+    {
+      "description": "Advance benchmark logical time and deliver due workflow events.",
+      "id": "clock.advance",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "seconds": {
+            "maximum": 200000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seconds"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "logical_time",
+      "source_refs": [
+        "growth_projection_contract"
+      ]
+    }
+  ]
+}

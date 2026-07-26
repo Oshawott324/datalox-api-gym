@@ -174,6 +174,19 @@ class OT2SimulatorComponent:
             snapshot=self.snapshot(),
         )
 
+    async def discard_tip(self) -> dict[str, Any]:
+        operation_id = "pylabrobot.ot2.discard_tip"
+        try:
+            await self.liquid_handler.discard_tips(use_channels=[self.channel])
+        except Exception as error:
+            raise normalize_plr_exception(error, operation_id=operation_id) from error
+        return operation_observation(
+            operation_id,
+            request={"channel": self.channel},
+            result=None,
+            snapshot=self.snapshot(),
+        )
+
     async def stop(self) -> dict[str, Any]:
         try:
             if self._setup:

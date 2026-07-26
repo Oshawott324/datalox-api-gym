@@ -1,0 +1,28 @@
+{
+  "schema_version": "api_gym.world_source_refs.v0",
+  "source_packs": [
+    {
+      "path": "../../source_packs/apis/pylabrobot/2026-07-26/source_pack.json",
+      "records": [
+        "operation:pylabrobot.ot2.aspirate",
+        "operation:pylabrobot.ot2.dispense",
+        "operation:pylabrobot.ot2.discard_tip",
+        "operation:pylabrobot.incubator.take_in_plate",
+        "operation:pylabrobot.incubator.fetch_plate",
+        "operation:pylabrobot.plate_reader.read_absorbance"
+      ],
+      "source_pack_id": "api.pylabrobot.2026-07-26"
+    }
+  ],
+  "world": "science_growth_kinetics_v0",
+  "world_evidence": [
+    {
+      "path": "evidence/elabftw_experiments_create_patch_get_v0.json",
+      "role": "elabftw_reference_sequence"
+    },
+    {
+      "path": "evidence/growth_protocol_sources.json",
+      "role": "scientific_protocol_sources"
+    }
+  ]
+}

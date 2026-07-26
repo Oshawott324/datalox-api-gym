@@ -1,0 +1,28 @@
+{
+  "episode_count": 12,
+  "executed_provider_backends": [
+    "OpentronsOT2Simulator",
+    "IncubatorChatterboxBackend",
+    "PlateReaderChatterboxBackend"
+  ],
+  "family_ids": [
+    "growth_nominal_v1",
+    "growth_resource_recovery_v1",
+    "growth_async_freshness_recovery_v1"
+  ],
+  "hardware_execution_allowed": false,
+  "network_access_required": false,
+  "provider_bridge_source_sha256": "sha256:80c6447579ee270cdb1d10693f04cac8a52e5d88d68fe88c21f7d11d65da49ff",
+  "provider_projects": [
+    "eLabFTW",
+    "PyLabRobot"
+  ],
+  "scalar_reward_owned_here": false,
+  "schema_version": "datalox_science_world_construction_v1",
+  "verifier_complexity": {
+    "assertion_count": 11,
+    "event_passes": 1,
+    "state_loads": 1
+  },
+  "world_id": "science_growth_kinetics_v0"
+}

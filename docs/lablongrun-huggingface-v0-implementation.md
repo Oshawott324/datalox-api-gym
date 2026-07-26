@@ -3,6 +3,28 @@
 Date: 2026-07-26
 Status: active implementation contract
 
+## Current Status
+
+Implemented and admitted on 2026-07-26:
+
+- pinned PyLabRobot 0.2.1 provider component and sanitized reference captures;
+- actual OT-2 simulator calls for every transfer;
+- actual incubator and plate-reader Chatterbox calls at their declared fidelity;
+- one cross-service world with eLabFTW-shaped records and PyLabRobot mechanisms;
+- 12 deterministic episodes across nominal, resource-recovery, and
+  asynchronous freshness/recovery families;
+- 17 admitted reference, negative, recovery, and parity trajectories;
+- obligation-level verifier output with stable codes and evidence references;
+- deterministic source-pack and world rebuild checks.
+
+Not yet complete:
+
+- remote MCP transport suitable for a public Docker Space;
+- Codex and Claude baseline rollouts through the same release surface;
+- trace replay UI and dataset export;
+- independent scientific review;
+- Hugging Face Space and dataset publication.
+
 ## Objective
 
 Release a small but complete public science-agent environment that an outside
@@ -83,23 +105,25 @@ scripts/providers/pylabrobot/
 
 worlds/science_growth_kinetics_v0/
   README.md
-  grounding_matrix.json
-  family_contracts/
-  fixtures/
-  trajectories/
-  build.py
+  projection_contract.md
+  source_refs.json
+  evidence/
+  tests/trajectories/
   world/
     manifest.json
     v1/
       implementation.py
       dynamics.py
-      facts.py
       verifier.py
+      provider_pylabrobot.py
       episodes.jsonl
       roles.json
       tools.json
       verifier.json
       sources.json
+
+scripts/worlds/
+  build_science_growth_kinetics.py
 ```
 
 Do not add a second provider-pack tree for PyLabRobot. Source evidence lives in
@@ -168,9 +192,9 @@ protocol or reviewed by one domain researcher before public release.
 
 Initial task families:
 
-1. `nominal_growth_run`;
-2. `resource_or_contamination_recovery`;
-3. `busy_stale_or_partial_measurement`.
+1. `growth_nominal_v1`;
+2. `growth_resource_recovery_v1`;
+3. `growth_async_freshness_recovery_v1`.
 
 Each family must include:
 
@@ -191,8 +215,11 @@ World verification has three layers:
 3. world predicates for required controls, contamination lineage, incubation
    exposure, measurement completeness, and supported conclusions.
 
-`facts.py` builds indexed facts in one pass. Predicates do not repeatedly scan
-the complete trajectory. Verification emits a boolean and obligation outcomes
+The verifier reads state once, indexes the relevant operation events once, and
+evaluates named predicates over those facts. It does not repeatedly scan the
+complete trajectory. If multiple worlds reuse the same fact extraction, that
+extraction becomes a reusable provider or runtime assertion rather than a
+world-specific framework. Verification emits a boolean and obligation outcomes
 with stable failure codes and evidence references. It emits no scalar reward,
 weights, or credit assignment.
 

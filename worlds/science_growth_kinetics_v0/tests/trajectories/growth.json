@@ -1,0 +1,3759 @@
+{
+  "trajectories": [
+    {
+      "episode_id": "growth-kinetics-000",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-000",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1100
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-000",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1100
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-000"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-000",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2100,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-000\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-000"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2100
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-001",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-001",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1101
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-001",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1101
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-001",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2110,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-001\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-001"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-002",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-002",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1102
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-002",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1102
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-002"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-002",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2120,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-002\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-002"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2120
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-003",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-003",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1103
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-003",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1103
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-003"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-003",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2130,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-003\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-003"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2130
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-004",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-004",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1104
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "G12",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-004",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1104
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-004"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-004",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2140,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-004\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-004"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2140
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-005",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-005",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1105
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A10",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-005",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1105
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-005"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-005",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2150,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-005\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-005"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2150
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-006",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-006",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1106
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "G12",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-006",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1106
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-006"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-006",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2160,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-006\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-006"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2160
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-007",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-007",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A10",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-007",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-007"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-007",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2170,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-007\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-007"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2170
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-008",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-008",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-008",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-008"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-008",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 1200
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-008",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2180,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-008\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-008"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2180
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-009",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-009",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1109
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-009",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1109
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-009"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-009",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-009",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-002"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-002 completed with all declared replicates and blank control.",
+            "experiment_id": 2190,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-002\",\"observation_count\":601,\"plate_barcode\":\"YGR-009\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-009"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2190
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-010",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-010",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-010",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-010"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-010",
+            "protocol_revision": 2,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2200,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-010\",\"protocol_revision\":2,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-010"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2200
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-011",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "id": "reference-growth-kinetics-011",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1111
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-011",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1111
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-011"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-011",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 1200
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-011",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-011",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-002"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-002 completed with all declared replicates and blank control.",
+            "experiment_id": 2210,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-002\",\"observation_count\":601,\"plate_barcode\":\"YGR-011\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-011"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2210
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-000",
+      "expected": {
+        "failure_codes": [
+          "growth.protocol_inspected",
+          "growth.prep_complete",
+          "growth.transfer_lineage_valid",
+          "growth.unique_tip_per_transfer",
+          "growth.incubator_stabilized",
+          "growth.kinetic_complete",
+          "growth.series_current",
+          "growth.series_contract",
+          "growth.result_record_complete",
+          "growth.workflow_ordered",
+          "growth.provider_mechanisms_executed"
+        ],
+        "passed": false
+      },
+      "id": "negative-empty",
+      "kind": "negative",
+      "steps": []
+    },
+    {
+      "episode_id": "growth-kinetics-004",
+      "expected": {
+        "failure_codes": [
+          "growth.prep_complete",
+          "growth.transfer_lineage_valid",
+          "growth.unique_tip_per_transfer",
+          "growth.incubator_stabilized",
+          "growth.kinetic_complete",
+          "growth.series_current",
+          "growth.series_contract",
+          "growth.result_record_complete",
+          "growth.workflow_ordered",
+          "growth.provider_mechanisms_executed"
+        ],
+        "passed": false
+      },
+      "id": "negative-low-resource-unrecovered",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1104
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-009",
+      "expected": {
+        "failure_codes": [
+          "growth.kinetic_complete",
+          "growth.series_current",
+          "growth.series_contract",
+          "growth.result_record_complete"
+        ],
+        "passed": false
+      },
+      "id": "negative-partial-treated-as-complete",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1109
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-009",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1109
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-009"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-009",
+            "protocol_revision": 1,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "This record incorrectly treats a partial run as complete.",
+            "experiment_id": 2190,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-009\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Incorrectly accepted partial growth kinetics"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2190
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-010",
+      "expected": {
+        "failure_codes": [
+          "growth.result_record_complete"
+        ],
+        "passed": false
+      },
+      "id": "negative-stale-result-record",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.inspect_deck"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A1",
+            "target_well": "A1",
+            "tip_spot": "A1",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A2",
+            "target_well": "A2",
+            "tip_spot": "A2",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A3",
+            "target_well": "A3",
+            "tip_spot": "A3",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A4",
+            "target_well": "A4",
+            "tip_spot": "A4",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A5",
+            "target_well": "A5",
+            "tip_spot": "A5",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A6",
+            "target_well": "A6",
+            "tip_spot": "A6",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A7",
+            "target_well": "A7",
+            "tip_spot": "A7",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "A8",
+            "target_well": "A8",
+            "tip_spot": "A8",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "source_well": "H11",
+            "target_well": "H12",
+            "tip_spot": "A9",
+            "volume_ul": 200.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.transfer"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-010",
+            "shaking_hz": 2.0,
+            "temperature_c": 30.0
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_load"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 600
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 1110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "plate_barcode": "YGR-010"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.incubator_release"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "duration_seconds": 72000,
+            "interval_seconds": 120,
+            "plate_barcode": "YGR-010",
+            "protocol_revision": 2,
+            "wavelength_nm": 600,
+            "wells": [
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "A6",
+              "A7",
+              "A8",
+              "H12"
+            ]
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.start_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 72000
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "job_id": "run-001"
+          },
+          "surface": "mcp",
+          "tool_name": "pylabrobot.get_kinetic_read"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "Dry-run job run-001 completed with all declared replicates and blank control.",
+            "experiment_id": 2200,
+            "metadata": "{\"expected_wells\":[\"A1\",\"A2\",\"A3\",\"A4\",\"A5\",\"A6\",\"A7\",\"A8\",\"H12\"],\"kinetic_job_id\":\"run-001\",\"observation_count\":601,\"plate_barcode\":\"YGR-010\",\"protocol_revision\":1,\"qc_status\":\"accepted\"}",
+            "title": "Accepted growth kinetics YGR-010"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 2200
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "growth-kinetics-000",
+      "expected": {
+        "matched": true
+      },
+      "http_step": {
+        "actor_id": "science-http-001",
+        "actor_role": "scientist_agent",
+        "body": null,
+        "method": "GET",
+        "path": "/api/v2/experiments/1100",
+        "query": {},
+        "surface": "http"
+      },
+      "id": "parity-get-protocol",
+      "kind": "parity",
+      "mcp_step": {
+        "actor_id": "science-agent-001",
+        "actor_role": "scientist_agent",
+        "arguments": {
+          "experiment_id": 1100
+        },
+        "surface": "mcp",
+        "tool_name": "elabftw.get_experiment"
+      }
+    }
+  ]
+}

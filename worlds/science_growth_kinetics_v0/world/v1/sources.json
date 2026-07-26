@@ -1,0 +1,73 @@
+{
+  "grounding_gaps": [
+    {
+      "operation_family": "plate_reading",
+      "reason": "The Chatterbox backend executes the interface but returns dummy values. Kinetic OD600 values are benchmark-defined, not instrument observations.",
+      "status": "partial"
+    },
+    {
+      "operation_family": "incubation",
+      "reason": "Chatterbox does not model stabilization, exposure, or temperature dynamics. Logical-time stabilization is benchmark-defined.",
+      "status": "partial"
+    },
+    {
+      "operation_family": "cross_instrument_transport",
+      "reason": "No robot arm or physical workcell handoff is executed. Plate identity is preserved by world state across independent local fixtures.",
+      "status": "unsupported"
+    },
+    {
+      "operation_family": "biological_prediction",
+      "reason": "The deterministic logistic curves are stable workflow fixtures and must not be interpreted as biological predictions.",
+      "status": "unsupported"
+    }
+  ],
+  "sources": [
+    {
+      "derivation": "Pinned eLabFTW 5.6.10 create-patch-get request and response sequence captured from the disposable official container.",
+      "grounding_level": "G2_LOCAL_EXECUTED",
+      "id": "elabftw_reference_capture",
+      "kind": "authorized_local_fixture_capture",
+      "locator": "evidence/elabftw_experiments_create_patch_get_v0.json",
+      "supports": [
+        "operation:elabftw.get_experiment",
+        "operation:elabftw.create_experiment",
+        "operation:elabftw.patch_experiment"
+      ]
+    },
+    {
+      "derivation": "Pinned PyLabRobot 0.2.1 methods were executed locally with OpentronsOT2Simulator and Chatterbox backends.",
+      "grounding_level": "G2_LOCAL_EXECUTED",
+      "id": "pylabrobot_executed_source_pack",
+      "kind": "local_simulator_and_chatterbox_execution",
+      "locator": "evidence/ot2_success_v0.json; evidence/incubator_success_v0.json; evidence/plate_reader_success_v0.json",
+      "supports": [
+        "operation:pylabrobot.transfer",
+        "operation:pylabrobot.incubator_load",
+        "operation:pylabrobot.incubator_release",
+        "operation:pylabrobot.start_kinetic_read"
+      ]
+    },
+    {
+      "derivation": "Grounds the selected 96-well, eight-replicate, 200 uL, 30 C, OD600, two-minute, 20-hour protocol values.",
+      "grounding_level": "G1_OFFICIAL_DOCS",
+      "id": "agilent_growth_protocol",
+      "kind": "official_application_note",
+      "locator": "evidence/growth_protocol_sources.json",
+      "supports": [
+        "protocol:growth_kinetics"
+      ]
+    },
+    {
+      "derivation": "Defines logical-time stabilization, synthetic OD values, fault schedules, and state-verification semantics.",
+      "grounding_level": "G0_BENCHMARK_DEFINED",
+      "id": "growth_projection_contract",
+      "kind": "benchmark_projection",
+      "locator": "projection_contract.md",
+      "supports": [
+        "dynamics:logical_time",
+        "dynamics:kinetic_values",
+        "dynamics:fault_schedule"
+      ]
+    }
+  ]
+}

@@ -137,8 +137,8 @@ def test_checked_in_source_pack_matches_fresh_execution(tmp_path: Path) -> None:
     assert validation["record_counts"] == {
         "known_gaps": 6,
         "observed_errors": 6,
-        "operations": 28,
-        "response_cases": 33,
+        "operations": 29,
+        "response_cases": 34,
     }
 
 

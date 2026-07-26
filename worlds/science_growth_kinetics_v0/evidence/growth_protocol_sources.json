@@ -1,0 +1,16 @@
+{
+  "agilent_app_note": {
+    "locators": {
+      "duration": "page 3: experiment completed 20 hours later",
+      "replicates": "page 3: 200 uL aliquots in replicates of eight",
+      "workflow": "pages 2-3: 30 C, 600 nm, two-minute measurements, continuous orbital shaking"
+    },
+    "url": "https://www.agilent.com/cs/library/applications/monitoring-growth-of-saccharomyces-cerevisiae-5994-3284EN-agilent.pdf"
+  },
+  "agilent_technical_details": {
+    "locators": {
+      "reader": "page 1: kinetic reads, incubation, orbital shaking, and 230-999 nm absorbance"
+    },
+    "url": "https://www.agilent.com/cs/library/specifications/public/Synergy-H1-technical-details-5994-3583EN-agilent.pdf"
+  }
+}

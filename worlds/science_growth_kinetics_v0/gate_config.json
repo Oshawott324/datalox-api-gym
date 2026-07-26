@@ -1,0 +1,14 @@
+{
+  "audit_rules": [],
+  "config_id": "science_growth_kinetics_v0",
+  "policy": {
+    "deny": [],
+    "live_capture": [],
+    "shadow_write": []
+  },
+  "response_cases": [],
+  "world": {
+    "kind": "world_bundle_v1",
+    "seed": 0
+  }
+}

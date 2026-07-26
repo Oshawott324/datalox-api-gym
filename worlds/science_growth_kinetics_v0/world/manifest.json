@@ -1,0 +1,48 @@
+{
+  "bundle_version": "0.1.0",
+  "content_hashes": {
+    "README.md": "sha256:e7d05f1e9c081fd4ab01a933e97fde07ddbd93565ebbabbdd1a4dafe77a1ebf6",
+    "evidence/elabftw_experiments_create_patch_get_v0.json": "sha256:ab08452c77328dc894fb2b081efa42eb7632f1ec6f66d539628d8ede41509cc6",
+    "evidence/growth_protocol_sources.json": "sha256:8ba5ef600a6f75173a0a25cc6978937723d8ee8b5e42c2fb0c8f740369afeceb",
+    "evidence/incubator_success_v0.json": "sha256:2b5bf667716cd381d7363b509b068a305d46d4c90a1a0dc1a0e5d6ae21f7867e",
+    "evidence/ot2_success_v0.json": "sha256:eeb241c4bcddffe92025534bf5eefacf002d6f2f27d5ea1cee14380b8f5d1ed2",
+    "evidence/plate_reader_success_v0.json": "sha256:723012bd4b2af75b31c65e3dcfa3b1140715b18eb189c01799d4237b13d3e0f4",
+    "gate_config.json": "sha256:f8470b6733750633362f53bb2984eb09f388abb9032c1f85680c3004962d3a3a",
+    "projection_contract.md": "sha256:9d7f659b09a1f0691c83b7f9b3e56ec515b6a58edc3ec5472c76b9c2bbfc5540",
+    "replay_script.json": "sha256:0568ab55d01c45cfc1a76b4b8e64f4e7239e23fcab86c9d06c3ef55745de5612",
+    "skills/SKILL.md": "sha256:818098666bc93ea9e1dd9eea65154e40eaf891c71d188368965df80f8a4464f9",
+    "source_refs.json": "sha256:39f091c8b378cb23818133b7365c623ed2bb7cad430d638b679a37168ed352d0",
+    "task.json": "sha256:1e67a4a1417b5cba5743839990f0e2231f70c1295e00f54e6b18b0e69de0775b",
+    "tests/trajectories/growth.json": "sha256:a918db7f72dc78dc566a42dcc9545524d4487a5a0660cb6d5f0bba362331ff59",
+    "world/v1/construction.json": "sha256:3a0b603365e33a022209703a6b11b6465492443e738a6eaa151671d5f141086a",
+    "world/v1/contract.py": "sha256:69bc14e3a9ed538f0306c949b78c3f5718b1a722a5dc8bad92b2dc5ca51a3aed",
+    "world/v1/dynamics.py": "sha256:e0dd782923c1f209223998866440da5f3a92e432251aa211b75a8dcd0fcef6a7",
+    "world/v1/episodes.jsonl": "sha256:e5bb64669e64a369a4094ae544845a9f05adddf8b4b07829c3dd189eb1b8e58f",
+    "world/v1/implementation.py": "sha256:dfccb791bbf385c5ff80bdb34409252442b7b831a22264d2851e0741544dc45b",
+    "world/v1/provider_pylabrobot.py": "sha256:80c6447579ee270cdb1d10693f04cac8a52e5d88d68fe88c21f7d11d65da49ff",
+    "world/v1/roles.json": "sha256:15abc4c948f03c022bdae884a34420908d2adc0757176b3bd66b6c52daa1f0e1",
+    "world/v1/sources.json": "sha256:4a14eb2f1274355f0f50d041fa0ef7209bc54a1d79522d9147bfe2957d4eef5c",
+    "world/v1/tools.json": "sha256:46c7820c015c65010c0105e34185693e58315bb5529c2a37902402db1587f571",
+    "world/v1/verifier.json": "sha256:0cd0f969be416811c9cdd4df343bb2543ecdc626f44c9383a63da0eb03d6ba50",
+    "world/v1/verifier.py": "sha256:b847bfe388611b3f2ca816880adfd5c2cdfb1b7c319e0fab15e5bcab35ae144e"
+  },
+  "default_actor_role": "scientist_agent",
+  "episodes_path": "world/v1/episodes.jsonl",
+  "implementation": "world/v1/implementation.py:create_world",
+  "required_runtime_capabilities": [
+    "actors",
+    "role_scoped_tools",
+    "transactions",
+    "clock",
+    "scheduled_events"
+  ],
+  "roles_path": "world/v1/roles.json",
+  "schema_version": "datalox_world_bundle_v1",
+  "sources_path": "world/v1/sources.json",
+  "tools_path": "world/v1/tools.json",
+  "trajectory_paths": [
+    "tests/trajectories/growth.json"
+  ],
+  "verifier_path": "world/v1/verifier.json",
+  "world_id": "science_growth_kinetics_v0"
+}

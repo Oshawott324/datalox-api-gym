@@ -66,7 +66,9 @@ async def _ot2_success() -> dict[str, Any]:
         steps.append(await component.pick_up_tip("A1"))
         steps.append(await component.aspirate("A1", 25.0))
         steps.append(await component.dispense("A1", 25.0))
-        steps.append(await component.drop_tip("A1"))
+        steps.append(await component.discard_tip())
+        steps.append(await component.pick_up_tip("A2"))
+        steps.append(await component.drop_tip("A2"))
         steps.append(
             {
                 **_snapshot_step("pylabrobot.ot2.snapshot", component.snapshot()),

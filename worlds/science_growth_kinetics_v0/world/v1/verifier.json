@@ -1,0 +1,51 @@
+{
+  "assertions": [
+    {
+      "failure_code": "growth.protocol_inspected",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.prep_complete",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.transfer_lineage_valid",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.unique_tip_per_transfer",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.incubator_stabilized",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.kinetic_complete",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.series_current",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.series_contract",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.result_record_complete",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.workflow_ordered",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "growth.provider_mechanisms_executed",
+      "type": "implementation_check"
+    }
+  ],
+  "scalar_reward_owned_here": false,
+  "schema_version": "science_growth_kinetics_verifier_v0",
+  "semantic_rubrics": []
+}

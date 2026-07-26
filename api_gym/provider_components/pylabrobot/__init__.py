@@ -17,6 +17,13 @@ from api_gym.provider_components.pylabrobot.liquid_handling import (
 from api_gym.provider_components.pylabrobot.plate_reading import (
     PlateReaderChatterboxComponent,
 )
+from api_gym.provider_components.pylabrobot.world_bridge import (
+    PyLabRobotBridgeError,
+    run_incubator_load,
+    run_incubator_release,
+    run_ot2_transfer,
+    run_plate_reader_absorbance,
+)
 
 __all__ = [
     "GROUNDING_LEVELS",
@@ -26,6 +33,11 @@ __all__ = [
     "OT2SimulatorComponent",
     "OperationGrounding",
     "PlateReaderChatterboxComponent",
+    "PyLabRobotBridgeError",
     "PyLabRobotComponentError",
     "capture_reference_sequences",
+    "run_incubator_load",
+    "run_incubator_release",
+    "run_ot2_transfer",
+    "run_plate_reader_absorbance",
 ]

@@ -68,6 +68,12 @@ _DECLARATIONS = (
         "Drop one tracked tip through the OT-2 simulator backend.",
     ),
     OperationGrounding(
+        "pylabrobot.ot2.discard_tip",
+        "simulator_executed",
+        "pylabrobot.liquid_handling.LiquidHandler.discard_tips",
+        "Discard one tracked tip into the OT-2 deck trash area.",
+    ),
+    OperationGrounding(
         "pylabrobot.ot2.stop",
         "simulator_executed",
         "pylabrobot.liquid_handling.LiquidHandler.stop",
