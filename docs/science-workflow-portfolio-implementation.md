@@ -3,6 +3,12 @@
 Date: 2026-07-25
 Status: implementation-ready plan
 Companion: `docs/science-long-horizon-workflow-portfolio.md`
+Architecture correction:
+`docs/reference-conformance-science-architecture.md`
+
+The architecture correction is authoritative where this plan assigns
+reference-service execution, provider projections, or the first AMR slice to a
+repository.
 
 ## Objective
 
@@ -16,19 +22,19 @@ other agent systems:
 4. `science_metabolomics_qc_v0`
 
 The first executable milestone is not four incomplete worlds. It is one deep
-AMR vertical slice:
+AMR analysis and evidence-handoff slice:
 
 ```text
 eLabFTW experiment and sample map
-  -> Opentrons protocol upload, analysis, and simulated run
-  -> pinned sequence artifact arrival
+  -> current and stale sequence artifacts in MinIO
   -> Galaxy AMR workflow invocation and outputs
   -> eLabFTW result attachment and research decision
 ```
 
-The slice must pass the existing `datalox_world_bundle_v1` admission path and
-must run through the existing gated-runtime session lifecycle. Do not add
-another session runtime to API Gym.
+The reference workflow must first execute against disposable eLabFTW, MinIO,
+and Galaxy services. A fast projected world is built afterward and must pass
+the existing `datalox_world_bundle_v1` admission path. Do not add another
+session runtime to API Gym.
 
 ## Non-Negotiable Architecture
 
@@ -36,8 +42,9 @@ another session runtime to API Gym.
 
 `datalox-gated-runtime` owns:
 
-- authorized local or sandbox probes;
-- capture, redaction, promotion, and replay;
+- provider-neutral offline reference-sequence contracts, comparison, and
+  conformance reports;
+- generic capture, redaction, promotion, and replay;
 - the generic `datalox_world_bundle_v1` loader;
 - session lifecycle, HTTP/MCP transport, ledgers, and exports;
 - domain-neutral deterministic assertion implementations.
@@ -45,6 +52,8 @@ another session runtime to API Gym.
 `datalox-api-gym` owns:
 
 - canonical provider/API source packs;
+- provider-specific disposable fixtures, targets, observations, normalization,
+  and bounded projections;
 - source-grounded provider transitions and deterministic verifier signals;
 - science world bundle source;
 - world-specific state, dynamics, fact adapters, and task families;
@@ -256,7 +265,7 @@ curriculum and sampling policy
 The world may emit a boolean pass and per-obligation outcomes. It must not
 decide how a training pipeline converts those outcomes into reward.
 
-The one optional record worth adding during provider capture is
+The optional record worth adding during provider capture is
 `known_gaps.jsonl`:
 
 ```json
@@ -280,15 +289,16 @@ The one optional record worth adding during provider capture is
 If `known_gaps.jsonl` is added, extend `validate_source_pack()` only enough to
 require:
 
-- `source_refs` are missing;
-- a known gap has no `forbidden_claims`.
+- `source_refs` is present and non-empty;
+- `forbidden_claims` is present and non-empty.
 
 Do not make this record mandatory for legacy packs.
 
-## Step 2: Capture eLabFTW As G2
+## Step 2: Capture eLabFTW Against A Disposable Reference
 
-This work belongs in `datalox-gated-runtime` because it executes and records a
-local provider.
+The provider-neutral trace and comparison contract belongs in
+`datalox-gated-runtime`. The eLabFTW deployment, target adapter, observations,
+normalization, evidence, and projected behavior belong in `datalox-api-gym`.
 
 ### 2.1 Pin and start a disposable local service
 
@@ -371,22 +381,22 @@ Every capture record must contain:
 Strip tokens, cookies, container paths, host usernames, and private network
 information before the capture can be committed.
 
-### 2.3 Build the runtime provider component
+### 2.3 Build the API Gym provider component
 
 Add:
 
 ```text
-envs/probed_elabftw_local_v0/
-  task.json
-  gate_config.json
-  replay_script.json
-  provider_core_coverage.json
-  evidence/
-  world/
+api_gym/provider_components/elabftw/
+  reference_target.py
+  observations.py
+  normalization.py
+  projection.py
+  transition_atoms.py
 ```
 
-The world should shadow writes in run-private state and preserve eLabFTW body
-and error shapes. It should include at least these operation families:
+The bounded projection should shadow writes in run-private state and preserve
+the tested eLabFTW body and error shapes. It should include only operation
+families exercised by admitted connected reference sequences.
 
 ```text
 experiments
@@ -423,18 +433,10 @@ The first world implementation remains the executable transition contract.
 
 ### eLabFTW exit gate
 
-```bash
-python -m datalox_gated_runtime.cli env verify-replay \
-  --env envs/probed_elabftw_local_v0 \
-  --json
-
-api-gym source-pack validate \
-  source_packs/apis/elabftw/<capture-date>
-```
-
 Required result:
 
-- zero replay misses;
+- the connected reference sequence executes twice;
+- the bounded projection passes differential conformance;
 - success and negative bodies captured;
 - read-after-write behavior admitted;
 - reset produces the same initial fingerprint;
@@ -1372,54 +1374,73 @@ Do not copy world truth or verifier internals into model-visible training rows.
 
 Keep reviewable boundaries.
 
-### Runtime PR 1: eLabFTW G2
+### Runtime PR 1: reference conformance
 
 Contents:
 
-- pinned disposable service;
-- safe local capture;
-- sanitized evidence;
-- provider replay/shadow world;
-- replay and reset tests.
+- scheduled-event assertion fix;
+- sanitized reference-sequence contracts;
+- exact comparison and explicit normalization interface;
+- deterministic conformance reports;
+- focused safety and comparison tests.
 
-### Runtime PR 2: Opentrons write lifecycle
+No provider deployment, provider semantics, or world behavior belongs in this
+PR.
 
-Contents:
-
-- simulator-only protocol fixtures;
-- non-GET captures;
-- refreshed provider world;
-- fail-closed hardware boundary tests.
-
-### API Gym PR 1: refreshed provider packs
+### API Gym PR 1: eLabFTW reference and projection
 
 Contents:
 
-- eLabFTW G2 pack;
-- refreshed Opentrons G2 pack;
-- explicit known gaps and forbidden claims;
-- exact citations to runtime capture digests.
+- pinned disposable eLabFTW fixture;
+- safe provider-specific control and observations;
+- connected create-update-read capture;
+- sanitized source pack and explicit known gaps;
+- bounded eLabFTW projection;
+- differential conformance report.
 
-### API Gym PR 2: AMR vertical slice
+### API Gym PR 2: MinIO and Galaxy reference sequences
 
 Contents:
 
-- three reviewed families;
-- world bundle;
-- oracle, negative, near-miss, and parity trajectories;
+- disposable MinIO artifact/version/checksum sequence;
+- exact pinned Galaxy AMR workflow and immutable inputs;
+- one successful Galaxy invocation and output-provenance sequence;
+- sanitized connected-sequence evidence;
+- bounded provider projections and conformance reports.
+
+### API Gym PR 3: AMR reference workflow
+
+Contents:
+
+- seeded two-isolate reference task;
+- complete eLabFTW -> MinIO -> Galaxy -> eLabFTW execution;
+- two-run semantic fingerprint comparison;
+- wrong-identity, stale-artifact, checksum, wrong-attachment, early-finalization,
+  partial-output, and duplicate-invocation probes;
+- evidence review package for Zheng and a scientific reviewer.
+
+### API Gym PR 4: AMR projected world
+
+Contents:
+
+- provider components vendored into one hash-checked world bundle;
+- reviewed family contract;
+- oracle, negative, recovery, near-miss, and parity trajectories;
 - deterministic build;
 - admission and performance report.
 
-### API Gym PR 3: growth transfer world
+### Later API Gym PRs
 
 Contents:
 
+- independently ground the Opentrons non-GET simulator lifecycle before using
+  it in a world;
 - grounded reader topology decision;
 - public OD600 artifact;
 - three reviewed families;
 - transfer and performance measurements.
 
-### API Gym PR 4: transition and verifier extraction
+### API Gym extraction PR
 
 Contents:
 
@@ -1470,43 +1491,59 @@ sources or focused domain review before they become contracts.
 ### Days 1-2
 
 - record the transition/outcome/reward ownership boundary;
+- fix and test scheduled-event delivery verification;
+- implement the generic offline reference-conformance core;
 - start pinned eLabFTW locally;
-- capture one experiment create/read/update cycle and one permission failure.
+- execute one experiment create/update/read cycle.
 
 Exit: one concrete G2 eLabFTW state transition with sanitized request and
 response bodies.
 
 ### Days 3-4
 
-- finish the selected eLabFTW operation surface;
-- build and replay its local provider component;
-- refresh the canonical API Gym source pack.
+- repeat the eLabFTW sequence from a reset fixture;
+- build the bounded eLabFTW projection;
+- produce its first differential conformance report;
+- create the canonical API Gym source pack with explicit known gaps.
 
-Exit: eLabFTW pack validates and reset/replay pass.
+Exit: eLabFTW pack validates, the reference sequence repeats, and the bounded
+projection conforms.
 
-### Days 5-6
+### Day 5
 
-- start the official Opentrons simulator;
-- upload the AMR smoke protocol;
-- create and poll analysis;
-- create and complete one simulated run lifecycle;
-- capture commands and negative cases.
+- start a disposable MinIO service;
+- capture object creation, version selection, checksum validation, and stale
+  version behavior;
+- build and check the bounded artifact projection.
 
-Exit: the required AMR Opentrons transitions are G2 or the AMR topology is
-stopped.
+Exit: current-versus-stale artifact selection is reference-executed and
+conformance-tested.
 
-### Day 7
+### Days 6-7
 
-- write and review three AMR family contracts;
-- freeze exact Galaxy AMR workflow and input artifact digests;
-- complete `grounding_matrix.json`.
+- start a pinned local Galaxy service;
+- freeze one exact AMR workflow and immutable input digests;
+- execute one successful invocation to terminal state;
+- capture output completeness and provenance observations;
+- build and check the bounded Galaxy projection.
 
-Exit: no consequential AMR transition is G0/G1.
+Exit: the exact Galaxy path needed by the first task is reference-executed and
+conformance-tested.
 
-### Days 8-10
+### Day 8
 
-- build one AMR episode end to end;
-- add reference, wrong-identity, stale-result, and partial-result trajectories;
+- execute the complete three-service reference workflow twice;
+- compare semantic fingerprints;
+- add the required workflow-level negative probes.
+
+Exit: one reproducible AMR analysis reference workflow and reviewer evidence
+package.
+
+### Days 9-10
+
+- build one projected AMR episode end to end;
+- add oracle, wrong-identity, stale-artifact, checksum, wrong-attachment,
+  early-finalization, partial-output, duplicate, and recovery trajectories;
 - run world admission;
 - profile verification;
 - fix correctness before adding task count.
@@ -1517,8 +1554,11 @@ Exit: one admitted cross-provider AMR world with at least one deep family.
 
 The AMR vertical slice is done only when:
 
-- eLabFTW and Opentrons consequential writes have G2 evidence;
-- the exact Galaxy AMR workflow is pinned;
+- eLabFTW, MinIO, and the exact Galaxy AMR workflow have connected
+  reference-executed sequences;
+- each bounded provider projection has a machine-readable conformance report;
+- the complete reference workflow produces the same semantic fingerprint from
+  two clean starts;
 - the agent acts through provider-shaped HTTP/MCP operations;
 - at least two independent stateful providers are involved;
 - one world reset reproduces the initial fingerprint;
@@ -1538,4 +1578,5 @@ The AMR vertical slice is done only when:
 - the build is reproducible with `--check`.
 
 Only after this milestone should the project expand task count or begin the
-growth world.
+growth world. Opentrons enters only after its non-GET protocol, analysis, run,
+and command lifecycle passes an independent local-reference gate.
