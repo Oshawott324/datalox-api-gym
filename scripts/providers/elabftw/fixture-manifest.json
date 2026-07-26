@@ -1,0 +1,35 @@
+{
+  "schema_version": "api_gym.provider_reference_fixture.v0",
+  "provider": "elabftw",
+  "provider_version": "5.6.10",
+  "disposable_marker": "datalox-elabftw-reference-v0",
+  "images": {
+    "web": {
+      "tag": "elabftw/elabimg:5.6.10",
+      "digest": "sha256:a4dd2264b6fa40bb250ca68d3845afa442bb15c29aed95cd444786084eb30e67",
+      "reference": "elabftw/elabimg:5.6.10@sha256:a4dd2264b6fa40bb250ca68d3845afa442bb15c29aed95cd444786084eb30e67"
+    },
+    "mysql": {
+      "tag": "mysql:8.4",
+      "digest": "sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6",
+      "reference": "mysql:8.4@sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6"
+    }
+  },
+  "evidence_sources": [
+    "https://github.com/elabftw/elabftw/releases/tag/5.6.10",
+    "https://doc.elabftw.net/docs/install/intro/",
+    "https://doc.elabftw.net/docs/usage/api/",
+    "https://doc.elabftw.net/api/v2/",
+    "https://doc.elabftw.net/api/v2/openapi.yaml",
+    "https://github.com/elabftw/elabftw/blob/5.6.10/src/Commands/PopulateDatabase.php",
+    "https://github.com/elabftw/elabftw/blob/5.6.10/src/Models/ApiKeys.php"
+  ],
+  "reference_sequence": {
+    "id": "experiments_create_patch_get_v0",
+    "operations": [
+      "POST /api/v2/experiments",
+      "PATCH /api/v2/experiments/{id}",
+      "GET /api/v2/experiments/{id}"
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+services:
+  web:
+    image: elabftw/elabimg:5.6.10@sha256:a4dd2264b6fa40bb250ca68d3845afa442bb15c29aed95cd444786084eb30e67
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: elabftw
+      DB_USER: elabftw
+      DB_PASSWORD: ${ELABFTW_FIXTURE_DB_PASSWORD:-unused-disposable-value}
+      SECRET_KEY: ${ELABFTW_FIXTURE_SECRET_KEY:-unused-disposable-value}
+      SITE_URL: http://127.0.0.1:${ELABFTW_FIXTURE_PORT:-3148}
+      SERVER_NAME: localhost
+      DISABLE_HTTPS: "true"
+      ENABLE_LETSENCRYPT: "false"
+      PHP_TIMEZONE: UTC
+      TZ: UTC
+    labels:
+      org.datalox.fixture.disposable: datalox-elabftw-reference-v0
+    ports:
+      - "127.0.0.1:${ELABFTW_FIXTURE_PORT:-3148}:443"
+    volumes:
+      - web_uploads:/elabftw/uploads
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - FOWNER
+      - DAC_OVERRIDE
+
+  mysql:
+    image: mysql:8.4@sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ELABFTW_FIXTURE_ROOT_PASSWORD:-unused-disposable-value}
+      MYSQL_DATABASE: elabftw
+      MYSQL_USER: elabftw
+      MYSQL_PASSWORD: ${ELABFTW_FIXTURE_DB_PASSWORD:-unused-disposable-value}
+      TZ: UTC
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "mysql --user=$${MYSQL_USER} --password=$${MYSQL_PASSWORD} --execute 'SELECT 1' $${MYSQL_DATABASE}"
+      interval: 2s
+      timeout: 5s
+      retries: 60
+    labels:
+      org.datalox.fixture.disposable: datalox-elabftw-reference-v0
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
+  web_uploads:
