@@ -69,7 +69,7 @@ def test_growth_world_build_is_deterministic_and_self_contained() -> None:
     assert source_refs["missing_world_evidence"] == []
     compatibility = json.loads((WORLD / "compatibility.json").read_text())
     assert compatibility["schema_version"] == "datalox_world_compatibility_v1"
-    assert compatibility["runtime"]["tested_git_commit"] == "50c5fbc"
+    assert compatibility["runtime"]["tested_git_commit"] == "ce53726"
     assert compatibility["providers"]["pylabrobot"]["tested_version"] == "0.2.1"
 
 

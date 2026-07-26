@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from dataclasses import dataclass
 from typing import Any, Mapping
@@ -12,6 +14,7 @@ class GrowthVerifierResult:
     passed: bool
     checks: tuple[dict[str, Any], ...]
     failure_codes: tuple[str, ...]
+    public_evidence: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -19,6 +22,7 @@ class GrowthVerifierResult:
             "verifier_type": "science_growth_kinetics_v0",
             "checks": list(self.checks),
             "failure_codes": list(self.failure_codes),
+            "public_evidence": self.public_evidence,
         }
 
 
@@ -55,7 +59,7 @@ def verify_growth(session: WorldSession) -> GrowthVerifierResult:
         (
             "growth.protocol_inspected",
             "elabftw.get_experiment" in operation_ids,
-            ["operation:elabftw.get_experiment"],
+            ["public_evidence:#/operation_sequence"],
         ),
         (
             "growth.prep_complete",
@@ -64,39 +68,44 @@ def verify_growth(session: WorldSession) -> GrowthVerifierResult:
                 math.isclose(float(deck["target_volumes_ul"].get(well, 0)), 200.0)
                 for well in expected_wells
             ),
-            ["state:facts#/prep_complete", "state:deck#/target_volumes_ul"],
+            ["public_evidence:#/preparation"],
         ),
         (
             "growth.transfer_lineage_valid",
             set(lineage) == set(expected_wells)
-            and all(lineage[target]["source_well"] in plan_by_target[target] for target in lineage),
-            ["state:facts#/transfer_lineage"],
+            and all(
+                lineage[target]["source_well"] in plan_by_target[target]
+                for target in lineage
+            ),
+            ["public_evidence:#/preparation/transfer_lineage"],
         ),
         (
             "growth.unique_tip_per_transfer",
-            len(facts["used_tips"]) == len(set(facts["used_tips"])) == len(expected_wells),
-            ["state:facts#/used_tips"],
+            len(facts["used_tips"])
+            == len(set(facts["used_tips"]))
+            == len(expected_wells),
+            ["public_evidence:#/preparation/tip_usage"],
         ),
         (
             "growth.incubator_stabilized",
             incubator["released_at"] is not None
             and incubator["stabilized"] is True
             and incubator["temperature_c"] == protocol["temperature_c"],
-            ["state:incubator"],
+            ["public_evidence:#/incubation"],
         ),
         (
             "growth.kinetic_complete",
             current_job is not None
             and current_job["status"] == "complete"
             and current_job["complete"] is True,
-            ["state:reader#/jobs", "state:facts#/current_complete_job_id"],
+            ["public_evidence:#/kinetic_run"],
         ),
         (
             "growth.series_current",
             current_job is not None
             and current_job["plate_barcode"] == protocol["plate_barcode"]
             and current_job["protocol_revision"] == protocol["revision"],
-            ["state:protocol", "state:reader#/jobs"],
+            ["public_evidence:#/protocol", "public_evidence:#/kinetic_run"],
         ),
         (
             "growth.series_contract",
@@ -106,7 +115,7 @@ def verify_growth(session: WorldSession) -> GrowthVerifierResult:
             and current_job["duration_seconds"] == 72000
             and current_job["observation_count"] == 601
             and set(current_job["series"]) == set(expected_wells),
-            ["state:reader#/jobs"],
+            ["public_evidence:#/kinetic_run"],
         ),
         (
             "growth.result_record_complete",
@@ -118,7 +127,7 @@ def verify_growth(session: WorldSession) -> GrowthVerifierResult:
             and result_metadata.get("kinetic_job_id") == current_job_id
             and result_metadata.get("observation_count") == 601
             and result_metadata.get("expected_wells") == expected_wells,
-            ["state:elabftw#/result_records"],
+            ["public_evidence:#/result_record"],
         ),
         (
             "growth.workflow_ordered",
@@ -136,14 +145,14 @@ def verify_growth(session: WorldSession) -> GrowthVerifierResult:
                     "elabftw.get_experiment",
                 ),
             ),
-            ["event:growth_operation"],
+            ["public_evidence:#/operation_sequence"],
         ),
         (
             "growth.provider_mechanisms_executed",
             facts["provider_execution_counts"]["ot2"] >= len(expected_wells)
             and facts["provider_execution_counts"]["incubator"] >= 2
             and facts["provider_execution_counts"]["plate_reader"] >= 1,
-            ["state:facts#/provider_execution_counts"],
+            ["public_evidence:#/provider_execution_counts"],
         ),
     )
     checks = tuple(
@@ -155,7 +164,17 @@ def verify_growth(session: WorldSession) -> GrowthVerifierResult:
         for code, passed, refs in checks_raw
     )
     failures = tuple(check["code"] for check in checks if not check["passed"])
-    return GrowthVerifierResult(not failures, checks, failures)
+    public_evidence = _public_evidence(
+        protocol=protocol,
+        deck=deck,
+        incubator=incubator,
+        facts=facts,
+        current_job_id=current_job_id,
+        current_job=current_job,
+        result_record=result_record,
+        operation_ids=operation_ids,
+    )
+    return GrowthVerifierResult(not failures, checks, failures, public_evidence)
 
 
 def _selected_result_record(
@@ -173,3 +192,104 @@ def _operations_ordered(actual: list[str], required: tuple[str, ...]) -> bool:
         if cursor < len(required) and operation == required[cursor]:
             cursor += 1
     return cursor == len(required)
+
+
+def _public_evidence(
+    *,
+    protocol: Mapping[str, Any],
+    deck: Mapping[str, Any],
+    incubator: Mapping[str, Any],
+    facts: Mapping[str, Any],
+    current_job_id: Any,
+    current_job: Mapping[str, Any] | None,
+    result_record: Mapping[str, Any] | None,
+    operation_ids: list[str],
+) -> dict[str, Any]:
+    result_metadata = result_record.get("metadata", {}) if result_record else {}
+    kinetic_run = None
+    if current_job is not None:
+        kinetic_run = {
+            "job_id": current_job_id,
+            "status": current_job.get("status"),
+            "complete": current_job.get("complete"),
+            "plate_barcode": current_job.get("plate_barcode"),
+            "protocol_revision": current_job.get("protocol_revision"),
+            "wavelength_nm": current_job.get("wavelength_nm"),
+            "interval_seconds": current_job.get("interval_seconds"),
+            "duration_seconds": current_job.get("duration_seconds"),
+            "observation_count": current_job.get("observation_count"),
+            "expected_wells": list(current_job.get("expected_wells", [])),
+            "series_commitment": _series_commitment(current_job.get("series", {})),
+            "started_at": current_job.get("started_at"),
+            "completed_at": current_job.get("completed_at"),
+        }
+    return {
+        "schema_version": "science_growth_kinetics_public_evidence_v1",
+        "operation_sequence": operation_ids,
+        "protocol": {
+            "experiment_id": protocol["experiment_id"],
+            "plate_barcode": protocol["plate_barcode"],
+            "revision": protocol["revision"],
+            "expected_wells": list(protocol["expected_wells"]),
+            "target_volume_ul": protocol["target_volume_ul"],
+            "temperature_c": protocol["temperature_c"],
+            "stabilization_seconds": protocol["stabilization_seconds"],
+            "wavelength_nm": protocol["wavelength_nm"],
+            "interval_seconds": protocol["interval_seconds"],
+            "duration_seconds": protocol["duration_seconds"],
+            "expected_observation_count": protocol["expected_observation_count"],
+        },
+        "preparation": {
+            "complete": facts["prep_complete"],
+            "target_volumes_ul": {
+                well: deck["target_volumes_ul"].get(well)
+                for well in protocol["expected_wells"]
+            },
+            "transfer_lineage": facts["transfer_lineage"],
+            "tip_usage": {
+                "count": len(facts["used_tips"]),
+                "distinct_count": len(set(facts["used_tips"])),
+            },
+        },
+        "incubation": {
+            "plate_barcode": incubator.get("plate_barcode"),
+            "temperature_c": incubator.get("temperature_c"),
+            "shaking_hz": incubator.get("shaking_hz"),
+            "stabilized": incubator.get("stabilized"),
+            "loaded_at": incubator.get("loaded_at"),
+            "released_at": incubator.get("released_at"),
+        },
+        "kinetic_run": kinetic_run,
+        "result_record": (
+            None
+            if result_record is None
+            else {
+                "phase": result_record.get("phase"),
+                "qc_status": result_metadata.get("qc_status"),
+                "plate_barcode": result_metadata.get("plate_barcode"),
+                "protocol_revision": result_metadata.get("protocol_revision"),
+                "kinetic_job_id": result_metadata.get("kinetic_job_id"),
+                "observation_count": result_metadata.get("observation_count"),
+                "expected_wells": result_metadata.get("expected_wells"),
+            }
+        ),
+        "provider_execution_counts": facts["provider_execution_counts"],
+    }
+
+
+def _series_commitment(series: Any) -> dict[str, Any]:
+    if not isinstance(series, Mapping):
+        return {"sha256": None, "well_count": 0, "total_values": 0}
+    canonical = json.dumps(
+        series,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode()
+    return {
+        "sha256": f"sha256:{hashlib.sha256(canonical).hexdigest()}",
+        "well_count": len(series),
+        "total_values": sum(
+            len(values) for values in series.values() if isinstance(values, list)
+        ),
+    }

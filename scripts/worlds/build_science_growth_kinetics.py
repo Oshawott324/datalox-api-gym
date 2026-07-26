@@ -798,7 +798,7 @@ def build() -> None:
             "runtime": {
                 "package": "datalox-gated-runtime",
                 "tested_version": "0.1.0",
-                "tested_git_commit": "50c5fbc",
+                "tested_git_commit": "ce53726",
                 "repository": "https://github.com/Oshawott324/datalox-gated-runtime",
             },
             "providers": {

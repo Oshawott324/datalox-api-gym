@@ -15,17 +15,30 @@ Implemented and admitted on 2026-07-26:
   asynchronous freshness/recovery families;
 - 17 admitted reference, negative, recovery, and parity trajectories;
 - obligation-level verifier output with stable codes and evidence references;
-- deterministic source-pack and world rebuild checks.
+- deterministic source-pack and world rebuild checks;
 - a bounded domain-review packet for the scientific workflow and recovery
-  assumptions.
+  assumptions;
+- isolated multi-session Streamable HTTP MCP with opaque bearer tokens, TTL
+  cleanup, capacity limits, and no live-provider mode;
+- serialized worker execution so blocking provider calls do not block the ASGI
+  event loop or race finalization;
+- a fail-closed public run-export contract with immutable bundle identity,
+  actual world IDs, named verifier outcomes, and resolvable public evidence
+  capsules;
+- a complete remote reference replay: 22 tool calls, 22 public ledger events,
+  and all 11 world obligations passing;
+- one controlled Codex `gpt-5.4-mini` MCP baseline passing all 11 obligations.
+  Bounding kinetic readback reduced non-cached input from about 57.7k to 33.3k
+  tokens and total reported input from about 796k to 463k.
 
 Not yet complete:
 
-- remote MCP transport suitable for a public Docker Space;
-- Codex and Claude baseline rollouts through the same release surface;
+- Codex and Claude baseline rollouts through the final deployed remote URL;
 - trace replay UI and dataset export;
 - independent scientific review;
-- Hugging Face Space and dataset publication.
+- Hugging Face Space and dataset publication;
+- a public or otherwise reproducibly installable gated-runtime release. The
+  current runtime repository is private.
 
 ## Objective
 
@@ -225,19 +238,36 @@ world-specific framework. Verification emits a boolean and obligation outcomes
 with stable failure codes and evidence references. It emits no scalar reward,
 weights, or credit assignment.
 
+Remote publication adds a separate typed projection. The raw run export and
+authoritative world state remain private. Each world verifier may publish a
+minimal evidence capsule containing only the facts needed to audit its named
+outcomes. Every published evidence reference must resolve inside that capsule.
+For the growth world this includes protocol and plate identity, preparation
+lineage and counts, incubation conditions, kinetic-run metadata and a series
+digest, result-record metadata, operation order, and provider-execution counts.
+It excludes raw world state, fault schedules, full kinetic values, simulator
+context, and shadow mutations.
+
 ## Public Deployment
 
-The Hugging Face Docker Space installs tagged releases of API Gym and gated
-runtime. It exposes one public port with:
+The Hugging Face Docker Space installs pinned releases of API Gym and gated
+runtime. The implemented runtime service exposes one public port with:
 
 ```text
-POST /api/sessions
-GET  /api/sessions/{id}/task
-POST /api/sessions/{id}/mcp
-POST /api/sessions/{id}/finalize
-GET  /api/sessions/{id}/export
-GET  /api/sessions/{id}/replay
+GET    /health
+POST   /sessions
+POST   /sessions/{id}/mcp
+GET    /sessions/{id}/mcp
+DELETE /sessions/{id}/mcp
+POST   /sessions/{id}/finalize
+GET    /sessions/{id}/export
+DELETE /sessions/{id}
 ```
+
+Session creation returns the selected task and bearer token. The MCP catalog
+also exposes `get_task` but not the local session-manifest tool. A deployment UI
+may add same-origin browser routes and trace replay without changing these
+runtime contracts.
 
 Sessions use opaque tokens, isolated run directories, expiration, fixed
 resource limits, no arbitrary code execution, no user-supplied provider
@@ -249,10 +279,15 @@ credentials, and no live hardware access.
 2. Implement reusable liquid-handler, incubator, and plate-reader components.
 3. Build and admit the nominal world vertical slice.
 4. Add recovery and stale/partial-result families.
-5. Profile reset, action, and verifier latency.
-6. Run Codex and Claude baselines through the same MCP surface.
-7. Build the separate Docker Space.
-8. Generate and publish the accompanying run dataset.
+5. Profile reset, action, verifier, and model-context cost. Completed for the
+   first Codex baseline; broader sampling remains.
+6. Run Codex and Claude baselines through the deployed Streamable HTTP MCP
+   surface.
+7. Build and locally verify the separate Docker Space.
+8. Authenticate to Hugging Face and publish the Space.
+9. Add trace replay without placing world logic in the Space repository.
+10. Extend `datalox-rollout-collector` to import the typed public run export,
+    join host trajectory records, and publish the accompanying dataset.
 
 ## Release Gate
 
