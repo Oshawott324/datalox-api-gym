@@ -101,7 +101,7 @@ The existing gated runtime can load this without copying the world into its
 repository:
 
 ```bash
-export DATALOX_GATE_EXAMPLES_DIR=/Users/yifanjin/datalox-api-gym/worlds
+export DATALOX_GATE_EXAMPLES_DIR="$PWD/worlds"
 
 datalox-gate session create \
   --example science_amr_campaign_v0 \
@@ -858,10 +858,10 @@ python scripts/worlds/build_science_amr_campaign.py --check
 ### Structural and runtime admission
 
 ```bash
-export DATALOX_GATE_EXAMPLES_DIR=/Users/yifanjin/datalox-api-gym/worlds
+export DATALOX_GATE_EXAMPLES_DIR="$PWD/worlds"
 
 datalox-gate env admit-world \
-  --env /Users/yifanjin/datalox-api-gym/worlds/science_amr_campaign_v0 \
+  --env "$PWD/worlds/science_amr_campaign_v0" \
   --json
 ```
 
@@ -1243,7 +1243,7 @@ attachment path and the session manifest.
 ### Per-run procedure
 
 ```bash
-export DATALOX_GATE_EXAMPLES_DIR=/Users/yifanjin/datalox-api-gym/worlds
+export DATALOX_GATE_EXAMPLES_DIR="$PWD/worlds"
 
 datalox-gate session create \
   --example science_amr_campaign_v0 \
@@ -1307,7 +1307,7 @@ Create `agent_ci.json` beside each `run_export.json`, then aggregate with the
 existing runtime script:
 
 ```bash
-python /Users/yifanjin/datalox-gated-runtime/scripts/evaluate_world_runs.py \
+python ../datalox-gated-runtime/scripts/evaluate_world_runs.py \
   runs/science-pilot \
   --json-out reports/science-pilot.json \
   --markdown-out reports/science-pilot.md \

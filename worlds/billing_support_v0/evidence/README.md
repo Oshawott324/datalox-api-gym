@@ -20,7 +20,7 @@ locations were:
 
 - environment variables: `STRIPE_SECRET_KEY`, `STRIPE_API_KEY`,
   `ZENDESK_API_TOKEN`, `ZENDESK_EMAIL`, `ZENDESK_SUBDOMAIN`
-- `/Users/yifanjin/datalox-agent-replay/docs/api_keys.md`
+- the local `datalox-agent-replay/docs/api_keys.md` credential note
 
 The rows in `observed_instances.jsonl` are therefore `source_type: docs`. They
 are not live sandbox observations. They only use concrete examples and partial
