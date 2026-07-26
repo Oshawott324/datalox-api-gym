@@ -2,6 +2,7 @@
   "bundle_version": "0.1.0",
   "content_hashes": {
     "README.md": "sha256:e7d05f1e9c081fd4ab01a933e97fde07ddbd93565ebbabbdd1a4dafe77a1ebf6",
+    "compatibility.json": "sha256:bd66d48b28632c45d849bc779519d0d3e148482473b61a386b8c7be126b6ae00",
     "evidence/elabftw_experiments_create_patch_get_v0.json": "sha256:ab08452c77328dc894fb2b081efa42eb7632f1ec6f66d539628d8ede41509cc6",
     "evidence/growth_protocol_sources.json": "sha256:8ba5ef600a6f75173a0a25cc6978937723d8ee8b5e42c2fb0c8f740369afeceb",
     "evidence/incubator_success_v0.json": "sha256:2b5bf667716cd381d7363b509b068a305d46d4c90a1a0dc1a0e5d6ae21f7867e",

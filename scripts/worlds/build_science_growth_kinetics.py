@@ -790,6 +790,33 @@ def build() -> None:
             "world": {"kind": "world_bundle_v1", "seed": 0},
         },
     )
+    write_json(
+        WORLD / "compatibility.json",
+        {
+            "schema_version": "datalox_world_compatibility_v1",
+            "python": {"tested_version": "3.12"},
+            "runtime": {
+                "package": "datalox-gated-runtime",
+                "tested_version": "0.1.0",
+                "tested_git_commit": "50c5fbc",
+                "repository": "https://github.com/Oshawott324/datalox-gated-runtime",
+            },
+            "providers": {
+                "pylabrobot": {
+                    "tested_version": "0.2.1",
+                    "execution_modes": [
+                        "ot2_simulator",
+                        "incubator_chatterbox",
+                        "plate_reader_chatterbox",
+                    ],
+                },
+                "elabftw": {
+                    "captured_version": "5.6.10",
+                    "execution_mode": "captured_projection",
+                },
+            },
+        },
+    )
     write_json(WORLD / "task.json", episodes[0]["task"])
     write_json(WORLD / "replay_script.json", {"calls": []})
     (WORLD / "skills").mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,26 @@
+{
+  "providers": {
+    "elabftw": {
+      "captured_version": "5.6.10",
+      "execution_mode": "captured_projection"
+    },
+    "pylabrobot": {
+      "execution_modes": [
+        "ot2_simulator",
+        "incubator_chatterbox",
+        "plate_reader_chatterbox"
+      ],
+      "tested_version": "0.2.1"
+    }
+  },
+  "python": {
+    "tested_version": "3.12"
+  },
+  "runtime": {
+    "package": "datalox-gated-runtime",
+    "repository": "https://github.com/Oshawott324/datalox-gated-runtime",
+    "tested_git_commit": "50c5fbc",
+    "tested_version": "0.1.0"
+  },
+  "schema_version": "datalox_world_compatibility_v1"
+}
