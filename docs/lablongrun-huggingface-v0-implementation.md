@@ -16,6 +16,8 @@ Implemented and admitted on 2026-07-26:
 - 17 admitted reference, negative, recovery, and parity trajectories;
 - obligation-level verifier output with stable codes and evidence references;
 - deterministic source-pack and world rebuild checks.
+- a bounded domain-review packet for the scientific workflow and recovery
+  assumptions.
 
 Not yet complete:
 
@@ -262,3 +264,6 @@ credentials, and no live hardware access.
 - one scientific review;
 - reproducible local and Docker execution;
 - explicit source, version, grounding, and limitation records.
+
+The review packet is
+[`docs/reviews/science-growth-kinetics-v0-review.md`](reviews/science-growth-kinetics-v0-review.md).
