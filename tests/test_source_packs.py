@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from api_gym.cli import app
@@ -203,6 +204,107 @@ def test_source_pack_validator_rejects_malformed_source_refs(tmp_path: Path) -> 
         assert exc.details == {"path": str(pack_root / "operations.jsonl"), "line": 1, "source_ref_index": 0}
     else:
         raise AssertionError("expected SourcePackValidationError")
+
+
+def test_source_pack_validator_accepts_optional_known_gaps(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+    known_gaps_path = _add_known_gaps(
+        pack_root,
+        {
+            "id": "known_gap:widget_updates",
+            "source_pack_id": "api.example.2026-06-12",
+            "scope": "updateWidget",
+            "status": "partial",
+            "reason": "The provider documents the request but not the response body.",
+            "source_refs": [{"kind": "docs", "url": "https://docs.example.invalid/widgets"}],
+            "forbidden_claims": ["The update response body is source-grounded."],
+        },
+    )
+
+    result = validate_source_pack(pack_root)
+
+    assert known_gaps_path.exists()
+    assert result["ok"] is True
+    assert result["record_counts"]["known_gaps"] == 1
+
+
+def test_source_pack_validator_keeps_known_gaps_optional_for_legacy_packs(tmp_path: Path) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+
+    result = validate_source_pack(pack_root)
+
+    assert result["ok"] is True
+    assert "known_gaps" not in result["record_counts"]
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected_code", "expected_details"),
+    [
+        (
+            {"scope": ""},
+            "source_pack_known_gap_scope_invalid",
+            {},
+        ),
+        (
+            {"status": "unknown"},
+            "source_pack_known_gap_status_invalid",
+            {"status": "unknown"},
+        ),
+        (
+            {"status": []},
+            "source_pack_known_gap_status_invalid",
+            {"status": []},
+        ),
+        (
+            {"reason": ""},
+            "source_pack_known_gap_reason_invalid",
+            {},
+        ),
+        (
+            {"source_refs": []},
+            "source_pack_known_gap_source_refs_invalid",
+            {},
+        ),
+        (
+            {"forbidden_claims": []},
+            "source_pack_known_gap_forbidden_claims_invalid",
+            {},
+        ),
+        (
+            {"forbidden_claims": ["valid", ""]},
+            "source_pack_known_gap_forbidden_claims_invalid",
+            {"forbidden_claim_index": 1},
+        ),
+    ],
+)
+def test_source_pack_validator_rejects_invalid_known_gap_fields(
+    tmp_path: Path,
+    overrides: dict[str, object],
+    expected_code: str,
+    expected_details: dict[str, object],
+) -> None:
+    pack_root = _write_minimal_source_pack(tmp_path)
+    row = {
+        "id": "known_gap:widget_updates",
+        "source_pack_id": "api.example.2026-06-12",
+        "scope": "updateWidget",
+        "status": "unsupported",
+        "reason": "The provider does not publish this behavior.",
+        "source_refs": [{"kind": "docs", "url": "https://docs.example.invalid/widgets"}],
+        "forbidden_claims": ["This behavior is source-grounded."],
+    }
+    row.update(overrides)
+    known_gaps_path = _add_known_gaps(pack_root, row)
+
+    with pytest.raises(SourcePackValidationError) as exc_info:
+        validate_source_pack(pack_root)
+
+    assert exc_info.value.code == expected_code
+    assert exc_info.value.details == {
+        "path": str(known_gaps_path),
+        "line": 1,
+        **expected_details,
+    }
 
 
 def test_source_pack_validate_cli_reports_json(tmp_path: Path) -> None:
@@ -458,3 +560,14 @@ def _rewrite_response_case(pack_root: Path, **overrides: object) -> None:
     }
     row.update(overrides)
     (pack_root / "response_cases.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+
+
+def _add_known_gaps(pack_root: Path, row: dict[str, object]) -> Path:
+    source_pack_path = pack_root / "source_pack.json"
+    source_pack = json.loads(source_pack_path.read_text(encoding="utf-8"))
+    source_pack["records"]["known_gaps"] = "known_gaps.jsonl"
+    source_pack_path.write_text(json.dumps(source_pack), encoding="utf-8")
+
+    known_gaps_path = pack_root / "known_gaps.jsonl"
+    known_gaps_path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    return known_gaps_path

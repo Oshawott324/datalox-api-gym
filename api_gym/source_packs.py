@@ -12,6 +12,7 @@ SOURCE_PACK_SCHEMA_VERSION = "api_gym.api_source_pack.v0"
 WORLD_SOURCE_REFS_SCHEMA_VERSION = "api_gym.world_source_refs.v0"
 RESPONSE_CASE_PAYLOAD_FIELDS = ("body", "body_excerpt", "body_shape", "error_shape", "headers")
 RESPONSE_CASE_RESPONSE_MODES = frozenset((*RESPONSE_CASE_PAYLOAD_FIELDS, "no_body"))
+KNOWN_GAP_STATUSES = frozenset({"unsupported", "partial"})
 
 
 class SourcePackValidationError(ValueError):
@@ -249,6 +250,8 @@ def _validate_record_row(
     elif record_name == "world_candidates":
         if row.get("not_world_contract") is not True:
             _raise_row("source_pack_world_candidate_not_contract_missing", "World candidate rows must set `not_world_contract` to true.", record_path, row_number)
+    elif record_name == "known_gaps":
+        _validate_known_gap(row, record_path, row_number)
 
 
 def _require_string(payload: dict[str, Any], key: str, path: Path) -> str:
@@ -364,6 +367,64 @@ def _require_row_source_refs(row: dict[str, Any], path: Path, row_number: int) -
                 path,
                 row_number,
                 extra={"source_ref_index": index},
+            )
+
+
+def _validate_known_gap(row: dict[str, Any], path: Path, row_number: int) -> None:
+    scope = row.get("scope")
+    if not isinstance(scope, str) or not scope:
+        _raise_row(
+            "source_pack_known_gap_scope_invalid",
+            "`scope` must be a non-empty string.",
+            path,
+            row_number,
+        )
+
+    status = row.get("status")
+    if not isinstance(status, str) or status not in KNOWN_GAP_STATUSES:
+        _raise_row(
+            "source_pack_known_gap_status_invalid",
+            "`status` must be `unsupported` or `partial`.",
+            path,
+            row_number,
+            extra={"status": status},
+        )
+
+    reason = row.get("reason")
+    if not isinstance(reason, str) or not reason:
+        _raise_row(
+            "source_pack_known_gap_reason_invalid",
+            "`reason` must be a non-empty string.",
+            path,
+            row_number,
+        )
+
+    source_refs = row.get("source_refs")
+    if not isinstance(source_refs, list) or not source_refs:
+        _raise_row(
+            "source_pack_known_gap_source_refs_invalid",
+            "`source_refs` must be a non-empty list.",
+            path,
+            row_number,
+        )
+    _require_row_source_refs(row, path, row_number)
+
+    forbidden_claims = row.get("forbidden_claims")
+    if not isinstance(forbidden_claims, list) or not forbidden_claims:
+        _raise_row(
+            "source_pack_known_gap_forbidden_claims_invalid",
+            "`forbidden_claims` must be a non-empty list.",
+            path,
+            row_number,
+        )
+    for index, claim in enumerate(forbidden_claims):
+        if not isinstance(claim, str) or not claim:
+            _raise_row(
+                "source_pack_known_gap_forbidden_claims_invalid",
+                "`forbidden_claims` entries must be non-empty strings.",
+                path,
+                row_number,
+                extra={"forbidden_claim_index": index},
             )
 
 
