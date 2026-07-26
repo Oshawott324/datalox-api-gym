@@ -27,6 +27,13 @@ Implemented and admitted on 2026-07-26:
   capsules;
 - a complete remote reference replay: 22 tool calls, 22 public ledger events,
   and all 11 world obligations passing;
+- a separate exact-pinned Docker Space wrapper with a JSON service manifest,
+  automatic Hugging Face host/origin binding, and both local-source and private
+  runtime installation paths;
+- a container smoke replay executing all 22 calls over Streamable HTTP MCP,
+  passing all 11 checks, and proving OT-2, incubator, and plate-reader provider
+  execution. The locked dependency set also resolves as binary wheels on
+  Linux/x86-64;
 - one controlled Codex `gpt-5.4-mini` MCP baseline passing all 11 obligations.
   Bounding kinetic readback reduced non-cached input from about 57.7k to 33.3k
   tokens and total reported input from about 796k to 463k.
@@ -36,7 +43,7 @@ Not yet complete:
 - Codex and Claude baseline rollouts through the final deployed remote URL;
 - trace replay UI and dataset export;
 - independent scientific review;
-- Hugging Face Space and dataset publication;
+- Hugging Face Space deployment and dataset publication;
 - a public or otherwise reproducibly installable gated-runtime release. The
   current runtime repository is private.
 
@@ -283,7 +290,8 @@ credentials, and no live hardware access.
    first Codex baseline; broader sampling remains.
 6. Run Codex and Claude baselines through the deployed Streamable HTTP MCP
    surface.
-7. Build and locally verify the separate Docker Space.
+7. Build and locally verify the separate Docker Space. Completed with a full
+   provider-executing reference replay.
 8. Authenticate to Hugging Face and publish the Space.
 9. Add trace replay without placing world logic in the Space repository.
 10. Extend `datalox-rollout-collector` to import the typed public run export,
