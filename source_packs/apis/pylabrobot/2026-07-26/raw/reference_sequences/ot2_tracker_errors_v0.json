@@ -1,0 +1,62 @@
+{
+  "hardware_execution_allowed": false,
+  "network_access_required": false,
+  "normalization": {
+    "console": "unstructured Chatterbox stdout/stderr omitted; line count and normalized hash retained",
+    "non_finite_numbers": "replaced with explicit normalized_non_finite_float objects",
+    "timestamps": "replaced with <normalized-runtime-timestamp>"
+  },
+  "package": {
+    "distribution": "pylabrobot",
+    "expected_version": "0.2.1",
+    "module_sha256": {
+      "pylabrobot.liquid_handling.backends.opentrons_simulator": "df1ab9dae71ccf579c1737fe05675fc79a01a56d39a8e202171c96ff0ebcb677",
+      "pylabrobot.plate_reading.chatterbox": "758c0f4e83909787b96d078fbe68b900eda708c53c8f4d56cb13510dbb59854e",
+      "pylabrobot.storage.chatterbox": "ae13d20f05f1cf2bc9d053e735254be7b6dd47d3f6a78979c3347b7fe4378d05"
+    },
+    "version": "0.2.1"
+  },
+  "schema_version": "api_gym.pylabrobot_reference_sequences.v0",
+  "sequence": {
+    "cases": [
+      {
+        "error": {
+          "code": "PYLABROBOT_NO_TIP",
+          "details": {
+            "exception_type": "pylabrobot.resources.errors.NoTipError",
+            "hardware_execution_attempted": false
+          },
+          "message": "Tip spot does not have a tip.",
+          "operation_id": "pylabrobot.ot2.pick_up_tip"
+        },
+        "status": "error"
+      },
+      {
+        "error": {
+          "code": "PYLABROBOT_TOO_LITTLE_LIQUID",
+          "details": {
+            "exception_type": "pylabrobot.resources.errors.TooLittleLiquidError",
+            "hardware_execution_attempted": false
+          },
+          "message": "Not enough liquid in container: 10.0uL > 0.0uL.",
+          "operation_id": "pylabrobot.ot2.aspirate"
+        },
+        "status": "error"
+      },
+      {
+        "error": {
+          "code": "PYLABROBOT_TOO_LITTLE_VOLUME",
+          "details": {
+            "exception_type": "pylabrobot.resources.errors.TooLittleVolumeError",
+            "hardware_execution_attempted": false
+          },
+          "message": "Not enough space in container: 25.0uL > 20uL.",
+          "operation_id": "pylabrobot.ot2.aspirate"
+        },
+        "status": "error"
+      }
+    ],
+    "status": "completed"
+  },
+  "sequence_id": "ot2_tracker_errors_v0"
+}

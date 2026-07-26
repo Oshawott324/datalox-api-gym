@@ -1,0 +1,339 @@
+{
+  "hardware_execution_allowed": false,
+  "network_access_required": false,
+  "normalization": {
+    "console": "unstructured Chatterbox stdout/stderr omitted; line count and normalized hash retained",
+    "non_finite_numbers": "replaced with explicit normalized_non_finite_float objects",
+    "timestamps": "replaced with <normalized-runtime-timestamp>"
+  },
+  "package": {
+    "distribution": "pylabrobot",
+    "expected_version": "0.2.1",
+    "module_sha256": {
+      "pylabrobot.liquid_handling.backends.opentrons_simulator": "df1ab9dae71ccf579c1737fe05675fc79a01a56d39a8e202171c96ff0ebcb677",
+      "pylabrobot.plate_reading.chatterbox": "758c0f4e83909787b96d078fbe68b900eda708c53c8f4d56cb13510dbb59854e",
+      "pylabrobot.storage.chatterbox": "ae13d20f05f1cf2bc9d053e735254be7b6dd47d3f6a78979c3347b7fe4378d05"
+    },
+    "version": "0.2.1"
+  },
+  "schema_version": "api_gym.pylabrobot_reference_sequences.v0",
+  "sequence": {
+    "status": "completed",
+    "steps": [
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "95a1ea1e263f1880dd965543cfec77092f638a24bb0bcccde23fbe0086efa1d0",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.setup",
+        "operation_id": "pylabrobot.incubator.setup",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null,
+        "snapshot": {
+          "backend": {
+            "class": "pylabrobot.storage.chatterbox.IncubatorChatterboxBackend"
+          },
+          "loading_tray": null,
+          "sites": {
+            "site_1": null
+          }
+        }
+      },
+      {
+        "grounding_level": "provider_interface_only",
+        "implementation": "pylabrobot.resources.PlateHolder.assign_child_resource",
+        "operation_id": "pylabrobot.incubator.place_plate_on_tray",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "plate_name": "growth_plate"
+        },
+        "result": null,
+        "snapshot": {
+          "backend": {
+            "class": "pylabrobot.storage.chatterbox.IncubatorChatterboxBackend"
+          },
+          "loading_tray": "growth_plate",
+          "sites": {
+            "site_1": null
+          }
+        }
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "9b772f0248441d8cd5e14204d204088aa98cc2ab6e4207d90ed36266678104e2",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.open_door",
+        "operation_id": "pylabrobot.incubator.open_door",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "cb3812c9160d848aef03a40d8089a921f890aa94f4ffb8a8b02f46fead4dcb9a",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.close_door",
+        "operation_id": "pylabrobot.incubator.close_door",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "93abaab44e5965b4bb89dad8c344d620be17f4a7a95f11d2b4abcbd749b5d5a8",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.set_temperature",
+        "operation_id": "pylabrobot.incubator.set_temperature",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "temperature_c": 30.0
+        },
+        "result": null
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "a7bcabb28c5c5da9ac31d40a2820eb4eda98381ef70ed4e682f8947d0afc6c66",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.get_temperature",
+        "operation_id": "pylabrobot.incubator.get_temperature",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": 37.0
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "f6e630915c4e4d843404ce24ad58d82a9965b5f765a4d0782998467cb37029e1",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.start_shaking",
+        "operation_id": "pylabrobot.incubator.start_shaking",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "frequency_hz": 2.0
+        },
+        "result": null
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "64e517a95901e68bb19b8d55afc290ad9d87fd4fc7266ea9fdecccfda4e5bbaa",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.stop_shaking",
+        "operation_id": "pylabrobot.incubator.stop_shaking",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "829abd9527d130de4b7b6bab189d8401af30cc8d106934dac65327975d455dd2",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.take_in_plate",
+        "operation_id": "pylabrobot.incubator.take_in_plate",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "site": "smallest"
+        },
+        "result": null,
+        "snapshot": {
+          "backend": {
+            "class": "pylabrobot.storage.chatterbox.IncubatorChatterboxBackend"
+          },
+          "loading_tray": null,
+          "sites": {
+            "site_1": "growth_plate"
+          }
+        }
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "7efc43badd2dc2c37dbaf6f4a735e90fd3262a3b54e8127393748789133ffa57",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.fetch_plate_to_loading_tray",
+        "operation_id": "pylabrobot.incubator.fetch_plate",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "plate_name": "growth_plate"
+        },
+        "result": {
+          "plate_name": "growth_plate"
+        },
+        "snapshot": {
+          "backend": {
+            "class": "pylabrobot.storage.chatterbox.IncubatorChatterboxBackend"
+          },
+          "loading_tray": "growth_plate",
+          "sites": {
+            "site_1": null
+          }
+        }
+      },
+      {
+        "grounding_level": "captured_projection",
+        "implementation": "api_gym.provider_components.pylabrobot.snapshots.incubator_snapshot",
+        "operation_id": "pylabrobot.incubator.snapshot",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": {
+          "backend": {
+            "class": "pylabrobot.storage.chatterbox.IncubatorChatterboxBackend"
+          },
+          "loading_tray": "growth_plate",
+          "sites": {
+            "site_1": null
+          }
+        }
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "627f8f78a76266eb59e73d2755281a4be0f60016bf41c6e1e31b46d7e72dc48c",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.storage.Incubator.stop",
+        "operation_id": "pylabrobot.incubator.stop",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null
+      }
+    ]
+  },
+  "sequence_id": "incubator_success_v0"
+}

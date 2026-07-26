@@ -1,0 +1,622 @@
+{
+  "hardware_execution_allowed": false,
+  "network_access_required": false,
+  "normalization": {
+    "console": "unstructured Chatterbox stdout/stderr omitted; line count and normalized hash retained",
+    "non_finite_numbers": "replaced with explicit normalized_non_finite_float objects",
+    "timestamps": "replaced with <normalized-runtime-timestamp>"
+  },
+  "package": {
+    "distribution": "pylabrobot",
+    "expected_version": "0.2.1",
+    "module_sha256": {
+      "pylabrobot.liquid_handling.backends.opentrons_simulator": "df1ab9dae71ccf579c1737fe05675fc79a01a56d39a8e202171c96ff0ebcb677",
+      "pylabrobot.plate_reading.chatterbox": "758c0f4e83909787b96d078fbe68b900eda708c53c8f4d56cb13510dbb59854e",
+      "pylabrobot.storage.chatterbox": "ae13d20f05f1cf2bc9d053e735254be7b6dd47d3f6a78979c3347b7fe4378d05"
+    },
+    "version": "0.2.1"
+  },
+  "schema_version": "api_gym.pylabrobot_reference_sequences.v0",
+  "sequence": {
+    "status": "completed",
+    "steps": [
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "be1f8ad155cb33f6734e01a54d2c27a1eb0ca4593c794c1cbbebf2119d21cef9",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.plate_reading.PlateReader.setup",
+        "operation_id": "pylabrobot.plate_reader.setup",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null,
+        "snapshot": {
+          "backend": {
+            "class": "pylabrobot.plate_reading.chatterbox.PlateReaderChatterboxBackend"
+          },
+          "plate": null
+        }
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "6129b1d3b4e602840940a8cb7c8ef59dcc69f992a460918d2b13fb9c3f49b213",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.plate_reading.PlateReader.open",
+        "operation_id": "pylabrobot.plate_reader.open",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null
+      },
+      {
+        "grounding_level": "provider_interface_only",
+        "implementation": "pylabrobot.plate_reading.PlateReader.assign_child_resource",
+        "operation_id": "pylabrobot.plate_reader.place_plate",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "plate_name": "growth_plate"
+        },
+        "result": null,
+        "snapshot": {
+          "backend": {
+            "class": "pylabrobot.plate_reading.chatterbox.PlateReaderChatterboxBackend"
+          },
+          "plate": "growth_plate"
+        }
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "fd63580eac7bc7f4d3d65429bf5fba346a15737aa1d36ba16d8df893f670bb95",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.plate_reading.PlateReader.close",
+        "operation_id": "pylabrobot.plate_reader.close",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 12,
+            "normalized_sha256": "01403bd3ac28134194737b8cfcbd7d4fd899c19d41dd9cf727febd5010400b8e",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.plate_reading.PlateReader.read_absorbance",
+        "operation_id": "pylabrobot.plate_reader.read_absorbance",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "wavelength_nm": 600,
+          "wells": [
+            "A1",
+            "B1"
+          ]
+        },
+        "result": [
+          {
+            "data": [
+              [
+                0.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                0.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ]
+            ],
+            "temperature": {
+              "kind": "normalized_non_finite_float",
+              "value": "NaN"
+            },
+            "time": "<normalized-runtime-timestamp>",
+            "wavelength": 600
+          }
+        ]
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 12,
+            "normalized_sha256": "7f2992c8c1ffcbbefa5deb8c851b5186290bd9bf71d259c4de6a5c3d3199ecf2",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.plate_reading.PlateReader.read_fluorescence",
+        "operation_id": "pylabrobot.plate_reader.read_fluorescence",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "emission_wavelength_nm": 528,
+          "excitation_wavelength_nm": 485,
+          "focal_height_mm": 7.5,
+          "wells": [
+            "A1",
+            "B1"
+          ]
+        },
+        "result": [
+          {
+            "data": [
+              [
+                0.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                0.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ]
+            ],
+            "em_wavelength": 528,
+            "ex_wavelength": 485,
+            "temperature": {
+              "kind": "normalized_non_finite_float",
+              "value": "NaN"
+            },
+            "time": "<normalized-runtime-timestamp>"
+          }
+        ]
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 12,
+            "normalized_sha256": "07e54e6719103609903e9f47eb903a09fed37366839e73b53a7a40606e8ac616",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.plate_reading.PlateReader.read_luminescence",
+        "operation_id": "pylabrobot.plate_reader.read_luminescence",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "request": {
+          "focal_height_mm": 7.5,
+          "wells": [
+            "A1",
+            "B1"
+          ]
+        },
+        "result": [
+          {
+            "data": [
+              [
+                0.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                0.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ]
+            ],
+            "em_wavelength": 0,
+            "temperature": {
+              "kind": "normalized_non_finite_float",
+              "value": "NaN"
+            },
+            "time": "<normalized-runtime-timestamp>"
+          }
+        ]
+      },
+      {
+        "grounding_level": "captured_projection",
+        "implementation": "api_gym.provider_components.pylabrobot.snapshots.plate_reader_snapshot",
+        "operation_id": "pylabrobot.plate_reader.snapshot",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": {
+          "backend": {
+            "class": "pylabrobot.plate_reading.chatterbox.PlateReaderChatterboxBackend"
+          },
+          "plate": "growth_plate"
+        }
+      },
+      {
+        "console": {
+          "stderr": {
+            "nonempty_line_count": 0,
+            "normalized_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "policy": "omitted_unstructured_console"
+          },
+          "stdout": {
+            "nonempty_line_count": 1,
+            "normalized_sha256": "b2ddae4b9f6cc9a7f6b0b27f5676a7547c2a7d43407a1a21d4d3bb58ed6e4bf3",
+            "policy": "omitted_unstructured_console"
+          }
+        },
+        "grounding_level": "chatterbox_executed",
+        "implementation": "pylabrobot.plate_reading.PlateReader.stop",
+        "operation_id": "pylabrobot.plate_reader.stop",
+        "provider": {
+          "distribution": "pylabrobot",
+          "hardware_execution_allowed": false,
+          "version": "0.2.1"
+        },
+        "result": null
+      }
+    ]
+  },
+  "sequence_id": "plate_reader_success_v0"
+}
