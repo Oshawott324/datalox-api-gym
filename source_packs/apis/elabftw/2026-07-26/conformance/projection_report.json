@@ -1,0 +1,13 @@
+{
+  "mismatches": [],
+  "passed": true,
+  "profile_id": "elabftw_experiment_id_location_v0",
+  "provider_id": "elabftw",
+  "provider_version": "5.6.10",
+  "schema_id": "datalox_conformance_report_v1",
+  "seed": 20260726,
+  "target_id": "elabftw_experiments_projection_v0",
+  "target_version": "elabftw_experiments_create_patch_get_v0",
+  "trace_digest": "sha256:7bf5abfbc60f69e81d8e11f280cb04eefc4350b3fbd061c5eabb82e2797814e5",
+  "trace_schema_id": "datalox_reference_trace_v1"
+}
