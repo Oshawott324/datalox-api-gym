@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from datalox_gated_runtime.remote_world_service import create_remote_world_app
 
@@ -26,15 +27,37 @@ def _append_once(values: list[str], value: str) -> None:
         values.append(value)
 
 
+def _public_service_url() -> str:
+    configured_url = os.getenv("DATALOX_PUBLIC_URL", "")
+    if configured_url:
+        return configured_url
+
+    render_url = os.getenv("RENDER_EXTERNAL_URL", "")
+    if render_url:
+        return render_url
+
+    space_host = os.getenv("SPACE_HOST", "")
+    if space_host:
+        return f"https://{space_host}"
+
+    return ""
+
+
 allowed_hosts = _csv_env(
     "DATALOX_ALLOWED_HOSTS",
     "localhost:*,127.0.0.1:*",
 )
 allowed_origins = _csv_env("DATALOX_ALLOWED_ORIGINS")
-space_host = os.getenv("SPACE_HOST", "")
-if space_host:
-    _append_once(allowed_hosts, space_host)
-    _append_once(allowed_origins, f"https://{space_host}")
+public_service_url = _public_service_url()
+if public_service_url:
+    parsed_public_url = urlsplit(public_service_url)
+    if parsed_public_url.scheme not in {"http", "https"} or not parsed_public_url.netloc:
+        raise ValueError("DATALOX public URL must be an absolute HTTP(S) URL")
+    _append_once(allowed_hosts, parsed_public_url.netloc)
+    _append_once(
+        allowed_origins,
+        f"{parsed_public_url.scheme}://{parsed_public_url.netloc}",
+    )
 
 if not allowed_hosts:
     raise ValueError("At least one MCP Host must be allowed")

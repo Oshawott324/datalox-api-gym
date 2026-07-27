@@ -75,11 +75,13 @@ verifier inputs are not part of that export.
 
 ## Configuration
 
-The image listens on `0.0.0.0:7860`. These runtime environment variables are
-available:
+The image listens on `0.0.0.0:$PORT`, defaulting to port `7860`. These runtime
+environment variables are available:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
+| `PORT` | `7860` | HTTP listen port supplied by the container platform. |
+| `DATALOX_PUBLIC_URL` | empty | Absolute external URL used to extend the MCP host and origin allowlists. |
 | `DATALOX_ALLOWED_HOSTS` | `localhost:*,127.0.0.1:*` | Comma-separated MCP `Host` allowlist. At least one value is required. |
 | `DATALOX_ALLOWED_ORIGINS` | empty | Comma-separated MCP `Origin` allowlist. |
 | `DATALOX_MAX_SESSIONS` | `4` | Maximum concurrent sessions. |
@@ -87,9 +89,10 @@ available:
 | `DATALOX_CLEANUP_INTERVAL_SECONDS` | `5` | Expired-session cleanup interval. |
 | `DATALOX_RUNS_ROOT` | `/home/user/runs` | Ephemeral run directory inside the container. |
 
-The ASGI wrapper automatically adds Hugging Face's built-in `SPACE_HOST` to the
-host allowlist and `https://SPACE_HOST` to the origin allowlist. Explicit
-values remain useful for custom domains or non-HF clients:
+The ASGI wrapper automatically uses Render's `RENDER_EXTERNAL_URL` or Hugging
+Face's `SPACE_HOST` when either platform provides it. `DATALOX_PUBLIC_URL`
+takes precedence for custom domains or other container platforms. Explicit
+allowlist values remain useful for additional clients:
 
 ```text
 DATALOX_ALLOWED_HOSTS=<space-subdomain>.hf.space
@@ -159,15 +162,40 @@ IMAGE=datalox-science-growth-space:local \
 ./scripts/smoke.sh
 ```
 
-## Publication blocker
+## Managed container deployment
 
-This wrapper is not yet a publicly reproducible Space. Anyone can reproduce
-the credential-free base image, but only authorized users can start the
-service because startup installs the private runtime. A public service would
-also execute private runtime code in an internet-facing container, so the
-Space should remain private until the runtime distribution decision is made.
+The repository root contains `render.yaml` for a controlled Render deployment.
+The service is intentionally configured as:
 
-Public deployment remains blocked until one of these exists:
+- one paid `starter` instance, so active sessions are never split across
+  processes and the service does not sleep between requests;
+- no autoscaling and no persistent disk;
+- manual deploys, so a pushed commit cannot terminate active benchmark
+  sessions;
+- a `/health` health check and a 60-second graceful shutdown window;
+- four active sessions maximum, each with a 30-minute inactivity TTL.
+
+During initial Blueprint creation, set `GITHUB_TOKEN` to a fine-grained GitHub
+token with read-only Contents access to only
+`Oshawott324/datalox-gated-runtime`. The entrypoint uses it to fetch the pinned
+runtime commit, deletes the temporary credential file, and removes the variable
+before starting the server. Do not reuse a broad personal token.
+
+This is a proof service, not a horizontally scalable production service.
+Session metadata and run artifacts are process-local and ephemeral. Before
+increasing `numInstances`, move the session registry and run storage to shared
+durable backends and add authenticated service-level admission control.
+
+## Public reproducibility blocker
+
+This wrapper is not yet a publicly reproducible image. Anyone can reproduce
+the credential-free base image, but only authorized operators can start the
+service because startup installs the private runtime. A managed public endpoint
+can run this image with a platform secret, but external users cannot reproduce
+the full image until the runtime distribution decision is made.
+
+An independently reproducible public image remains blocked until one of these
+exists:
 
 1. the pinned gated runtime revision is public; or
 2. an installable runtime artifact is published with distribution terms that
@@ -180,3 +208,9 @@ Hugging Face references:
 
 - [Docker Spaces](https://huggingface.co/docs/hub/spaces-sdks-docker)
 - [Spaces configuration](https://huggingface.co/docs/hub/spaces-config-reference)
+
+Render references:
+
+- [Blueprint specification](https://render.com/docs/blueprint-spec)
+- [Docker services](https://render.com/docs/docker)
+- [Environment variables and secrets](https://render.com/docs/configure-environment-variables)

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 readonly bind_host="0.0.0.0"
-readonly bind_port="7860"
+readonly bind_port="${PORT:-7860}"
 readonly runtime_commit="ce5372623ddbab41dab169e4e0d0fc1c000a56c2"
 readonly runtime_repository="https://github.com/Oshawott324/datalox-gated-runtime.git"
 temporary_paths=()

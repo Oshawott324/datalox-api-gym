@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+
+services:
+  - type: web
+    name: datalox-science-growth
+    runtime: docker
+    repo: https://github.com/Oshawott324/datalox-api-gym
+    branch: codex/lablongrun-hf-v0
+    plan: starter
+    region: singapore
+    numInstances: 1
+    previews:
+      generation: manual
+    autoDeployTrigger: "off"
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 60
+    dockerfilePath: ./deployments/huggingface/science_growth_kinetics_v0/Dockerfile
+    dockerContext: ./deployments/huggingface/science_growth_kinetics_v0
+    buildFilter:
+      paths:
+        - deployments/huggingface/science_growth_kinetics_v0/**
+        - render.yaml
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: DATALOX_MAX_SESSIONS
+        value: "4"
+      - key: DATALOX_SESSION_TTL_SECONDS
+        value: "1800"
+      - key: DATALOX_CLEANUP_INTERVAL_SECONDS
+        value: "5"
