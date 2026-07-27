@@ -27,9 +27,10 @@ Implemented and admitted on 2026-07-26:
   capsules;
 - a complete remote reference replay: 22 tool calls, 22 public ledger events,
   and all 11 world obligations passing;
-- a separate exact-pinned Docker Space wrapper with a JSON service manifest,
-  automatic Hugging Face host/origin binding, and both local-source and private
-  runtime installation paths;
+- an isolated exact-pinned Docker Space package under
+  `deployments/huggingface/science_growth_kinetics_v0`, with a JSON service
+  manifest, automatic Hugging Face host/origin binding, and both local-source
+  and private runtime installation paths;
 - a container smoke replay executing all 22 calls over Streamable HTTP MCP,
   passing all 11 checks, and proving OT-2, incubator, and plate-reader provider
   execution. The locked dependency set also resolves as binary wheels on
@@ -89,7 +90,7 @@ scientifically reviewed and strictly admitted episodes.
 - dataset manifests and split assignment;
 - Hugging Face dataset generation and validation.
 
-The Hugging Face Space repository owns only deployment:
+The Hugging Face deployment package owns only deployment:
 
 - one public FastAPI port;
 - session creation and expiration policy;
@@ -290,8 +291,8 @@ credentials, and no live hardware access.
    first Codex baseline; broader sampling remains.
 6. Run Codex and Claude baselines through the deployed Streamable HTTP MCP
    surface.
-7. Build and locally verify the separate Docker Space. Completed with a full
-   provider-executing reference replay.
+7. Build and locally verify the deployment-isolated Docker Space package.
+   Completed with a full provider-executing reference replay.
 8. Authenticate to Hugging Face and publish the Space.
 9. Add trace replay without placing world logic in the Space repository.
 10. Extend `datalox-rollout-collector` to import the typed public run export,

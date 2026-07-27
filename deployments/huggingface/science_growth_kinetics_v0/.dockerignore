@@ -1,0 +1,13 @@
+.git
+.gitignore
+.DS_Store
+.ruff_cache
+__pycache__
+*.py[cod]
+*.log
+.env
+.env.*
+.runtime-source.*
+.runtime-debug.*
+.tools
+runs
