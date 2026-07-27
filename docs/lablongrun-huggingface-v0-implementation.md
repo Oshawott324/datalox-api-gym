@@ -44,7 +44,10 @@ Not yet complete:
 - Codex and Claude baseline rollouts through the final deployed remote URL;
 - trace replay UI and dataset export;
 - independent scientific review;
-- Hugging Face Space deployment and dataset publication;
+- Hugging Face Space deployment and dataset publication. On 2026-07-27, the
+  Hugging Face create-repository API returned HTTP 402 because Docker and
+  Gradio Spaces on `cpu-basic` require a PRO subscription; no placeholder
+  static Space was created;
 - a public or otherwise reproducibly installable gated-runtime release. The
   current runtime repository is private.
 
