@@ -1,0 +1,112 @@
+{
+  "program_id": "galaxy_connected_history_fasta_v1",
+  "schema_id": "api_gym.galaxy_connected_recipe.v1",
+  "steps": [
+    {
+      "assertions": {
+        "body": {
+          "extra/git_commit": "3d62013917dfc9e285c2be923b7b5b2034469d6f",
+          "version_major": "26.1",
+          "version_minor": "rc1"
+        },
+        "status": 200
+      },
+      "method": "GET",
+      "path": "/api/version",
+      "role": "identity",
+      "step_id": "get_version"
+    },
+    {
+      "assertions": {
+        "status": 404
+      },
+      "method": "GET",
+      "path": "/api/health",
+      "role": "health_observation",
+      "step_id": "get_health"
+    },
+    {
+      "assertions": {
+        "body": [],
+        "status": 200
+      },
+      "method": "GET",
+      "path": "/api/histories",
+      "role": "before",
+      "step_id": "histories_before"
+    },
+    {
+      "assertions": {
+        "status": 200
+      },
+      "method": "POST",
+      "path": "/api/histories",
+      "role": "mutation",
+      "step_id": "create_history"
+    },
+    {
+      "assertions": {
+        "status": 200
+      },
+      "method": "POST",
+      "path": "/api/tools",
+      "role": "mutation",
+      "step_id": "upload_fasta"
+    },
+    {
+      "assertions": {
+        "terminal_state": "ok"
+      },
+      "method": "GET",
+      "path_template": "/api/datasets/{dataset_id}",
+      "role": "poll",
+      "step_id_prefix": "poll_dataset_"
+    },
+    {
+      "assertions": {
+        "ext": "fasta",
+        "state": "ok",
+        "status": 200
+      },
+      "method": "GET",
+      "path_template": "/api/datasets/{dataset_id}",
+      "role": "read",
+      "step_id": "read_dataset"
+    },
+    {
+      "assertions": {
+        "status": 200
+      },
+      "method": "GET",
+      "path_template": "/api/histories/{history_id}/contents/{dataset_id}/provenance",
+      "role": "provenance",
+      "step_id": "read_provenance"
+    },
+    {
+      "assertions": {
+        "body_bytes": 44,
+        "body_sha256": "sha256:d044ffc156b7f0a06cd252ec80ab8f0c0ef40ee57bbe3b0d4139f70bd8cbd39c",
+        "status": 200
+      },
+      "method": "GET",
+      "path_template": "/api/histories/{history_id}/contents/{dataset_id}/display?raw=true",
+      "role": "readback",
+      "step_id": "readback_dataset"
+    },
+    {
+      "assertions": {
+        "exact_required_tool_statuses": [
+          404,
+          404,
+          404,
+          404,
+          404
+        ],
+        "workflow_import_attempted": false,
+        "workflow_invocation_attempted": false
+      },
+      "role": "unsupported_boundary",
+      "step_id": "staramr_capability_check"
+    }
+  ]
+}

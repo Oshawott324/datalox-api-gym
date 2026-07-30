@@ -1,0 +1,107 @@
+{
+  "allowed_request_headers": [
+    "accept",
+    "accept-encoding",
+    "connection",
+    "content-length",
+    "content-type",
+    "host"
+  ],
+  "auth": {
+    "bootstrap": {
+      "admin_secret_source": "container_environment:GALAXY_CONFIG_BOOTSTRAP_ADMIN_API_KEY",
+      "method": "Galaxy admin API",
+      "persisted": false
+    },
+    "contexts": [
+      {
+        "actor_alias": "disposable_local_user",
+        "context_id": "fixture_user",
+        "grant_required": true,
+        "secret_source_names": [
+          "galaxy_disposable_user_api_key"
+        ],
+        "strategy_id": "x_api_key_header"
+      }
+    ],
+    "kind": "secret",
+    "secret_sources": [
+      {
+        "kind": "capture_process_memory",
+        "name": "galaxy_disposable_user_api_key",
+        "persisted": false
+      }
+    ]
+  },
+  "authoring_policy": {
+    "concurrency": 1,
+    "write_retries": 0
+  },
+  "boundary": {
+    "kind": "self_hosted_reference",
+    "production_equivalence": "not_claimed",
+    "statement": "Disposable loopback Galaxy 26.1.rc1 fixture; production equivalence is not claimed."
+  },
+  "bounds": {
+    "max_polls": 180,
+    "max_requests": 220,
+    "request_timeout_ms": 30000,
+    "total_timeout_ms": 180000
+  },
+  "connector_id": "galaxy_26_1_rc1_connected_history_fasta_v1",
+  "driver_kind": "http11",
+  "identity": {
+    "git_commit": "3d62013917dfc9e285c2be923b7b5b2034469d6f",
+    "image_id": "sha256:8e5b825e2d064707caa9f564bd5280bef0a79b666ccfee116ae7c311657eec62",
+    "origin": "http://127.0.0.1:32770",
+    "version_major": "26.1",
+    "version_minor": "rc1"
+  },
+  "isolation": {
+    "cleanup_kind": "delete_resources_then_remove_fixture",
+    "cleanup_strategy_id": "delete_history_user_stop_container_remove_named_volume",
+    "isolation_kind": "disposable_user_and_history",
+    "reset_equivalence_claimed": false,
+    "reset_kind": "fixture_destroy"
+  },
+  "known_limitations": [
+    "This case captures one history, one upload1 FASTA ingestion, reads, provenance, and readback.",
+    "The /api/health route returned 404 on this image; no alternate route is presented as that route.",
+    "The exact AMR Gene Detection workflow was not imported or invoked because all five required tool versions were absent.",
+    "No production, arbitrary workflow, concurrency, quota, or reset-equivalence behavior is claimed."
+  ],
+  "origin": "http://127.0.0.1:32770",
+  "provider_id": "galaxy",
+  "provider_version": "26.1.rc1",
+  "request_encoding": "canonical_json",
+  "schema_id": "api_gym.galaxy_connected_connector.v1",
+  "sensitive_transport_fields": {
+    "request_headers_removed": [
+      "authorization",
+      "cookie",
+      "x-api-key"
+    ],
+    "response_headers_removed": [
+      "set-cookie"
+    ],
+    "secret_response_bodies_removed": [
+      "create_disposable_api_key"
+    ]
+  },
+  "source_pins": [
+    {
+      "git_commit": "3d62013917dfc9e285c2be923b7b5b2034469d6f",
+      "image_id": "sha256:8e5b825e2d064707caa9f564bd5280bef0a79b666ccfee116ae7c311657eec62",
+      "image_reference": "datalox-galaxy-reference@sha256:8e5b825e2d064707caa9f564bd5280bef0a79b666ccfee116ae7c311657eec62",
+      "oci_index": "sha256:100a37301e5f4fb3ac560be5cec7ec5629400673cef8511ea2a8c17b4c8b7399"
+    }
+  ],
+  "static_artifact_inputs": [
+    {
+      "artifact_id": "tiny_fasta",
+      "expected_sha256": "sha256:d044ffc156b7f0a06cd252ec80ab8f0c0ef40ee57bbe3b0d4139f70bd8cbd39c",
+      "filename": "input.fa",
+      "media_type": "text/x-fasta"
+    }
+  ]
+}

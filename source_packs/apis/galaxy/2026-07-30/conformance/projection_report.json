@@ -1,0 +1,13 @@
+{
+  "mismatches": [],
+  "passed": true,
+  "profile_id": "galaxy_generated_fields_v1",
+  "provider_id": "galaxy",
+  "provider_version": "26.1.rc1",
+  "schema_id": "datalox_conformance_report_v1",
+  "seed": 20260730,
+  "target_id": "galaxy_connected_history_fasta_projection_v1",
+  "target_version": "galaxy_connected_history_fasta_projection_v1",
+  "trace_digest": "sha256:454d36a3aa422fa58e1316fc39b52b8fa2bf5cd3d3425e5c85844bb205bb4906",
+  "trace_schema_id": "datalox_reference_trace_v1"
+}

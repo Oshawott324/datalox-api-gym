@@ -1,0 +1,120 @@
+{
+  "credential_lifecycle": {
+    "api_key_created": true,
+    "api_key_persisted": false,
+    "bootstrap_admin_key_persisted": false,
+    "bootstrap_admin_key_source": "container_environment:GALAXY_CONFIG_BOOTSTRAP_ADMIN_API_KEY",
+    "disposable_user_id": "f2db41e1fa331b3e",
+    "password_persisted": false,
+    "secret_scan": {
+      "checked_files": [
+        "capture.json",
+        "connector.json",
+        "fixture_receipt.json",
+        "recipe.json",
+        "input.fa"
+      ],
+      "checked_variants": [
+        "base64",
+        "raw",
+        "sha256_hex"
+      ],
+      "passed": true
+    }
+  },
+  "pre_capture": {
+    "architecture": "amd64",
+    "auto_remove": true,
+    "configured_image": "datalox-galaxy-reference@sha256:8e5b825e2d064707caa9f564bd5280bef0a79b666ccfee116ae7c311657eec62",
+    "container_name": "datalox-galaxy-sequence-59441",
+    "container_running": true,
+    "disposable_marker": "galaxy-reference-v1",
+    "image_id": "sha256:8e5b825e2d064707caa9f564bd5280bef0a79b666ccfee116ae7c311657eec62",
+    "image_reference": "datalox-galaxy-reference@sha256:8e5b825e2d064707caa9f564bd5280bef0a79b666ccfee116ae7c311657eec62",
+    "image_repo_digests": [
+      "datalox-galaxy-reference@sha256:8e5b825e2d064707caa9f564bd5280bef0a79b666ccfee116ae7c311657eec62"
+    ],
+    "labels": {
+      "org.opencontainers.image.created": "2026-07-30T15:48:52Z",
+      "org.opencontainers.image.revision": "3d62013917dfc9e285c2be923b7b5b2034469d6f",
+      "org.opencontainers.image.version": "26.1-auto"
+    },
+    "loopback_origin": "http://127.0.0.1:32770",
+    "mounts": [
+      {
+        "destination": "/data",
+        "driver": "local",
+        "name": "datalox-galaxy-sequence-data-59441",
+        "read_write": true,
+        "type": "volume"
+      }
+    ],
+    "oci_index_pin": {
+      "digest": "sha256:100a37301e5f4fb3ac560be5cec7ec5629400673cef8511ea2a8c17b4c8b7399",
+      "locally_independently_verified": false,
+      "provenance": "capture_request"
+    },
+    "operating_system": "linux",
+    "ports": {
+      "8080/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "32770"
+        }
+      ]
+    },
+    "provider": "galaxy",
+    "schema_id": "api_gym.galaxy_fixture_inspection.v1"
+  },
+  "schema_id": "api_gym.galaxy_fixture_receipt.v1",
+  "teardown": {
+    "api_cleanup_steps": [
+      "purge_history",
+      "delete_disposable_user_failed:RuntimeError:delete_disposable_user returned HTTP 403, expected [200]"
+    ],
+    "attached_fixture_volumes_removed": [
+      "datalox-galaxy-sequence-data-59441"
+    ],
+    "container_absent_after": true,
+    "container_auto_remove": true,
+    "container_inspect_exit_code_after": 1,
+    "container_remove": {
+      "action": "container_auto_removed_after_stop",
+      "command": null,
+      "exit_code": 0
+    },
+    "container_stop": {
+      "command": [
+        "docker",
+        "stop",
+        "--timeout",
+        "30",
+        "datalox-galaxy-sequence-59441"
+      ],
+      "completed_at": "2026-07-30T20:37:52Z",
+      "duration_ms": 462.852,
+      "exit_code": 0,
+      "started_at": "2026-07-30T20:37:51Z",
+      "stderr": "",
+      "stdout": "datalox-galaxy-sequence-59441\n"
+    },
+    "schema_id": "api_gym.galaxy_fixture_teardown.v1",
+    "volume_absent_after": true,
+    "volume_inspect_exit_code_after": 1,
+    "volume_remove": {
+      "command": [
+        "docker",
+        "volume",
+        "rm",
+        "datalox-galaxy-sequence-data-59441"
+      ],
+      "completed_at": "2026-07-30T20:37:52Z",
+      "duration_ms": 16.804,
+      "exit_code": 0,
+      "started_at": "2026-07-30T20:37:52Z",
+      "stderr": "",
+      "stdout": "datalox-galaxy-sequence-data-59441\n"
+    },
+    "volumes_created_by_capture": []
+  }
+}
