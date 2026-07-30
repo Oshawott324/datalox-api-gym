@@ -1,14 +1,19 @@
 # eLabFTW Reference-Conformance Review
 
 Date: 2026-07-26
-Status: first provider slice implemented
+Status: historical selected three-call slice
 Reviewers: training-system reviewer and scientific-workflow reviewer
 Architecture:
 `docs/reference-conformance-science-architecture.md`
 
+> This document describes the earlier selected `POST -> PATCH -> GET` evidence
+> slice. It is preserved for provenance and existing projection tests, but it
+> is not the complete eLabFTW behavior case. The complete, generic-harvester
+> artifact is reviewed in `docs/elabftw-complete-behavior-case.md`.
+
 ## What Exists
 
-The first provider slice now has four separate artifacts:
+This historical provider slice has four separate artifacts:
 
 ```text
 disposable eLabFTW 5.6.10 service

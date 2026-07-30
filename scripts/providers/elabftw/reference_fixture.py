@@ -262,6 +262,69 @@ def verify_disposable_fixture(
     )
 
 
+def inspect_fixture_receipt(
+    project: str,
+    port: int,
+    credentials: FixtureCredentials,
+) -> dict[str, Any]:
+    """Return stable, non-secret evidence derived from the running fixture."""
+    verify_disposable_fixture(project, port, credentials)
+    manifest = json.loads(MANIFEST_FILE.read_text(encoding="utf-8"))
+    services: dict[str, dict[str, Any]] = {}
+    for service in ("web", "mysql"):
+        container_id = _run(
+            _compose_command(project, "ps", "--quiet", service),
+            credentials=credentials,
+            port=port,
+        ).stdout.strip()
+        if not container_id:
+            raise FixtureError(f"eLabFTW fixture {service} container is not running")
+        container = json.loads(
+            _run(
+                ["docker", "inspect", container_id],
+                credentials=credentials,
+                port=port,
+            ).stdout
+        )[0]
+        image = json.loads(
+            _run(
+                ["docker", "image", "inspect", container["Image"]],
+                credentials=credentials,
+                port=port,
+            ).stdout
+        )[0]
+        expected = manifest["images"][service]
+        configured_image = container["Config"].get("Image", "")
+        repo_digests = sorted(image.get("RepoDigests") or [])
+        if configured_image != expected["reference"]:
+            raise FixtureError(
+                f"eLabFTW fixture {service} configured image does not match the manifest"
+            )
+        if not any(
+            item.rpartition("@")[2] == expected["digest"] for item in repo_digests
+        ):
+            raise FixtureError(
+                f"eLabFTW fixture {service} image digest does not match the manifest"
+            )
+        services[service] = {
+            "configured_image": configured_image,
+            "content_id": image["Id"],
+            "content_digest": expected["digest"],
+            "disposable_marker": container["Config"]
+            .get("Labels", {})
+            .get("org.datalox.fixture.disposable"),
+        }
+
+    return {
+        "schema_id": "api_gym.elabftw_fixture_inspection.v1",
+        "provider": "elabftw",
+        "provider_version": manifest["provider_version"],
+        "origin": f"http://127.0.0.1:{port}",
+        "loopback_only": True,
+        "services": services,
+    }
+
+
 def _verify_inspected_web_container(
     container: dict[str, Any],
     image: dict[str, Any],
