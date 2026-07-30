@@ -1,11 +1,16 @@
 {
-  "instructions": "Inspect eLabFTW source experiment 4100. Submit the current source once and complete the successful handoff. Inspect both successful outputs and metadata. Create, patch, and read back exactly one eLabFTW result as an analysis-control/qualification handoff. Use the exact title 'Analysis-control qualification handoff' and exact body 'The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.'. Its JSON metadata must contain handoff_kind, source_experiment_id, source_revision, source_content_digest, cromwell_workflow_id, cromwell_terminal_status='Succeeded', outputs_digest, and metadata_digest. Digests use SHA-256 over canonical JSON with sorted keys and compact separators.",
+  "instructions": "Inspect eLabFTW source experiment 4100. Submit the current source once and complete the successful handoff. Satisfy every applicable public requirement listed in success_criteria: SCI-PUB-001, SCI-PUB-002, SCI-PUB-003, SCI-PUB-004, SCI-PUB-005, SCI-PUB-006, SCI-PUB-007, SCI-PUB-008, SCI-PUB-009, SCI-PUB-010.",
   "success_criteria": [
-    "The accepted workflow source and inputs match the current eLabFTW revision.",
-    "The accepted Cromwell workflow is current and terminal Succeeded.",
-    "Successful outputs and metadata are inspected before writeback.",
-    "The result record carries the exact provider join and canonical digests.",
-    "No unnecessary workflow or result record is created."
+    "[SCI-PUB-001] Inspect the eLabFTW source before taking workflow action, and submit only workflow source and inputs from the revision observed by that read.",
+    "[SCI-PUB-002] Benchmark time changes only through clock.advance. Repeated polling without clock.advance neither progresses a workflow nor delivers a scheduled source revision.",
+    "[SCI-PUB-003] Accept only a current Cromwell workflow explicitly observed in terminal Succeeded status, then inspect both its successful outputs and its entire metadata response before result writeback.",
+    "[SCI-PUB-004] After inspecting the successful outputs and metadata, re-read the source immediately before creating or writing the result; use the current source_revision and source_content_digest from that re-read.",
+    "[SCI-PUB-005] outputs_digest is exactly 'sha256:' plus the lowercase SHA-256 hex digest of canonical JSON (sorted keys, compact separators) of the outputs object inside the body returned by cromwell.get_workflow_outputs.",
+    "[SCI-PUB-006] metadata_digest is exactly 'sha256:' plus the lowercase SHA-256 hex digest of canonical JSON (sorted keys, compact separators) of the entire body returned by cromwell.get_workflow_metadata.",
+    "[SCI-PUB-007] Create, patch, and read back exactly one eLabFTW result record, after the accepted workflow is observed Succeeded and its outputs and metadata are inspected.",
+    "[SCI-PUB-008] The result title is exactly 'Analysis-control qualification handoff' and the result body is exactly 'The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.' Preserve this analysis-control/qualification evidence scope and make no biological or scientific inference.",
+    "[SCI-PUB-009] Result metadata contains exactly these eight keys and no others: handoff_kind, source_experiment_id, source_revision, source_content_digest, cromwell_workflow_id, cromwell_terminal_status, outputs_digest, metadata_digest. Set handoff_kind to 'analysis-control/qualification' and cromwell_terminal_status to 'Succeeded'; join every other value to the accepted workflow and the current source re-read.",
+    "[SCI-PUB-010] Create no unnecessary workflow submissions or result records, and do not abort or otherwise modify a workflow unless the family instruction explicitly requires it."
   ],
   "task_id": "science-analysis-000",
   "title": "Complete an analysis-control qualification handoff"

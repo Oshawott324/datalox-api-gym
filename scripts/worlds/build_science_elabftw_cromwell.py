@@ -92,6 +92,110 @@ RESULT_BODY = (
     "The captured Cromwell program qualified for evidence handoff. "
     "This record makes no biological or scientific inference."
 )
+COMMON_PUBLIC_REQUIREMENTS = (
+    (
+        "SCI-PUB-001",
+        "Inspect the eLabFTW source before taking workflow action, and submit only "
+        "workflow source and inputs from the revision observed by that read.",
+    ),
+    (
+        "SCI-PUB-002",
+        "Benchmark time changes only through clock.advance. Repeated polling "
+        "without clock.advance neither progresses a workflow nor delivers a "
+        "scheduled source revision.",
+    ),
+    (
+        "SCI-PUB-003",
+        "Accept only a current Cromwell workflow explicitly observed in terminal "
+        "Succeeded status, then inspect both its successful outputs and its entire "
+        "metadata response before result writeback.",
+    ),
+    (
+        "SCI-PUB-004",
+        "After inspecting the successful outputs and metadata, re-read the source "
+        "immediately before creating or writing the result; use the current "
+        "source_revision and source_content_digest from that re-read.",
+    ),
+    (
+        "SCI-PUB-005",
+        "outputs_digest is exactly 'sha256:' plus the lowercase SHA-256 hex digest "
+        "of canonical JSON (sorted keys, compact separators) of the outputs object "
+        "inside the body returned by cromwell.get_workflow_outputs.",
+    ),
+    (
+        "SCI-PUB-006",
+        "metadata_digest is exactly 'sha256:' plus the lowercase SHA-256 hex digest "
+        "of canonical JSON (sorted keys, compact separators) of the entire body "
+        "returned by cromwell.get_workflow_metadata.",
+    ),
+    (
+        "SCI-PUB-007",
+        "Create, patch, and read back exactly one eLabFTW result record, after the "
+        "accepted workflow is observed Succeeded and its outputs and metadata are "
+        "inspected.",
+    ),
+    (
+        "SCI-PUB-008",
+        "The result title is exactly 'Analysis-control qualification handoff' and "
+        "the result body is exactly 'The captured Cromwell program qualified for "
+        "evidence handoff. This record makes no biological or scientific "
+        "inference.' Preserve this analysis-control/qualification evidence scope "
+        "and make no biological or scientific inference.",
+    ),
+    (
+        "SCI-PUB-009",
+        "Result metadata contains exactly these eight keys and no others: "
+        "handoff_kind, source_experiment_id, source_revision, "
+        "source_content_digest, cromwell_workflow_id, "
+        "cromwell_terminal_status, outputs_digest, metadata_digest. Set "
+        "handoff_kind to 'analysis-control/qualification' and "
+        "cromwell_terminal_status to 'Succeeded'; join every other value to the "
+        "accepted workflow and the current source re-read.",
+    ),
+    (
+        "SCI-PUB-010",
+        "Create no unnecessary workflow submissions or result records, and do not "
+        "abort or otherwise modify a workflow unless the family instruction "
+        "explicitly requires it.",
+    ),
+)
+TRANSIENT_PUBLIC_REQUIREMENT = (
+    "SCI-PUB-TR-001",
+    "For this transient-visibility task, make exactly one workflow submission and "
+    "observe its status in this order: HTTP 404, then Submitted, then Succeeded. "
+    "Call clock.advance between each of those three status observations; never "
+    "resubmit after the 404 or Submitted observation.",
+)
+FAMILY_PUBLIC_REQUIREMENTS = {
+    "analysis_transient_visibility_v1": TRANSIENT_PUBLIC_REQUIREMENT,
+    "analysis_existing_run_resume_v1": (
+        "SCI-PUB-ER-001",
+        "For this existing-run resume task, inspect and resume the in-flight "
+        "workflow referenced by the source, and make no duplicate workflow "
+        "submission.",
+    ),
+    "analysis_failure_recovery_v1": (
+        "SCI-PUB-FR-001",
+        "For this failure-recovery task, explicitly observe the failed workflow "
+        "in Failed status, then inspect both its logs and its entire metadata "
+        "response, then re-read the corrected current source before making a new "
+        "workflow submission.",
+    ),
+    "analysis_superseded_abort_v1": (
+        "SCI-PUB-SA-001",
+        "For this superseded-abort task, explicitly observe the workflow "
+        "referenced by the source in Running status, then abort it, explicitly "
+        "observe it in Aborted status, then submit the current source.",
+    ),
+    "analysis_stale_revision_v1": (
+        "SCI-PUB-SR-001",
+        "For this stale-recovery task, explicitly observe the older completed "
+        "workflow in terminal Succeeded status, inspect its outputs and its entire "
+        "metadata response, re-read the current source, then make exactly one "
+        "current workflow submission and do not attach evidence from the stale "
+        "workflow.",
+    ),
+}
 FAMILIES = (
     "analysis_nominal_v1",
     "analysis_transient_visibility_v1",
@@ -427,8 +531,7 @@ def _task(*, family: str, seed: int, source_id: int) -> dict[str, Any]:
             "Submit the current source once and complete the successful handoff."
         ),
         "analysis_transient_visibility_v1": (
-            "Treat an initial status 404 or Submitted as nonterminal; do not "
-            "resubmit the same work."
+            "Follow the transient-visibility requirement SCI-PUB-TR-001."
         ),
         "analysis_existing_run_resume_v1": (
             "The source references an in-flight workflow. Resume it without a "
@@ -448,28 +551,28 @@ def _task(*, family: str, seed: int, source_id: int) -> dict[str, Any]:
             "source, then submit one current workflow instead of attaching stale evidence."
         ),
     }[family]
+    requirement_ids = [item[0] for item in COMMON_PUBLIC_REQUIREMENTS]
+    family_requirement = FAMILY_PUBLIC_REQUIREMENTS.get(family)
+    if family_requirement is not None:
+        requirement_ids.append(family_requirement[0])
     instructions = (
         f"Inspect eLabFTW source experiment {source_id}. {family_direction} "
-        "Inspect both successful outputs and metadata. Create, patch, and read "
-        "back exactly one eLabFTW result as an analysis-control/qualification "
-        f"handoff. Use the exact title {RESULT_TITLE!r} and exact body "
-        f"{RESULT_BODY!r}. Its JSON metadata must contain handoff_kind, "
-        "source_experiment_id, source_revision, source_content_digest, "
-        "cromwell_workflow_id, cromwell_terminal_status='Succeeded', "
-        "outputs_digest, and metadata_digest. Digests use SHA-256 over canonical "
-        "JSON with sorted keys and compact separators."
+        "Satisfy every applicable public requirement listed in success_criteria: "
+        + ", ".join(requirement_ids)
+        + "."
     )
+    success_criteria = [
+        f"[{requirement_id}] {requirement}"
+        for requirement_id, requirement in COMMON_PUBLIC_REQUIREMENTS
+    ]
+    if family_requirement is not None:
+        requirement_id, requirement = family_requirement
+        success_criteria.append(f"[{requirement_id}] {requirement}")
     return {
         "task_id": f"science-analysis-{seed:03d}",
         "title": "Complete an analysis-control qualification handoff",
         "instructions": instructions,
-        "success_criteria": [
-            "The accepted workflow source and inputs match the current eLabFTW revision.",
-            "The accepted Cromwell workflow is current and terminal Succeeded.",
-            "Successful outputs and metadata are inspected before writeback.",
-            "The result record carries the exact provider join and canonical digests.",
-            "No unnecessary workflow or result record is created.",
-        ],
+        "success_criteria": success_criteria,
     }
 
 

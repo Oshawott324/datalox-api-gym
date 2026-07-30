@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -23,6 +24,7 @@ from datalox_gated_runtime.world_v1.backend import (
 )
 from datalox_gated_runtime.world_v1.bundle import validate_world_bundle
 from datalox_gated_runtime.world_v1.contracts import ActorContext
+from datalox_gated_runtime.world_v1.contracts import TaskBrief
 
 from api_gym.worlds.source_refs import validate_world_source_refs
 
@@ -60,6 +62,17 @@ RESULT_BODY = (
     "The captured Cromwell program qualified for evidence handoff. "
     "This record makes no biological or scientific inference."
 )
+COMMON_PUBLIC_REQUIREMENT_IDS = {
+    f"SCI-PUB-{index:03d}" for index in range(1, 11)
+}
+TRANSIENT_PUBLIC_REQUIREMENT_ID = "SCI-PUB-TR-001"
+FAMILY_PUBLIC_REQUIREMENT_IDS = {
+    "analysis_transient_visibility_v1": TRANSIENT_PUBLIC_REQUIREMENT_ID,
+    "analysis_existing_run_resume_v1": "SCI-PUB-ER-001",
+    "analysis_failure_recovery_v1": "SCI-PUB-FR-001",
+    "analysis_superseded_abort_v1": "SCI-PUB-SA-001",
+    "analysis_stale_revision_v1": "SCI-PUB-SR-001",
+}
 
 
 def _subprocess_env() -> dict[str, str]:
@@ -177,6 +190,158 @@ def test_world_build_is_deterministic_self_contained_and_grounded() -> None:
         key in json.dumps(bundle.episodes)
         for key in ("expected_failure_codes", "verifier_answers", "hidden_verifier")
     )
+
+
+def test_agent_visible_task_briefs_publish_complete_family_contracts() -> None:
+    bundle = validate_world_bundle(WORLD)
+    verifier = json.loads(
+        (WORLD / "world" / "v1" / "verifier.json").read_text()
+    )
+    hidden_codes = {
+        assertion["failure_code"] for assertion in verifier["assertions"]
+    }
+    common_mapping = {
+        "analysis.source_inspected_before_action": {"SCI-PUB-001"},
+        "analysis.submissions_match_source": {"SCI-PUB-001"},
+        "analysis.current_terminal_success": {"SCI-PUB-003"},
+        "analysis.success_outputs_metadata_inspected": {"SCI-PUB-003"},
+        "analysis.result_record_lifecycle": {"SCI-PUB-007"},
+        "analysis.result_record_content_contract": {"SCI-PUB-008"},
+        "analysis.result_record_exact_join": {"SCI-PUB-005", "SCI-PUB-006", "SCI-PUB-009"},
+        "analysis.writeback_source_current": {"SCI-PUB-004"},
+        "analysis.cross_provider_ordering": {"SCI-PUB-004", "SCI-PUB-007"},
+        "analysis.no_unnecessary_duplicate_submission": {"SCI-PUB-010"},
+        "analysis.no_forbidden_collateral": {"SCI-PUB-010"},
+    }
+    family_mappings = {
+        "analysis_nominal_v1": common_mapping,
+        "analysis_transient_visibility_v1": {
+            **common_mapping,
+            "analysis.required_transient_observation": {
+                TRANSIENT_PUBLIC_REQUIREMENT_ID
+            },
+        },
+        "analysis_existing_run_resume_v1": {
+            **common_mapping,
+            "analysis.source_inspected_before_action": {
+                "SCI-PUB-001",
+                "SCI-PUB-ER-001",
+            },
+            "analysis.current_terminal_success": {
+                "SCI-PUB-003",
+                "SCI-PUB-ER-001",
+            },
+            "analysis.no_unnecessary_duplicate_submission": {
+                "SCI-PUB-010",
+                "SCI-PUB-ER-001",
+            },
+        },
+        "analysis_failure_recovery_v1": {
+            **common_mapping,
+            "analysis.required_failure_recovery": {"SCI-PUB-FR-001"},
+        },
+        "analysis_superseded_abort_v1": {
+            **common_mapping,
+            "analysis.required_superseded_abort": {"SCI-PUB-SA-001"},
+        },
+        "analysis_stale_revision_v1": {
+            **common_mapping,
+            "analysis.required_stale_recovery": {"SCI-PUB-SR-001"},
+        },
+    }
+    assert set(family_mappings) == FAMILIES
+    assert (
+        set().union(*(mapping.keys() for mapping in family_mappings.values()))
+        == hidden_codes
+    )
+
+    for episode in bundle.episodes:
+        task = TaskBrief(**episode["task"])
+        visible = task.instructions + "\n" + "\n".join(task.success_criteria)
+        requirement_ids = set(
+            re.findall(r"SCI-PUB-(?:(?:TR|ER|FR|SA|SR)-)?\d{3}", visible)
+        )
+        assert COMMON_PUBLIC_REQUIREMENT_IDS <= requirement_ids
+        expected_mapping = family_mappings[episode["family_id"]]
+        for required_ids in expected_mapping.values():
+            assert required_ids <= requirement_ids
+        expected_family_id = FAMILY_PUBLIC_REQUIREMENT_IDS.get(
+            episode["family_id"]
+        )
+        visible_family_ids = requirement_ids & set(
+            FAMILY_PUBLIC_REQUIREMENT_IDS.values()
+        )
+        assert visible_family_ids == (
+            {expected_family_id} if expected_family_id is not None else set()
+        )
+
+        assert "only through clock.advance" in visible
+        assert "Repeated polling without clock.advance neither progresses" in visible
+        assert "re-read the source immediately before creating or writing" in visible
+        assert "outputs object inside the body returned" in visible
+        assert "entire body returned by cromwell.get_workflow_metadata" in visible
+        assert "exactly these eight keys and no others" in visible
+        assert RESULT_TITLE in visible
+        assert RESULT_BODY in visible
+        assert "make no biological or scientific inference" in visible
+        assert not any(code in visible for code in hidden_codes)
+        assert not re.search(r"sha256:[0-9a-f]{64}", visible)
+        assert not re.search(
+            r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-"
+            r"[0-9a-f]{4}-[0-9a-f]{12}\b",
+            visible,
+        )
+        assert not any(
+            leak in visible
+            for leak in (
+                "expected_failure_codes",
+                "failure_codes",
+                "verifier_answers",
+                "hidden_verifier",
+                "expected_agent_submission_count",
+            )
+        )
+
+        family_requirement_text = next(
+            (
+                criterion
+                for criterion in task.success_criteria
+                if expected_family_id is not None
+                and expected_family_id in criterion
+            ),
+            "",
+        )
+        if episode["family_id"] == "analysis_transient_visibility_v1":
+            assert "exactly one workflow submission" in family_requirement_text
+            assert (
+                "HTTP 404, then Submitted, then Succeeded"
+                in family_requirement_text
+            )
+            assert "clock.advance between each" in family_requirement_text
+        elif episode["family_id"] == "analysis_existing_run_resume_v1":
+            assert "in-flight workflow referenced by the source" in family_requirement_text
+            assert "no duplicate workflow submission" in family_requirement_text
+        elif episode["family_id"] == "analysis_failure_recovery_v1":
+            assert "explicitly observe the failed workflow in Failed" in family_requirement_text
+            assert "both its logs and its entire metadata" in family_requirement_text
+            assert "re-read the corrected current source" in family_requirement_text
+            assert "before making a new workflow submission" in family_requirement_text
+        elif episode["family_id"] == "analysis_superseded_abort_v1":
+            assert "referenced by the source in Running" in family_requirement_text
+            assert "then abort it" in family_requirement_text
+            assert "observe it in Aborted" in family_requirement_text
+            assert "then submit the current source" in family_requirement_text
+        elif episode["family_id"] == "analysis_stale_revision_v1":
+            assert (
+                "older completed workflow in terminal Succeeded status"
+                in family_requirement_text
+            )
+            assert "its outputs and its entire metadata" in family_requirement_text
+            assert "re-read the current source" in family_requirement_text
+            assert "exactly one current workflow submission" in family_requirement_text
+            assert "do not attach evidence from the stale workflow" in family_requirement_text
+        else:
+            assert family_requirement_text == ""
 
 
 def test_fresh_process_can_initialize_self_contained_bundle(
