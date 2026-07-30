@@ -55,6 +55,8 @@ class RunningFixture:
     port: int
     stdout_handle: BinaryIO
     stderr_handle: BinaryIO
+    ownership_marker: bytes
+    fixture_receipt: dict[str, Any]
 
 
 def validate_cromwell_jar(jar_path: Path) -> None:
@@ -139,9 +141,9 @@ def cromwell_config(root: Path, port: int) -> str:
 def inspect_fixture_receipt(fixture: RunningFixture) -> dict[str, Any]:
     if fixture.process.poll() is not None:
         raise FixtureError("Cromwell fixture process is not running")
-    _verify_owned_root(fixture.root)
+    _verify_owned_root(fixture.root, fixture.ownership_marker)
     _assert_exact_readiness(fixture.port)
-    return build_fixture_receipt()
+    return fixture.fixture_receipt
 
 
 @contextmanager
@@ -149,32 +151,43 @@ def disposable_cromwell_fixture(
     *,
     jar_path: Path,
     java_bin: Path,
+    root: Path = DISPOSABLE_ROOT,
+    port: int = PORT,
+    ownership_marker: bytes = OWNERSHIP_MARKER,
+    fixture_receipt: dict[str, Any] | None = None,
 ) -> Iterator[RunningFixture]:
     validate_cromwell_jar(jar_path)
     validate_java_17(java_bin)
-    assert_fixture_available(root=DISPOSABLE_ROOT, port=PORT)
+    receipt = build_fixture_receipt() if fixture_receipt is None else fixture_receipt
+    _validate_fixture_parameters(
+        root=root,
+        port=port,
+        ownership_marker=ownership_marker,
+        fixture_receipt=receipt,
+    )
+    assert_fixture_available(root=root, port=port)
 
     fixture: RunningFixture | None = None
     owned_root = False
     try:
-        _create_owned_root(DISPOSABLE_ROOT)
+        _create_owned_root(root, ownership_marker)
         owned_root = True
-        config_path = DISPOSABLE_ROOT / "cromwell.conf"
-        config_path.write_text(cromwell_config(DISPOSABLE_ROOT, PORT), encoding="ascii")
-        stdout_handle = (DISPOSABLE_ROOT / "server.stdout.log").open("xb")
-        stderr_handle = (DISPOSABLE_ROOT / "server.stderr.log").open("xb")
+        config_path = root / "cromwell.conf"
+        config_path.write_text(cromwell_config(root, port), encoding="ascii")
+        stdout_handle = (root / "server.stdout.log").open("xb")
+        stderr_handle = (root / "server.stderr.log").open("xb")
         try:
             process = subprocess.Popen(
                 [
                     str(java_bin),
-                    f"-Djava.io.tmpdir={DISPOSABLE_ROOT}/tmp",
+                    f"-Djava.io.tmpdir={root}/tmp",
                     f"-Dconfig.file={config_path}",
                     "-jar",
                     str(jar_path),
                     "server",
                 ],
-                cwd=DISPOSABLE_ROOT,
-                env=_runtime_environment(DISPOSABLE_ROOT),
+                cwd=root,
+                env=_runtime_environment(root),
                 stdin=subprocess.DEVNULL,
                 stdout=stdout_handle,
                 stderr=stderr_handle,
@@ -186,10 +199,12 @@ def disposable_cromwell_fixture(
             raise
         fixture = RunningFixture(
             process=process,
-            root=DISPOSABLE_ROOT,
-            port=PORT,
+            root=root,
+            port=port,
             stdout_handle=stdout_handle,
             stderr_handle=stderr_handle,
+            ownership_marker=ownership_marker,
+            fixture_receipt=receipt,
         )
         _wait_for_exact_readiness(fixture)
         yield fixture
@@ -197,7 +212,7 @@ def disposable_cromwell_fixture(
         if fixture is not None:
             destroy_fixture(fixture)
         elif owned_root:
-            _delete_owned_root(DISPOSABLE_ROOT)
+            _delete_owned_root(root, ownership_marker)
 
 
 def destroy_fixture(fixture: RunningFixture) -> None:
@@ -220,7 +235,7 @@ def destroy_fixture(fixture: RunningFixture) -> None:
         fixture.stdout_handle.close()
         fixture.stderr_handle.close()
     _wait_for_port_release(fixture.port)
-    _delete_owned_root(fixture.root)
+    _delete_owned_root(fixture.root, fixture.ownership_marker)
 
 
 def _validation_environment() -> dict[str, str]:
@@ -239,24 +254,60 @@ def _runtime_environment(root: Path) -> dict[str, str]:
     }
 
 
-def _create_owned_root(root: Path) -> None:
+def _validate_fixture_parameters(
+    *,
+    root: Path,
+    port: int,
+    ownership_marker: bytes,
+    fixture_receipt: dict[str, Any],
+) -> None:
+    if not root.is_absolute() or root.parent != Path("/tmp"):
+        raise FixtureError("fixture root must be a direct absolute child of /tmp")
+    if not root.name.startswith("datalox-cromwell-92-workflow-"):
+        raise FixtureError("fixture root must use the Cromwell 92 Datalox prefix")
+    if type(port) is not int or not 1024 <= port <= 65_535:
+        raise FixtureError("fixture port must be a fixed non-privileged TCP port")
+    if (
+        type(ownership_marker) is not bytes
+        or not ownership_marker.startswith(b"datalox-cromwell-92-workflow-")
+        or not ownership_marker.endswith(b"\n")
+    ):
+        raise FixtureError("fixture ownership marker is invalid")
+    expected_origin = f"http://127.0.0.1:{port}"
+    if fixture_receipt.get("origin") != expected_origin:
+        raise FixtureError("fixture receipt origin does not match the fixed loopback port")
+    paths = fixture_receipt.get("paths")
+    database = fixture_receipt.get("database")
+    if not isinstance(paths, dict) or not isinstance(database, dict):
+        raise FixtureError("fixture receipt must declare paths and database")
+    if paths.get("disposable_root") != str(root):
+        raise FixtureError("fixture receipt root does not match the disposable root")
+    if paths.get("execution_root") != f"{root}/executions":
+        raise FixtureError("fixture receipt execution root does not match")
+    if paths.get("workflow_log_root") != f"{root}/workflow-logs":
+        raise FixtureError("fixture receipt workflow log root does not match")
+    if database.get("path_prefix") != f"{root}/db/":
+        raise FixtureError("fixture receipt database root does not match")
+
+
+def _create_owned_root(root: Path, ownership_marker: bytes) -> None:
     try:
         root.mkdir(mode=0o700)
     except FileExistsError as error:
         raise FixtureError(f"fixture root already exists: {root}") from error
-    (root / ".datalox-fixture-owner").write_bytes(OWNERSHIP_MARKER)
+    (root / ".datalox-fixture-owner").write_bytes(ownership_marker)
     for name in ("db", "executions", "workflow-logs", "tmp", "home"):
         (root / name).mkdir(mode=0o700)
 
 
-def _verify_owned_root(root: Path) -> None:
+def _verify_owned_root(root: Path, ownership_marker: bytes) -> None:
     marker = root / ".datalox-fixture-owner"
-    if not root.is_dir() or marker.read_bytes() != OWNERSHIP_MARKER:
+    if not root.is_dir() or marker.read_bytes() != ownership_marker:
         raise FixtureError("refusing to operate on a root without the exact ownership marker")
 
 
-def _delete_owned_root(root: Path) -> None:
-    _verify_owned_root(root)
+def _delete_owned_root(root: Path, ownership_marker: bytes) -> None:
+    _verify_owned_root(root, ownership_marker)
     shutil.rmtree(root)
 
 
