@@ -1,0 +1,113 @@
+{
+  "admission": {
+    "empty_failure_codes": [
+      "analysis.source_inspected_before_action",
+      "analysis.current_terminal_success",
+      "analysis.required_stale_recovery",
+      "analysis.success_outputs_metadata_inspected",
+      "analysis.result_record_lifecycle",
+      "analysis.result_record_content_contract",
+      "analysis.result_record_exact_join",
+      "analysis.writeback_source_current",
+      "analysis.cross_provider_ordering"
+    ],
+    "known_bad_failure_codes": [
+      "analysis.current_terminal_success",
+      "analysis.required_stale_recovery",
+      "analysis.result_record_exact_join",
+      "analysis.writeback_source_current"
+    ]
+  },
+  "family_id": "analysis_stale_revision_v1",
+  "grounding": {
+    "logical_timing_and_cross_provider_rules": "G0_BENCHMARK_DEFINED",
+    "provider_operations": "G2_LOCAL_EXECUTED"
+  },
+  "initial_state_contract": {
+    "result_experiment_count": 0,
+    "source_experiment_count": 1
+  },
+  "mutant_families": [
+    "stale_revision_attached"
+  ],
+  "obligations": [
+    {
+      "failure_code": "analysis.source_inspected_before_action",
+      "id": "analysis.source_inspected_before_action",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.submissions_match_source",
+      "id": "analysis.submissions_match_source",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.no_unnecessary_duplicate_submission",
+      "id": "analysis.no_unnecessary_duplicate_submission",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_transient_observation",
+      "id": "analysis.required_transient_observation",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.current_terminal_success",
+      "id": "analysis.current_terminal_success",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_failure_recovery",
+      "id": "analysis.required_failure_recovery",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_superseded_abort",
+      "id": "analysis.required_superseded_abort",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_stale_recovery",
+      "id": "analysis.required_stale_recovery",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.success_outputs_metadata_inspected",
+      "id": "analysis.success_outputs_metadata_inspected",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.result_record_lifecycle",
+      "id": "analysis.result_record_lifecycle",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.result_record_content_contract",
+      "id": "analysis.result_record_content_contract",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.result_record_exact_join",
+      "id": "analysis.result_record_exact_join",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.writeback_source_current",
+      "id": "analysis.writeback_source_current",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.cross_provider_ordering",
+      "id": "analysis.cross_provider_ordering",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.no_forbidden_collateral",
+      "id": "analysis.no_forbidden_collateral",
+      "type": "implementation_check"
+    }
+  ],
+  "schema_version": "api_gym.science_family_contract.v1",
+  "scientific_scope": "analysis-control/qualification evidence handoff",
+  "valid_alternatives": []
+}

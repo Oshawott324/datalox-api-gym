@@ -1,0 +1,27 @@
+{
+  "case_name": "workflow_abort_v1",
+  "claims": {
+    "paths_dereferenced": false,
+    "production_equivalence": "not_claimed",
+    "projection": "captured_program_family_only"
+  },
+  "grounding": {
+    "capture_sha256": "sha256:14a8382eb9a80e2adc8e089543cd80a235b3fe1566bd096f61c2ed83bcf759e0",
+    "connector_sha256": "sha256:02c07fa79025e2b8a9a05eef29c563f0a5bbc90581ef8efd440fdd393ad8e7c4",
+    "fixture_receipt_sha256": "sha256:a78295d08705b21cf834dc5d02db7a47a65eeee48fe962b403877c70f7d0a2ce",
+    "production_equivalence": "not_claimed",
+    "program_id": "cromwell_workflow_abort_v1",
+    "recipe_sha256": "sha256:254629bc8ad693d7708aac3503b35547d423e0b21dabba22769c75e2e0028199",
+    "reset_equivalence": "not_claimed"
+  },
+  "inputs_sha256": "sha256:ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+  "projection": {
+    "dynamic_timestamps": "G0_BENCHMARK_DEFINED",
+    "provider_response_shape": "G2_LOCAL_EXECUTED"
+  },
+  "provider": "cromwell",
+  "provider_version": "92",
+  "schema_version": "api_gym.selected_behavior_evidence.v1",
+  "terminal_status": "Aborted",
+  "workflow_sha256": "sha256:1f5b811ff2f381f464e42a47932bd845360548a9b4a9605890424081eb4dcc8f"
+}

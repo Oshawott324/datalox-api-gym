@@ -1,0 +1,23 @@
+{
+  "schema_version": "api_gym.world_source_refs.v0",
+  "source_packs": [],
+  "world": "science_elabftw_cromwell_v0",
+  "world_evidence": [
+    {
+      "path": "evidence/elabftw_experiments_patch_complete_v1.json",
+      "role": "elabftw_complete_behavior"
+    },
+    {
+      "path": "evidence/cromwell_workflow_success_v1.json",
+      "role": "cromwell_success_behavior"
+    },
+    {
+      "path": "evidence/cromwell_workflow_failure_v1.json",
+      "role": "cromwell_failure_behavior"
+    },
+    {
+      "path": "evidence/cromwell_workflow_abort_v1.json",
+      "role": "cromwell_abort_behavior"
+    }
+  ]
+}

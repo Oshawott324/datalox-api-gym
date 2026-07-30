@@ -1,0 +1,287 @@
+{
+  "tools": [
+    {
+      "description": "Read one eLabFTW source or result experiment.",
+      "id": "elabftw.get_experiment",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "experiment_id": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "experiment_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "analysis_record",
+      "source_refs": [
+        "elabftw_complete_capture"
+      ]
+    },
+    {
+      "description": "Create one empty eLabFTW result experiment.",
+      "id": "elabftw.create_experiment",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "analysis_record",
+      "source_refs": [
+        "elabftw_complete_capture"
+      ]
+    },
+    {
+      "description": "Patch an eLabFTW result using the task's exact title/body contract and JSON metadata.",
+      "id": "elabftw.patch_experiment",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "experiment_id": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "metadata": {
+            "minLength": 2,
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "title",
+          "body",
+          "metadata"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "analysis_record",
+      "source_refs": [
+        "elabftw_complete_capture"
+      ]
+    },
+    {
+      "description": "Submit an admitted Cromwell WDL source and input object.",
+      "id": "cromwell.submit_workflow",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "workflowInputs": {
+            "type": "object"
+          },
+          "workflowSource": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflowSource",
+          "workflowInputs"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "workflow_execution",
+      "source_refs": [
+        "cromwell_complete_captures"
+      ]
+    },
+    {
+      "description": "Read provider-native Cromwell workflow status.",
+      "id": "cromwell.get_workflow_status",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "workflow_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "workflow_execution",
+      "source_refs": [
+        "cromwell_complete_captures",
+        "analysis_projection_contract"
+      ]
+    },
+    {
+      "description": "Read terminal Cromwell outputs for one admitted workflow.",
+      "id": "cromwell.get_workflow_outputs",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "workflow_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "workflow_execution",
+      "source_refs": [
+        "cromwell_complete_captures"
+      ]
+    },
+    {
+      "description": "Read sanitized terminal Cromwell log references.",
+      "id": "cromwell.get_workflow_logs",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "workflow_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "workflow_execution",
+      "source_refs": [
+        "cromwell_complete_captures"
+      ]
+    },
+    {
+      "description": "Read terminal Cromwell workflow metadata.",
+      "id": "cromwell.get_workflow_metadata",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "workflow_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "workflow_execution",
+      "source_refs": [
+        "cromwell_complete_captures"
+      ]
+    },
+    {
+      "description": "Abort one Running Cromwell workflow.",
+      "id": "cromwell.abort_workflow",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "workflow_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "workflow_execution",
+      "source_refs": [
+        "cromwell_complete_captures"
+      ]
+    },
+    {
+      "description": "Advance benchmark logical time and deliver due revisions.",
+      "id": "clock.advance",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "seconds": {
+            "maximum": 3600,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seconds"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "scientist_agent"
+      ],
+      "list_roles": [
+        "scientist_agent"
+      ],
+      "operation_family": "logical_time",
+      "source_refs": [
+        "analysis_projection_contract"
+      ]
+    }
+  ]
+}

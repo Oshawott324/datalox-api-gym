@@ -1,0 +1,8 @@
+{
+  "roles": [
+    {
+      "description": "Executes a bounded analysis-control and evidence-handoff workflow.",
+      "id": "scientist_agent"
+    }
+  ]
+}

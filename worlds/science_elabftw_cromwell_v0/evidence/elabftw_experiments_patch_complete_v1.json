@@ -1,0 +1,63 @@
+{
+  "claims": {
+    "production_equivalence": "not_claimed",
+    "projection": "captured_program_family_only"
+  },
+  "grounding": {
+    "capture_sha256": "sha256:f83ba0c58a078c332064e16f629084b8dcd7e341ef3d2861e2ff974790e6eca6",
+    "connector_sha256": "sha256:99e021f67e8cf642d8085268291dff1e76528ab56ed21c75345c5e95995eb4ee",
+    "fixture_receipt_sha256": "sha256:2e4efce0c9ff395b1c57ef863bf6300902bc0ac1d91b2161cad98933009f4759",
+    "grounding_level": "G2_LOCAL_EXECUTED",
+    "production_equivalence": "not_claimed",
+    "program_id": "elabftw_experiments_patch_complete_v1",
+    "recipe_sha256": "sha256:cfb40b56272ec5f86aebd95e7ef9988fd06436f5b7dbd8264c1ace4f645fd3d7",
+    "reset_equivalence": "not_claimed"
+  },
+  "operations": {
+    "create": {
+      "body_kind": "empty",
+      "request_fields": [],
+      "status_code": 201
+    },
+    "get": {
+      "status_code": 200
+    },
+    "list": {
+      "body_sha256": "sha256:cd0094f808a31b8f9452d55ec302ee7da95117cffefdf039efe1aa726b967796",
+      "body_shape": "array",
+      "status_code": 200
+    },
+    "patch": {
+      "request_fields": [
+        "body",
+        "metadata",
+        "title"
+      ],
+      "status_code": 200
+    }
+  },
+  "projection": {
+    "dynamic_changelog": "G0_BENCHMARK_DEFINED",
+    "dynamic_links": "G0_BENCHMARK_DEFINED",
+    "dynamic_timestamps": "G0_BENCHMARK_DEFINED",
+    "provider_response_shape": "G2_LOCAL_EXECUTED"
+  },
+  "provider": "elabftw",
+  "provider_version": "5.6.10",
+  "response_headers": {
+    "create": {
+      "content-type": "text/html; charset=UTF-8",
+      "location_template": "/api/v2/experiments/{experiment_id}"
+    },
+    "get": {
+      "content-type": "application/json"
+    },
+    "list": {
+      "content-type": "application/json"
+    },
+    "patch": {
+      "content-type": "application/json"
+    }
+  },
+  "schema_version": "api_gym.selected_behavior_evidence.v1"
+}

@@ -1,0 +1,3179 @@
+{
+  "trajectories": [
+    {
+      "episode_id": "science-analysis-000",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_nominal_v1",
+      "id": "reference-science-analysis-000",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4100
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "28cd158f-92a3-5d4e-bbf5-58c9287ca930"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "28cd158f-92a3-5d4e-bbf5-58c9287ca930"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "28cd158f-92a3-5d4e-bbf5-58c9287ca930"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "28cd158f-92a3-5d4e-bbf5-58c9287ca930"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "28cd158f-92a3-5d4e-bbf5-58c9287ca930"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "28cd158f-92a3-5d4e-bbf5-58c9287ca930"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4100
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 141500,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"28cd158f-92a3-5d4e-bbf5-58c9287ca930\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:1ce5a3241c658394aed6f64cad1d160ac124554cf0b3cdc8d668c72df6d7a9b7\",\"outputs_digest\":\"sha256:08a04e6bb9d84281946be9ec7dcff65316b58ec40ccb20ccf3ecca1e4286649a\",\"source_content_digest\":\"sha256:09a379e0d62957ce3daef69fcffb603d56d42c93de14e0ae1113dd0f740da4e3\",\"source_experiment_id\":4100,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 141500
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-001",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_nominal_v1",
+      "id": "reference-science-analysis-001",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4101
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7b25e04e-0ebf-5921-884c-b91311269840"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7b25e04e-0ebf-5921-884c-b91311269840"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7b25e04e-0ebf-5921-884c-b91311269840"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7b25e04e-0ebf-5921-884c-b91311269840"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7b25e04e-0ebf-5921-884c-b91311269840"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7b25e04e-0ebf-5921-884c-b91311269840"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4101
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 469166,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"7b25e04e-0ebf-5921-884c-b91311269840\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:c10b3e08b5a6ede72555065c8649d41006cfbf4dacd0d906d5d9d4332ff005da\",\"outputs_digest\":\"sha256:355b9f118ec0de493a430cb529ca3e3447df3f284f7a34fb35129a5953cb3b15\",\"source_content_digest\":\"sha256:af2f0fc2bbdf06ecb0eff358791ebb66663d4dcbb2ed0d83ce6660227a3fb5b4\",\"source_experiment_id\":4101,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 469166
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-002",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_transient_visibility_v1",
+      "id": "reference-science-analysis-002",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4102
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4102
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 678889,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"c13b4395-67a1-5f3b-b2ee-ace1d43e1a38\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:43b3cc29e9df1080c243da3314b9b9d7e354619dca94e748fb8d5aa1318ac3d8\",\"outputs_digest\":\"sha256:80f10693191719667e7fab7851fb1a3eb51f47f70d458a8f244556f984470e64\",\"source_content_digest\":\"sha256:c6227a9a7108da5a10032c3cdbdacd48cec8a1cc62cf94f59e33ecd09cafe4ee\",\"source_experiment_id\":4102,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 678889
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-003",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_transient_visibility_v1",
+      "id": "reference-science-analysis-003",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4103
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "65f7c30f-949a-5e94-9916-b8f19f1759b1"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "65f7c30f-949a-5e94-9916-b8f19f1759b1"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "65f7c30f-949a-5e94-9916-b8f19f1759b1"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "65f7c30f-949a-5e94-9916-b8f19f1759b1"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "65f7c30f-949a-5e94-9916-b8f19f1759b1"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "65f7c30f-949a-5e94-9916-b8f19f1759b1"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4103
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 154099,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"65f7c30f-949a-5e94-9916-b8f19f1759b1\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:514bca21146dd59edc5c23403db035a40224ed9706bb1a8e025e7fc28a0c0b20\",\"outputs_digest\":\"sha256:bc4e91a54cd9c17f2f6f7594dd09cb92af39fdfcd1e306bf42b7a1064ac1ba79\",\"source_content_digest\":\"sha256:d1077ecc86306ee9792ea23b43c4dfd9a47749f284f8fc70aa90cc33875be729\",\"source_experiment_id\":4103,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 154099
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-004",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_existing_run_resume_v1",
+      "id": "reference-science-analysis-004",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4104
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "dd725826-e905-53db-881c-18dc3b62ff11"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 15
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "dd725826-e905-53db-881c-18dc3b62ff11"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "dd725826-e905-53db-881c-18dc3b62ff11"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "dd725826-e905-53db-881c-18dc3b62ff11"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4104
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 718799,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"dd725826-e905-53db-881c-18dc3b62ff11\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:ec33164e1c3b6e6354940949aa13f4bc1412e2b83d99b2aed0397e35243f7b6f\",\"outputs_digest\":\"sha256:04668493a06f94720f0e4b80ac41edf65629c70fee01a331da2fb01b22b311a3\",\"source_content_digest\":\"sha256:7af6a19acdffad5bd510ba8a9d30b45668097e622d658fd803001abbeeb353ea\",\"source_experiment_id\":4104,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 718799
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-005",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_existing_run_resume_v1",
+      "id": "reference-science-analysis-005",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4105
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "3445815e-dc6c-598e-84c5-0bc02ac93d80"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 15
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "3445815e-dc6c-598e-84c5-0bc02ac93d80"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "3445815e-dc6c-598e-84c5-0bc02ac93d80"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "3445815e-dc6c-598e-84c5-0bc02ac93d80"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4105
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 586008,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"3445815e-dc6c-598e-84c5-0bc02ac93d80\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:838cb4e37534fb5ca14ff3ce6284caca9b6c5d9399dd68f82ee6928f1508a4b0\",\"outputs_digest\":\"sha256:b4aa834fe50e1d6e43e8376b22a7680ac0012c936a38870bed35b7a54afdffda\",\"source_content_digest\":\"sha256:006aa3df1940c0e3d5262c52e2ad44d371d7ef79506f3c5cef74060ba9082b4c\",\"source_experiment_id\":4105,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 586008
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-006",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_failure_recovery_v1",
+      "id": "reference-science-analysis-006",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4106
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {},
+            "workflowSource": "version 1.0\n\ntask exit_nonzero {\n  command <<<\n    printf '%s\\n' 'intentional failure on stderr' >&2\n    exit 23\n  >>>\n\n  output {\n    String unreachable = read_string(stdout())\n  }\n}\n\nworkflow failure_case {\n  call exit_nonzero\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 30
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "b07544f4-a009-5e28-ba80-178121226e71"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "b07544f4-a009-5e28-ba80-178121226e71"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_logs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "b07544f4-a009-5e28-ba80-178121226e71"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4106
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "cfe3cd1a-2af2-5d35-af66-9750eb5c6a93"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "cfe3cd1a-2af2-5d35-af66-9750eb5c6a93"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "cfe3cd1a-2af2-5d35-af66-9750eb5c6a93"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "cfe3cd1a-2af2-5d35-af66-9750eb5c6a93"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "cfe3cd1a-2af2-5d35-af66-9750eb5c6a93"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "cfe3cd1a-2af2-5d35-af66-9750eb5c6a93"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4106
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 200410,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"cfe3cd1a-2af2-5d35-af66-9750eb5c6a93\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:980f993397e71c77dde0118bdd6654f7893f6a60772c3519eb1384a63ee5db7b\",\"outputs_digest\":\"sha256:0fb6b8c80720e8a5397a963e7624edf9ee153a614f7043f3f353b34fb1b24fcb\",\"source_content_digest\":\"sha256:800887040e4697c98e6325c1816aa9c0d55ac6137027661111d9e5c3017790b5\",\"source_experiment_id\":4106,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 200410
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-007",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_failure_recovery_v1",
+      "id": "reference-science-analysis-007",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {},
+            "workflowSource": "version 1.0\n\ntask exit_nonzero {\n  command <<<\n    printf '%s\\n' 'intentional failure on stderr' >&2\n    exit 23\n  >>>\n\n  output {\n    String unreachable = read_string(stdout())\n  }\n}\n\nworkflow failure_case {\n  call exit_nonzero\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 30
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "88964603-f2c0-5acd-8654-8380849dff3f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "88964603-f2c0-5acd-8654-8380849dff3f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_logs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "88964603-f2c0-5acd-8654-8380849dff3f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 532749,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:3383a6924212666d6457d37a2984139cc0bdec7da86b77aeb76c53ebafdcd3c6\",\"outputs_digest\":\"sha256:335aee4a22fdb91d80df81f059aceda9fd5c3861a22cabb68e1c3e569d43bcca\",\"source_content_digest\":\"sha256:fd8f37d0c6b1fd5986b295eb7eb7593370a1f425eda5848ec7e1f296f22ad2f9\",\"source_experiment_id\":4107,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 532749
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-008",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_superseded_abort_v1",
+      "id": "reference-science-analysis-008",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "d4405890-c8b4-53de-902a-e564d2d20558"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 10
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "d4405890-c8b4-53de-902a-e564d2d20558"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.abort_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "d4405890-c8b4-53de-902a-e564d2d20558"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 364933,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"2477dd89-8006-5a63-a641-7b88eaf052ac\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:734f2f49778856defb499ace4b459497efb86551e77e000f2ab6229b960294f8\",\"outputs_digest\":\"sha256:ad54941895ee3f9c4eff2dcd2828f08278d9edb516d6787037eb386ea51863e1\",\"source_content_digest\":\"sha256:c23dedf3781e96f27050b532ae786b887d44d8802172f51c0f587ac2b8bef821\",\"source_experiment_id\":4108,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 364933
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-009",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_superseded_abort_v1",
+      "id": "reference-science-analysis-009",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4109
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "195d047a-d13c-540f-a468-18edcf8c5408"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 10
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4109
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "195d047a-d13c-540f-a468-18edcf8c5408"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.abort_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "195d047a-d13c-540f-a468-18edcf8c5408"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "591e5dc6-f414-58a8-ba97-372fb811f38f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "591e5dc6-f414-58a8-ba97-372fb811f38f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "591e5dc6-f414-58a8-ba97-372fb811f38f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "591e5dc6-f414-58a8-ba97-372fb811f38f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "591e5dc6-f414-58a8-ba97-372fb811f38f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "591e5dc6-f414-58a8-ba97-372fb811f38f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4109
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 937967,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"591e5dc6-f414-58a8-ba97-372fb811f38f\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:70a7be73d56b3d369ad7ae3d64caf2a31c0af2d5ab2c6de2e0e7892dc7c0d08f\",\"outputs_digest\":\"sha256:10c9d57596b8ee4d40900900603b1b87219ec682a44e4741391c072c0224b5f2\",\"source_content_digest\":\"sha256:938da4b2b52b935eadc598780c6593ddb9cd4e29460f5c04ecf64c21f22512b2\",\"source_experiment_id\":4109,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 937967
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-010",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_stale_revision_v1",
+      "id": "reference-science-analysis-010",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c2f88b69-6f16-5ae8-98cc-e57f1ed236c8"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c2f88b69-6f16-5ae8-98cc-e57f1ed236c8"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c2f88b69-6f16-5ae8-98cc-e57f1ed236c8"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "0333d7ee-9f66-5c4d-ac9f-b75ee990d045"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "0333d7ee-9f66-5c4d-ac9f-b75ee990d045"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "0333d7ee-9f66-5c4d-ac9f-b75ee990d045"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "0333d7ee-9f66-5c4d-ac9f-b75ee990d045"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "0333d7ee-9f66-5c4d-ac9f-b75ee990d045"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "0333d7ee-9f66-5c4d-ac9f-b75ee990d045"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 264974,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"0333d7ee-9f66-5c4d-ac9f-b75ee990d045\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:be15b65539fc1eb51d880e451cfd3cace84069324468f57881ba2488f7fc0957\",\"outputs_digest\":\"sha256:8d5ec59b924de4d96a4b9974e320567e14ce1883ce6ae8d9819dcc9c42131e5f\",\"source_content_digest\":\"sha256:da8f6d153af2a66164d1902d1276f4fbee186a7c03c0d8b368c981e94dd163bb\",\"source_experiment_id\":4110,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 264974
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-011",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_stale_revision_v1",
+      "id": "reference-science-analysis-011",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4111
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "6d67cae1-948d-5de2-a643-92fbcfa8e592"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "6d67cae1-948d-5de2-a643-92fbcfa8e592"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "6d67cae1-948d-5de2-a643-92fbcfa8e592"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4111
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7993ddbf-cf47-5d6d-90d8-858d9a979151"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7993ddbf-cf47-5d6d-90d8-858d9a979151"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7993ddbf-cf47-5d6d-90d8-858d9a979151"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7993ddbf-cf47-5d6d-90d8-858d9a979151"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7993ddbf-cf47-5d6d-90d8-858d9a979151"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "7993ddbf-cf47-5d6d-90d8-858d9a979151"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4111
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 932022,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"7993ddbf-cf47-5d6d-90d8-858d9a979151\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:92f4730fd2fbaf6f5abf6c97f021a242e30509ed112056e56ab060a2c40d7e63\",\"outputs_digest\":\"sha256:d63fb1fd8b2c5296eaef2f3cc457564ad5aad892057ea38d2d39342780af68b6\",\"source_content_digest\":\"sha256:367a37b285987a8a1d1bcb590e8856d95f4adbdd594c8b48910f0549480dc3bb\",\"source_experiment_id\":4111,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 932022
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-007",
+      "expected": {
+        "failure_codes": [],
+        "passed": true
+      },
+      "family_id": "analysis_failure_recovery_v1",
+      "id": "alternative-failure-recovery",
+      "kind": "reference",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {},
+            "workflowSource": "version 1.0\n\ntask exit_nonzero {\n  command <<<\n    printf '%s\\n' 'intentional failure on stderr' >&2\n    exit 23\n  >>>\n\n  output {\n    String unreachable = read_string(stdout())\n  }\n}\n\nworkflow failure_case {\n  call exit_nonzero\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 30
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "88964603-f2c0-5acd-8654-8380849dff3f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "88964603-f2c0-5acd-8654-8380849dff3f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "88964603-f2c0-5acd-8654-8380849dff3f"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_logs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4107
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 532749,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"2ca4aba9-f6a5-572d-a064-3dd0edcf0ef9\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:3383a6924212666d6457d37a2984139cc0bdec7da86b77aeb76c53ebafdcd3c6\",\"outputs_digest\":\"sha256:335aee4a22fdb91d80df81f059aceda9fd5c3861a22cabb68e1c3e569d43bcca\",\"source_content_digest\":\"sha256:fd8f37d0c6b1fd5986b295eb7eb7593370a1f425eda5848ec7e1f296f22ad2f9\",\"source_experiment_id\":4107,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 532749
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-000",
+      "expected": {
+        "failure_codes": [
+          "analysis.source_inspected_before_action",
+          "analysis.current_terminal_success",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_lifecycle",
+          "analysis.result_record_content_contract",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_nominal_v1",
+      "id": "negative-empty-analysis_nominal_v1",
+      "kind": "negative",
+      "steps": []
+    },
+    {
+      "episode_id": "science-analysis-002",
+      "expected": {
+        "failure_codes": [
+          "analysis.source_inspected_before_action",
+          "analysis.required_transient_observation",
+          "analysis.current_terminal_success",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_lifecycle",
+          "analysis.result_record_content_contract",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_transient_visibility_v1",
+      "id": "negative-empty-analysis_transient_visibility_v1",
+      "kind": "negative",
+      "steps": []
+    },
+    {
+      "episode_id": "science-analysis-004",
+      "expected": {
+        "failure_codes": [
+          "analysis.source_inspected_before_action",
+          "analysis.current_terminal_success",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_lifecycle",
+          "analysis.result_record_content_contract",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_existing_run_resume_v1",
+      "id": "negative-empty-analysis_existing_run_resume_v1",
+      "kind": "negative",
+      "steps": []
+    },
+    {
+      "episode_id": "science-analysis-006",
+      "expected": {
+        "failure_codes": [
+          "analysis.source_inspected_before_action",
+          "analysis.current_terminal_success",
+          "analysis.required_failure_recovery",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_lifecycle",
+          "analysis.result_record_content_contract",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_failure_recovery_v1",
+      "id": "negative-empty-analysis_failure_recovery_v1",
+      "kind": "negative",
+      "steps": []
+    },
+    {
+      "episode_id": "science-analysis-008",
+      "expected": {
+        "failure_codes": [
+          "analysis.source_inspected_before_action",
+          "analysis.current_terminal_success",
+          "analysis.required_superseded_abort",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_lifecycle",
+          "analysis.result_record_content_contract",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_superseded_abort_v1",
+      "id": "negative-empty-analysis_superseded_abort_v1",
+      "kind": "negative",
+      "steps": []
+    },
+    {
+      "episode_id": "science-analysis-010",
+      "expected": {
+        "failure_codes": [
+          "analysis.source_inspected_before_action",
+          "analysis.current_terminal_success",
+          "analysis.required_stale_recovery",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_lifecycle",
+          "analysis.result_record_content_contract",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_stale_revision_v1",
+      "id": "negative-empty-analysis_stale_revision_v1",
+      "kind": "negative",
+      "steps": []
+    },
+    {
+      "episode_id": "science-analysis-000",
+      "expected": {
+        "failure_codes": [
+          "analysis.current_terminal_success",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_exact_join",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_nominal_v1",
+      "id": "negative-mutant-analysis_nominal_v1",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4100
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4100
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 141500,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"28cd158f-92a3-5d4e-bbf5-58c9287ca930\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:1ce5a3241c658394aed6f64cad1d160ac124554cf0b3cdc8d668c72df6d7a9b7\",\"outputs_digest\":\"sha256:08a04e6bb9d84281946be9ec7dcff65316b58ec40ccb20ccf3ecca1e4286649a\",\"source_content_digest\":\"sha256:09a379e0d62957ce3daef69fcffb603d56d42c93de14e0ae1113dd0f740da4e3\",\"source_experiment_id\":4100,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 141500
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-002",
+      "expected": {
+        "failure_codes": [
+          "analysis.no_unnecessary_duplicate_submission",
+          "analysis.required_transient_observation",
+          "analysis.no_forbidden_collateral"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_transient_visibility_v1",
+      "id": "negative-mutant-analysis_transient_visibility_v1",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4102
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c13b4395-67a1-5f3b-b2ee-ace1d43e1a38"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4102
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 678889,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"c13b4395-67a1-5f3b-b2ee-ace1d43e1a38\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:43b3cc29e9df1080c243da3314b9b9d7e354619dca94e748fb8d5aa1318ac3d8\",\"outputs_digest\":\"sha256:80f10693191719667e7fab7851fb1a3eb51f47f70d458a8f244556f984470e64\",\"source_content_digest\":\"sha256:c6227a9a7108da5a10032c3cdbdacd48cec8a1cc62cf94f59e33ecd09cafe4ee\",\"source_experiment_id\":4102,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 678889
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-004",
+      "expected": {
+        "failure_codes": [
+          "analysis.no_unnecessary_duplicate_submission",
+          "analysis.result_record_exact_join",
+          "analysis.no_forbidden_collateral"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_existing_run_resume_v1",
+      "id": "negative-mutant-analysis_existing_run_resume_v1",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4104
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "4b6cecc7-0574-5fdc-bd51-d7bbbeba7215"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "4b6cecc7-0574-5fdc-bd51-d7bbbeba7215"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "4b6cecc7-0574-5fdc-bd51-d7bbbeba7215"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "4b6cecc7-0574-5fdc-bd51-d7bbbeba7215"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "4b6cecc7-0574-5fdc-bd51-d7bbbeba7215"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "4b6cecc7-0574-5fdc-bd51-d7bbbeba7215"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4104
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 718799,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"4b6cecc7-0574-5fdc-bd51-d7bbbeba7215\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:d237d9e9d3a307c653217182f59971b5a2412529e70eacfdb6e45ffaa722c47b\",\"outputs_digest\":\"sha256:efb9c8a080288750f03e2893708af601ec646caa4556be0cca3f434f2584e197\",\"source_content_digest\":\"sha256:7af6a19acdffad5bd510ba8a9d30b45668097e622d658fd803001abbeeb353ea\",\"source_experiment_id\":4104,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 718799
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-006",
+      "expected": {
+        "failure_codes": [
+          "analysis.current_terminal_success",
+          "analysis.required_failure_recovery",
+          "analysis.success_outputs_metadata_inspected",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current",
+          "analysis.cross_provider_ordering"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_failure_recovery_v1",
+      "id": "negative-mutant-analysis_failure_recovery_v1",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4106
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {},
+            "workflowSource": "version 1.0\n\ntask exit_nonzero {\n  command <<<\n    printf '%s\\n' 'intentional failure on stderr' >&2\n    exit 23\n  >>>\n\n  output {\n    String unreachable = read_string(stdout())\n  }\n}\n\nworkflow failure_case {\n  call exit_nonzero\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 30
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "b07544f4-a009-5e28-ba80-178121226e71"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 200410,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"b07544f4-a009-5e28-ba80-178121226e71\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:6fbc3ef0afe8becf3a50462f2eb32ba8a3bf7e8c8d55afd393bdfd80ddfd7828\",\"outputs_digest\":\"sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\"source_content_digest\":\"sha256:a04c9b60ab5f9087c9d02bab1368f7199b21c39339931d6beefd4e6c0a0160d2\",\"source_experiment_id\":4106,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 200410
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-008",
+      "expected": {
+        "failure_codes": [
+          "analysis.required_superseded_abort",
+          "analysis.result_record_exact_join",
+          "analysis.no_forbidden_collateral"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_superseded_abort_v1",
+      "id": "negative-mutant-analysis_superseded_abort_v1",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "d4405890-c8b4-53de-902a-e564d2d20558"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 10
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflowInputs": {
+              "success_case.message": "hello from cromwell 92"
+            },
+            "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.submit_workflow"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 5
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "seconds": 20
+          },
+          "surface": "mcp",
+          "tool_name": "clock.advance"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "2477dd89-8006-5a63-a641-7b88eaf052ac"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4108
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 364933,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"2477dd89-8006-5a63-a641-7b88eaf052ac\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:734f2f49778856defb499ace4b459497efb86551e77e000f2ab6229b960294f8\",\"outputs_digest\":\"sha256:ad54941895ee3f9c4eff2dcd2828f08278d9edb516d6787037eb386ea51863e1\",\"source_content_digest\":\"sha256:c23dedf3781e96f27050b532ae786b887d44d8802172f51c0f587ac2b8bef821\",\"source_experiment_id\":4108,\"source_revision\":2}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 364933
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-010",
+      "expected": {
+        "failure_codes": [
+          "analysis.current_terminal_success",
+          "analysis.required_stale_recovery",
+          "analysis.result_record_exact_join",
+          "analysis.writeback_source_current"
+        ],
+        "passed": false
+      },
+      "family_id": "analysis_stale_revision_v1",
+      "id": "negative-mutant-analysis_stale_revision_v1",
+      "kind": "negative",
+      "steps": [
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c2f88b69-6f16-5ae8-98cc-e57f1ed236c8"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_status"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c2f88b69-6f16-5ae8-98cc-e57f1ed236c8"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_outputs"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "workflow_id": "c2f88b69-6f16-5ae8-98cc-e57f1ed236c8"
+          },
+          "surface": "mcp",
+          "tool_name": "cromwell.get_workflow_metadata"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 4110
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {},
+          "surface": "mcp",
+          "tool_name": "elabftw.create_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "body": "The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.",
+            "experiment_id": 264974,
+            "metadata": "{\"cromwell_terminal_status\":\"Succeeded\",\"cromwell_workflow_id\":\"c2f88b69-6f16-5ae8-98cc-e57f1ed236c8\",\"handoff_kind\":\"analysis-control/qualification\",\"metadata_digest\":\"sha256:a7d169791f4bcc3ae918e47d08df77613780023f5760a161e72f42b041e1173b\",\"outputs_digest\":\"sha256:3fd5137135247a9121c2b5a20ebc6554795f2f87e4a837fc87ec3d3f0cd3da7f\",\"source_content_digest\":\"sha256:8148c25dcced0b8c335d0d19057b0c07578e78f251c2559cdd5f50907d2edc6f\",\"source_experiment_id\":4110,\"source_revision\":1}",
+            "title": "Analysis-control qualification handoff"
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.patch_experiment"
+        },
+        {
+          "actor_id": "science-agent-001",
+          "actor_role": "scientist_agent",
+          "arguments": {
+            "experiment_id": 264974
+          },
+          "surface": "mcp",
+          "tool_name": "elabftw.get_experiment"
+        }
+      ]
+    },
+    {
+      "episode_id": "science-analysis-000",
+      "expected": {
+        "matched": true
+      },
+      "http_step": {
+        "actor_id": "science-http-001",
+        "actor_role": "scientist_agent",
+        "body": null,
+        "method": "GET",
+        "path": "/api/v2/experiments/4100",
+        "query": {},
+        "surface": "http"
+      },
+      "id": "parity-elabftw-get-source",
+      "kind": "parity",
+      "mcp_step": {
+        "actor_id": "science-agent-001",
+        "actor_role": "scientist_agent",
+        "arguments": {
+          "experiment_id": 4100
+        },
+        "surface": "mcp",
+        "tool_name": "elabftw.get_experiment"
+      }
+    },
+    {
+      "episode_id": "science-analysis-004",
+      "expected": {
+        "matched": true
+      },
+      "http_step": {
+        "actor_id": "science-http-002",
+        "actor_role": "scientist_agent",
+        "body": null,
+        "method": "GET",
+        "path": "/api/workflows/v1/dd725826-e905-53db-881c-18dc3b62ff11/status",
+        "query": {},
+        "surface": "http"
+      },
+      "id": "parity-cromwell-running-status",
+      "kind": "parity",
+      "mcp_step": {
+        "actor_id": "science-agent-001",
+        "actor_role": "scientist_agent",
+        "arguments": {
+          "workflow_id": "dd725826-e905-53db-881c-18dc3b62ff11"
+        },
+        "surface": "mcp",
+        "tool_name": "cromwell.get_workflow_status"
+      }
+    },
+    {
+      "episode_id": "science-analysis-000",
+      "expected": {
+        "matched": true
+      },
+      "http_step": {
+        "actor_id": "science-http-003",
+        "actor_role": "scientist_agent",
+        "body": {
+          "workflowInputs": {
+            "success_case.message": "hello from cromwell 92"
+          },
+          "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+        },
+        "method": "POST",
+        "path": "/api/workflows/v1",
+        "query": {},
+        "surface": "http"
+      },
+      "id": "parity-cromwell-submit",
+      "kind": "parity",
+      "mcp_step": {
+        "actor_id": "science-agent-001",
+        "actor_role": "scientist_agent",
+        "arguments": {
+          "workflowInputs": {
+            "success_case.message": "hello from cromwell 92"
+          },
+          "workflowSource": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+        },
+        "surface": "mcp",
+        "tool_name": "cromwell.submit_workflow"
+      }
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 """Reusable Cromwell provider behavior components."""
 
+from api_gym.provider_components.cromwell.analysis_projection import (
+    CromwellAnalysisProjectionError,
+    build_capture_facts as build_analysis_capture_facts,
+)
 from api_gym.provider_components.cromwell.abort_behavior import (
     CromwellAbortBehaviorTarget,
     build_connector as build_abort_connector,
@@ -20,9 +24,11 @@ from api_gym.provider_components.cromwell.success_behavior import (
 )
 
 __all__ = [
+    "CromwellAnalysisProjectionError",
     "CromwellAbortBehaviorTarget",
     "CromwellFailureBehaviorTarget",
     "CromwellSuccessBehaviorTarget",
+    "build_analysis_capture_facts",
     "build_abort_connector",
     "build_abort_recipe",
     "build_connector",

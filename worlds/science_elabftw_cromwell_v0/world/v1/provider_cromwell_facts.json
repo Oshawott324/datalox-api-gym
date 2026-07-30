@@ -1,0 +1,512 @@
+{
+  "abort": {
+    "body_templates": {
+      "not_in_progress": {
+        "message": "Couldn't abort __WORKFLOW_ID__ because no workflow with that ID is in progress",
+        "status": "error"
+      },
+      "success": {
+        "id": "__WORKFLOW_ID__",
+        "status": "Aborting"
+      }
+    },
+    "not_in_progress_status_code": 404,
+    "success_status_code": 200
+  },
+  "grounding": {
+    "cases": {
+      "abort": {
+        "capture_sha256": "sha256:14a8382eb9a80e2adc8e089543cd80a235b3fe1566bd096f61c2ed83bcf759e0",
+        "connector_sha256": "sha256:02c07fa79025e2b8a9a05eef29c563f0a5bbc90581ef8efd440fdd393ad8e7c4",
+        "fixture_receipt_sha256": "sha256:a78295d08705b21cf834dc5d02db7a47a65eeee48fe962b403877c70f7d0a2ce",
+        "production_equivalence": "not_claimed",
+        "program_id": "cromwell_workflow_abort_v1",
+        "recipe_sha256": "sha256:254629bc8ad693d7708aac3503b35547d423e0b21dabba22769c75e2e0028199",
+        "reset_equivalence": "not_claimed"
+      },
+      "failure": {
+        "capture_sha256": "sha256:b726575994bf7b16a53ff39bf0bf1ea48a5c7138ea2c1fa1142d902b71282298",
+        "connector_sha256": "sha256:b57c888f22b40df132fa823a415eb97c10bc467e46bc18e0a4c4c7d4778918a8",
+        "fixture_receipt_sha256": "sha256:2667f5fe9d83b545a8459ae6a263fe474c4895f1aadb18b1f42adce04261a05c",
+        "production_equivalence": "not_claimed",
+        "program_id": "cromwell_workflow_failure_v1",
+        "recipe_sha256": "sha256:c09a55c7a927fbe9d592b50ccbc8e0d1c8e968032d6be313e202b10c8aa48245",
+        "reset_equivalence": "not_claimed"
+      },
+      "success": {
+        "capture_sha256": "sha256:13b94e8644fadd859202af40cf1f48930de75d24e1576517c6d2122b638014ec",
+        "connector_sha256": "sha256:3838aef63df6fc33c92b2470440c7621a95b01f33758131f0cd10dba5cb36cca",
+        "fixture_receipt_sha256": "sha256:794b39c0e4dd82760397e586779529af7b2f07248c0a57c0cea56b536c928b5b",
+        "production_equivalence": "not_claimed",
+        "program_id": "cromwell_workflow_success_v1",
+        "recipe_sha256": "sha256:38c30c0dc479954814ba0665fd715610127786895b75a01b3d61491d758de9a8",
+        "reset_equivalence": "not_claimed"
+      }
+    },
+    "grounding_level": "G2_LOCAL_EXECUTED",
+    "projection": "captured_program_families_only"
+  },
+  "programs": {
+    "abort": {
+      "capture_sha256": "sha256:14a8382eb9a80e2adc8e089543cd80a235b3fe1566bd096f61c2ed83bcf759e0",
+      "case_name": "workflow_abort_v1",
+      "inputs_sha256": "sha256:ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "logs_template": {
+        "calls": {
+          "abort_case.wait_long_enough_to_abort": [
+            {
+              "attempt": 1,
+              "shardIndex": -1,
+              "stderr": "datalox-world://cromwell/executions/abort_case/__WORKFLOW_ID__/call-wait_long_enough_to_abort/execution/stderr",
+              "stdout": "datalox-world://cromwell/executions/abort_case/__WORKFLOW_ID__/call-wait_long_enough_to_abort/execution/stdout"
+            }
+          ]
+        },
+        "id": "__WORKFLOW_ID__"
+      },
+      "metadata_template": {
+        "actualWorkflowLanguage": "WDL",
+        "actualWorkflowLanguageVersion": "1.0",
+        "calls": {
+          "abort_case.wait_long_enough_to_abort": [
+            {
+              "attempt": 1,
+              "backend": "Local",
+              "backendStatus": "Done",
+              "callCaching": {
+                "allowResultReuse": false,
+                "effectiveCallCachingMode": "CallCachingOff"
+              },
+              "callRoot": "datalox-world://cromwell/executions/abort_case/__WORKFLOW_ID__/call-wait_long_enough_to_abort",
+              "commandLine": "printf '%s\\n' 'started'\nsleep 120\nprintf '%s\\n' 'finished' > result.txt",
+              "end": "2026-07-30T12:27:22.583Z",
+              "executionEvents": [
+                {
+                  "description": "PreparingJob",
+                  "endTime": "2026-07-30T12:27:17.535Z",
+                  "startTime": "2026-07-30T12:27:17.507Z"
+                },
+                {
+                  "description": "RunningJob",
+                  "endTime": "2026-07-30T12:27:22.583Z",
+                  "startTime": "2026-07-30T12:27:17.535Z"
+                },
+                {
+                  "description": "RequestingExecutionToken",
+                  "endTime": "2026-07-30T12:27:17.499Z",
+                  "startTime": "2026-07-30T12:27:08.907Z"
+                },
+                {
+                  "description": "WaitingForValueStore",
+                  "endTime": "2026-07-30T12:27:17.507Z",
+                  "startTime": "2026-07-30T12:27:17.499Z"
+                },
+                {
+                  "description": "Pending",
+                  "endTime": "2026-07-30T12:27:08.907Z",
+                  "startTime": "2026-07-30T12:27:08.900Z"
+                }
+              ],
+              "executionStatus": "Aborted",
+              "inputs": {},
+              "jobId": "7343",
+              "runtimeAttributes": {
+                "continueOnReturnCode": "0",
+                "cpu": "1",
+                "failOnStderr": "false",
+                "maxRetries": "0"
+              },
+              "shardIndex": -1,
+              "start": "2026-07-30T12:27:08.891Z",
+              "stderr": "datalox-world://cromwell/executions/abort_case/__WORKFLOW_ID__/call-wait_long_enough_to_abort/execution/stderr",
+              "stdout": "datalox-world://cromwell/executions/abort_case/__WORKFLOW_ID__/call-wait_long_enough_to_abort/execution/stdout"
+            }
+          ]
+        },
+        "end": "2026-07-30T12:27:23.186Z",
+        "id": "__WORKFLOW_ID__",
+        "inputs": {},
+        "labels": {
+          "cromwell-workflow-id": "cromwell-__WORKFLOW_ID__"
+        },
+        "outputs": {},
+        "start": "2026-07-30T12:27:07.620Z",
+        "status": "Aborted",
+        "submission": "2026-07-30T12:26:48.750Z",
+        "submittedFiles": {
+          "inputs": "{}",
+          "labels": "{}",
+          "options": "{\n\n}",
+          "root": "",
+          "workflow": "version 1.0\n\ntask wait_long_enough_to_abort {\n  command <<<\n    printf '%s\\n' 'started'\n    sleep 120\n    printf '%s\\n' 'finished' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n  }\n}\n\nworkflow abort_case {\n  call wait_long_enough_to_abort\n}\n",
+          "workflowUrl": ""
+        },
+        "workflowName": "abort_case",
+        "workflowProcessingEvents": [
+          {
+            "cromwellId": "cromid-7fb3f3a",
+            "cromwellVersion": "92",
+            "description": "Finished",
+            "timestamp": "2026-07-30T12:27:23.187Z"
+          },
+          {
+            "cromwellId": "cromid-7fb3f3a",
+            "cromwellVersion": "92",
+            "description": "PickedUp",
+            "timestamp": "2026-07-30T12:27:07.603Z"
+          }
+        ],
+        "workflowRoot": "datalox-world://cromwell/executions/abort_case/__WORKFLOW_ID__"
+      },
+      "outputs_template": {
+        "id": "__WORKFLOW_ID__",
+        "outputs": {}
+      },
+      "terminal_status": "Aborted",
+      "workflow_inputs": {},
+      "workflow_sha256": "sha256:1f5b811ff2f381f464e42a47932bd845360548a9b4a9605890424081eb4dcc8f",
+      "workflow_source": "version 1.0\n\ntask wait_long_enough_to_abort {\n  command <<<\n    printf '%s\\n' 'started'\n    sleep 120\n    printf '%s\\n' 'finished' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n  }\n}\n\nworkflow abort_case {\n  call wait_long_enough_to_abort\n}\n"
+    },
+    "failure": {
+      "capture_sha256": "sha256:b726575994bf7b16a53ff39bf0bf1ea48a5c7138ea2c1fa1142d902b71282298",
+      "case_name": "workflow_failure_v1",
+      "inputs_sha256": "sha256:ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "logs_template": {
+        "calls": {
+          "failure_case.exit_nonzero": [
+            {
+              "attempt": 1,
+              "shardIndex": -1,
+              "stderr": "datalox-world://cromwell/executions/failure_case/__WORKFLOW_ID__/call-exit_nonzero/execution/stderr",
+              "stdout": "datalox-world://cromwell/executions/failure_case/__WORKFLOW_ID__/call-exit_nonzero/execution/stdout"
+            }
+          ]
+        },
+        "id": "__WORKFLOW_ID__"
+      },
+      "metadata_template": {
+        "actualWorkflowLanguage": "WDL",
+        "actualWorkflowLanguageVersion": "1.0",
+        "calls": {
+          "failure_case.exit_nonzero": [
+            {
+              "attempt": 1,
+              "backend": "Local",
+              "backendStatus": "Done",
+              "callCaching": {
+                "allowResultReuse": false,
+                "effectiveCallCachingMode": "CallCachingOff"
+              },
+              "callRoot": "datalox-world://cromwell/executions/failure_case/__WORKFLOW_ID__/call-exit_nonzero",
+              "commandLine": "printf '%s\\n' 'intentional failure on stderr' >&2\nexit 23",
+              "end": "2026-07-30T12:02:26.259Z",
+              "executionEvents": [
+                {
+                  "description": "Pending",
+                  "endTime": "2026-07-30T12:02:11.659Z",
+                  "startTime": "2026-07-30T12:02:11.656Z"
+                },
+                {
+                  "description": "RunningJob",
+                  "endTime": "2026-07-30T12:02:25.258Z",
+                  "startTime": "2026-07-30T12:02:20.327Z"
+                },
+                {
+                  "description": "WaitingForValueStore",
+                  "endTime": "2026-07-30T12:02:20.304Z",
+                  "startTime": "2026-07-30T12:02:20.298Z"
+                },
+                {
+                  "description": "UpdatingJobStore",
+                  "endTime": "2026-07-30T12:02:26.259Z",
+                  "startTime": "2026-07-30T12:02:25.258Z"
+                },
+                {
+                  "description": "RequestingExecutionToken",
+                  "endTime": "2026-07-30T12:02:20.298Z",
+                  "startTime": "2026-07-30T12:02:11.659Z"
+                },
+                {
+                  "description": "PreparingJob",
+                  "endTime": "2026-07-30T12:02:20.327Z",
+                  "startTime": "2026-07-30T12:02:20.304Z"
+                }
+              ],
+              "executionStatus": "Failed",
+              "failures": [
+                {
+                  "causedBy": [],
+                  "message": "Job failure_case.exit_nonzero:NA:1 exited with return code 23 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details."
+                }
+              ],
+              "inputs": {},
+              "jobId": "72615",
+              "retryableFailure": false,
+              "returnCode": 23,
+              "runtimeAttributes": {
+                "continueOnReturnCode": "0",
+                "cpu": "1",
+                "failOnStderr": "false",
+                "maxRetries": "0"
+              },
+              "shardIndex": -1,
+              "start": "2026-07-30T12:02:11.651Z",
+              "stderr": "datalox-world://cromwell/executions/failure_case/__WORKFLOW_ID__/call-exit_nonzero/execution/stderr",
+              "stdout": "datalox-world://cromwell/executions/failure_case/__WORKFLOW_ID__/call-exit_nonzero/execution/stdout"
+            }
+          ]
+        },
+        "end": "2026-07-30T12:02:26.956Z",
+        "failures": [
+          {
+            "causedBy": [
+              {
+                "causedBy": [],
+                "message": "Job failure_case.exit_nonzero:NA:1 exited with return code 23 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details."
+              }
+            ],
+            "message": "Workflow failed"
+          }
+        ],
+        "id": "__WORKFLOW_ID__",
+        "inputs": {},
+        "labels": {
+          "cromwell-workflow-id": "cromwell-__WORKFLOW_ID__"
+        },
+        "outputs": {},
+        "start": "2026-07-30T12:02:10.424Z",
+        "status": "Failed",
+        "submission": "2026-07-30T12:01:51.605Z",
+        "submittedFiles": {
+          "inputs": "{}",
+          "labels": "{}",
+          "options": "{\n\n}",
+          "root": "",
+          "workflow": "version 1.0\n\ntask exit_nonzero {\n  command <<<\n    printf '%s\\n' 'intentional failure on stderr' >&2\n    exit 23\n  >>>\n\n  output {\n    String unreachable = read_string(stdout())\n  }\n}\n\nworkflow failure_case {\n  call exit_nonzero\n}\n",
+          "workflowUrl": ""
+        },
+        "workflowName": "failure_case",
+        "workflowProcessingEvents": [
+          {
+            "cromwellId": "cromid-7e2a59b",
+            "cromwellVersion": "92",
+            "description": "Finished",
+            "timestamp": "2026-07-30T12:02:26.956Z"
+          },
+          {
+            "cromwellId": "cromid-7e2a59b",
+            "cromwellVersion": "92",
+            "description": "PickedUp",
+            "timestamp": "2026-07-30T12:02:10.408Z"
+          }
+        ],
+        "workflowRoot": "datalox-world://cromwell/executions/failure_case/__WORKFLOW_ID__"
+      },
+      "outputs_template": {
+        "id": "__WORKFLOW_ID__",
+        "outputs": {}
+      },
+      "terminal_status": "Failed",
+      "workflow_inputs": {},
+      "workflow_sha256": "sha256:feaf458caad5621f5ce2ccd5b950d842033d86fc09078adfec7e084922b73f54",
+      "workflow_source": "version 1.0\n\ntask exit_nonzero {\n  command <<<\n    printf '%s\\n' 'intentional failure on stderr' >&2\n    exit 23\n  >>>\n\n  output {\n    String unreachable = read_string(stdout())\n  }\n}\n\nworkflow failure_case {\n  call exit_nonzero\n}\n"
+    },
+    "success": {
+      "capture_sha256": "sha256:13b94e8644fadd859202af40cf1f48930de75d24e1576517c6d2122b638014ec",
+      "case_name": "workflow_success_v1",
+      "inputs_sha256": "sha256:a57de4ed9167b07d59f574cbd8be218ecbbcc6d7d4d1d2e3fa8ef0c30dfa4b4a",
+      "logs_template": {
+        "calls": {
+          "success_case.write_message": [
+            {
+              "attempt": 1,
+              "shardIndex": -1,
+              "stderr": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message/execution/stderr",
+              "stdout": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message/execution/stdout"
+            }
+          ]
+        },
+        "id": "__WORKFLOW_ID__"
+      },
+      "metadata_template": {
+        "actualWorkflowLanguage": "WDL",
+        "actualWorkflowLanguageVersion": "1.0",
+        "calls": {
+          "success_case.write_message": [
+            {
+              "attempt": 1,
+              "backend": "Local",
+              "backendStatus": "Done",
+              "callCaching": {
+                "allowResultReuse": false,
+                "effectiveCallCachingMode": "CallCachingOff"
+              },
+              "callRoot": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message",
+              "commandLine": "printf '%s\\n' 'hello from cromwell 92' > result.txt",
+              "end": "2026-07-30T11:22:08.170Z",
+              "executionEvents": [
+                {
+                  "description": "Pending",
+                  "endTime": "2026-07-30T11:21:54.967Z",
+                  "startTime": "2026-07-30T11:21:54.960Z"
+                },
+                {
+                  "description": "UpdatingJobStore",
+                  "endTime": "2026-07-30T11:22:08.170Z",
+                  "startTime": "2026-07-30T11:22:07.181Z"
+                },
+                {
+                  "description": "RequestingExecutionToken",
+                  "endTime": "2026-07-30T11:22:02.211Z",
+                  "startTime": "2026-07-30T11:21:54.967Z"
+                },
+                {
+                  "description": "PreparingJob",
+                  "endTime": "2026-07-30T11:22:02.241Z",
+                  "startTime": "2026-07-30T11:22:02.217Z"
+                },
+                {
+                  "description": "RunningJob",
+                  "endTime": "2026-07-30T11:22:07.181Z",
+                  "startTime": "2026-07-30T11:22:02.241Z"
+                },
+                {
+                  "description": "WaitingForValueStore",
+                  "endTime": "2026-07-30T11:22:02.217Z",
+                  "startTime": "2026-07-30T11:22:02.211Z"
+                }
+              ],
+              "executionStatus": "Done",
+              "inputs": {
+                "message": "hello from cromwell 92"
+              },
+              "jobId": "30902",
+              "outputs": {
+                "echoed": "hello from cromwell 92",
+                "result_file": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message/execution/result.txt"
+              },
+              "returnCode": 0,
+              "runtimeAttributes": {
+                "continueOnReturnCode": "0",
+                "cpu": "1",
+                "failOnStderr": "false",
+                "maxRetries": "0"
+              },
+              "shardIndex": -1,
+              "start": "2026-07-30T11:21:54.949Z",
+              "stderr": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message/execution/stderr",
+              "stdout": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message/execution/stdout"
+            }
+          ]
+        },
+        "end": "2026-07-30T11:22:09.248Z",
+        "id": "__WORKFLOW_ID__",
+        "inputs": {
+          "message": "hello from cromwell 92"
+        },
+        "labels": {
+          "cromwell-workflow-id": "cromwell-__WORKFLOW_ID__"
+        },
+        "outputs": {
+          "success_case.echoed": "hello from cromwell 92",
+          "success_case.result_file": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message/execution/result.txt"
+        },
+        "start": "2026-07-30T11:21:52.335Z",
+        "status": "Succeeded",
+        "submission": "2026-07-30T11:21:33.463Z",
+        "submittedFiles": {
+          "inputs": "{\"success_case.message\":\"hello from cromwell 92\"}",
+          "labels": "{}",
+          "options": "{\n\n}",
+          "root": "",
+          "workflow": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n",
+          "workflowUrl": ""
+        },
+        "workflowName": "success_case",
+        "workflowProcessingEvents": [
+          {
+            "cromwellId": "cromid-120c3d9",
+            "cromwellVersion": "92",
+            "description": "PickedUp",
+            "timestamp": "2026-07-30T11:21:52.320Z"
+          },
+          {
+            "cromwellId": "cromid-120c3d9",
+            "cromwellVersion": "92",
+            "description": "Finished",
+            "timestamp": "2026-07-30T11:22:09.248Z"
+          }
+        ],
+        "workflowRoot": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__"
+      },
+      "outputs_template": {
+        "id": "__WORKFLOW_ID__",
+        "outputs": {
+          "success_case.echoed": "hello from cromwell 92",
+          "success_case.result_file": "datalox-world://cromwell/executions/success_case/__WORKFLOW_ID__/call-write_message/execution/result.txt"
+        }
+      },
+      "terminal_status": "Succeeded",
+      "workflow_inputs": {
+        "success_case.message": "hello from cromwell 92"
+      },
+      "workflow_sha256": "sha256:6e6d652e3ba12cd5be4f76733733bc7b3408879d2d0beaf24a405575e1013078",
+      "workflow_source": "version 1.0\n\ntask write_message {\n  input {\n    String message\n  }\n\n  command <<<\n    printf '%s\\n' '~{message}' > result.txt\n  >>>\n\n  output {\n    File result_file = \"result.txt\"\n    String echoed = read_string(\"result.txt\")\n  }\n}\n\nworkflow success_case {\n  input {\n    String message\n  }\n\n  call write_message {\n    input:\n      message = message\n  }\n\n  output {\n    File result_file = write_message.result_file\n    String echoed = write_message.echoed\n  }\n}\n"
+    }
+  },
+  "projection": {
+    "dynamic_timestamps": "G0_BENCHMARK_DEFINED",
+    "provider_response_shape": "G2_LOCAL_EXECUTED"
+  },
+  "provider_statuses": [
+    "Aborted",
+    "Aborting",
+    "Failed",
+    "Running",
+    "Submitted",
+    "Succeeded"
+  ],
+  "provider_version": "92",
+  "schema_version": "api_gym.cromwell_analysis_projection_facts.v1",
+  "status": {
+    "body_templates": {
+      "Aborted": {
+        "id": "__WORKFLOW_ID__",
+        "status": "Aborted"
+      },
+      "Aborting": {
+        "id": "__WORKFLOW_ID__",
+        "status": "Aborting"
+      },
+      "Failed": {
+        "id": "__WORKFLOW_ID__",
+        "status": "Failed"
+      },
+      "Running": {
+        "id": "__WORKFLOW_ID__",
+        "status": "Running"
+      },
+      "Submitted": {
+        "id": "__WORKFLOW_ID__",
+        "status": "Submitted"
+      },
+      "Succeeded": {
+        "id": "__WORKFLOW_ID__",
+        "status": "Succeeded"
+      }
+    },
+    "success_status_code": 200,
+    "transient_status_code": 404,
+    "transient_template": {
+      "message": "Unrecognized workflow ID: __WORKFLOW_ID__",
+      "status": "fail"
+    }
+  },
+  "submit": {
+    "body_template": {
+      "id": "__WORKFLOW_ID__",
+      "status": "Submitted"
+    },
+    "status_code": 201
+  }
+}

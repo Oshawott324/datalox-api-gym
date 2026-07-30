@@ -1,0 +1,26 @@
+{
+  "claims": [
+    {
+      "level": "G2_LOCAL_EXECUTED",
+      "scope": "elabftw_create_list_get_patch_shapes",
+      "source": "experiments_patch_complete_v1"
+    },
+    {
+      "level": "G2_LOCAL_EXECUTED",
+      "scope": "cromwell_submit_status_outputs_logs_metadata",
+      "source": "workflow_success_v1; workflow_failure_v1"
+    },
+    {
+      "level": "G2_LOCAL_EXECUTED",
+      "scope": "cromwell_abort",
+      "source": "workflow_abort_v1"
+    },
+    {
+      "level": "G0_BENCHMARK_DEFINED",
+      "scope": "logical_timing_revisions_joins_dynamic_provider_fields_and_qualification_meaning",
+      "source": "projection_contract.md"
+    }
+  ],
+  "schema_version": "api_gym.science_grounding_matrix.v1",
+  "world_id": "science_elabftw_cromwell_v0"
+}

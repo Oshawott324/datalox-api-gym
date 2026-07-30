@@ -1,0 +1,29 @@
+{
+  "episode_count": 12,
+  "family_ids": [
+    "analysis_nominal_v1",
+    "analysis_transient_visibility_v1",
+    "analysis_existing_run_resume_v1",
+    "analysis_failure_recovery_v1",
+    "analysis_superseded_abort_v1",
+    "analysis_stale_revision_v1"
+  ],
+  "hardware_execution_allowed": false,
+  "network_access_required": false,
+  "provider_projects": [
+    "eLabFTW",
+    "Cromwell"
+  ],
+  "provider_source_sha256": {
+    "cromwell": "sha256:c716582b20455cbeb8378441da5c399f1bfdfdad1dfb3798aec23ca8a3ecb9f6",
+    "elabftw": "sha256:b5026352c44726132a96317700e0a075c2bb206579607e1e05ea08c64c48b77d"
+  },
+  "scalar_reward_owned_here": false,
+  "schema_version": "datalox_science_world_construction_v1",
+  "verifier_complexity": {
+    "assertion_count": 15,
+    "event_passes": 1,
+    "state_loads": 1
+  },
+  "world_id": "science_elabftw_cromwell_v0"
+}

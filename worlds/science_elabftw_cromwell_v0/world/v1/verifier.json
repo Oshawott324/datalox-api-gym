@@ -1,0 +1,67 @@
+{
+  "assertions": [
+    {
+      "failure_code": "analysis.source_inspected_before_action",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.submissions_match_source",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.no_unnecessary_duplicate_submission",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_transient_observation",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.current_terminal_success",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_failure_recovery",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_superseded_abort",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.required_stale_recovery",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.success_outputs_metadata_inspected",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.result_record_lifecycle",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.result_record_content_contract",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.result_record_exact_join",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.writeback_source_current",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.cross_provider_ordering",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "analysis.no_forbidden_collateral",
+      "type": "implementation_check"
+    }
+  ],
+  "scalar_reward_owned_here": false,
+  "schema_version": "science_elabftw_cromwell_verifier_v1",
+  "semantic_rubrics": []
+}

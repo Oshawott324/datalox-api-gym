@@ -1,0 +1,12 @@
+{
+  "instructions": "Inspect eLabFTW source experiment 4100. Submit the current source once and complete the successful handoff. Inspect both successful outputs and metadata. Create, patch, and read back exactly one eLabFTW result as an analysis-control/qualification handoff. Use the exact title 'Analysis-control qualification handoff' and exact body 'The captured Cromwell program qualified for evidence handoff. This record makes no biological or scientific inference.'. Its JSON metadata must contain handoff_kind, source_experiment_id, source_revision, source_content_digest, cromwell_workflow_id, cromwell_terminal_status='Succeeded', outputs_digest, and metadata_digest. Digests use SHA-256 over canonical JSON with sorted keys and compact separators.",
+  "success_criteria": [
+    "The accepted workflow source and inputs match the current eLabFTW revision.",
+    "The accepted Cromwell workflow is current and terminal Succeeded.",
+    "Successful outputs and metadata are inspected before writeback.",
+    "The result record carries the exact provider join and canonical digests.",
+    "No unnecessary workflow or result record is created."
+  ],
+  "task_id": "science-analysis-000",
+  "title": "Complete an analysis-control qualification handoff"
+}

@@ -1,0 +1,256 @@
+{
+  "grounding": {
+    "capture_sha256": "sha256:f83ba0c58a078c332064e16f629084b8dcd7e341ef3d2861e2ff974790e6eca6",
+    "connector_sha256": "sha256:99e021f67e8cf642d8085268291dff1e76528ab56ed21c75345c5e95995eb4ee",
+    "fixture_receipt_sha256": "sha256:2e4efce0c9ff395b1c57ef863bf6300902bc0ac1d91b2161cad98933009f4759",
+    "grounding_level": "G2_LOCAL_EXECUTED",
+    "production_equivalence": "not_claimed",
+    "program_id": "elabftw_experiments_patch_complete_v1",
+    "recipe_sha256": "sha256:cfb40b56272ec5f86aebd95e7ef9988fd06436f5b7dbd8264c1ace4f645fd3d7",
+    "reset_equivalence": "not_claimed"
+  },
+  "operations": {
+    "create": {
+      "body_kind": "empty",
+      "request_fields": [],
+      "status_code": 201
+    },
+    "get": {
+      "status_code": 200
+    },
+    "list": {
+      "body_sha256": "sha256:cd0094f808a31b8f9452d55ec302ee7da95117cffefdf039efe1aa726b967796",
+      "body_shape": "array",
+      "status_code": 200
+    },
+    "patch": {
+      "request_fields": [
+        "body",
+        "metadata",
+        "title"
+      ],
+      "status_code": 200
+    }
+  },
+  "projection": {
+    "dynamic_changelog": "G0_BENCHMARK_DEFINED",
+    "dynamic_links": "G0_BENCHMARK_DEFINED",
+    "dynamic_timestamps": "G0_BENCHMARK_DEFINED",
+    "provider_response_shape": "G2_LOCAL_EXECUTED"
+  },
+  "provider_version": "5.6.10",
+  "response_headers": {
+    "create": {
+      "content-type": "text/html; charset=UTF-8",
+      "location_template": "/api/v2/experiments/{experiment_id}"
+    },
+    "get": {
+      "content-type": "application/json"
+    },
+    "list": {
+      "content-type": "application/json"
+    },
+    "patch": {
+      "content-type": "application/json"
+    }
+  },
+  "schema_version": "api_gym.elabftw_analysis_projection_facts.v1",
+  "templates": {
+    "before_experiment": {
+      "access_key": null,
+      "body": null,
+      "body_html": null,
+      "canread": "{\"teams\": [], \"users\": [], \"teamgroups\": []}",
+      "canread_base": 30,
+      "canread_base_human": "Only members of the team",
+      "canread_is_immutable": 0,
+      "canwrite": "{\"teams\": [], \"users\": [], \"teamgroups\": []}",
+      "canwrite_base": 20,
+      "canwrite_base_human": "Only owner and admins",
+      "canwrite_is_immutable": 0,
+      "category": null,
+      "category_color": null,
+      "category_title": null,
+      "changelog": [
+        {
+          "content": "Experiment was created",
+          "created_at": "2026-07-30 09:02:09",
+          "fullname": "Datalox Fixture",
+          "target": "created",
+          "userid": 2
+        }
+      ],
+      "comments": [],
+      "compounds_links": [],
+      "containers": [],
+      "content_type": 1,
+      "created_at": "2026-07-30 09:02:09",
+      "created_from_id": null,
+      "created_from_type": null,
+      "created_from_type_human": null,
+      "custom_id": null,
+      "date": "2026-07-30",
+      "elabid": "20260730-8be9bf238b4739c59b7c3d7444e121a5796e6959",
+      "events_start": null,
+      "events_start_itemid": null,
+      "exclusive_edit_mode": null,
+      "experiments_links": [],
+      "firstname": "Datalox",
+      "fullname": "Datalox Fixture",
+      "hide_main_text": 0,
+      "id": 1,
+      "is_pinned": 0,
+      "items_links": [],
+      "last_signed_at": null,
+      "last_signed_by": null,
+      "lastchangeby": null,
+      "lastname": "Fixture",
+      "locked": 0,
+      "locked_at": null,
+      "lockedby": null,
+      "metadata": null,
+      "modified_at": "2026-07-30 09:02:09",
+      "next_step": null,
+      "orcid": null,
+      "page": "experiments",
+      "rating": 0,
+      "recent_comment": null,
+      "related_experiments_links": [],
+      "related_items_links": [],
+      "sharelink": "http://127.0.0.1:3148/experiments.php?mode=view&id=1",
+      "signature_count": 0,
+      "state": 1,
+      "status": null,
+      "status_color": null,
+      "status_title": null,
+      "steps": [],
+      "surrounding_bookers": [],
+      "tags": null,
+      "tags_decoded": [],
+      "tags_id": null,
+      "team": 1,
+      "team_name": "Datalox Disposable Reference",
+      "timestamped": 0,
+      "timestamped_at": null,
+      "timestampedby": null,
+      "title": "Untitled",
+      "type": "experiments",
+      "uploads": [],
+      "userid": 2
+    },
+    "duplicate_patch_changelog_delta": 2,
+    "patched_experiment": {
+      "access_key": null,
+      "body": "<p>Reference AMR analysis handoff for isolate AMR-ISO-001.</p>",
+      "body_html": "<p>Reference AMR analysis handoff for isolate AMR-ISO-001.</p>",
+      "canread": "{\"teams\": [], \"users\": [], \"teamgroups\": []}",
+      "canread_base": 30,
+      "canread_base_human": "Only members of the team",
+      "canread_is_immutable": 0,
+      "canwrite": "{\"teams\": [], \"users\": [], \"teamgroups\": []}",
+      "canwrite_base": 20,
+      "canwrite_base_human": "Only owner and admins",
+      "canwrite_is_immutable": 0,
+      "captured_changelog_count": 4,
+      "category": null,
+      "category_color": null,
+      "category_title": null,
+      "changelog": [
+        {
+          "content": "Depending on your instance configuration, the change in the body is possibly recorded in the revisions. <a href=\"revisions.php?type=experiments&amp;item_id=1\">See revisions page.</a>",
+          "created_at": "2026-07-30 09:02:10",
+          "fullname": "Datalox Fixture",
+          "target": "body",
+          "userid": 2
+        },
+        {
+          "content": "{\"extra_fields\":{\"isolate_id\":{\"description\":\"Stable isolate identifier used across the analysis handoff\",\"type\":\"text\",\"value\":\"AMR-ISO-001\"}}}",
+          "created_at": "2026-07-30 09:02:10",
+          "fullname": "Datalox Fixture",
+          "target": "metadata",
+          "userid": 2
+        },
+        {
+          "content": "Datalox AMR analysis handoff",
+          "created_at": "2026-07-30 09:02:10",
+          "fullname": "Datalox Fixture",
+          "target": "title",
+          "userid": 2
+        },
+        {
+          "content": "Experiment was created",
+          "created_at": "2026-07-30 09:02:09",
+          "fullname": "Datalox Fixture",
+          "target": "created",
+          "userid": 2
+        }
+      ],
+      "comments": [],
+      "compounds_links": [],
+      "containers": [],
+      "content_type": 1,
+      "created_at": "2026-07-30 09:02:09",
+      "created_from_id": null,
+      "created_from_type": null,
+      "created_from_type_human": null,
+      "custom_id": null,
+      "date": "2026-07-30",
+      "elabid": "20260730-8be9bf238b4739c59b7c3d7444e121a5796e6959",
+      "events_start": null,
+      "events_start_itemid": null,
+      "exclusive_edit_mode": null,
+      "experiments_links": [],
+      "firstname": "Datalox",
+      "fullname": "Datalox Fixture",
+      "hide_main_text": 0,
+      "id": 1,
+      "is_pinned": 0,
+      "items_links": [],
+      "last_signed_at": null,
+      "last_signed_by": null,
+      "lastchangeby": 2,
+      "lastname": "Fixture",
+      "locked": 0,
+      "locked_at": null,
+      "lockedby": null,
+      "metadata": "{\"extra_fields\": {\"isolate_id\": {\"type\": \"text\", \"value\": \"AMR-ISO-001\", \"description\": \"Stable isolate identifier used across the analysis handoff\"}}}",
+      "metadata_decoded": {
+        "extra_fields": {
+          "isolate_id": {
+            "description": "Stable isolate identifier used across the analysis handoff",
+            "type": "text",
+            "value": "AMR-ISO-001"
+          }
+        }
+      },
+      "modified_at": "2026-07-30 09:02:10",
+      "next_step": null,
+      "orcid": null,
+      "page": "experiments",
+      "rating": 0,
+      "recent_comment": null,
+      "related_experiments_links": [],
+      "related_items_links": [],
+      "sharelink": "http://127.0.0.1:3148/experiments.php?mode=view&id=1",
+      "signature_count": 0,
+      "state": 1,
+      "status": null,
+      "status_color": null,
+      "status_title": null,
+      "steps": [],
+      "surrounding_bookers": [],
+      "tags": null,
+      "tags_decoded": [],
+      "tags_id": null,
+      "team": 1,
+      "team_name": "Datalox Disposable Reference",
+      "timestamped": 0,
+      "timestamped_at": null,
+      "timestampedby": null,
+      "title": "Datalox AMR analysis handoff",
+      "type": "experiments",
+      "uploads": [],
+      "userid": 2
+    }
+  }
+}

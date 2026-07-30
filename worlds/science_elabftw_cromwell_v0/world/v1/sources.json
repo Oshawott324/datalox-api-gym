@@ -1,0 +1,61 @@
+{
+  "grounding_gaps": [
+    {
+      "operation_family": "production_provider_equivalence",
+      "reason": "The checked cases are disposable local references and do not establish production or reset equivalence.",
+      "status": "unsupported"
+    },
+    {
+      "operation_family": "arbitrary_cromwell_workflow_logic",
+      "reason": "Only the exact success, failure, and abort WDL/input families are executable.",
+      "status": "unsupported"
+    },
+    {
+      "operation_family": "biological_analysis",
+      "reason": "The captured WDL programs qualify analysis-control handoff behavior and perform no biological inference.",
+      "status": "unsupported"
+    }
+  ],
+  "sources": [
+    {
+      "derivation": "eLabFTW 5.6.10 create/list/get/PATCH status, request, and response shapes derived from the checked complete case. List is grounded but intentionally unexposed.",
+      "grounding_level": "G2_LOCAL_EXECUTED",
+      "id": "elabftw_complete_capture",
+      "kind": "authorized_local_fixture_capture",
+      "locator": "evidence/elabftw_experiments_patch_complete_v1.json",
+      "supports": [
+        "operation:elabftw.get_experiment",
+        "operation:elabftw.create_experiment",
+        "operation:elabftw.patch_experiment",
+        "provider_behavior:elabftw.list_experiments"
+      ]
+    },
+    {
+      "derivation": "Cromwell 92 submit, status, outputs, logs, metadata, and abort shapes derived from three checked cases.",
+      "grounding_level": "G2_LOCAL_EXECUTED",
+      "id": "cromwell_complete_captures",
+      "kind": "authorized_local_fixture_captures",
+      "locator": "evidence/cromwell_workflow_success_v1.json; evidence/cromwell_workflow_failure_v1.json; evidence/cromwell_workflow_abort_v1.json",
+      "supports": [
+        "operation:cromwell.submit_workflow",
+        "operation:cromwell.get_workflow_status",
+        "operation:cromwell.get_workflow_outputs",
+        "operation:cromwell.get_workflow_logs",
+        "operation:cromwell.get_workflow_metadata",
+        "operation:cromwell.abort_workflow"
+      ]
+    },
+    {
+      "derivation": "Defines compressed logical timing, source revisions, joins, qualification meaning, and family obligations.",
+      "grounding_level": "G0_BENCHMARK_DEFINED",
+      "id": "analysis_projection_contract",
+      "kind": "benchmark_projection",
+      "locator": "projection_contract.md",
+      "supports": [
+        "dynamics:logical_time",
+        "dynamics:source_revision",
+        "workflow:analysis_control_handoff"
+      ]
+    }
+  ]
+}
