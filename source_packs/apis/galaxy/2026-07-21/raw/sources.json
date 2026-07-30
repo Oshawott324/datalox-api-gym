@@ -1,0 +1,100 @@
+{
+  "grounding_gaps": [
+    {
+      "claim": "provider-observed authenticated writes or private reads",
+      "operation_family": "all",
+      "reason": "The checked public evidence is GET-only. Mutations and authenticated state are official-source-grounded local shadow behavior, not provider execution evidence."
+    },
+    {
+      "claim": "all Galaxy APIs or arbitrary Galaxy workflows",
+      "operation_family": "all",
+      "reason": "The declared core is the normal AMR analysis lifecycle centered on the captured IWC template; administration, libraries, users/groups, sharing, remote files, model stores, exports, storage, and unrelated workflows are excluded."
+    },
+    {
+      "claim": "the deployed source commit",
+      "operation_family": "all",
+      "reason": "Source snapshot a7f8b9a0d3169d5344e291826804bf13b369d4a1 is contemporaneous and controller-equivalent for the selected files, but usegalaxy.org does not expose a deployed commit proof in the capture."
+    },
+    {
+      "claim": "future Galaxy Main behavior, availability, latency, or SLA",
+      "operation_family": "all",
+      "reason": "The public capture is a dated 26.1.rc1 tenant snapshot and can drift."
+    }
+  ],
+  "sources": [
+    {
+      "commit": "a7f8b9a0d3169d5344e291826804bf13b369d4a1",
+      "derivation": "A contemporaneous pre-capture Galaxy source snapshot grounds the selected routes, payloads, transitions, async task/tool-request/job behavior, collections, and workflow invocation semantics. It is not claimed to prove the exact deployed usegalaxy.org commit.",
+      "file_sha256": {
+        "lib/galaxy/managers/citations.py": "73359b40a7d524c36a6d3798725acac1e432b1fed6aef4a9f2860f28b61a4f10",
+        "lib/galaxy/managers/collections.py": "f8e9988e61844f9053553e4b3cee396801bf526a82d0dc3610eaee8df3a3fae8",
+        "lib/galaxy/managers/configuration.py": "d87151b8eaab2342327215dccf3ceefa4a5e15887870d754a7a2af0e2a31346f",
+        "lib/galaxy/managers/jobs.py": "4f9cbabf06eb9637f077f3285da2f027605acc9b6e0de4083ced2d4c8f745b7b",
+        "lib/galaxy/managers/tasks.py": "7b1998bdc189d7e4fc93cb13aff54e3c75c60c8a0cf3997356a9a8a8cc630e51",
+        "lib/galaxy/managers/workflow_completion.py": "264c2964475c3270eda72dd293f75d29734436aa00a6d29018cdb42cba33d537",
+        "lib/galaxy/managers/workflows.py": "c828f5e1d88b82c837f595f8b245d75f5df7ac738208fb80ef761d644d9ab2f9",
+        "lib/galaxy/model/__init__.py": "2adecf6d063490929457f97c479fe523b178b4233d0d10792de332dfa7be42a0",
+        "lib/galaxy/schema/invocation.py": "595842d2dab945fa991f391c1b38c2c90b1191793973a09f96332f7f0ef8d902",
+        "lib/galaxy/schema/jobs.py": "7910b48f6525fa9a87849e2a513d4a79386756e00aecdbf350c5b0f0146d961a",
+        "lib/galaxy/schema/schema.py": "4244e47cc79f13d618181c4f86c8f81ca9f1d2009674db34758ebb28d185f773",
+        "lib/galaxy/schema/tasks.py": "2c1a346885843183a8cedceb87a078d02da7df5b2ee3a0550e82bad6cf94824f",
+        "lib/galaxy/schema/workflows.py": "7c151d5e494a7afb9b45af6a43ac170dcc42c107232188a16772d1beb191d483",
+        "lib/galaxy/webapps/galaxy/api/configuration.py": "8d099113373e30996c97f3902612853de03c7f47186dfd8f294b00eaa1960d63",
+        "lib/galaxy/webapps/galaxy/api/dataset_collections.py": "9c1bf59dc22aed326cec64ec98a8a3f8b3ad7700f15c383826d39e93a51a7ddf",
+        "lib/galaxy/webapps/galaxy/api/datasets.py": "dfd6f8e0f0ec3cf2b292c535d46fad8ace29051756a3f80596e4ab762ffdffdf",
+        "lib/galaxy/webapps/galaxy/api/datatypes.py": "3a378a179f35f69f4393893386442fa2f5d4699a20d695b8384126886057882a",
+        "lib/galaxy/webapps/galaxy/api/histories.py": "a5fcf09a6f0b6c0a28bc235f01b5bec8d3ffd6e7cc09756fd7c639b2ea592eec",
+        "lib/galaxy/webapps/galaxy/api/history_contents.py": "d531b1af566ce8545057e6e5beaa716c24fe4e8932b7b567398506eea909cfe6",
+        "lib/galaxy/webapps/galaxy/api/jobs.py": "53328e4940dd00221f48139a56e30bf6a6c5a6cc704092ac49aab60bd308990f",
+        "lib/galaxy/webapps/galaxy/api/provenance.py": "d555199a552673524dc29d9afd87d115728818f88c33a73bca8225e6200c9625",
+        "lib/galaxy/webapps/galaxy/api/tasks.py": "6cae1468b62371d00bb1062c6e9300fac88eb7d4fa1f713baad9aeacd74bbfe2",
+        "lib/galaxy/webapps/galaxy/api/tools.py": "3c30d8df9ce1a4c0fcd542e03cec4ad9275b9f86443403d65e1bf79cb19c3a11",
+        "lib/galaxy/webapps/galaxy/api/workflows.py": "19f6e30275579a9cfeff5996da53411d7eb0db4e22dd0d2e285a7812db29a93a",
+        "lib/galaxy/webapps/galaxy/fast_app.py": "95e7340d37d05ea7d7c1d137b62682e00dda870dd4ce920fdccbd6496330e057",
+        "lib/galaxy/webapps/galaxy/services/base.py": "9cdcc9ffcee8f82ebe7ea7b94df492e5aed1489ac6bab48a30c432330c239e98",
+        "lib/galaxy/webapps/galaxy/services/dataset_collections.py": "7433f48813667138fa5614297aeb17dfcf0d7564fe2e1184f779b81ce84881c7",
+        "lib/galaxy/webapps/galaxy/services/datasets.py": "e7ca2294c0b04699c2d5dbd5cb2c0e0c9565df02a314541130b11c9d5e7812bf",
+        "lib/galaxy/webapps/galaxy/services/histories.py": "dea8e53ea614f93f70ed3ddce9a3f82ea8250789da8895e448801bc61fb9e386",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py": "af28baa021f6e5b7bda72f95f229f73c1821134c7929128ea90b1d36a562579b",
+        "lib/galaxy/webapps/galaxy/services/invocations.py": "d669f8f5ec5f77bc6e957fffcbfe4b024fffa27cdcc4c1bfd3ac002c84831698",
+        "lib/galaxy/webapps/galaxy/services/jobs.py": "967a41ae1ef923f8e02aab147ac37e22b3c299105ac97e44c019feaa2a727f40",
+        "lib/galaxy/webapps/galaxy/services/tools.py": "3c1c88fd17d43d3d43353f3687c901136461dbf4c99e7615370cb220bf15bb3c",
+        "lib/galaxy/webapps/galaxy/services/workflows.py": "e5f24ea29cde7c31fb19e32ee8591bd64b8ddf702eedfe75378604fd1e66f54e",
+        "lib/galaxy/workflow/completion_monitor.py": "972929da398717c3e5aae9c96b86d1c9f351e34b2bd20ea2feb118ef9229c328",
+        "lib/galaxy/workflow/run.py": "cf8addb7b88975334410f1b4326a96e2c9abbfc1d9b6e9ac5842d9aa8bcc4d6d",
+        "lib/galaxy/workflow/schedulers/core.py": "4c506c28490fc10fcba633e5101374fd62f5afdfa3e7a549ab16d866d551466b",
+        "lib/galaxy/workflow/scheduling_manager.py": "3fe8d017d202fa8b7508035a29c89c82ba6b858821b8f98044d3762e3477298c"
+      },
+      "grounding_level": "G1_OFFICIAL_SOURCE",
+      "id": "galaxy_official_source",
+      "kind": "official_source",
+      "locator": "https://github.com/galaxyproject/galaxy/tree/a7f8b9a0d3169d5344e291826804bf13b369d4a1",
+      "supports": [
+        "shape:all_tools",
+        "semantics:selected_provider_core"
+      ]
+    },
+    {
+      "derivation": "Thirty-four credential-free GET records preserve exact deployed OpenAPI, public bodies, errors, timestamps, digests, and anonymous/auth boundaries from usegalaxy.org 26.1.rc1. They do not ground private reads or writes.",
+      "grounding_level": "G3_PUBLIC_PRODUCTION",
+      "id": "usegalaxy_public_capture",
+      "kind": "public_production_capture",
+      "locator": "envs/galaxy_usegalaxy_public_v0/evidence/public_get_capture.json",
+      "supports": [
+        "live_behavior:captured_public_gets",
+        "live_behavior:deployed_openapi"
+      ]
+    },
+    {
+      "derivation": "Executes the selected provider-shaped read/write/process lifecycle in isolated run-private state, including reset, ownership, async, failure, cancellation, and exact workflow topology checks.",
+      "grounding_level": "G2_LOCAL_EXECUTED",
+      "id": "local_galaxy_execution",
+      "kind": "local_executed_world",
+      "locator": "tests/test_galaxy_usegalaxy_public_world.py; envs/galaxy_usegalaxy_public_v0/world_admission.json",
+      "supports": [
+        "local_behavior:all_tools",
+        "local_behavior:all_writes"
+      ]
+    }
+  ]
+}

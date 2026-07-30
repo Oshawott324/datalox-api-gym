@@ -1,0 +1,2054 @@
+{
+  "core_families": [
+    {
+      "capabilities": [
+        "read"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy discovery lifecycle operations.",
+      "id": "discovery",
+      "implemented_operations": [
+        "galaxy.get_version",
+        "galaxy.get_configuration",
+        "galaxy.get_openapi"
+      ],
+      "role": "supporting",
+      "write_operations": []
+    },
+    {
+      "capabilities": [
+        "read",
+        "write"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ],
+        "write": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy tools lifecycle operations.",
+      "id": "tools",
+      "implemented_operations": [
+        "tools.search_catalog",
+        "tools.get_tool",
+        "tools.get_citations",
+        "tools.get_input_schema",
+        "datatypes.list_datatypes",
+        "tools.execute",
+        "tools.get_request",
+        "tools.get_request_state",
+        "tools.get_task_state",
+        "tools.get_task_result"
+      ],
+      "role": "primary",
+      "write_operations": [
+        "tools.execute"
+      ]
+    },
+    {
+      "capabilities": [
+        "read",
+        "write"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ],
+        "write": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy histories lifecycle operations.",
+      "id": "histories",
+      "implemented_operations": [
+        "histories.search_published",
+        "histories.list",
+        "histories.create",
+        "histories.get_history",
+        "histories.update",
+        "histories.delete",
+        "histories.undelete",
+        "histories.archive",
+        "histories.restore_archive",
+        "histories.list_contents",
+        "datasets.get_history_dataset",
+        "histories.update_content",
+        "histories.delete_content"
+      ],
+      "role": "primary",
+      "write_operations": [
+        "histories.create",
+        "histories.update",
+        "histories.delete",
+        "histories.undelete",
+        "histories.archive",
+        "histories.restore_archive",
+        "histories.update_content",
+        "histories.delete_content"
+      ]
+    },
+    {
+      "capabilities": [
+        "read",
+        "write"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ],
+        "write": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy datasets lifecycle operations.",
+      "id": "datasets",
+      "implemented_operations": [
+        "datasets.upload",
+        "datasets.get_dataset",
+        "datasets.display_history_dataset",
+        "datasets.get_provenance",
+        "datasets.update",
+        "datasets.delete"
+      ],
+      "role": "primary",
+      "write_operations": [
+        "datasets.upload",
+        "datasets.update",
+        "datasets.delete"
+      ]
+    },
+    {
+      "capabilities": [
+        "read",
+        "write"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ],
+        "write": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy collections lifecycle operations.",
+      "id": "collections",
+      "implemented_operations": [
+        "collections.create",
+        "collections.get_collection",
+        "collections.list_contents",
+        "collections.update",
+        "collections.delete"
+      ],
+      "role": "primary",
+      "write_operations": [
+        "collections.create",
+        "collections.update",
+        "collections.delete"
+      ]
+    },
+    {
+      "capabilities": [
+        "read",
+        "write"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ],
+        "write": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy jobs lifecycle operations.",
+      "id": "jobs",
+      "implemented_operations": [
+        "jobs.list",
+        "jobs.get_job",
+        "jobs.get_inputs",
+        "jobs.get_outputs",
+        "jobs.get_stdout",
+        "jobs.get_stderr",
+        "jobs.cancel",
+        "jobs.resume"
+      ],
+      "role": "primary",
+      "write_operations": [
+        "jobs.cancel",
+        "jobs.resume"
+      ]
+    },
+    {
+      "capabilities": [
+        "read",
+        "write"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ],
+        "write": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy workflows lifecycle operations.",
+      "id": "workflows",
+      "implemented_operations": [
+        "workflows.search_published",
+        "workflows.get_workflow",
+        "workflows.list_versions",
+        "workflows.download_workflow",
+        "workflows.create",
+        "workflows.update",
+        "workflows.delete",
+        "workflows.undelete"
+      ],
+      "role": "primary",
+      "write_operations": [
+        "workflows.create",
+        "workflows.update",
+        "workflows.delete",
+        "workflows.undelete"
+      ]
+    },
+    {
+      "capabilities": [
+        "read",
+        "write"
+      ],
+      "capability_source_refs": {
+        "read": [
+          "galaxy_official_source"
+        ],
+        "write": [
+          "galaxy_official_source"
+        ]
+      },
+      "description": "Selected provider-shaped Galaxy invocations lifecycle operations.",
+      "id": "invocations",
+      "implemented_operations": [
+        "invocations.create",
+        "invocations.list",
+        "invocations.get_invocation",
+        "invocations.get_completion",
+        "invocations.get_jobs_summary",
+        "invocations.get_step",
+        "invocations.get_report",
+        "invocations.update_step",
+        "invocations.cancel"
+      ],
+      "role": "primary",
+      "write_operations": [
+        "invocations.create",
+        "invocations.update_step",
+        "invocations.cancel"
+      ]
+    }
+  ],
+  "env_id": "galaxy_usegalaxy_public_v0",
+  "exclusions": [
+    {
+      "id": "galaxy_administration_and_adjacent_services",
+      "primary": false,
+      "reason": "Tool installation/dependencies/cache, users/groups/roles, libraries, sharing/publishing, remote files, exports, storage, quotas, and server administration are outside the selected analyst lifecycle.",
+      "source_refs": [
+        "galaxy_official_source"
+      ]
+    },
+    {
+      "id": "arbitrary_workflow_templates",
+      "primary": false,
+      "reason": "Workflow authoring and invocation are deliberately scoped to the captured 11-step IWC AMR template; arbitrary Galaxy workflows need their own source-grounded packs.",
+      "source_refs": [
+        "galaxy_official_source"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "blocking": false,
+      "family": "all",
+      "id": "authenticated_provider_execution_unobserved",
+      "reason": "Writes and authenticated reads are source-grounded local shadow behavior, not live usegalaxy.org execution evidence.",
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    }
+  ],
+  "operations": [
+    {
+      "effect": "read",
+      "family": "discovery",
+      "id": "galaxy.get_version",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/configuration.py",
+        "lib/galaxy/managers/configuration.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "discovery",
+      "id": "galaxy.get_configuration",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/configuration.py",
+        "lib/galaxy/managers/configuration.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "discovery",
+      "id": "galaxy.get_openapi",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/fast_app.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.search_catalog",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tools.py",
+        "lib/galaxy/webapps/galaxy/services/tools.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.get_tool",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tools.py",
+        "lib/galaxy/webapps/galaxy/services/tools.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.get_citations",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tools.py",
+        "lib/galaxy/managers/citations.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.get_input_schema",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tools.py",
+        "lib/galaxy/webapps/galaxy/services/tools.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "datatypes.list_datatypes",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/datatypes.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "tools",
+      "id": "tools.execute",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/schema/tasks.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.get_request",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tools.py",
+        "lib/galaxy/webapps/galaxy/services/base.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.get_request_state",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tools.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.get_task_state",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tasks.py",
+        "lib/galaxy/managers/tasks.py",
+        "lib/galaxy/schema/tasks.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "tools",
+      "id": "tools.get_task_result",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tasks.py",
+        "lib/galaxy/managers/tasks.py",
+        "lib/galaxy/schema/tasks.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "histories",
+      "id": "histories.search_published",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "histories",
+      "id": "histories.list",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.create",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "histories",
+      "id": "histories.get_history",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.update",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.delete",
+      "method": "DELETE",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.undelete",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.archive",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.restore_archive",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/histories.py",
+        "lib/galaxy/webapps/galaxy/services/histories.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "histories",
+      "id": "histories.list_contents",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "histories",
+      "id": "datasets.get_history_dataset",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.update_content",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "histories",
+      "id": "histories.delete_content",
+      "method": "DELETE",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "datasets",
+      "id": "datasets.upload",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/tools.py",
+        "lib/galaxy/webapps/galaxy/services/tools.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "datasets",
+      "id": "datasets.get_dataset",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/datasets.py",
+        "lib/galaxy/webapps/galaxy/services/datasets.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "datasets",
+      "id": "datasets.display_history_dataset",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/datasets.py",
+        "lib/galaxy/webapps/galaxy/services/datasets.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "datasets",
+      "id": "datasets.get_provenance",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/provenance.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "datasets",
+      "id": "datasets.update",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "datasets",
+      "id": "datasets.delete",
+      "method": "DELETE",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "collections",
+      "id": "collections.create",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/dataset_collections.py",
+        "lib/galaxy/webapps/galaxy/services/dataset_collections.py",
+        "lib/galaxy/managers/collections.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "collections",
+      "id": "collections.get_collection",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/dataset_collections.py",
+        "lib/galaxy/webapps/galaxy/services/dataset_collections.py",
+        "lib/galaxy/managers/collections.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "collections",
+      "id": "collections.list_contents",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/dataset_collections.py",
+        "lib/galaxy/webapps/galaxy/services/dataset_collections.py",
+        "lib/galaxy/managers/collections.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "collections",
+      "id": "collections.update",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py",
+        "lib/galaxy/managers/collections.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "collections",
+      "id": "collections.delete",
+      "method": "DELETE",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/history_contents.py",
+        "lib/galaxy/webapps/galaxy/services/history_contents.py",
+        "lib/galaxy/schema/schema.py",
+        "lib/galaxy/managers/collections.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "jobs",
+      "id": "jobs.list",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "jobs",
+      "id": "jobs.get_job",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "jobs",
+      "id": "jobs.get_inputs",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "jobs",
+      "id": "jobs.get_outputs",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "jobs",
+      "id": "jobs.get_stdout",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "jobs",
+      "id": "jobs.get_stderr",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "jobs",
+      "id": "jobs.cancel",
+      "method": "DELETE",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "jobs",
+      "id": "jobs.resume",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/jobs.py",
+        "lib/galaxy/webapps/galaxy/services/jobs.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py",
+        "lib/galaxy/schema/schema.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "workflows",
+      "id": "workflows.search_published",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "workflows",
+      "id": "workflows.get_workflow",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "workflows",
+      "id": "workflows.list_versions",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "workflows",
+      "id": "workflows.download_workflow",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [
+          "usegalaxy_public_capture"
+        ],
+        "note": "Exact public-production GET capture.",
+        "status": "observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "usegalaxy_public_capture",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "workflows",
+      "id": "workflows.create",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "workflows",
+      "id": "workflows.update",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "workflows",
+      "id": "workflows.delete",
+      "method": "DELETE",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "workflows",
+      "id": "workflows.undelete",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/workflows.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "invocations",
+      "id": "invocations.create",
+      "method": "POST",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/workflows.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py",
+        "lib/galaxy/workflow/schedulers/core.py",
+        "lib/galaxy/workflow/run.py",
+        "lib/galaxy/workflow/scheduling_manager.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "invocations",
+      "id": "invocations.list",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "invocations",
+      "id": "invocations.get_invocation",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "invocations",
+      "id": "invocations.get_completion",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py",
+        "lib/galaxy/managers/workflow_completion.py",
+        "lib/galaxy/workflow/completion_monitor.py",
+        "lib/galaxy/model/__init__.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "invocations",
+      "id": "invocations.get_jobs_summary",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py",
+        "lib/galaxy/managers/jobs.py",
+        "lib/galaxy/schema/jobs.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "invocations",
+      "id": "invocations.get_step",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "read",
+      "family": "invocations",
+      "id": "invocations.get_report",
+      "method": "GET",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "invocations",
+      "id": "invocations.update_step",
+      "method": "PUT",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    },
+    {
+      "effect": "write",
+      "family": "invocations",
+      "id": "invocations.cancel",
+      "method": "DELETE",
+      "provider_execution": {
+        "evidence_refs": [],
+        "note": "Official-source grounded and locally executed only; no provider execution evidence is claimed.",
+        "status": "not_observed"
+      },
+      "source_files": [
+        "lib/galaxy/webapps/galaxy/api/workflows.py",
+        "lib/galaxy/webapps/galaxy/services/invocations.py",
+        "lib/galaxy/managers/workflows.py",
+        "lib/galaxy/schema/invocation.py"
+      ],
+      "source_refs": [
+        "galaxy_official_source",
+        "local_galaxy_execution"
+      ]
+    }
+  ],
+  "process_assurances": [],
+  "provider_id": "galaxy_usegalaxy",
+  "provider_mutability": {
+    "mode": "mutable",
+    "reason": "Official Galaxy controllers support authenticated history, dataset, collection, job, workflow, and invocation mutations in the selected lifecycle.",
+    "source_refs": [
+      "galaxy_official_source"
+    ]
+  },
+  "schema_version": "datalox_provider_core_coverage_v1",
+  "scope": {
+    "name": "Galaxy AMR analysis operations",
+    "primary_workflow": "History and data preparation through tool/task/job and exact five-tool AMR workflow execution, inspection, recovery, and cleanup.",
+    "source_refs": [
+      "galaxy_official_source"
+    ],
+    "version": "usegalaxy.org 26.1.rc1 / source snapshot 2026-07-20"
+  },
+  "write_assurances": [
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "tools.execute",
+      "read_after_write_operations": [
+        "tools.get_task_state",
+        "tools.get_request",
+        "jobs.get_job"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.create",
+      "read_after_write_operations": [
+        "histories.get_history"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.update",
+      "read_after_write_operations": [
+        "histories.get_history"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.delete",
+      "read_after_write_operations": [
+        "histories.get_history"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.undelete",
+      "read_after_write_operations": [
+        "histories.get_history"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.archive",
+      "read_after_write_operations": [
+        "histories.get_history"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.restore_archive",
+      "read_after_write_operations": [
+        "histories.get_history"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.update_content",
+      "read_after_write_operations": [
+        "datasets.get_history_dataset"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "histories.delete_content",
+      "read_after_write_operations": [
+        "datasets.get_history_dataset"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "datasets.upload",
+      "read_after_write_operations": [
+        "histories.list_contents",
+        "jobs.get_job"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition",
+        "tests/test_galaxy_usegalaxy_public_world.py::test_action_failure_completion_owner_and_restore_regressions"
+      ],
+      "operation_id": "datasets.update",
+      "read_after_write_operations": [
+        "datasets.get_dataset"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "datasets.delete",
+      "read_after_write_operations": [
+        "datasets.get_dataset"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition",
+        "tests/test_galaxy_usegalaxy_public_world.py::test_collection_copy_import_nested_and_rank_semantics"
+      ],
+      "operation_id": "collections.create",
+      "read_after_write_operations": [
+        "collections.get_collection"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "collections.update",
+      "read_after_write_operations": [
+        "collections.get_collection"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "collections.delete",
+      "read_after_write_operations": [
+        "collections.get_collection"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_job_fail_pause_cancel_and_invocation_cancel_are_provider_shaped"
+      ],
+      "operation_id": "jobs.cancel",
+      "read_after_write_operations": [
+        "jobs.get_job"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_job_fail_pause_cancel_and_invocation_cancel_are_provider_shaped"
+      ],
+      "operation_id": "jobs.resume",
+      "read_after_write_operations": [
+        "jobs.get_job"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "workflows.create",
+      "read_after_write_operations": [
+        "workflows.get_workflow"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "workflows.update",
+      "read_after_write_operations": [
+        "workflows.get_workflow"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "workflows.delete",
+      "read_after_write_operations": [
+        "workflows.get_workflow"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "workflows.undelete",
+      "read_after_write_operations": [
+        "workflows.get_workflow"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "invocations.create",
+      "read_after_write_operations": [
+        "invocations.get_invocation"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_action_failure_completion_owner_and_restore_regressions"
+      ],
+      "operation_id": "invocations.update_step",
+      "read_after_write_operations": [
+        "invocations.get_step"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    },
+    {
+      "execution_mode": "local_shadow",
+      "implementation_ref": "envs/galaxy_usegalaxy_public_v0/world/v1/implementation.py::GalaxyUseGalaxyWorld",
+      "invalid_duplicate_atomicity_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_provider_native_negatives_are_atomic"
+      ],
+      "local_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_every_write_has_created_id_readback_and_exact_transition"
+      ],
+      "operation_id": "invocations.cancel",
+      "read_after_write_operations": [
+        "invocations.get_invocation"
+      ],
+      "reset_evidence_refs": [
+        "tests/test_galaxy_usegalaxy_public_world.py::test_reset_is_functionally_equivalent_after_mutations"
+      ]
+    }
+  ],
+  "write_families": [
+    "tools",
+    "histories",
+    "datasets",
+    "collections",
+    "jobs",
+    "workflows",
+    "invocations"
+  ]
+}

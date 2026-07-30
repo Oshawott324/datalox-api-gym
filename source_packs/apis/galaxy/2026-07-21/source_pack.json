@@ -1,0 +1,82 @@
+{
+  "artifacts": {
+    "construction": {
+      "byte_count": 19152,
+      "path": "raw/construction.json",
+      "sha256": "16c7fc0234090eec7c79bd464b221362416e42aebe1b714dd301ef6eab0c3b10"
+    },
+    "openapi": {
+      "byte_count": 3219040,
+      "object_preserved_from_capture_id": "openapi",
+      "path": "raw/openapi.json",
+      "sha256": "3943ae65ed8cdf9af9395b9db0a4a0b5c87f2203b9681bd3fb251e5730e5f42a"
+    },
+    "provider_core_coverage": {
+      "byte_count": 66855,
+      "path": "raw/provider_core_coverage.json",
+      "sha256": "cef471d6c3929b3559b73a9a5a541f3e9cecdf09403dde9f6c775e964493758e"
+    },
+    "public_get_capture": {
+      "byte_count": 4081301,
+      "path": "raw/public_get_capture.json",
+      "sha256": "19d1bcbd61371df7cdd20df37a84fb5f918fa50297beface8af0ddbd2d4dfd0a"
+    },
+    "sources": {
+      "byte_count": 7604,
+      "path": "raw/sources.json",
+      "sha256": "3fc6d07d37553f69f9bb3ccd7314309ec71322fdb7c5ee5d46d8d3cdfa5b1a8e"
+    }
+  },
+  "capture_recipe": {
+    "allowed_host": "usegalaxy.org",
+    "allowed_method": "GET",
+    "credential_policy": "The API Gym wrapper accepts no credentials and delegates with a minimal environment that omits ambient credential, authorization, cookie, proxy, and user-home state.",
+    "runtime_repository": "datalox-gated-runtime",
+    "runtime_recipe": "scripts/providers/capture-galaxy-usegalaxy-public.py",
+    "runtime_recipe_sha256": "704fe528bdda078af7eb19c53921389e93200ba77ed5b18ae494c29e50c9c15a",
+    "wrapper": "../../../../scripts/providers/galaxy/capture_public_gets.py"
+  },
+  "evidence_summary": {
+    "auxiliary_capture_count": 3,
+    "capture_count": 34,
+    "contract_shaped_candidate_count": 43,
+    "operation_count": 62,
+    "operation_linked_capture_count": 31,
+    "provider_observed_get_operation_count": 19,
+    "provider_observed_write_operation_count": 0,
+    "write_candidate_count": 24
+  },
+  "implementation": {
+    "base_url": "https://usegalaxy.org",
+    "galaxy_version": "26.1.rc1",
+    "name": "Galaxy Main"
+  },
+  "live_execution": {
+    "allowed": false,
+    "reason": "This source pack is immutable source substrate. Explicit recapture is delegated to the pinned datalox-gated-runtime recipe and is not a source-pack runtime action."
+  },
+  "normalization": {
+    "captured_bodies": "The retained capture stores provider bodies as parsed JSON values or decoded UTF-8 text with provider-body byte counts and SHA-256 digests.",
+    "raw_byte_limit": "Raw provider response bytes were not retained by the capture recipe and cannot be reconstructed generally from parsed JSON or decoded text.",
+    "timestamps": "Provider capture timestamps are preserved without normalization."
+  },
+  "provider": "galaxy",
+  "records": {
+    "docs_index": "docs_index.jsonl",
+    "known_gaps": "known_gaps.jsonl",
+    "observed_errors": "observed_errors.jsonl",
+    "operations": "operations.jsonl",
+    "probes": "probes.jsonl",
+    "response_cases": "response_cases.jsonl"
+  },
+  "schema_version": "api_gym.api_source_pack.v0",
+  "source_pack_id": "api.galaxy.2026-07-21",
+  "source_types": [
+    "public_production_capture",
+    "openapi",
+    "official_source",
+    "construction_metadata"
+  ],
+  "status": "normalized",
+  "version": "2026-07-21"
+}
