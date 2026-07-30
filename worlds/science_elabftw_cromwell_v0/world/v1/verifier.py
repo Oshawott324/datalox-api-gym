@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
@@ -28,6 +29,17 @@ FAILURE_CODES = (
     "analysis.cross_provider_ordering",
     "analysis.no_forbidden_collateral",
 )
+_BODY_SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
+_RUNTIME_DIGEST_OPERATIONS = {
+    "outputs_digest": (
+        "cromwell.get_workflow_outputs",
+        "outputs",
+    ),
+    "metadata_digest": (
+        "cromwell.get_workflow_metadata",
+        "metadata",
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -54,9 +66,10 @@ def verify_analysis(
     """Load state once and evaluate one ordered operation-event projection."""
 
     state = session.list_state()
+    verifier_events = session.verifier_events()
     events = tuple(
         event
-        for event in session.verifier_events()
+        for event in verifier_events
         if event.get("event_type") == "analysis_operation"
         and event.get("decision") in {"replay", "shadow_write"}
     )
@@ -83,6 +96,13 @@ def verify_analysis(
         workflow_status(accepted, current_time=session.current_time())
         if isinstance(accepted, Mapping)
         else None
+    )
+    accepted_digests = _accepted_runtime_digests(
+        verifier_events=verifier_events,
+        operation_events=events,
+        accepted_id=accepted_id,
+        accepted_status=accepted_status,
+        result_id=result_id,
     )
     current_revision = int(source["current_revision"])
     current_source = source["revisions"][str(current_revision)]
@@ -142,6 +162,7 @@ def verify_analysis(
         and accepted_status == "Succeeded"
         and accepted.get("outputs_inspected") is True
         and accepted.get("metadata_inspected") is True
+        and all(accepted_digests.values())
     )
     lifecycle_complete = _result_lifecycle_complete(
         events=events,
@@ -157,6 +178,7 @@ def verify_analysis(
         result_metadata=result_metadata,
         accepted=accepted,
         accepted_status=accepted_status,
+        accepted_digests=accepted_digests,
     )
     writeback_current = bool(
         isinstance(result_record, Mapping)
@@ -244,6 +266,7 @@ def verify_analysis(
         accepted_id=accepted_id,
         accepted=accepted,
         accepted_status=accepted_status,
+        accepted_digests=accepted_digests,
         result_id=result_id,
         result_record=result_record,
         scenario=scenario,
@@ -586,6 +609,7 @@ def _result_exact_join(
     result_metadata: Mapping[str, Any],
     accepted: Mapping[str, Any] | None,
     accepted_status: str | None,
+    accepted_digests: Mapping[str, str | None],
 ) -> bool:
     if not isinstance(accepted, Mapping):
         return False
@@ -593,8 +617,8 @@ def _result_exact_join(
         "cromwell_terminal_status": accepted_status,
         "cromwell_workflow_id": accepted["workflow_id"],
         "handoff_kind": "analysis-control/qualification",
-        "metadata_digest": accepted.get("metadata_digest"),
-        "outputs_digest": accepted.get("outputs_digest"),
+        "metadata_digest": accepted_digests.get("metadata_digest"),
+        "outputs_digest": accepted_digests.get("outputs_digest"),
         "source_content_digest": accepted["source_digest_at_submit"],
         "source_experiment_id": accepted["source_experiment_id"],
         "source_revision": accepted["source_revision_at_submit"],
@@ -765,6 +789,7 @@ def _public_evidence(
     accepted_id: Any,
     accepted: Mapping[str, Any] | None,
     accepted_status: str | None,
+    accepted_digests: Mapping[str, str | None],
     result_id: Any,
     result_record: Mapping[str, Any] | None,
     scenario: Mapping[str, Any],
@@ -846,8 +871,8 @@ def _public_evidence(
                 "status": accepted_status,
                 "source_revision": accepted["source_revision_at_submit"],
                 "source_content_digest": accepted["source_digest_at_submit"],
-                "outputs_digest": accepted.get("outputs_digest"),
-                "metadata_digest": accepted.get("metadata_digest"),
+                "outputs_digest": accepted_digests.get("outputs_digest"),
+                "metadata_digest": accepted_digests.get("metadata_digest"),
             }
         ),
         "diagnosed_failure": diagnosed_failure,
@@ -886,6 +911,113 @@ def _public_evidence(
             "result_record_count": len(records),
         },
     }
+
+
+def _accepted_runtime_digests(
+    *,
+    verifier_events: Sequence[Mapping[str, Any]],
+    operation_events: Sequence[Mapping[str, Any]],
+    accepted_id: Any,
+    accepted_status: str | None,
+    result_id: Any,
+) -> dict[str, str | None]:
+    selected = {field: None for field in _RUNTIME_DIGEST_OPERATIONS}
+    if (
+        not isinstance(accepted_id, str)
+        or accepted_status != "Succeeded"
+        or not isinstance(result_id, int)
+    ):
+        return selected
+
+    terminal_sequence = _first_event_sequence(
+        operation_events,
+        operation_id="cromwell.get_workflow_status",
+        workflow_id=accepted_id,
+        provider_status="Succeeded",
+        response_status_code=200,
+    )
+    patch_sequence = _first_event_sequence(
+        operation_events,
+        operation_id="elabftw.patch_experiment",
+        experiment_id=result_id,
+        response_status_code=200,
+    )
+    if terminal_sequence is None or patch_sequence is None:
+        return selected
+
+    events_by_sequence = {
+        event.get("sequence"): event
+        for event in verifier_events
+        if isinstance(event.get("sequence"), int)
+    }
+    for field, (operation_id, path_suffix) in _RUNTIME_DIGEST_OPERATIONS.items():
+        expected_request = {
+            "method": "GET",
+            "path": f"/api/workflows/v1/{accepted_id}/{path_suffix}",
+            "query": {},
+            "body": None,
+        }
+        for operation_event in operation_events:
+            operation_sequence = operation_event.get("sequence")
+            payload = _payload(operation_event)
+            if (
+                not isinstance(operation_sequence, int)
+                or operation_sequence <= terminal_sequence
+                or operation_sequence >= patch_sequence
+                or operation_event.get("operation_id") != operation_id
+                or payload.get("workflow_id") != accepted_id
+                or payload.get("provider_status") != "Succeeded"
+                or payload.get("response_status_code") != 200
+            ):
+                continue
+            digest_event = events_by_sequence.get(operation_sequence + 1)
+            digest = (
+                digest_event.get("body_sha256")
+                if isinstance(digest_event, Mapping)
+                else None
+            )
+            if (
+                isinstance(digest_event, Mapping)
+                and digest_event.get("event_type")
+                == "world_response_digest_recorded"
+                and digest_event.get("operation_id") == operation_id
+                and digest_event.get("tool_id") == operation_id
+                and digest_event.get("tool_name") == operation_id
+                and digest_event.get("actor_id")
+                == operation_event.get("actor_id")
+                and digest_event.get("actor_role")
+                == operation_event.get("actor_role")
+                and digest_event.get("status_code") == 200
+                and digest_event.get("request") == expected_request
+                and isinstance(digest, str)
+                and _BODY_SHA256.fullmatch(digest)
+            ):
+                selected[field] = digest
+                break
+    return selected
+
+
+def _first_event_sequence(
+    events: Sequence[Mapping[str, Any]],
+    *,
+    operation_id: str,
+    workflow_id: str | None = None,
+    provider_status: str | None = None,
+    response_status_code: int | None = None,
+    experiment_id: int | None = None,
+) -> int | None:
+    index = _first_index(
+        events,
+        operation_id=operation_id,
+        workflow_id=workflow_id,
+        provider_status=provider_status,
+        response_status_code=response_status_code,
+        experiment_id=experiment_id,
+    )
+    if index is None:
+        return None
+    sequence = events[index].get("sequence")
+    return sequence if isinstance(sequence, int) else None
 
 
 def _first_index(

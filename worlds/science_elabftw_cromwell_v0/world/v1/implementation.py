@@ -718,17 +718,9 @@ class ScienceELabFTWCromwellWorld(WorldImplementationV1):
                 workflow_id,
             )
         workflow[f"{kind}_inspected"] = True
-        if kind == "outputs":
-            workflow["outputs_digest"] = canonical_digest(body["outputs"])
-        if kind == "metadata":
-            workflow["metadata_digest"] = canonical_digest(body)
         cromwell["workflows"][workflow_id] = workflow
         session.set_state("cromwell", cromwell)
         evidence: dict[str, Any] = {"evidence_kind": kind}
-        if kind == "outputs":
-            evidence["outputs_digest"] = canonical_digest(body["outputs"])
-        if kind == "metadata":
-            evidence["metadata_digest"] = canonical_digest(body)
         if kind == "logs":
             evidence["paths_dereferenced"] = False
             evidence["projected_log_paths"] = _projected_log_paths(body)

@@ -118,15 +118,19 @@ COMMON_PUBLIC_REQUIREMENTS = (
     ),
     (
         "SCI-PUB-005",
-        "outputs_digest is exactly 'sha256:' plus the lowercase SHA-256 hex digest "
-        "of canonical JSON (sorted keys, compact separators) of the outputs object "
-        "inside the body returned by cromwell.get_workflow_outputs.",
+        "Set outputs_digest by copying the top-level body_sha256 from the MCP "
+        "envelope returned by cromwell.get_workflow_outputs. That value is the "
+        "canonical SHA-256 digest of the sibling complete provider body. No shell "
+        "or code computation is required; do not recompute it from copied or "
+        "serialized text.",
     ),
     (
         "SCI-PUB-006",
-        "metadata_digest is exactly 'sha256:' plus the lowercase SHA-256 hex digest "
-        "of canonical JSON (sorted keys, compact separators) of the entire body "
-        "returned by cromwell.get_workflow_metadata.",
+        "Set metadata_digest by copying the top-level body_sha256 from the MCP "
+        "envelope returned by cromwell.get_workflow_metadata. That value is the "
+        "canonical SHA-256 digest of the sibling complete provider body. No shell "
+        "or code computation is required; do not recompute it from copied or "
+        "serialized text.",
     ),
     (
         "SCI-PUB-007",
@@ -629,7 +633,7 @@ def _handoff_metadata(
         render_outputs,
     )
 
-    outputs = render_outputs(cromwell_facts, "success", workflow_id)["outputs"]
+    outputs = render_outputs(cromwell_facts, "success", workflow_id)
     metadata = render_metadata(
         cromwell_facts,
         "success",
@@ -1081,7 +1085,7 @@ def _mutant_steps(
             )
         ),
         "outputs_digest": canonical_digest(
-            render_outputs(cromwell_facts, "failure", failed_id)["outputs"]
+            render_outputs(cromwell_facts, "failure", failed_id)
         ),
         "source_content_digest": failed_revision["content_digest"],
         "source_experiment_id": source["experiment_id"],
@@ -1374,6 +1378,14 @@ def build(world_root: Path = WORLD) -> None:
             "network_access_required": False,
             "hardware_execution_allowed": False,
             "scalar_reward_owned_here": False,
+            "mcp_body_digest_contract": {
+                "runtime_git_commit": "9fc984a",
+                "envelope_field": "body_sha256",
+                "digest_scope": "complete_provider_body",
+                "agent_computation_required": False,
+                "verifier_event_type": "world_response_digest_recorded",
+                "verifier_authority": "runtime_hidden_event",
+            },
             "verifier_complexity": {
                 "state_loads": 1,
                 "event_passes": 1,
@@ -1420,6 +1432,7 @@ def build(world_root: Path = WORLD) -> None:
             "default_actor_role": "scientist_agent",
             "required_runtime_capabilities": [
                 "actors",
+                "mcp_response_body_sha256",
                 "role_scoped_tools",
                 "transactions",
                 "clock",
@@ -1555,7 +1568,7 @@ def _write_world_documents(episodes: list[dict[str, Any]]) -> None:
             "runtime": {
                 "package": "datalox-gated-runtime",
                 "tested_version": "0.1.0",
-                "tested_git_commit": "15689da",
+                "tested_git_commit": "9fc984a",
                 "repository": (
                     "https://github.com/Oshawott324/datalox-gated-runtime"
                 ),
@@ -1608,6 +1621,15 @@ def _write_world_documents(episodes: list[dict[str, Any]]) -> None:
         "`datalox-world://cromwell/...` and are never dereferenced. All writes "
         "remain in the run-private SQLite world state. Network and hardware "
         "actions are inexpressible.\n\n"
+        "At the MCP surface, datalox-gated-runtime commit `9fc984a` supplies a "
+        "top-level `body_sha256` beside each provider `body`. It is the runtime "
+        "canonical SHA-256 digest of that complete sibling body. The agent copies "
+        "this envelope value into handoff metadata; it does not recompute a digest. "
+        "The envelope field is runtime-defined and does not modify the "
+        "provider-shaped response body. Hidden verification joins the copied value "
+        "to the runtime-owned `world_response_digest_recorded` event for the "
+        "successful accepted workflow call; projected world state does not "
+        "recompute or store the expected response digest.\n\n"
         "No production equivalence, reset equivalence, arbitrary Cromwell "
         "business logic, biological analysis, or scientific inference is "
         "claimed.\n",
@@ -1622,14 +1644,11 @@ def _write_world_documents(episodes: list[dict[str, Any]]) -> None:
         "a referenced in-flight UUID. Diagnose Failed from both logs and metadata. "
         "Abort a superseded Running workflow and observe Aborted. Inspect outputs "
         "and metadata only after Succeeded.\n\n"
-        "Compute required digests with code:\n\n"
-        "```python\n"
-        "import hashlib, json\n"
-        "\n"
-        "def digest(value):\n"
-        "    body = json.dumps(value, sort_keys=True, separators=(\",\", \":\"))\n"
-        "    return \"sha256:\" + hashlib.sha256(body.encode()).hexdigest()\n"
-        "```\n\n"
+        "For `outputs_digest`, copy the top-level `body_sha256` from the "
+        "`cromwell.get_workflow_outputs` MCP envelope. For `metadata_digest`, copy "
+        "the top-level `body_sha256` from the `cromwell.get_workflow_metadata` MCP "
+        "envelope. Each value digests the complete sibling `body`; do not "
+        "recompute it with shell, code, or copied response text.\n\n"
         "PATCH metadata is a JSON string. Call the result an "
         "analysis-control/qualification handoff. Do not claim the captured WDL "
         "performed biological or scientific inference.\n",

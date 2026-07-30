@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -14,6 +15,11 @@ import pytest
 pytest.importorskip("datalox_gated_runtime.world_v1.admission")
 
 import datalox_gated_runtime
+from datalox_gated_runtime.ledger import SessionLedger
+from datalox_gated_runtime.mcp_registry import McpToolRegistry
+from datalox_gated_runtime.models import McpGateConfig
+from datalox_gated_runtime.policy import GatePolicy
+from datalox_gated_runtime.runtime import GatedRuntime
 from datalox_gated_runtime.world_v1.admission import admit_world
 from datalox_gated_runtime.world_v1.admission_runtime import (
     runtime_admission_callbacks,
@@ -73,6 +79,11 @@ FAMILY_PUBLIC_REQUIREMENT_IDS = {
     "analysis_superseded_abort_v1": "SCI-PUB-SA-001",
     "analysis_stale_revision_v1": "SCI-PUB-SR-001",
 }
+
+
+class _UnexpectedMcpRuntime:
+    async def handle(self, call: object) -> object:
+        raise AssertionError(f"world tool unexpectedly reached MCP upstream: {call}")
 
 
 def _subprocess_env() -> dict[str, str]:
@@ -173,11 +184,32 @@ def test_world_build_is_deterministic_self_contained_and_grounded() -> None:
         "missing_world_evidence": [],
     }
     compatibility = json.loads((WORLD / "compatibility.json").read_text())
-    assert compatibility["runtime"]["tested_git_commit"] == "15689da"
+    assert compatibility["runtime"]["tested_git_commit"] == "9fc984a"
     assert compatibility["providers"]["elabftw"]["captured_version"] == "5.6.10"
     assert compatibility["providers"]["cromwell"]["captured_version"] == "92"
+    construction = json.loads(
+        (WORLD / "world" / "v1" / "construction.json").read_text()
+    )
+    assert construction["mcp_body_digest_contract"] == {
+        "agent_computation_required": False,
+        "digest_scope": "complete_provider_body",
+        "envelope_field": "body_sha256",
+        "runtime_git_commit": "9fc984a",
+        "verifier_authority": "runtime_hidden_event",
+        "verifier_event_type": "world_response_digest_recorded",
+    }
+    skill = (WORLD / "skills" / "SKILL.md").read_text()
+    assert skill.count("top-level `body_sha256`") == 2
+    assert "complete sibling `body`" in skill
+    assert "do not recompute it with shell, code" in skill
+    assert "hashlib" not in skill
+    assert "json.dumps" not in skill
+    assert not re.search(r"sha256:[0-9a-f]{64}", skill)
 
     manifest = json.loads((WORLD / "world" / "manifest.json").read_text())
+    assert "mcp_response_body_sha256" in manifest[
+        "required_runtime_capabilities"
+    ]
     assert set(manifest["content_hashes"]) == {
         path.relative_to(WORLD).as_posix()
         for path in WORLD.rglob("*")
@@ -278,8 +310,21 @@ def test_agent_visible_task_briefs_publish_complete_family_contracts() -> None:
         assert "only through clock.advance" in visible
         assert "Repeated polling without clock.advance neither progresses" in visible
         assert "re-read the source immediately before creating or writing" in visible
-        assert "outputs object inside the body returned" in visible
-        assert "entire body returned by cromwell.get_workflow_metadata" in visible
+        assert (
+            "top-level body_sha256 from the MCP envelope returned by "
+            "cromwell.get_workflow_outputs"
+        ) in visible
+        assert (
+            "top-level body_sha256 from the MCP envelope returned by "
+            "cromwell.get_workflow_metadata"
+        ) in visible
+        assert visible.count(
+            "canonical SHA-256 digest of the sibling complete provider body"
+        ) == 2
+        assert visible.count("No shell or code computation is required") == 2
+        assert visible.count("do not recompute") == 2
+        assert "hashlib" not in visible
+        assert "json.dumps" not in visible
         assert "exactly these eight keys and no others" in visible
         assert RESULT_TITLE in visible
         assert RESULT_BODY in visible
@@ -559,6 +604,178 @@ def test_reference_handoff_has_exact_joins_and_vector_only_fast_verifier(
             timings.append((time.perf_counter() - started) * 1000)
         p95 = sorted(timings)[int(len(timings) * 0.95) - 1]
         assert p95 < 100
+    finally:
+        backend.close()
+
+
+def test_dynamic_mcp_client_copies_runtime_digests_without_hidden_trajectory(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "dynamic-runtime-mcp-body-digests"
+    initialize_world_bundle_session(
+        source_bundle_dir=WORLD,
+        run_dir=run_dir,
+        episode_id="science-analysis-000",
+    )
+    backend = WorldBundleBackend(run_dir=run_dir)
+    runtime = GatedRuntime(
+        policy=GatePolicy.default(),
+        response_cases=[],
+        ledger=SessionLedger(path=run_dir / "ledger.jsonl"),
+        world_backend=backend,
+    )
+    registry = McpToolRegistry(
+        run_dir=run_dir,
+        config=McpGateConfig(),
+        mcp_runtime=_UnexpectedMcpRuntime(),
+        http_runtime=runtime,
+        world_backend=backend,
+    )
+
+    def call(tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
+        result = asyncio.run(registry.call_tool(tool_name, arguments))
+        assert result.isError is False
+        envelope = result.structuredContent
+        assert isinstance(envelope, dict)
+        return envelope
+
+    try:
+        task = backend.task()
+        assert task is not None
+        match = re.search(r"source experiment ([0-9]+)", task.instructions)
+        assert match is not None
+        source_id = int(match.group(1))
+
+        source_envelope = call(
+            "elabftw.get_experiment",
+            {"experiment_id": source_id},
+        )
+        source_body = source_envelope["body"]
+        assert isinstance(source_body, dict)
+        source_metadata = source_body["metadata_decoded"]
+        assert isinstance(source_metadata, dict)
+
+        submit_envelope = call(
+            "cromwell.submit_workflow",
+            {
+                "workflowSource": source_metadata["workflow_source"],
+                "workflowInputs": source_metadata["workflow_inputs"],
+            },
+        )
+        submit_body = submit_envelope["body"]
+        assert isinstance(submit_body, dict)
+        workflow_id = submit_body["id"]
+        assert isinstance(workflow_id, str)
+
+        initial_status = call(
+            "cromwell.get_workflow_status",
+            {"workflow_id": workflow_id},
+        )
+        assert initial_status["status_code"] == 404
+        call("clock.advance", {"seconds": 5})
+        submitted_status = call(
+            "cromwell.get_workflow_status",
+            {"workflow_id": workflow_id},
+        )
+        assert submitted_status["body"]["status"] == "Submitted"
+        call("clock.advance", {"seconds": 5})
+        running_status = call(
+            "cromwell.get_workflow_status",
+            {"workflow_id": workflow_id},
+        )
+        assert running_status["body"]["status"] == "Running"
+        call("clock.advance", {"seconds": 20})
+        succeeded_status = call(
+            "cromwell.get_workflow_status",
+            {"workflow_id": workflow_id},
+        )
+        assert succeeded_status["body"]["status"] == "Succeeded"
+
+        outputs_envelope = call(
+            "cromwell.get_workflow_outputs",
+            {"workflow_id": workflow_id},
+        )
+        metadata_envelope = call(
+            "cromwell.get_workflow_metadata",
+            {"workflow_id": workflow_id},
+        )
+        assert re.fullmatch(
+            r"sha256:[0-9a-f]{64}",
+            str(outputs_envelope["body_sha256"]),
+        )
+        assert re.fullmatch(
+            r"sha256:[0-9a-f]{64}",
+            str(metadata_envelope["body_sha256"]),
+        )
+
+        current_source_envelope = call(
+            "elabftw.get_experiment",
+            {"experiment_id": source_id},
+        )
+        current_source_body = current_source_envelope["body"]
+        assert isinstance(current_source_body, dict)
+        current_source_metadata = current_source_body["metadata_decoded"]
+        assert isinstance(current_source_metadata, dict)
+
+        create_envelope = call("elabftw.create_experiment", {})
+        location = create_envelope["headers"]["location"]
+        assert isinstance(location, str)
+        result_id = int(location.rsplit("/", 1)[1])
+
+        patch_metadata = {
+            "cromwell_terminal_status": "Succeeded",
+            "cromwell_workflow_id": workflow_id,
+            "handoff_kind": "analysis-control/qualification",
+            "metadata_digest": metadata_envelope["body_sha256"],
+            "outputs_digest": outputs_envelope["body_sha256"],
+            "source_content_digest": current_source_metadata[
+                "source_content_digest"
+            ],
+            "source_experiment_id": source_id,
+            "source_revision": current_source_metadata["source_revision"],
+        }
+        call(
+            "elabftw.patch_experiment",
+            {
+                "experiment_id": result_id,
+                "title": RESULT_TITLE,
+                "body": RESULT_BODY,
+                "metadata": json.dumps(patch_metadata, sort_keys=True),
+            },
+        )
+        result_readback = call(
+            "elabftw.get_experiment",
+            {"experiment_id": result_id},
+        )
+        assert result_readback["body"]["metadata_decoded"] == patch_metadata
+
+        workflow_state = backend.session.get_state("cromwell")["workflows"][
+            workflow_id
+        ]
+        assert "outputs_digest" not in workflow_state
+        assert "metadata_digest" not in workflow_state
+
+        verification = backend.verify().to_dict()
+        assert verification["passed"] is True
+        accepted = verification["public_evidence"]["accepted_workflow"]
+        assert accepted["outputs_digest"] == outputs_envelope["body_sha256"]
+        assert accepted["metadata_digest"] == metadata_envelope["body_sha256"]
+        runtime_digest_events = [
+            event
+            for event in backend.session.verifier_events()
+            if event["event_type"] == "world_response_digest_recorded"
+            and event["operation_id"]
+            in {
+                "cromwell.get_workflow_outputs",
+                "cromwell.get_workflow_metadata",
+            }
+        ]
+        assert {
+            event["body_sha256"] for event in runtime_digest_events
+        } == {
+            outputs_envelope["body_sha256"],
+            metadata_envelope["body_sha256"],
+        }
     finally:
         backend.close()
 

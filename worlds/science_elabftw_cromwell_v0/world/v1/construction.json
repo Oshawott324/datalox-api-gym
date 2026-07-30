@@ -9,6 +9,14 @@
     "analysis_stale_revision_v1"
   ],
   "hardware_execution_allowed": false,
+  "mcp_body_digest_contract": {
+    "agent_computation_required": false,
+    "digest_scope": "complete_provider_body",
+    "envelope_field": "body_sha256",
+    "runtime_git_commit": "9fc984a",
+    "verifier_authority": "runtime_hidden_event",
+    "verifier_event_type": "world_response_digest_recorded"
+  },
   "network_access_required": false,
   "provider_projects": [
     "eLabFTW",
