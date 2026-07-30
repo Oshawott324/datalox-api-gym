@@ -1,8 +1,35 @@
 # Reference-Conformant Science Worlds
 
 Date: 2026-07-26
-Status: implementation boundary and first vertical-slice plan
+Status: architecture boundary with execution status through `c748840`
 Audience: API Gym engineering, training-team reviewers, and scientific reviewers
+
+## Execution Status At 2026-07-30
+
+The authoritative completion record is the
+[2026-07-30 science grounding execution report](reports/2026-07-30-science-grounding-execution-report.md).
+This status supersedes earlier planning or inventory statements where they
+conflict; the architecture principles below remain unchanged.
+
+- eLabFTW 5.6.10 behavior capture and Cromwell 92 success, failure, and abort
+  captures are complete for their exact admitted programs.
+- `science_elabftw_cromwell_v0` is the admitted first six-family
+  eLabFTW-Cromwell world: twelve episodes, exact-code negatives, and
+  runtime-hidden response digest evidence. Codex passed 4/6 and Claude Sonnet
+  passed 5/6 at the frozen `20dd88a` API Gym and `9fc984a` runtime commits.
+  These are integration baselines, not a statistically meaningful
+  leaderboard.
+- The Galaxy public pack records 19 provider-observed GET operations, 43
+  contract-shaped candidates, and no provider-observed writes. The later
+  pinned local run completed history creation, FASTA upload,
+  `queued -> running -> ok`, dataset/provenance reads, exact 44-byte readback,
+  and purge; the bounded projection conformance report passed.
+- Galaxy AMR composition is blocked. All five exact StarAMR workflow tool
+  versions returned HTTP 404, so workflow import and invocation were not
+  attempted, no StarAMR or AMR analysis ran, and no Galaxy science world was
+  composed.
+- No private provider was promoted because no actual private tenant, sandbox,
+  credential, or partner capture exists.
 
 ## Goal
 
@@ -270,18 +297,35 @@ A scientific reviewer should judge a different surface:
 
 Neither reviewer should be asked to decide internal repository boundaries.
 
-## Immediate Work Order
+## Current Work Order
 
-1. Fix the scheduled-event delivery assertion used by asynchronous workflows.
-2. Implement the generic offline reference-conformance core.
-3. Execute eLabFTW create-update-read against a disposable pinned service.
-4. Store one sanitized connected sequence and explicit known gaps.
-5. Implement the bounded eLabFTW projection.
-6. Run differential conformance against the reference sequence.
-7. Repeat the reference process for MinIO and the exact Galaxy AMR workflow.
-8. Execute the complete three-service reference workflow twice.
-9. Ask Zheng and one scientific reviewer to evaluate the resulting evidence.
-10. Build the fast resettable AMR analysis world only after those gates pass.
+Completed:
+
+1. Implemented the generic offline reference-conformance core used by the
+   pinned runtime.
+2. Executed and captured the scoped eLabFTW behavior and Cromwell success,
+   failure, and abort programs against pinned disposable services.
+3. Built and admitted the bounded six-family eLabFTW-Cromwell world.
+4. Captured the public Galaxy GET surface and a pinned local
+   history/upload/readback/purge lifecycle.
+5. Made the bounded Galaxy projection pass conformance for the selected
+   captured trace.
+
+Blocked and next:
+
+1. Install and immutably pin all five exact StarAMR workflow tool versions in
+   a disposable Galaxy fixture; require all five tool lookups to pass before
+   workflow import.
+2. Import and invoke the exact pinned AMR workflow, capture terminal outputs,
+   completeness, provenance, native failures, teardown, repeatability, and
+   reset. Do not compose a world before this provider-executed gate passes.
+3. Execute and conform the pinned MinIO current/stale artifact lifecycle if the
+   original three-service AMR slice remains the target.
+4. Compose and admit the AMR world only after the Galaxy tool-stack and
+   reference-workflow gates pass, then obtain training-system and scientific
+   review.
+5. Keep private providers outside promoted worlds until actual authorized
+   access produces sanitizable execution evidence.
 
 Opentrons is not part of this first slice. Its public read surface is grounded,
 but its non-GET protocol, analysis, run, and command lifecycle has not yet been
