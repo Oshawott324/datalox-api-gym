@@ -1794,7 +1794,18 @@ def dispatch_tool(run_dir: Path, *, name: str,
                   arguments: dict[str, Any]) -> dict[str, Any]:
     """Dispatch a tool call by name, resolving LabState from the run directory."""
     lab_state = get_state(run_dir)
-    return _dispatch(lab_state, name=name, arguments=arguments)
+    result = _dispatch(lab_state, name=name, arguments=arguments)
+
+    from api_gym.worlds.pylabrobot_star_v0.replay import get_public_replay
+
+    recorder = get_public_replay(run_dir)
+    if recorder is not None:
+        recorder.record_completed_tool(
+            operation_id=name,
+            arguments=arguments,
+            simulated_at_seconds=lab_state.clock.current_time,
+        )
+    return result
 
 
 def _dispatch(lab_state: LabState, *, name: str,

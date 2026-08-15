@@ -20,7 +20,12 @@ dependencies = [
 api-gym = "api_gym.cli:app"
 
 [project.optional-dependencies]
+lab = [
+  "pylabrobot==0.2.1",
+]
 dev = [
+  "httpx2",
+  "pylabrobot==0.2.1",
   "pytest>=8.2",
 ]
 

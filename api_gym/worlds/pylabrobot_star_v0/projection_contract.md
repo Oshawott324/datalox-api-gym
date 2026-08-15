@@ -417,3 +417,41 @@ Currently 11 scenarios have strict admission coverage (56/56 cases passing).
 | No multi-liquid mixing | Liquid enum exists in PLR but not used in scenarios |
 | `pump_run_volume` requires calibration | `PumpDryRunBackend` lacks calibration data; `TypeError` on volume-based pumping |
 | No plate washing | PLR `plate_washing` module is empty (no API surface) |
+
+## 10. Public Visual Replay
+
+`replay.py` provides an opt-in `STARReplayRecorder` for hosted or published
+runs. It attaches to the sampled world's actual `LiquidHandler`, records the
+commands emitted by PyLabRobot's `Visualizer`, groups them by completed API Gym
+tool call, and writes `public_replay_projection.json` atomically.
+
+The recorder is deliberately not enabled for ordinary sampling or admission,
+so generating benchmark tasks does not create a thread or visualization
+artifact. A host starts and stops it explicitly:
+
+```python
+start_public_replay(run_dir)
+# Run agent tool calls through the normal world dispatcher.
+stop_public_replay(run_dir)
+```
+
+The artifact declares the tested compatibility pair:
+
+```text
+capture: PyLabRobot 0.2.1
+viewer:  PyLabRobot 0.2.2
+replay protocol: 0.1.0
+```
+
+The split is intentional. Version 0.2.1 preserves the admitted benchmark's
+volume-tracking behavior but its wheel omits visualizer image assets. Version
+0.2.2 supplies the complete viewer assets, but running the benchmark itself on
+0.2.2 changes the OT-2 serial-dilution final-volume result. Datalox Gated
+Runtime validates both versions before publishing or displaying the replay.
+
+The visual replay covers renderer-native STAR deck, resource, tip, and liquid
+state changes. It does not claim continuous arm motion. Standalone instruments
+such as the plate reader, centrifuge, and thermocycler are represented in the
+world state and tool trace but are not yet rendered in the PyLabRobot deck
+view. A later multi-service timeline should compose those views without
+inventing PyLabRobot commands for instruments outside its visual root.

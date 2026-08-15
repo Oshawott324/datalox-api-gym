@@ -196,14 +196,12 @@ def create_plate(name: str) -> Any:
 
 def create_tip_rack(name: str, tip_volume_ul: int = 300,
                     with_tips: bool = True) -> Any:
-    """Create a tip rack.
+    """Create the Hamilton 96-position 300 uL rack used by the STAR carrier."""
+    if tip_volume_ul != 300:
+        raise ValueError("pylabrobot_star_v0 supports the Hamilton 300 uL tip rack")
+    from pylabrobot.resources.hamilton.tip_racks import hamilton_96_tiprack_300uL
 
-    Uses the OT-2 tip rack factory for broad compatibility.
-    Hamilton-specific tip racks (hamilton_96_tiprack_300uL, etc.) can
-    be used when STARChatterboxBackend is available.
-    """
-    from api_gym.worlds.pylabrobot_lab_v0.state import create_tip_rack as _ctr
-    return _ctr(name, with_tips=with_tips)
+    return hamilton_96_tiprack_300uL(name=name, with_tips=with_tips)
 
 
 def create_trough(name: str, volume_ml: int = 60) -> Any:
