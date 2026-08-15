@@ -31,6 +31,12 @@ def test_serial_dilution_visualization_is_public_and_synchronized(tmp_path: Path
         }
     ]
     assert document["steps"][-1]["render"]["commands"] == []
+    assert [step["scene"]["kind"] for step in document["steps"][-3:]] == [
+        "instrument",
+        "instrument",
+        "evidence",
+    ]
+    assert all(step["scene"]["kind"] == "process" for step in document["steps"][:20])
     assert document["steps"][-1]["artifact_ids"] == ["protocol-submission"]
     assert document["outcome"] is None
     assert "/Users/" not in destination.read_text(encoding="utf-8")

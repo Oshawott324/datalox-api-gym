@@ -174,6 +174,7 @@ def _visual_step(
         "duration_ms": _duration_ms(name),
         "status": "completed",
         "render": {"commands": replay_step["commands"]},
+        "scene": _operation_scene(name, arguments, result),
         "facts": _facts(name, arguments, result),
         "state_changes": _state_changes(index, name, arguments, result),
         "artifact_ids": artifact_ids,
@@ -192,6 +193,18 @@ def _submission_step(operation: dict[str, Any], *, sequence: int) -> dict[str, A
         "duration_ms": 1100,
         "status": "completed",
         "render": {"commands": []},
+        "scene": {
+            "kind": "evidence",
+            "label": "Protocol submission",
+            "data": {
+                "decision": result["decision"],
+                "rationale": result["rationale"],
+                "evidence": [
+                    {"label": "Readout", "value": result["evidence_readout_id"]},
+                    {"label": "Target", "value": result["target_well"]},
+                ],
+            },
+        },
         "facts": [
             {"label": "Decision", "value": result["decision"], "unit": None, "tone": "success"},
             {
@@ -226,6 +239,106 @@ def _operation_copy(
         wells = ", ".join(result["wells"])
         return f"Read OD600 for {result['plate']}", f"The simulated reader records 600 nm values for {wells}."
     raise ValueError(f"unsupported visualization operation: {name}")
+
+
+def _operation_scene(
+    name: str,
+    arguments: dict[str, Any],
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    actor = "Hamilton STAR channel 1"
+    if name == "pick_up_tips":
+        return _process_scene(
+            actor=actor,
+            action="Mount clean tip",
+            source=arguments["tip_refs"][0],
+            target=actor,
+            quantity=None,
+            detail="The selected rack position is consumed and the tip is mounted.",
+        )
+    if name == "aspirate":
+        return _process_scene(
+            actor=actor,
+            action="Aspirate liquid",
+            source=arguments["source"],
+            target=actor,
+            quantity={"value": f"{float(result['volume_ul']):g}", "unit": "uL"},
+            detail="Liquid moves from the declared source into the mounted tip.",
+        )
+    if name == "dispense":
+        return _process_scene(
+            actor=actor,
+            action="Dispense liquid",
+            source=actor,
+            target=arguments["target"],
+            quantity={"value": f"{float(result['volume_ul']):g}", "unit": "uL"},
+            detail="The destination volume changes by the recorded transfer amount.",
+        )
+    if name == "discard_tips":
+        return _process_scene(
+            actor=actor,
+            action="Eject used tip",
+            source=actor,
+            target="Waste container",
+            quantity=None,
+            detail="The channel returns to an empty tip state before the next transfer.",
+        )
+    if name == "read_absorbance":
+        return {
+            "kind": "instrument",
+            "label": "Simulated measurement",
+            "data": {
+                "instrument": "Simulated absorbance reader",
+                "action": "Read optical density at 600 nm",
+                "sample": result["plate"],
+                "progress_percent": 100,
+                "metrics": [
+                    {
+                        "label": "Wavelength",
+                        "value": str(result["wavelength_nm"]),
+                        "unit": "nm",
+                    },
+                    {
+                        "label": "Wells read",
+                        "value": str(len(result["wells"])),
+                        "unit": None,
+                    },
+                    {
+                        "label": "Readout",
+                        "value": result["readout_id"],
+                        "unit": None,
+                    },
+                ],
+                "series": [
+                    {"label": well, "value": result["values"][well]}
+                    for well in result["wells"]
+                ],
+            },
+        }
+    raise ValueError(f"unsupported visualization operation: {name}")
+
+
+def _process_scene(
+    *,
+    actor: str,
+    action: str,
+    source: str,
+    target: str,
+    quantity: dict[str, str] | None,
+    detail: str,
+) -> dict[str, Any]:
+    return {
+        "kind": "process",
+        "label": "Recorded liquid-handler state",
+        "data": {
+            "actor": actor,
+            "action": action,
+            "source": source,
+            "target": target,
+            "quantity": quantity,
+            "detail": detail,
+        },
+    }
 
 
 def _facts(
