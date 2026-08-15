@@ -190,3 +190,11 @@ state files such as `state.sqlite`.
 - labware, transfer, readout, note, and protocol decision tools
 - verifier checks dry-run workflow invariants
 - API semantics should be grounded from an explicit UniteLabs OpenAPI contract
+
+`pylabrobot_science_v0`
+
+- instrument-rich dry-run science workflow world
+- thermocycler, incubator-shaker, plate-reader, powder-dispenser, and scale
+  interfaces from the installed PyLabRobot package
+- benchmark-defined biological and measurement dynamics are explicitly
+  separated from PyLabRobot interface grounding

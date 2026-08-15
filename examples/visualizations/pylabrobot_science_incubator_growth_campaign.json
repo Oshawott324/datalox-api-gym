@@ -1,0 +1,3031 @@
+{
+  "artifacts": [
+    {
+      "data": {
+        "artifact_id": "od600-001",
+        "barcode": "CULTURE-BC-1042",
+        "grounding": "pylabrobot_plate_reader_with_benchmark_growth_projection",
+        "plate_id": "culture_plate_01",
+        "plate_version": 1,
+        "time_s": 0.0,
+        "values": {
+          "A1": 0.075,
+          "A2": 0.0765,
+          "A3": 0.078,
+          "A4": 0.0795,
+          "A5": 0.081,
+          "A6": 0.0825,
+          "A7": 0.084,
+          "A8": 0.0855
+        },
+        "wavelength_nm": 600,
+        "wells": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8"
+        ]
+      },
+      "id": "od600-001",
+      "label": "OD600 timepoint 001",
+      "summary": "Deterministic dry-run evidence produced by the declared benchmark projection.",
+      "type": "simulated_measurement"
+    },
+    {
+      "data": {
+        "artifact_id": "od600-002",
+        "barcode": "CULTURE-BC-1042",
+        "grounding": "pylabrobot_plate_reader_with_benchmark_growth_projection",
+        "plate_id": "culture_plate_01",
+        "plate_version": 1,
+        "time_s": 7200.0,
+        "values": {
+          "A1": 0.1967,
+          "A2": 0.199,
+          "A3": 0.2013,
+          "A4": 0.2037,
+          "A5": 0.206,
+          "A6": 0.2083,
+          "A7": 0.2106,
+          "A8": 0.213
+        },
+        "wavelength_nm": 600,
+        "wells": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8"
+        ]
+      },
+      "id": "od600-002",
+      "label": "OD600 timepoint 002",
+      "summary": "Deterministic dry-run evidence produced by the declared benchmark projection.",
+      "type": "simulated_measurement"
+    },
+    {
+      "data": {
+        "artifact_id": "od600-003",
+        "barcode": "CULTURE-BC-1042",
+        "grounding": "pylabrobot_plate_reader_with_benchmark_growth_projection",
+        "plate_id": "culture_plate_01",
+        "plate_version": 1,
+        "time_s": 14400.0,
+        "values": {
+          "A1": 0.5591,
+          "A2": 0.5638,
+          "A3": 0.5686,
+          "A4": 0.5734,
+          "A5": 0.5782,
+          "A6": 0.583,
+          "A7": 0.5878,
+          "A8": 0.5925
+        },
+        "wavelength_nm": 600,
+        "wells": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8"
+        ]
+      },
+      "id": "od600-003",
+      "label": "OD600 timepoint 003",
+      "summary": "Deterministic dry-run evidence produced by the declared benchmark projection.",
+      "type": "simulated_measurement"
+    },
+    {
+      "data": {
+        "artifact_id": "od600-004",
+        "barcode": "CULTURE-BC-1042",
+        "grounding": "pylabrobot_plate_reader_with_benchmark_growth_projection",
+        "plate_id": "culture_plate_01",
+        "plate_version": 1,
+        "time_s": 21600.0,
+        "values": {
+          "A1": 0.9867,
+          "A2": 0.9944,
+          "A3": 1.0021,
+          "A4": 1.0098,
+          "A5": 1.0175,
+          "A6": 1.0251,
+          "A7": 1.0328,
+          "A8": 1.0405
+        },
+        "wavelength_nm": 600,
+        "wells": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8"
+        ]
+      },
+      "id": "od600-004",
+      "label": "OD600 timepoint 004",
+      "summary": "Deterministic dry-run evidence produced by the declared benchmark projection.",
+      "type": "simulated_measurement"
+    },
+    {
+      "data": {
+        "artifact_id": "od600-005",
+        "barcode": "CULTURE-BC-1042",
+        "grounding": "pylabrobot_plate_reader_with_benchmark_growth_projection",
+        "plate_id": "culture_plate_01",
+        "plate_version": 1,
+        "time_s": 28800.0,
+        "values": {
+          "A1": 1.1671,
+          "A2": 1.176,
+          "A3": 1.1849,
+          "A4": 1.1938,
+          "A5": 1.2027,
+          "A6": 1.2116,
+          "A7": 1.2205,
+          "A8": 1.2294
+        },
+        "wavelength_nm": 600,
+        "wells": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8"
+        ]
+      },
+      "id": "od600-005",
+      "label": "OD600 timepoint 005",
+      "summary": "Deterministic dry-run evidence produced by the declared benchmark projection.",
+      "type": "simulated_measurement"
+    }
+  ],
+  "outcome": null,
+  "presentation": {
+    "agent": null,
+    "mode": "dry_run",
+    "status": "completed",
+    "subject": "Incubator-shaker workflow",
+    "summary": "Plate custody, chamber ramp, conditioned shaking exposure, and five OD600 timepoints.",
+    "title": "Eight-hour shaking-incubation campaign"
+  },
+  "renderer": {
+    "id": "pylabrobot_visualizer_v1",
+    "payload": {
+      "capture_package_version": "0.2.1",
+      "initialization": [
+        {
+          "data": {
+            "resource": {
+              "barcode": null,
+              "category": null,
+              "children": [
+                {
+                  "barcode": null,
+                  "category": null,
+                  "children": [],
+                  "location": {
+                    "type": "Coordinate",
+                    "x": 80,
+                    "y": 220,
+                    "z": 0
+                  },
+                  "model": null,
+                  "name": "orbital_incubator",
+                  "parent_name": "science_workcell",
+                  "preferred_pickup_location": null,
+                  "rotation": {
+                    "type": "Rotation",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "size_x": 180,
+                  "size_y": 160,
+                  "size_z": 120,
+                  "type": "Resource"
+                },
+                {
+                  "barcode": null,
+                  "category": null,
+                  "children": [],
+                  "location": {
+                    "type": "Coordinate",
+                    "x": 340,
+                    "y": 220,
+                    "z": 0
+                  },
+                  "model": null,
+                  "name": "od600_reader",
+                  "parent_name": "science_workcell",
+                  "preferred_pickup_location": null,
+                  "rotation": {
+                    "type": "Rotation",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "size_x": 180,
+                  "size_y": 160,
+                  "size_z": 120,
+                  "type": "Resource"
+                },
+                {
+                  "barcode": null,
+                  "category": null,
+                  "children": [],
+                  "location": {
+                    "type": "Coordinate",
+                    "x": 600,
+                    "y": 220,
+                    "z": 0
+                  },
+                  "model": null,
+                  "name": "culture_plate_01",
+                  "parent_name": "science_workcell",
+                  "preferred_pickup_location": null,
+                  "rotation": {
+                    "type": "Rotation",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "size_x": 180,
+                  "size_y": 160,
+                  "size_z": 120,
+                  "type": "Resource"
+                }
+              ],
+              "location": null,
+              "model": null,
+              "name": "science_workcell",
+              "parent_name": null,
+              "preferred_pickup_location": null,
+              "rotation": {
+                "type": "Rotation",
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "size_x": 1000,
+              "size_y": 650,
+              "size_z": 200,
+              "type": "Resource"
+            }
+          },
+          "event": "set_root_resource"
+        }
+      ],
+      "viewer_package_version": "0.2.2"
+    },
+    "protocol_version": "0.1.0"
+  },
+  "resources": [
+    {
+      "attributes": {},
+      "id": "orbital_incubator",
+      "label": "Orbital incubator",
+      "status": "ready",
+      "summary": "Declared instrument or sample in the dry-run workflow.",
+      "type": "incubator_shaker"
+    },
+    {
+      "attributes": {},
+      "id": "od600_reader",
+      "label": "OD600 reader",
+      "status": "ready",
+      "summary": "Declared instrument or sample in the dry-run workflow.",
+      "type": "plate_reader"
+    },
+    {
+      "attributes": {},
+      "id": "culture_plate_01",
+      "label": "Culture plate CULTURE-BC-1042",
+      "status": "ready",
+      "summary": "Declared instrument or sample in the dry-run workflow.",
+      "type": "plate"
+    }
+  ],
+  "run_id": "incubator_growth_campaign-seed-1",
+  "schema_version": "datalox_visualization_run_v1",
+  "steps": [
+    {
+      "artifact_ids": [
+        "od600-001"
+      ],
+      "description": "The separate reader records A1-A8 at 600 nm for this timepoint.",
+      "duration_ms": 2200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "reader measure od600"
+        }
+      ],
+      "operation_id": "reader_measure_od600-1",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Measure the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 0.0,
+            "progress_percent": 0,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "00:00",
+            "elapsed_seconds": 0.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": false,
+            "rpm": 0
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 22.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.02
+              },
+              "state": "heating"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 1,
+      "simulated_at": "T+0.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Measure the culture plate"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The chamber begins a declared 22 to 30 C temperature ramp.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator set temperature"
+        }
+      ],
+      "operation_id": "incubator_set_temperature-2",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Set incubation to 30 C",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 0.0,
+            "progress_percent": 0,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "00:00",
+            "elapsed_seconds": 0.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": false,
+            "rpm": 0
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 22.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.02
+              },
+              "state": "heating"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 2,
+      "simulated_at": "T+0.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Set incubation to 30 C"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The incubator holds the culture plate at 250 rpm while stored.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator start shaking"
+        }
+      ],
+      "operation_id": "incubator_start_shaking-3",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Start orbital shaking",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 0.0,
+            "progress_percent": 0,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "00:00",
+            "elapsed_seconds": 0.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 22.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.02
+              },
+              "state": "heating"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 3,
+      "simulated_at": "T+0.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Start orbital shaking"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Plate custody moves from the loading tray into a declared storage position.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator store plate"
+        }
+      ],
+      "operation_id": "incubator_store_plate-4",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Store the plate in slot S04",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 0.0,
+            "progress_percent": 0,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "00:00",
+            "elapsed_seconds": 0.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 22.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.02
+              },
+              "state": "heating"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 4,
+      "simulated_at": "T+0.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Store the plate in slot S04"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Logical time accumulates only temperature-conditioned shaking exposure.",
+      "duration_ms": 1800,
+      "facts": [
+        {
+          "label": "Time",
+          "tone": "info",
+          "unit": "s",
+          "value": "7200.0"
+        },
+        {
+          "label": "Exposure",
+          "tone": "info",
+          "unit": "s",
+          "value": "6825.0"
+        }
+      ],
+      "operation_id": "incubator_advance_time-5",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Advance two hours",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 6825.0,
+            "progress_percent": 24,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "02:00",
+            "elapsed_seconds": 7200.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 5,
+      "simulated_at": "T+7200.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Advance two hours"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The chamber reports temperature, shaking, storage, and exposure state.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Time",
+          "tone": "info",
+          "unit": "s",
+          "value": "7200.0"
+        },
+        {
+          "label": "Exposure",
+          "tone": "info",
+          "unit": "s",
+          "value": "6825.0"
+        }
+      ],
+      "operation_id": "incubator_get_status-6",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Check the incubation conditions",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 6825.0,
+            "progress_percent": 24,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "02:00",
+            "elapsed_seconds": 7200.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 6,
+      "simulated_at": "T+7200.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Check the incubation conditions"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The identified plate returns to the loading tray for measurement.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator retrieve plate"
+        }
+      ],
+      "operation_id": "incubator_retrieve_plate-7",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Retrieve the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 6825.0,
+            "progress_percent": 24,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "02:00",
+            "elapsed_seconds": 7200.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 7,
+      "simulated_at": "T+7200.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Retrieve the culture plate"
+    },
+    {
+      "artifact_ids": [
+        "od600-002"
+      ],
+      "description": "The separate reader records A1-A8 at 600 nm for this timepoint.",
+      "duration_ms": 2200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "reader measure od600"
+        }
+      ],
+      "operation_id": "reader_measure_od600-8",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Measure the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 6825.0,
+            "progress_percent": 24,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "02:00",
+            "elapsed_seconds": 7200.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 8,
+      "simulated_at": "T+7200.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Measure the culture plate"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Plate custody moves from the loading tray into a declared storage position.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator store plate"
+        }
+      ],
+      "operation_id": "incubator_store_plate-9",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Store the plate in slot S04",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 6825.0,
+            "progress_percent": 24,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "02:00",
+            "elapsed_seconds": 7200.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 9,
+      "simulated_at": "T+7200.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Store the plate in slot S04"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Logical time accumulates only temperature-conditioned shaking exposure.",
+      "duration_ms": 1800,
+      "facts": [
+        {
+          "label": "Time",
+          "tone": "info",
+          "unit": "s",
+          "value": "14400.0"
+        },
+        {
+          "label": "Exposure",
+          "tone": "info",
+          "unit": "s",
+          "value": "14025.0"
+        }
+      ],
+      "operation_id": "incubator_advance_time-10",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Advance two hours",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 14025.0,
+            "progress_percent": 50,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "04:00",
+            "elapsed_seconds": 14400.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 10,
+      "simulated_at": "T+14400.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Advance two hours"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The identified plate returns to the loading tray for measurement.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator retrieve plate"
+        }
+      ],
+      "operation_id": "incubator_retrieve_plate-11",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Retrieve the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 14025.0,
+            "progress_percent": 50,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "04:00",
+            "elapsed_seconds": 14400.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 11,
+      "simulated_at": "T+14400.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Retrieve the culture plate"
+    },
+    {
+      "artifact_ids": [
+        "od600-003"
+      ],
+      "description": "The separate reader records A1-A8 at 600 nm for this timepoint.",
+      "duration_ms": 2200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "reader measure od600"
+        }
+      ],
+      "operation_id": "reader_measure_od600-12",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Measure the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 14025.0,
+            "progress_percent": 50,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "04:00",
+            "elapsed_seconds": 14400.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 12,
+      "simulated_at": "T+14400.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Measure the culture plate"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Plate custody moves from the loading tray into a declared storage position.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator store plate"
+        }
+      ],
+      "operation_id": "incubator_store_plate-13",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Store the plate in slot S04",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 14025.0,
+            "progress_percent": 50,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "04:00",
+            "elapsed_seconds": 14400.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 13,
+      "simulated_at": "T+14400.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Store the plate in slot S04"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Logical time accumulates only temperature-conditioned shaking exposure.",
+      "duration_ms": 1800,
+      "facts": [
+        {
+          "label": "Time",
+          "tone": "info",
+          "unit": "s",
+          "value": "21600.0"
+        },
+        {
+          "label": "Exposure",
+          "tone": "info",
+          "unit": "s",
+          "value": "21225.0"
+        }
+      ],
+      "operation_id": "incubator_advance_time-14",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Advance two hours",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 21225.0,
+            "progress_percent": 75,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "06:00",
+            "elapsed_seconds": 21600.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 14,
+      "simulated_at": "T+21600.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Advance two hours"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The identified plate returns to the loading tray for measurement.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator retrieve plate"
+        }
+      ],
+      "operation_id": "incubator_retrieve_plate-15",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Retrieve the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 21225.0,
+            "progress_percent": 75,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "06:00",
+            "elapsed_seconds": 21600.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 15,
+      "simulated_at": "T+21600.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Retrieve the culture plate"
+    },
+    {
+      "artifact_ids": [
+        "od600-004"
+      ],
+      "description": "The separate reader records A1-A8 at 600 nm for this timepoint.",
+      "duration_ms": 2200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "reader measure od600"
+        }
+      ],
+      "operation_id": "reader_measure_od600-16",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Measure the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 21225.0,
+            "progress_percent": 75,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "06:00",
+            "elapsed_seconds": 21600.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              },
+              {
+                "elapsed_seconds": 21600.0,
+                "label": "06:00",
+                "value": 1.0136
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 16,
+      "simulated_at": "T+21600.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Measure the culture plate"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Plate custody moves from the loading tray into a declared storage position.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator store plate"
+        }
+      ],
+      "operation_id": "incubator_store_plate-17",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Store the plate in slot S04",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 21225.0,
+            "progress_percent": 75,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "06:00",
+            "elapsed_seconds": 21600.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              },
+              {
+                "elapsed_seconds": 21600.0,
+                "label": "06:00",
+                "value": 1.0136
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 17,
+      "simulated_at": "T+21600.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Store the plate in slot S04"
+    },
+    {
+      "artifact_ids": [],
+      "description": "Logical time accumulates only temperature-conditioned shaking exposure.",
+      "duration_ms": 1800,
+      "facts": [
+        {
+          "label": "Time",
+          "tone": "info",
+          "unit": "s",
+          "value": "28800.0"
+        },
+        {
+          "label": "Exposure",
+          "tone": "info",
+          "unit": "s",
+          "value": "28425.0"
+        }
+      ],
+      "operation_id": "incubator_advance_time-18",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Advance two hours",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 28425.0,
+            "progress_percent": 100,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "08:00",
+            "elapsed_seconds": 28800.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              },
+              {
+                "elapsed_seconds": 21600.0,
+                "label": "06:00",
+                "value": 1.0136
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "slot",
+            "label": "S04",
+            "slot_index": 4
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "occupied"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 18,
+      "simulated_at": "T+28800.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Advance two hours"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The identified plate returns to the loading tray for measurement.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "incubator retrieve plate"
+        }
+      ],
+      "operation_id": "incubator_retrieve_plate-19",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Retrieve the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 28425.0,
+            "progress_percent": 100,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "08:00",
+            "elapsed_seconds": 28800.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              },
+              {
+                "elapsed_seconds": 21600.0,
+                "label": "06:00",
+                "value": 1.0136
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 19,
+      "simulated_at": "T+28800.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Retrieve the culture plate"
+    },
+    {
+      "artifact_ids": [
+        "od600-005"
+      ],
+      "description": "The separate reader records A1-A8 at 600 nm for this timepoint.",
+      "duration_ms": 2200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "reader measure od600"
+        }
+      ],
+      "operation_id": "reader_measure_od600-20",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Measure the culture plate",
+          "conditioned_exposure": {
+            "condition": "Stored at 30 C with orbital shaking",
+            "elapsed_seconds": 28425.0,
+            "progress_percent": 100,
+            "target_seconds": 28200.0
+          },
+          "instrument": "Orbital incubator and OD600 reader",
+          "logical_time": {
+            "display": "08:00",
+            "elapsed_seconds": 28800.0
+          },
+          "od600": {
+            "points": [
+              {
+                "elapsed_seconds": 0.0,
+                "label": "00:00",
+                "value": 0.0803
+              },
+              {
+                "elapsed_seconds": 7200.0,
+                "label": "02:00",
+                "value": 0.2048
+              },
+              {
+                "elapsed_seconds": 14400.0,
+                "label": "04:00",
+                "value": 0.5758
+              },
+              {
+                "elapsed_seconds": 21600.0,
+                "label": "06:00",
+                "value": 1.0136
+              },
+              {
+                "elapsed_seconds": 28800.0,
+                "label": "08:00",
+                "value": 1.1983
+              }
+            ],
+            "x_label": "Campaign time",
+            "y_label": "Mean OD600",
+            "y_unit": null
+          },
+          "plate": "CULTURE-BC-1042",
+          "plate_location": {
+            "kind": "external",
+            "label": "Loading Tray",
+            "slot_index": null
+          },
+          "shaker": {
+            "enabled": true,
+            "rpm": 250
+          },
+          "storage_slots": [
+            {
+              "index": 1,
+              "label": "S01",
+              "status": "empty"
+            },
+            {
+              "index": 2,
+              "label": "S02",
+              "status": "empty"
+            },
+            {
+              "index": 3,
+              "label": "S03",
+              "status": "empty"
+            },
+            {
+              "index": 4,
+              "label": "S04",
+              "status": "empty"
+            },
+            {
+              "index": 5,
+              "label": "S05",
+              "status": "empty"
+            },
+            {
+              "index": 6,
+              "label": "S06",
+              "status": "empty"
+            },
+            {
+              "index": 7,
+              "label": "S07",
+              "status": "empty"
+            },
+            {
+              "index": 8,
+              "label": "S08",
+              "status": "empty"
+            }
+          ],
+          "temperature": {
+            "current": {
+              "unit": "C",
+              "value": 30.0
+            },
+            "ramp": {
+              "rate": {
+                "unit": "C/s",
+                "value": 0.0
+              },
+              "state": "holding"
+            },
+            "target": {
+              "unit": "C",
+              "value": 30.0
+            }
+          },
+          "variant": "incubator_shaker"
+        },
+        "kind": "instrument",
+        "label": "Incubator-shaker campaign"
+      },
+      "sequence": 20,
+      "simulated_at": "T+28800.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Measure the culture plate"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The final decision cites the latest completed measurement artifact.",
+      "duration_ms": 1500,
+      "facts": [
+        {
+          "label": "Decision",
+          "tone": "success",
+          "unit": null,
+          "value": "accept"
+        }
+      ],
+      "operation_id": "submit_science_decision-21",
+      "phase_id": "decision",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "decision": "accept",
+          "evidence": [
+            {
+              "label": "Evidence artifact",
+              "value": "od600-005"
+            }
+          ],
+          "rationale": "The five timepoints cover eight hours and show a consistent increase across all replicates."
+        },
+        "kind": "evidence",
+        "label": "Run decision"
+      },
+      "sequence": 21,
+      "simulated_at": "T+28800.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Submit the evidence-linked decision"
+    }
+  ],
+  "workflow": {
+    "edges": [
+      {
+        "from": "execution",
+        "to": "decision"
+      }
+    ],
+    "stages": [
+      {
+        "id": "execution",
+        "kind": "lab_automation",
+        "label": "Incubation and repeated measurement",
+        "provider": "PyLabRobot",
+        "status": "completed"
+      },
+      {
+        "id": "decision",
+        "kind": "workflow_decision",
+        "label": "Evidence-linked decision",
+        "provider": null,
+        "status": "completed"
+      }
+    ]
+  },
+  "world_id": "pylabrobot_science_v0"
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "api_gym.source_refs.v1",
+  "installed_contract": {
+    "package": "pylabrobot",
+    "version": "0.2.1",
+    "verified_modules": [
+      "pylabrobot.thermocycling.thermocycler",
+      "pylabrobot.storage.incubator",
+      "pylabrobot.plate_reading.plate_reader",
+      "pylabrobot.powder_dispensing.powder_dispenser",
+      "pylabrobot.scales.scale"
+    ]
+  },
+  "public_docs": [
+    {
+      "subject": "thermocycler_protocol",
+      "url": "https://docs.pylabrobot.org/0.2.1/user_guide/01_material-handling/thermocycling/thermocycling.html"
+    },
+    {
+      "subject": "cytomat_storage",
+      "url": "https://docs.pylabrobot.org/stable/user_guide/01_material-handling/storage/cytomat.html"
+    },
+    {
+      "subject": "analytical_scale",
+      "url": "https://docs.pylabrobot.org/stable/user_guide/02_analytical/scales/scales.html"
+    }
+  ],
+  "exclusions": [
+    "No live hardware behavior was captured.",
+    "No vendor accuracy, timing, thermal, optical, or powder-delivery claim is made.",
+    "qPCR, growth, and measurement-noise dynamics are benchmark-defined and declared in contract.json."
+  ]
+}
+

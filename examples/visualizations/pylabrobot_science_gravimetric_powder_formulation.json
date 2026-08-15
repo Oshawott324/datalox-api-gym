@@ -1,0 +1,1017 @@
+{
+  "artifacts": [
+    {
+      "data": {
+        "artifact_id": "gravimetric-001",
+        "error_mg": -2.1,
+        "grounding": "pylabrobot_scale_with_benchmark_noise_projection",
+        "measured_mass_mg": 147.9,
+        "powder": "L-leucine",
+        "target_mass_mg": 150.0,
+        "tolerance_mg": 0.5,
+        "vial_id": "FORM-001",
+        "within_tolerance": false
+      },
+      "id": "gravimetric-001",
+      "label": "Gravimetric reading 001",
+      "summary": "Deterministic dry-run evidence produced by the declared benchmark projection.",
+      "type": "simulated_measurement"
+    },
+    {
+      "data": {
+        "artifact_id": "gravimetric-002",
+        "error_mg": 0.094,
+        "grounding": "pylabrobot_scale_with_benchmark_noise_projection",
+        "measured_mass_mg": 150.094,
+        "powder": "L-leucine",
+        "target_mass_mg": 150.0,
+        "tolerance_mg": 0.5,
+        "vial_id": "FORM-001",
+        "within_tolerance": true
+      },
+      "id": "gravimetric-002",
+      "label": "Gravimetric reading 002",
+      "summary": "Deterministic dry-run evidence produced by the declared benchmark projection.",
+      "type": "simulated_measurement"
+    }
+  ],
+  "outcome": null,
+  "presentation": {
+    "agent": null,
+    "mode": "dry_run",
+    "status": "completed",
+    "subject": "Powder formulation workflow",
+    "summary": "Tare, coarse dose, gravimetric feedback, correction pulse, and final tolerance evidence.",
+    "title": "Gravimetric powder formulation dry run"
+  },
+  "renderer": {
+    "id": "pylabrobot_visualizer_v1",
+    "payload": {
+      "capture_package_version": "0.2.1",
+      "initialization": [
+        {
+          "data": {
+            "resource": {
+              "barcode": null,
+              "category": null,
+              "children": [
+                {
+                  "barcode": null,
+                  "category": null,
+                  "children": [],
+                  "location": {
+                    "type": "Coordinate",
+                    "x": 80,
+                    "y": 220,
+                    "z": 0
+                  },
+                  "model": null,
+                  "name": "powder_dispenser",
+                  "parent_name": "science_workcell",
+                  "preferred_pickup_location": null,
+                  "rotation": {
+                    "type": "Rotation",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "size_x": 180,
+                  "size_y": 160,
+                  "size_z": 120,
+                  "type": "Resource"
+                },
+                {
+                  "barcode": null,
+                  "category": null,
+                  "children": [],
+                  "location": {
+                    "type": "Coordinate",
+                    "x": 340,
+                    "y": 220,
+                    "z": 0
+                  },
+                  "model": null,
+                  "name": "analytical_balance",
+                  "parent_name": "science_workcell",
+                  "preferred_pickup_location": null,
+                  "rotation": {
+                    "type": "Rotation",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "size_x": 180,
+                  "size_y": 160,
+                  "size_z": 120,
+                  "type": "Resource"
+                },
+                {
+                  "barcode": null,
+                  "category": null,
+                  "children": [],
+                  "location": {
+                    "type": "Coordinate",
+                    "x": 600,
+                    "y": 220,
+                    "z": 0
+                  },
+                  "model": null,
+                  "name": "FORM-001",
+                  "parent_name": "science_workcell",
+                  "preferred_pickup_location": null,
+                  "rotation": {
+                    "type": "Rotation",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "size_x": 180,
+                  "size_y": 160,
+                  "size_z": 120,
+                  "type": "Resource"
+                }
+              ],
+              "location": null,
+              "model": null,
+              "name": "science_workcell",
+              "parent_name": null,
+              "preferred_pickup_location": null,
+              "rotation": {
+                "type": "Rotation",
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "size_x": 1000,
+              "size_y": 650,
+              "size_z": 200,
+              "type": "Resource"
+            }
+          },
+          "event": "set_root_resource"
+        }
+      ],
+      "viewer_package_version": "0.2.2"
+    },
+    "protocol_version": "0.1.0"
+  },
+  "resources": [
+    {
+      "attributes": {},
+      "id": "powder_dispenser",
+      "label": "Powder dosing station",
+      "status": "ready",
+      "summary": "Declared instrument or sample in the dry-run workflow.",
+      "type": "powder_dispenser"
+    },
+    {
+      "attributes": {},
+      "id": "analytical_balance",
+      "label": "Analytical balance",
+      "status": "ready",
+      "summary": "Declared instrument or sample in the dry-run workflow.",
+      "type": "scale"
+    },
+    {
+      "attributes": {},
+      "id": "FORM-001",
+      "label": "Formulation vial FORM-001",
+      "status": "ready",
+      "summary": "Declared instrument or sample in the dry-run workflow.",
+      "type": "vial"
+    }
+  ],
+  "run_id": "gravimetric_powder_formulation-seed-1",
+  "schema_version": "datalox_visualization_run_v1",
+  "steps": [
+    {
+      "artifact_ids": [],
+      "description": "The balance stores the empty-vial mass so subsequent readings report net powder mass.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "balance tare"
+        }
+      ],
+      "operation_id": "balance_tare-1",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Tare the empty vial",
+          "dosing_pulses": [],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 0.0
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "below_tolerance",
+          "transfer": {
+            "from": "powder_dispenser",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "analytical_balance"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "analytical_balance"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 1,
+      "simulated_at": "T+0.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Tare the empty vial"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The same vial moves between the dosing and weighing stations.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "formulation move vial"
+        }
+      ],
+      "operation_id": "formulation_move_vial-2",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Move the formulation vial",
+          "dosing_pulses": [],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 0.0
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "below_tolerance",
+          "transfer": {
+            "from": "analytical_balance",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "powder_dispenser"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "powder_dispenser"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 2,
+      "simulated_at": "T+0.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Move the formulation vial"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The dispenser reports requested, actual, and cumulative delivered mass.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Actual",
+          "tone": "info",
+          "unit": "mg",
+          "value": "147.9"
+        }
+      ],
+      "operation_id": "powder_dispense_pulse-3",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Dispense one powder pulse",
+          "dosing_pulses": [
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "index": 1,
+              "requested": {
+                "unit": "mg",
+                "value": 150.0
+              }
+            }
+          ],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 147.9
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "below_tolerance",
+          "transfer": {
+            "from": "analytical_balance",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "powder_dispenser"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "powder_dispenser"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 3,
+      "simulated_at": "T+2.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Dispense one powder pulse"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The same vial moves between the dosing and weighing stations.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "formulation move vial"
+        }
+      ],
+      "operation_id": "formulation_move_vial-4",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Move the formulation vial",
+          "dosing_pulses": [
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "index": 1,
+              "requested": {
+                "unit": "mg",
+                "value": 150.0
+              }
+            }
+          ],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 147.9
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "below_tolerance",
+          "transfer": {
+            "from": "powder_dispenser",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "analytical_balance"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "analytical_balance"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 4,
+      "simulated_at": "T+2.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Move the formulation vial"
+    },
+    {
+      "artifact_ids": [
+        "gravimetric-001"
+      ],
+      "description": "The analytical balance compares measured net mass with the target band.",
+      "duration_ms": 2200,
+      "facts": [
+        {
+          "label": "Measured",
+          "tone": "info",
+          "unit": "mg",
+          "value": "147.9"
+        },
+        {
+          "label": "Tolerance",
+          "tone": "warning",
+          "unit": null,
+          "value": "adjust"
+        }
+      ],
+      "operation_id": "balance_read_mass-5",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Weigh the formulation",
+          "dosing_pulses": [
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "index": 1,
+              "requested": {
+                "unit": "mg",
+                "value": 150.0
+              }
+            }
+          ],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 147.9
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "below_tolerance",
+          "transfer": {
+            "from": "powder_dispenser",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "analytical_balance"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "analytical_balance"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 5,
+      "simulated_at": "T+3.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Weigh the formulation"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The same vial moves between the dosing and weighing stations.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "formulation move vial"
+        }
+      ],
+      "operation_id": "formulation_move_vial-6",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Move the formulation vial",
+          "dosing_pulses": [
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "index": 1,
+              "requested": {
+                "unit": "mg",
+                "value": 150.0
+              }
+            }
+          ],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 147.9
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "below_tolerance",
+          "transfer": {
+            "from": "analytical_balance",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "powder_dispenser"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "powder_dispenser"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 6,
+      "simulated_at": "T+3.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Move the formulation vial"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The dispenser reports requested, actual, and cumulative delivered mass.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Actual",
+          "tone": "info",
+          "unit": "mg",
+          "value": "2.094"
+        }
+      ],
+      "operation_id": "powder_dispense_pulse-7",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Dispense one powder pulse",
+          "dosing_pulses": [
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "index": 1,
+              "requested": {
+                "unit": "mg",
+                "value": 150.0
+              }
+            },
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 2.094
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 149.994
+              },
+              "index": 2,
+              "requested": {
+                "unit": "mg",
+                "value": 2.1
+              }
+            }
+          ],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 149.994
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "in_tolerance",
+          "transfer": {
+            "from": "analytical_balance",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "powder_dispenser"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "powder_dispenser"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 7,
+      "simulated_at": "T+5.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Dispense one powder pulse"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The same vial moves between the dosing and weighing stations.",
+      "duration_ms": 1200,
+      "facts": [
+        {
+          "label": "Operation",
+          "tone": "neutral",
+          "unit": null,
+          "value": "formulation move vial"
+        }
+      ],
+      "operation_id": "formulation_move_vial-8",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Move the formulation vial",
+          "dosing_pulses": [
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "index": 1,
+              "requested": {
+                "unit": "mg",
+                "value": 150.0
+              }
+            },
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 2.094
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 149.994
+              },
+              "index": 2,
+              "requested": {
+                "unit": "mg",
+                "value": 2.1
+              }
+            }
+          ],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 149.994
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "in_tolerance",
+          "transfer": {
+            "from": "powder_dispenser",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "analytical_balance"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "analytical_balance"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 8,
+      "simulated_at": "T+5.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Move the formulation vial"
+    },
+    {
+      "artifact_ids": [
+        "gravimetric-002"
+      ],
+      "description": "The analytical balance compares measured net mass with the target band.",
+      "duration_ms": 2200,
+      "facts": [
+        {
+          "label": "Measured",
+          "tone": "info",
+          "unit": "mg",
+          "value": "150.094"
+        },
+        {
+          "label": "Tolerance",
+          "tone": "success",
+          "unit": null,
+          "value": "pass"
+        }
+      ],
+      "operation_id": "balance_read_mass-9",
+      "phase_id": "execution",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "action": "Weigh the formulation",
+          "dosing_pulses": [
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 147.9
+              },
+              "index": 1,
+              "requested": {
+                "unit": "mg",
+                "value": 150.0
+              }
+            },
+            {
+              "actual": {
+                "unit": "mg",
+                "value": 2.094
+              },
+              "cumulative": {
+                "unit": "mg",
+                "value": 149.994
+              },
+              "index": 2,
+              "requested": {
+                "unit": "mg",
+                "value": 2.1
+              }
+            }
+          ],
+          "instrument": "Powder dispenser and analytical balance",
+          "instruments": {
+            "analytical_balance": "Analytical balance",
+            "powder_dispenser": "Powder dosing station"
+          },
+          "measured_mass": {
+            "unit": "mg",
+            "value": 150.094
+          },
+          "target_mass": {
+            "unit": "mg",
+            "value": 150.0
+          },
+          "tolerance": {
+            "minus": {
+              "unit": "mg",
+              "value": 0.5
+            },
+            "plus": {
+              "unit": "mg",
+              "value": 0.5
+            }
+          },
+          "tolerance_state": "in_tolerance",
+          "transfer": {
+            "from": "powder_dispenser",
+            "progress_percent": 100,
+            "state": "arrived",
+            "to": "analytical_balance"
+          },
+          "variant": "powder_balance",
+          "vial": {
+            "label": "FORM-001",
+            "location": "analytical_balance"
+          }
+        },
+        "kind": "instrument",
+        "label": "Gravimetric formulation"
+      },
+      "sequence": 9,
+      "simulated_at": "T+6.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Weigh the formulation"
+    },
+    {
+      "artifact_ids": [],
+      "description": "The final decision cites the latest completed measurement artifact.",
+      "duration_ms": 1500,
+      "facts": [
+        {
+          "label": "Decision",
+          "tone": "success",
+          "unit": null,
+          "value": "accept"
+        }
+      ],
+      "operation_id": "submit_science_decision-10",
+      "phase_id": "decision",
+      "render": {
+        "commands": []
+      },
+      "scene": {
+        "data": {
+          "decision": "accept",
+          "evidence": [
+            {
+              "label": "Evidence artifact",
+              "value": "gravimetric-002"
+            }
+          ],
+          "rationale": "The correction pulse brought the measured net mass inside the +/-0.5 mg target band."
+        },
+        "kind": "evidence",
+        "label": "Run decision"
+      },
+      "sequence": 10,
+      "simulated_at": "T+6.0s",
+      "state_changes": [],
+      "status": "completed",
+      "title": "Submit the evidence-linked decision"
+    }
+  ],
+  "workflow": {
+    "edges": [
+      {
+        "from": "execution",
+        "to": "decision"
+      }
+    ],
+    "stages": [
+      {
+        "id": "execution",
+        "kind": "lab_automation",
+        "label": "Powder dosing and gravimetric correction",
+        "provider": "PyLabRobot",
+        "status": "completed"
+      },
+      {
+        "id": "decision",
+        "kind": "workflow_decision",
+        "label": "Evidence-linked decision",
+        "provider": null,
+        "status": "completed"
+      }
+    ]
+  },
+  "world_id": "pylabrobot_science_v0"
+}

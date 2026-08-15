@@ -33,9 +33,10 @@ api-gym session finalize --run runs/demo --json
 
 ## What's Real Today
 
-- Six registered worlds: billing/support operations, UniteLabs plate QC,
-  Automata LINQ workflow planning, PyLabRobot OT-2 and STAR dry-run worlds, and
-  a Synergy H1 yeast-growth workflow.
+- Seven registered worlds: billing/support operations, UniteLabs plate QC,
+  Automata LINQ workflow planning, PyLabRobot OT-2 and STAR dry-run worlds,
+  instrument-rich PyLabRobot science workflows, and a Synergy H1 yeast-growth
+  workflow.
 - A dry-run API gate over 31 source-grounded providers, 134 operations, and 179
   sourced response cases. An agent can call an original-shaped API and get a
   sourced response back instead of hitting the live service.
@@ -98,6 +99,14 @@ source-grounded APIs.
 - Hamilton STAR dry-run projection through PyLabRobot
 - 91 scenarios, 101 tools, and 16 instrument categories
 - tiered event-derived state plus strict oracle and mutant admission
+
+`pylabrobot_science_v0`
+
+- three instrument-rich dry-run workflows: thermocycler/qPCR,
+  incubator-shaker/plate-reader growth, and powder-dispenser/balance formulation
+- installed PyLabRobot interfaces with separately declared benchmark dynamics
+- persistent SQLite state, logical-time progression, evidence artifacts, and
+  family-specific state verification
 
 `synergy_h1_yeast_growth_v0`
 

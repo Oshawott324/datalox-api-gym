@@ -1,0 +1,44 @@
+{
+  "schema_version": "api_gym.world_spec.v1",
+  "world": "pylabrobot_science_v0",
+  "world_id": "pylabrobot-science-v0",
+  "mode": "dry_run",
+  "state_backend": "sqlite_json_snapshot",
+  "action_channel": "mcp",
+  "hardware_execution": false,
+  "families": {
+    "thermocycler": {
+      "scenarios": ["qpcr_amplification_qc"],
+      "pylabrobot_interfaces": [
+        "Thermocycler.close_lid",
+        "Thermocycler.set_lid_temperature",
+        "Thermocycler.run_protocol",
+        "Thermocycler.get_*",
+        "Thermocycler.open_lid"
+      ],
+      "benchmark_dynamics": ["logical_time", "qpcr_amplification"]
+    },
+    "incubator_shaker": {
+      "scenarios": ["incubator_growth_campaign"],
+      "pylabrobot_interfaces": [
+        "Incubator.set_temperature",
+        "Incubator.start_shaking",
+        "Incubator.take_in_plate",
+        "Incubator.fetch_plate_to_loading_tray",
+        "PlateReader.read_absorbance"
+      ],
+      "benchmark_dynamics": ["slot_inventory", "temperature_ramp", "logical_time", "growth_od600"]
+    },
+    "powder_balance": {
+      "scenarios": ["gravimetric_powder_formulation"],
+      "pylabrobot_interfaces": [
+        "PowderDispenser.dispense",
+        "Scale.tare",
+        "Scale.get_weight"
+      ],
+      "benchmark_dynamics": ["station_transfer", "powder_delivery_error", "balance_noise"]
+    }
+  },
+  "source_refs": "source_refs.json"
+}
+
