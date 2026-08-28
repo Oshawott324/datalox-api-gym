@@ -43,25 +43,46 @@ metadata and source refs:
 Agents must not receive direct access to hidden state. Hidden state includes:
 
 - `initial_state.sqlite` and per-run `state.sqlite`;
+- `hidden/task_metadata.json`;
 - `hidden/verifier_expectations.json`;
 - `hidden/oracle_plan.json`;
 - `hidden/known_bad_plans.json`;
 - `hidden/fault_schedule.json`;
 - `hidden/noise_schedule.json`.
 
-Agent-visible artifacts are limited to `agent_task.json`, `task.json`, source
-ref metadata, and files under `visible_artifacts/`.
+Agent-visible artifacts are limited to the output of
+`export_agent_workspace(...)`: `agent_task.json`, the allowlisted public
+`task.json`, source-ref metadata, `agent_visible_manifest.json`, and files under
+`visible_artifacts/`. Internal task bundles and run directories are evaluator
+workspaces and must not be used as an agent working directory. The public
+manifest is content-addressed: every file has a SHA-256 digest and byte size, and
+the complete record set has its own digest.
+
+## Prompt-Disclosure Admission
+
+Task prompts must state goals, legitimate scientific constraints, and available
+observations without disclosing the reference action sequence, hidden fault
+identity, expected outcome, or challenge-specific recovery action. This is a
+semantic review boundary rather than a keyword filter.
+
+Each template requires a review record in
+`templates/prompt_disclosure_reviews.json`. The record is bound to the SHA-256
+digest of the exact objective, agent instructions, and visible-artifact
+templates together with every parameter that can be rendered into them.
+Admission fails when the review is missing, rejected, incomplete, or
+bound to a different digest. A prompt edit therefore invalidates the prior
+approval automatically. Approval must come from a reviewer other than the prompt
+author; code review is the enforcement point for that separation of duties.
 
 ## Temporal/Stochastic Assumptions
 
 Time is logical. `wait` records elapsed seconds and ordering evidence; it does
 not sleep or model real wall-clock instrument timing.
 
-Current templates have `stochastic_source_status: none`. Generated bundles must
-therefore include deterministic empty schedules for both faults and noise. Each
-schedule is keyed by `environment_seed`, and admission must reject schedules
-that are missing, non-deterministic for that seed, or non-empty while the
-template declares no stochastic source.
+Each template declares its own `stochastic_source_status`. Generated schedules
+are keyed by `environment_seed`; admission rejects schedules that are missing or
+non-deterministic for that seed, and rejects non-empty schedules when a template
+declares `none`.
 
 ## Safety/Live-Boundary Rule
 

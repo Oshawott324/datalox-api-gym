@@ -12,6 +12,11 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
+from api_gym.worlds.agent_visibility import (
+    materialize_agent_workspace,
+    scan_agent_visible_files,
+    workspace_file_inventory,
+)
 from greenfield_lablongrun.core.schemas import read_json, write_json
 from greenfield_lablongrun.worlds.lablongrun_wet_v0 import state
 from greenfield_lablongrun.worlds.lablongrun_wet_v0.tools import expected_tools
@@ -22,6 +27,7 @@ DEFAULT_TEMPLATE_ID = "od600_nominal"
 DEFAULT_DIFFICULTY = "short"
 WORLD_DIR = Path(__file__).parent
 TEMPLATE_CATALOG = WORLD_DIR / "templates" / "task_templates.json"
+PROMPT_REVIEWS_PATH = WORLD_DIR / "templates" / "prompt_disclosure_reviews.json"
 SOURCE_REFS_PATH = WORLD_DIR / "source_refs.json"
 ALLOWED_STOCHASTIC_SOURCE_STATUSES = {
     "none",
@@ -36,6 +42,50 @@ SCHEDULE_REFS = {
     "fault": "hidden/fault_schedule.json",
     "noise": "hidden/noise_schedule.json",
 }
+AGENT_VISIBLE_ROOT_FILES = (
+    "task.json",
+    "agent_task.json",
+    "source_refs_snapshot.json",
+)
+PUBLIC_TASK_KEYS = frozenset(
+    {
+        "schema_version",
+        "world",
+        "task_id",
+        "objective",
+        "expected_tools",
+        "visible_artifacts",
+    }
+)
+PUBLIC_AGENT_TASK_KEYS = frozenset(
+    {
+        "schema_version",
+        "instructions",
+        "available_artifacts",
+        "available_tools",
+        "hidden_state_warning",
+    }
+)
+EVALUATOR_ONLY_KEYS = frozenset(
+    {
+        "attribution_labels",
+        "domain_source_status",
+        "environment_seed",
+        "expected_decision",
+        "expected_failure_codes",
+        "expected_final_volumes_ul",
+        "expected_horizon",
+        "failure_mode",
+        "known_bad_plan_strategy",
+        "oracle_strategy",
+        "projection_contract_ref",
+        "schedule_refs",
+        "seed",
+        "stochastic_source_status",
+        "template_id",
+        "verifier_predicates",
+    }
+)
 HIDDEN_LEAK_TOKENS = (
     "verifier_expectations",
     "oracle_plan",
@@ -44,6 +94,14 @@ HIDDEN_LEAK_TOKENS = (
     "expected_decision",
     "target_well_ref",
     "hidden/",
+)
+REQUIRED_DISCLOSURE_REVIEW_CATEGORIES = frozenset(
+    {
+        "expected_outcome",
+        "fault_identity",
+        "ordered_action_sequence",
+        "recovery_action",
+    }
 )
 
 
@@ -106,7 +164,7 @@ def generate_task(
     hidden_dir.mkdir()
 
     parameters = _resolve_parameters(template, seed)
-    task_id = f"{template_id}__seed_{seed:04d}"
+    task_id = _public_task_id(template_id, seed)
     horizon = template["difficulty_targets"][difficulty]
     artifact_names = sorted(template["visible_artifacts"].keys())
     environment_seed = int(seed)
@@ -129,30 +187,12 @@ def generate_task(
     write_json(
         out_dir / "task.json",
         {
-            "schema_version": "greenfield_lablongrun.task.v0",
+            "schema_version": "greenfield_lablongrun.public_task.v1",
             "world": WORLD_ID,
-            "scenario": template["scenario"],
             "task_id": task_id,
-            "template_id": template_id,
-            "seed": seed,
-            "environment_seed": environment_seed,
-            "difficulty": difficulty,
-            "failure_mode": template["lab_failure_mode"],
-            **task_projection_metadata,
             "objective": _render_string(template["objective"], _render_context(template, parameters, seed, difficulty)),
             "expected_tools": expected_tools(),
             "visible_artifacts": artifact_names,
-            "source_refs": template["source_refs"],
-            "schedule_refs": dict(SCHEDULE_REFS),
-            "oracle_strategy": template["oracle_strategy"],
-            "known_bad_plan_strategy": template["known_bad_plan_strategy"],
-            "expected_failure_codes": template["expected_failure_codes"],
-            "verifier_predicates": template["verifier_predicates"],
-            "expected_horizon": {
-                "bin": difficulty,
-                "min_tool_calls": int(horizon["min_tool_calls"]),
-                "max_tool_calls": int(horizon["max_tool_calls"]),
-            },
         },
     )
     write_json(
@@ -166,6 +206,32 @@ def generate_task(
             "available_artifacts": artifact_names,
             "available_tools": expected_tools(),
             "hidden_state_warning": "Do not assume direct access to state.sqlite or verifier expectations.",
+        },
+    )
+    write_json(
+        hidden_dir / "task_metadata.json",
+        {
+            "schema_version": "greenfield_lablongrun.task_metadata.v1",
+            "world": WORLD_ID,
+            "scenario": template["scenario"],
+            "task_id": task_id,
+            "template_id": template_id,
+            "seed": seed,
+            "environment_seed": environment_seed,
+            "difficulty": difficulty,
+            "failure_mode": template["lab_failure_mode"],
+            **task_projection_metadata,
+            "source_refs": template["source_refs"],
+            "schedule_refs": dict(SCHEDULE_REFS),
+            "oracle_strategy": template["oracle_strategy"],
+            "known_bad_plan_strategy": template["known_bad_plan_strategy"],
+            "expected_failure_codes": template["expected_failure_codes"],
+            "verifier_predicates": template["verifier_predicates"],
+            "expected_horizon": {
+                "bin": difficulty,
+                "min_tool_calls": int(horizon["min_tool_calls"]),
+                "max_tool_calls": int(horizon["max_tool_calls"]),
+            },
         },
     )
     write_json(
@@ -236,12 +302,27 @@ def generate_suite(suite_spec: Path, out: Path) -> list[GeneratedTask]:
         out_dir / "suite_manifest.json",
         {
             "schema_version": "greenfield_lablongrun.suite_manifest.v0",
-            "suite_spec": str(suite_spec.resolve()),
+            "suite_spec_ref": suite_spec.name,
             "task_count": len(generated),
             "tasks": [task.to_dict() for task in generated],
         },
     )
     return generated
+
+
+def export_agent_workspace(task_dir: Path, out: Path, *, clean: bool = False) -> Path:
+    """Export only admitted agent-visible files into a separate workspace."""
+
+    task_dir = task_dir.resolve()
+    out_dir = out.resolve()
+    if out_dir == task_dir or task_dir in out_dir.parents:
+        raise ValueError("Agent workspace must be outside the private task bundle.")
+    admission = validate_generated_task(task_dir)
+    if not admission.admitted:
+        failed = [item["name"] for item in admission.checks if not item["ok"]]
+        raise ValueError(f"Task is not admitted for agent export: {', '.join(failed)}")
+
+    return _materialize_agent_workspace(task_dir, out_dir, clean=clean)
 
 
 def validate_generated_task(task_dir: Path) -> AdmissionResult:
@@ -250,9 +331,10 @@ def validate_generated_task(task_dir: Path) -> AdmissionResult:
     task_dir = task_dir.resolve()
     task = read_json(task_dir / "task.json")
     agent_task = read_json(task_dir / "agent_task.json")
+    task_metadata = read_json(task_dir / "hidden" / "task_metadata.json")
     expectations = read_json(task_dir / "hidden" / "verifier_expectations.json")
     known_bad_doc = read_json(task_dir / "hidden" / "known_bad_plans.json")
-    template = _get_template(task["template_id"])
+    template = _get_template(task_metadata["template_id"])
 
     checks: list[dict[str, Any]] = []
 
@@ -273,18 +355,53 @@ def validate_generated_task(task_dir: Path) -> AdmissionResult:
 
     visible_sets_match = sorted(agent_task.get("available_artifacts", [])) == sorted(artifact_names)
     add_check("visible_artifact_manifest_consistent", visible_sets_match)
-    hidden_leak_tokens = _visible_hidden_leaks(task_dir)
-    add_check("no_hidden_leakage", not hidden_leak_tokens, {"tokens": hidden_leak_tokens})
+    public_task_keys = set(task)
+    add_check(
+        "public_task_schema_is_allowlisted",
+        public_task_keys == PUBLIC_TASK_KEYS,
+        {
+            "expected_keys": sorted(PUBLIC_TASK_KEYS),
+            "actual_keys": sorted(public_task_keys),
+            "unexpected_keys": sorted(public_task_keys - PUBLIC_TASK_KEYS),
+            "missing_keys": sorted(PUBLIC_TASK_KEYS - public_task_keys),
+        },
+    )
+    public_agent_task_keys = set(agent_task)
+    add_check(
+        "public_agent_task_schema_is_allowlisted",
+        public_agent_task_keys == PUBLIC_AGENT_TASK_KEYS,
+        {
+            "expected_keys": sorted(PUBLIC_AGENT_TASK_KEYS),
+            "actual_keys": sorted(public_agent_task_keys),
+            "unexpected_keys": sorted(public_agent_task_keys - PUBLIC_AGENT_TASK_KEYS),
+            "missing_keys": sorted(PUBLIC_AGENT_TASK_KEYS - public_agent_task_keys),
+        },
+    )
+    leakage = _agent_visible_leakage(task_dir)
+    add_check("no_hidden_leakage", not leakage["forbidden_tokens"], leakage)
+    add_check(
+        "no_evaluator_metadata_in_agent_surface",
+        not leakage["evaluator_keys"],
+        leakage,
+    )
+    prompt_review = _prompt_disclosure_review(template)
+    add_check(
+        "agent_prompt_has_no_solution_disclosure",
+        prompt_review["valid"],
+        prompt_review,
+    )
+    workspace_boundary = _agent_workspace_boundary_details(task_dir)
+    add_check("agent_workspace_export_isolated", workspace_boundary["isolated"], workspace_boundary)
     add_check("initial_state_physically_possible", _initial_state_physically_possible(task_dir))
 
-    projection_contract_ref = task.get("projection_contract_ref")
-    domain_source_status = task.get("domain_source_status")
-    stochastic_source_status = task.get("stochastic_source_status")
-    environment_seed = task.get("environment_seed")
+    projection_contract_ref = task_metadata.get("projection_contract_ref")
+    domain_source_status = task_metadata.get("domain_source_status")
+    stochastic_source_status = task_metadata.get("stochastic_source_status")
+    environment_seed = task_metadata.get("environment_seed")
     projection_contract_path = _world_ref_path(projection_contract_ref) if isinstance(projection_contract_ref, str) else None
     expected_projection_metadata = _task_projection_metadata(template)
     actual_projection_metadata = {
-        key: task.get(key)
+        key: task_metadata.get(key)
         for key in (
             "projection_contract_ref",
             "domain_source_status",
@@ -312,7 +429,6 @@ def validate_generated_task(task_dir: Path) -> AdmissionResult:
         projection_contract_path is not None and projection_contract_path.is_file(),
         {
             "projection_contract_ref": projection_contract_ref,
-            "path": str(projection_contract_path) if projection_contract_path else None,
         },
     )
     add_check(
@@ -325,14 +441,14 @@ def validate_generated_task(task_dir: Path) -> AdmissionResult:
         isinstance(environment_seed, int),
         {"environment_seed": environment_seed},
     )
-    schedule_refs = task.get("schedule_refs")
+    schedule_refs = task_metadata.get("schedule_refs")
     add_check(
         "schedule_refs_present",
         schedule_refs == SCHEDULE_REFS,
         {"expected": SCHEDULE_REFS, "actual": schedule_refs},
     )
     schedule_details = {
-        kind: _schedule_admission_details(task_dir, task, template, kind)
+        kind: _schedule_admission_details(task_dir, task_metadata, template, kind)
         for kind in sorted(SCHEDULE_REFS)
     }
     for kind, details in schedule_details.items():
@@ -347,12 +463,17 @@ def validate_generated_task(task_dir: Path) -> AdmissionResult:
     template_matches = [
         item
         for item in _load_template_catalog()["templates"]
-        if item["template_id"] == task["template_id"] and item["lab_failure_mode"] == task["failure_mode"]
+        if item["template_id"] == task_metadata["template_id"]
+        and item["lab_failure_mode"] == task_metadata["failure_mode"]
     ]
     add_check(
         "task_maps_to_one_template_failure_mode",
         len(template_matches) == 1,
-        {"template_id": task["template_id"], "failure_mode": task["failure_mode"], "matches": len(template_matches)},
+        {
+            "template_id": task_metadata["template_id"],
+            "failure_mode": task_metadata["failure_mode"],
+            "matches": len(template_matches),
+        },
     )
     add_check("verifier_predicates_non_vacuous", bool(template.get("verifier_predicates")))
 
@@ -372,7 +493,7 @@ def validate_generated_task(task_dir: Path) -> AdmissionResult:
         oracle_error = repr(exc)
     add_check("oracle_passes", oracle_ok, {"error": oracle_error} if oracle_error else None)
 
-    horizon = task["expected_horizon"]
+    horizon = task_metadata["expected_horizon"]
     add_check(
         "expected_horizon_bin_fits_oracle_tool_calls",
         oracle_ok and int(horizon["min_tool_calls"]) <= oracle_tool_calls <= int(horizon["max_tool_calls"]),
@@ -441,18 +562,21 @@ def validate_generated_task(task_dir: Path) -> AdmissionResult:
     )
 
     expected_artifacts = sorted(expectations["required_artifacts_read"])
-    add_check("task_has_one_template_failure_mode", bool(task["template_id"]) and bool(task["failure_mode"]))
+    add_check(
+        "task_has_one_template_failure_mode",
+        bool(task_metadata["template_id"]) and bool(task_metadata["failure_mode"]),
+    )
     add_check("visible_artifacts_cover_required_reads", expected_artifacts == sorted(artifact_names))
 
     admitted = all(item["ok"] for item in checks)
     payload = {
         "schema_version": "greenfield_lablongrun.admission.v0",
         "task_id": task["task_id"],
-        "template_id": task["template_id"],
-        "failure_mode": task["failure_mode"],
-        "seed": task["seed"],
+        "template_id": task_metadata["template_id"],
+        "failure_mode": task_metadata["failure_mode"],
+        "seed": task_metadata["seed"],
         "environment_seed": environment_seed,
-        "difficulty": task["difficulty"],
+        "difficulty": task_metadata["difficulty"],
         "projection": actual_projection_metadata,
         "schedule_refs": schedule_refs,
         "admitted": admitted,
@@ -761,6 +885,11 @@ def _rng(template_id: str, seed: int) -> random.Random:
     return random.Random(int(digest[:16], 16))
 
 
+def _public_task_id(template_id: str, seed: int) -> str:
+    digest = hashlib.sha256(f"{WORLD_ID}:{template_id}:{seed}".encode("utf-8")).hexdigest()
+    return f"lab_episode_{digest[:16]}"
+
+
 def _render_context(template: dict[str, Any], parameters: dict[str, Any], seed: int, difficulty: str) -> dict[str, str]:
     context = {name: _format_value(value) for name, value in parameters.items()}
     context.update(
@@ -963,7 +1092,6 @@ def _schedule_admission_details(task_dir: Path, task: dict[str, Any], template: 
     return {
         "kind": kind,
         "ref": ref,
-        "path": str(path) if path else None,
         "exists": exists,
         "deterministic": actual == expected,
         "empty": isinstance(actual, dict) and actual.get("events") == [],
@@ -992,13 +1120,113 @@ def _read_jsonl_records(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def _visible_hidden_leaks(task_dir: Path) -> list[str]:
-    text = "\n".join(
-        path.read_text(encoding="utf-8")
+def _agent_visible_leakage(task_dir: Path) -> dict[str, Any]:
+    return scan_agent_visible_files(
+        task_dir,
+        _agent_visible_relative_files(task_dir),
+        forbidden_tokens=HIDDEN_LEAK_TOKENS,
+        forbidden_json_keys=EVALUATOR_ONLY_KEYS,
+    )
+
+
+def _materialize_agent_workspace(task_dir: Path, out: Path, *, clean: bool) -> Path:
+    artifact_names = sorted(
+        path.name for path in (task_dir / "visible_artifacts").iterdir() if path.is_file()
+    )
+    return materialize_agent_workspace(
+        task_dir,
+        out,
+        relative_files=_agent_visible_relative_files(task_dir),
+        clean=clean,
+        manifest={
+            "schema_version": "greenfield_lablongrun.agent_visible_manifest.v1",
+            "task_id": read_json(task_dir / "task.json")["task_id"],
+            "root_files": sorted(AGENT_VISIBLE_ROOT_FILES),
+            "visible_artifacts": artifact_names,
+        },
+    )
+
+
+def _agent_visible_relative_files(task_dir: Path) -> list[str]:
+    files = list(AGENT_VISIBLE_ROOT_FILES)
+    files.extend(
+        f"visible_artifacts/{path.name}"
         for path in sorted((task_dir / "visible_artifacts").iterdir())
         if path.is_file()
-    ).lower()
-    return [token for token in HIDDEN_LEAK_TOKENS if token in text]
+    )
+    return files
+
+
+def _agent_workspace_boundary_details(task_dir: Path) -> dict[str, Any]:
+    expected_files = set(AGENT_VISIBLE_ROOT_FILES) | {"agent_visible_manifest.json"}
+    expected_files.update(
+        f"visible_artifacts/{path.name}"
+        for path in (task_dir / "visible_artifacts").iterdir()
+        if path.is_file()
+    )
+    with tempfile.TemporaryDirectory(prefix="lablongrun_agent_workspace_") as tmp:
+        workspace = _materialize_agent_workspace(task_dir, Path(tmp) / "agent", clean=False)
+        inventory = workspace_file_inventory(workspace)
+        actual_files = set(inventory["files"])
+        symlinks = inventory["symlinks"]
+    return {
+        "isolated": actual_files == expected_files and not symlinks,
+        "expected_files": sorted(expected_files),
+        "actual_files": sorted(actual_files),
+        "unexpected_files": sorted(actual_files - expected_files),
+        "missing_files": sorted(expected_files - actual_files),
+        "symlinks": symlinks,
+    }
+
+
+def _prompt_disclosure_review(template: dict[str, Any]) -> dict[str, Any]:
+    public_prompt_sha256 = _public_prompt_template_sha256(template)
+    reviews = read_json(PROMPT_REVIEWS_PATH).get("reviews", [])
+    matches = [item for item in reviews if item.get("template_id") == template["template_id"]]
+    if len(matches) != 1:
+        return {
+            "valid": False,
+            "template_id": template["template_id"],
+            "public_prompt_sha256": public_prompt_sha256,
+            "reason": "Expected exactly one prompt-disclosure review for this public template.",
+            "review_count": len(matches),
+            "findings": ["The public prompt does not have one unambiguous review bound to its exact digest."],
+        }
+    review = matches[0]
+
+    reviewed_categories = set(review.get("disclosures_checked", []))
+    valid = (
+        review.get("decision") == "approved_no_solution_disclosure"
+        and review.get("public_prompt_sha256") == public_prompt_sha256
+        and isinstance(review.get("reviewer"), str)
+        and bool(review["reviewer"].strip())
+        and isinstance(review.get("reviewed_at"), str)
+        and bool(review["reviewed_at"].strip())
+        and REQUIRED_DISCLOSURE_REVIEW_CATEGORIES <= reviewed_categories
+    )
+    return {
+        "valid": valid,
+        "template_id": template["template_id"],
+        "public_prompt_sha256": public_prompt_sha256,
+        "reviewed_prompt_sha256": review.get("public_prompt_sha256"),
+        "decision": review.get("decision"),
+        "reviewer": review.get("reviewer"),
+        "reviewed_at": review.get("reviewed_at"),
+        "findings": review.get("findings", []),
+        "required_disclosures": sorted(REQUIRED_DISCLOSURE_REVIEW_CATEGORIES),
+        "reviewed_disclosures": sorted(reviewed_categories),
+    }
+
+
+def _public_prompt_template_sha256(template: dict[str, Any]) -> str:
+    public_template = {
+        "objective": template["objective"],
+        "agent_instructions": template["agent_instructions"],
+        "visible_artifacts": template["visible_artifacts"],
+        "parameters": template["parameters"],
+    }
+    canonical = json.dumps(public_template, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _initial_state_physically_possible(task_dir: Path) -> bool:

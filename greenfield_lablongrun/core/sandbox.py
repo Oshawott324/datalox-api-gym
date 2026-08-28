@@ -45,12 +45,13 @@ def create_run_from_bundle(task_bundle_dir: Path, run_dir: Path, *, label: str, 
             shutil.copytree(source, run_dir / directory, dirs_exist_ok=True)
 
     task = read_json(task_bundle_dir / "task.json")
+    task_metadata = read_json(task_bundle_dir / "hidden" / "task_metadata.json")
     run_metadata = {
         "schema_version": "greenfield_lablongrun.run.v0",
         "world": task["world"],
-        "scenario": task["scenario"],
+        "scenario": task_metadata["scenario"],
+        "task_id": task["task_id"],
         "label": label,
-        "task_bundle_dir": str(task_bundle_dir),
         "state_db": STATE_DB_NAME,
         "artifacts": {
             "task": "task.json",
@@ -68,4 +69,3 @@ def create_run_from_bundle(task_bundle_dir: Path, run_dir: Path, *, label: str, 
         db_path=run_dir / STATE_DB_NAME,
         trace=TraceRecorder(run_dir),
     )
-

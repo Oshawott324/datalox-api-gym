@@ -1,0 +1,101 @@
+{
+  "schema_version": "greenfield_lablongrun.prompt_disclosure_reviews.v1",
+  "reviews": [
+    {
+      "decision": "rejected_solution_disclosure",
+      "disclosures_checked": [
+        "expected_outcome",
+        "fault_identity",
+        "ordered_action_sequence",
+        "recovery_action"
+      ],
+      "findings": [
+        "The protocol note exposes the ordered transfer, mix, wait, read, and decision procedure with exact values."
+      ],
+      "public_prompt_sha256": "9de7a39e88e27c7f806ceaeef611aa765b5b6870b04d1507b20ba6cead9bce72",
+      "reviewed_at": "2026-08-28",
+      "reviewer": "api-gym-maintainers",
+      "template_id": "od600_nominal"
+    },
+    {
+      "decision": "rejected_solution_disclosure",
+      "disclosures_checked": [
+        "expected_outcome",
+        "fault_identity",
+        "ordered_action_sequence",
+        "recovery_action"
+      ],
+      "findings": [
+        "The prompt identifies the low-source challenge and supplies the reduced-volume procedure that the agent should infer."
+      ],
+      "public_prompt_sha256": "1e5e499bc3d82764b8579767344f07ce6897977a6f76aae9a90dad637cde4f65",
+      "reviewed_at": "2026-08-28",
+      "reviewer": "api-gym-maintainers",
+      "template_id": "od600_low_source_volume"
+    },
+    {
+      "decision": "rejected_solution_disclosure",
+      "disclosures_checked": [
+        "expected_outcome",
+        "fault_identity",
+        "ordered_action_sequence",
+        "recovery_action"
+      ],
+      "findings": [
+        "The prompt supplies the clean-tip ordering and protected-reagent handling behavior under evaluation."
+      ],
+      "public_prompt_sha256": "973e552c037e2bf491e0908c42d517a468a351e485bd03a8c00b68b13f13e0a9",
+      "reviewed_at": "2026-08-28",
+      "reviewer": "api-gym-maintainers",
+      "template_id": "od600_contaminated_tip"
+    },
+    {
+      "decision": "rejected_solution_disclosure",
+      "disclosures_checked": [
+        "expected_outcome",
+        "fault_identity",
+        "ordered_action_sequence",
+        "recovery_action"
+      ],
+      "findings": [
+        "The prompt announces the reader-busy condition and gives the exact wait needed to clear it."
+      ],
+      "public_prompt_sha256": "6c8c09083ed3226442993d1f953d4d3ac0c59883eae8af51eef436e6ef745375",
+      "reviewed_at": "2026-08-28",
+      "reviewer": "api-gym-maintainers",
+      "template_id": "od600_instrument_busy_wait"
+    },
+    {
+      "decision": "rejected_solution_disclosure",
+      "disclosures_checked": [
+        "expected_outcome",
+        "fault_identity",
+        "ordered_action_sequence",
+        "recovery_action"
+      ],
+      "findings": [
+        "The prompt labels the prior readout as stale and directly instructs the agent to replace it with fresh evidence."
+      ],
+      "public_prompt_sha256": "4e937f779f39acb03c0127943162443820e161e868c96770ebefad467b91eeca",
+      "reviewed_at": "2026-08-28",
+      "reviewer": "api-gym-maintainers",
+      "template_id": "od600_stale_readout"
+    },
+    {
+      "decision": "rejected_solution_disclosure",
+      "disclosures_checked": [
+        "expected_outcome",
+        "fault_identity",
+        "ordered_action_sequence",
+        "recovery_action"
+      ],
+      "findings": [
+        "The prompt announces the partial-dispense fault and supplies the inspect-and-complete recovery procedure."
+      ],
+      "public_prompt_sha256": "c493a11dfd6ace3d20a03d719fd750d26ee804cbfc41d8f146848bbd006cb8b8",
+      "reviewed_at": "2026-08-28",
+      "reviewer": "api-gym-maintainers",
+      "template_id": "od600_partial_dispense_recovery"
+    }
+  ]
+}

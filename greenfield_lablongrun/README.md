@@ -5,7 +5,7 @@ not integrated with the current `api-gym` CLI and does not try to preserve the
 existing repo architecture.
 
 The prototype demonstrates a small template-driven source-grounded dry-run
-generator. The demo runs six admitted OD600 task families:
+generator. It contains six OD600 calibration task families:
 
 ```text
 od600_nominal
@@ -16,12 +16,19 @@ od600_stale_readout
 od600_partial_dispense_recovery
 ```
 
+The six original prompts are quarantined from model evaluation because they
+disclose reference procedures or challenge-specific recovery behavior. Their
+oracle and known-bad controls still run for world calibration, but admission now
+fails until each public prompt is redesigned and an exact-digest disclosure
+review is recorded in `templates/prompt_disclosure_reviews.json`.
+
 For each template, generation creates a task bundle, clones a SQLite sandbox,
 runs an oracle through the same tool path an agent would use, verifies the run,
 runs one known-bad plan for the template's declared failure mode, and exports
-traces plus verifier results. Generation also runs admission checks for
-projection metadata, seeded deterministic fault/noise schedules, hidden leakage,
-oracle pass, and exact known-bad failure codes, then writes `admission.json`.
+traces plus verifier results. Admission checks the public schema, all
+agent-visible files, the isolated agent-workspace export, the exact prompt-review
+digest, projection metadata, deterministic fault/noise schedules, oracle pass,
+and exact known-bad failure codes.
 
 Run it from the repository root:
 
@@ -42,6 +49,7 @@ runs/greenfield_lablongrun_phase2/
     source_refs_snapshot.json
     visible_artifacts/
     hidden/
+      task_metadata.json
       oracle_plan.json
       known_bad_plans.json
       verifier_expectations.json
@@ -72,13 +80,21 @@ Grounding:
   `worlds/lablongrun_wet_v0/projection_contract.md`.
 
 No live hardware, live provider, or production credential path exists in this
-prototype.
+prototype. Internal task bundles and run directories contain evaluator state and
+must never be used as an agent working directory. `export_agent_workspace(...)`
+is the only supported filesystem package for an agent host; it refuses tasks
+that have not passed admission. Its manifest records the SHA-256 digest and byte
+size of every public file plus a digest of the complete file-record set.
 
 Generator entry points:
 
 ```python
 from pathlib import Path
-from greenfield_lablongrun.worlds.lablongrun_wet_v0.task_generator import generate_suite, generate_task
+from greenfield_lablongrun.worlds.lablongrun_wet_v0.task_generator import (
+    export_agent_workspace,
+    generate_suite,
+    generate_task,
+)
 
 generate_task("od600_nominal", seed=1, difficulty="short", out=Path("runs/generated/nominal"))
 generate_task("od600_low_source_volume", seed=1, difficulty="short", out=Path("runs/generated/low_source"))
@@ -87,7 +103,11 @@ generate_task("od600_instrument_busy_wait", seed=1, difficulty="short", out=Path
 generate_task("od600_stale_readout", seed=1, difficulty="short", out=Path("runs/generated/stale_readout"))
 generate_task("od600_partial_dispense_recovery", seed=1, difficulty="short", out=Path("runs/generated/partial_dispense"))
 generate_suite(Path("suite_spec.json"), Path("runs/generated/suite"))
+export_agent_workspace(Path("runs/generated/nominal"), Path("agent-workspaces/episode"))
 ```
 
 Suite specs are JSON and contain a `tasks` list with `template_id`,
 `difficulty`, and either `seed` or `seeds`.
+
+The export call above succeeds only after the selected template has an approved
+prompt-disclosure review bound to the exact public-template SHA-256 digest.

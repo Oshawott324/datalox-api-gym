@@ -310,7 +310,7 @@ def _build_run_export(run_dir: Path, result: VerifierResult) -> dict[str, Any]:
         "schema_version": "greenfield_lablongrun.run_export.v0",
         "world_ref": {"world": result.world, "scenario": result.scenario},
         "task_ref": {"task": "task.json", "agent_task": "agent_task.json"},
-        "run_ref": {"run_dir": str(run_dir), "label": run["label"]},
+        "run_ref": {"task_id": run["task_id"], "label": run["label"]},
         "trace_ref": {"tool_calls": "tool_calls.jsonl", "state_diffs": "state_diffs.jsonl"},
         "verifier_result": result.to_dict(),
         "artifact_refs": {

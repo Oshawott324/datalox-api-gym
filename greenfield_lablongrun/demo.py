@@ -72,7 +72,7 @@ def main() -> int:
         template_results.append(
             {
                 "template_id": template_id,
-                "task_bundle": str(task_bundle),
+                "task_bundle_ref": f"generated/{template_id}",
                 "admission_passed": admission["admitted"],
                 "projection": admission["projection"],
                 "schedule_refs": admission["schedule_refs"],
@@ -81,9 +81,9 @@ def main() -> int:
                     for check in admission["checks"]
                     if check["name"] in projection_check_names
                 },
-                "oracle_run": str(oracle_run.run_dir),
+                "oracle_run_ref": f"runs/{template_id}/oracle",
                 "oracle_passed": oracle_result.ok,
-                "known_bad_run": str(bad_run_dir),
+                "known_bad_run_ref": f"runs/{template_id}/known_bad",
                 "known_bad_failed": known_bad_failed,
                 "known_bad_error": known_bad_error,
                 "oracle_trace_counts": oracle_run.trace.counts(),
