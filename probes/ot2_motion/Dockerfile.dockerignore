@@ -1,0 +1,14 @@
+**
+!api_gym/
+!api_gym/__init__.py
+!api_gym/source_packs.py
+!api_gym/instrument_models/
+!api_gym/instrument_models/**
+!probes/
+!probes/ot2_motion/
+!probes/ot2_motion/**
+!tests/
+!tests/instrument_models/
+!tests/instrument_models/**
+**/__pycache__/
+**/*.pyc

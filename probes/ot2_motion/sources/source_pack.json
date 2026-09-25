@@ -1,0 +1,16 @@
+{
+  "schema_version": "api_gym.api_source_pack.v0",
+  "source_pack_id": "api.opentrons.9.1.1-motion-p0",
+  "provider": "opentrons",
+  "version": "9.1.1-motion-p0",
+  "status": "raw",
+  "promotion": "Authoring inventory only; API source-pack catalog admission requires operation and response records.",
+  "source_types": ["official_source", "hardware_reference", "local_simulator"],
+  "records": {"docs_index": "docs_index.jsonl", "assets": "assets.jsonl"},
+  "live_execution": {"allowed": false, "reason": "Offline authoring feasibility only; no robot connections."},
+  "claim_boundary": "Source/asset inventory. No admitted instrument geometry, hardware validation, provider release, or agent evaluation.",
+  "software_commit": "ad074b80e267084f08065b6d559b791140dfa671",
+  "hardware_commit": "ef9ede131ed1d64daf9a0df5b2140a0a8e56b632",
+  "retrieved_at": "2026-09-24",
+  "source_files_redistribution": "not assessed; downloaded CAD remains in ignored local storage"
+}
