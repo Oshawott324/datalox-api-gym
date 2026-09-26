@@ -1,0 +1,390 @@
+{
+  "cases": [
+    {
+      "id": "raised_cross_plate",
+      "intersects_authored_wall": false,
+      "segment_queries": [
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        },
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        },
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        }
+      ]
+    },
+    {
+      "id": "direct_cross_plate",
+      "intersects_authored_wall": true,
+      "segment_queries": [
+        {
+          "intersects": true,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        }
+      ]
+    },
+    {
+      "id": "minimum_height",
+      "intersects_authored_wall": false,
+      "segment_queries": [
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        },
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        },
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        }
+      ]
+    },
+    {
+      "id": "labware_offset",
+      "intersects_authored_wall": false,
+      "segment_queries": [
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        }
+      ]
+    },
+    {
+      "id": "same_position",
+      "intersects_authored_wall": false,
+      "segment_queries": [
+        {
+          "intersects": false,
+          "method": "exact_translational_sweep",
+          "numerical_contact_tolerance_mm": 1e-08
+        }
+      ]
+    }
+  ],
+  "dependencies": {
+    "numpy": "1.26.4",
+    "opentrons": "9.1.1",
+    "opentrons-shared-data": "9.1.1",
+    "python-fcl": "0.7.0.11",
+    "scipy": "1.16.1",
+    "trimesh": "5.1.0"
+  },
+  "feasibility_passed": true,
+  "geometry_scope": "fixed-orientation boxes/spheres; closed linear segments; authored fixtures",
+  "instrument_geometry_admission": "pending",
+  "obstacle": {
+    "center_mm": [
+      140.0,
+      74.24,
+      20.0
+    ],
+    "shape": {
+      "dimensions_mm": [
+        0.01,
+        30.0,
+        40.0
+      ]
+    }
+  },
+  "phase": "P0",
+  "physical_validation": "not performed",
+  "probe_body": {
+    "is_pipette_model": false,
+    "radius_mm": 0.5,
+    "shape": "sphere"
+  },
+  "reference": {
+    "cases": [
+      {
+        "id": "raised_cross_plate",
+        "segments": [
+          {
+            "case": "raised_cross_plate",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              14.380000000000003,
+              74.24,
+              74.49
+            ],
+            "requested_end_mm": [
+              14.380000000000003,
+              74.24,
+              74.49
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              14.380000000000003,
+              74.24,
+              19.219999999999995
+            ]
+          },
+          {
+            "case": "raised_cross_plate",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              279.38,
+              74.24,
+              74.49
+            ],
+            "requested_end_mm": [
+              279.38,
+              74.24,
+              74.49
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              14.380000000000003,
+              74.24,
+              74.49
+            ]
+          },
+          {
+            "case": "raised_cross_plate",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              279.38,
+              74.24,
+              19.219999999999995
+            ],
+            "requested_end_mm": [
+              279.38,
+              74.24,
+              19.22
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              279.38,
+              74.24,
+              74.49
+            ]
+          }
+        ]
+      },
+      {
+        "id": "direct_cross_plate",
+        "segments": [
+          {
+            "case": "direct_cross_plate",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              14.380000000000003,
+              74.24,
+              19.219999999999995
+            ],
+            "requested_end_mm": [
+              14.38,
+              74.24,
+              19.22
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              279.38,
+              74.24,
+              19.219999999999995
+            ]
+          }
+        ]
+      },
+      {
+        "id": "minimum_height",
+        "segments": [
+          {
+            "case": "minimum_height",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              14.380000000000003,
+              74.24,
+              110.00000000000001
+            ],
+            "requested_end_mm": [
+              14.380000000000003,
+              74.24,
+              110.0
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              14.380000000000003,
+              74.24,
+              19.219999999999995
+            ]
+          },
+          {
+            "case": "minimum_height",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              279.38,
+              74.24,
+              110.00000000000001
+            ],
+            "requested_end_mm": [
+              279.38,
+              74.24,
+              110.0
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              14.380000000000003,
+              74.24,
+              110.00000000000001
+            ]
+          },
+          {
+            "case": "minimum_height",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              279.38,
+              74.24,
+              19.219999999999995
+            ],
+            "requested_end_mm": [
+              279.38,
+              74.24,
+              19.22
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              279.38,
+              74.24,
+              110.00000000000001
+            ]
+          }
+        ]
+      },
+      {
+        "id": "labware_offset",
+        "segments": [
+          {
+            "case": "labware_offset",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              280.38,
+              72.24,
+              19.720000000000002
+            ],
+            "requested_end_mm": [
+              280.38,
+              72.24,
+              19.720000000000002
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              279.38,
+              74.24,
+              19.219999999999995
+            ]
+          }
+        ]
+      },
+      {
+        "id": "same_position",
+        "segments": [
+          {
+            "case": "same_position",
+            "critical_point": null,
+            "mount": "LEFT",
+            "reported_end_mm": [
+              280.38,
+              72.24,
+              19.720000000000002
+            ],
+            "requested_end_mm": [
+              280.38,
+              72.24,
+              19.720000000000002
+            ],
+            "speed_mm_s": 400,
+            "start_mm": [
+              280.38,
+              72.24,
+              19.720000000000002
+            ]
+          }
+        ]
+      }
+    ],
+    "claim": "native simulator movement segments, not measured hardware trajectories",
+    "definitions": {
+      "corning_96_wellplate_360ul_flat": {
+        "canonical_json_sha256": "36295385c10855d55e488fd64cf3ff9b648cbe324c6892990d0c2af7292d46d2",
+        "dimensions": {
+          "xDimension": 127.76,
+          "yDimension": 85.47,
+          "zDimension": 14.22
+        },
+        "namespace": "opentrons",
+        "version": 1
+      },
+      "opentrons_96_tiprack_300ul": {
+        "canonical_json_sha256": "a76e52f9811b4aa616802bd12683aad94a2386d457a809b1459f6b058de6bac1",
+        "dimensions": {
+          "xDimension": 127.76,
+          "yDimension": 85.48,
+          "zDimension": 64.49
+        },
+        "namespace": "opentrons",
+        "version": 1
+      }
+    },
+    "opentrons_version": "9.1.1",
+    "setup": {
+      "api_level": "2.26",
+      "calibration": "official nominal defaults; no physical calibration supplied",
+      "mount": "left",
+      "pickup": "official simulated setup only; contact behavior not validated",
+      "pipette_model": "p300_single_v2.1",
+      "position_frame": "deck",
+      "position_reference": "native critical point; tip end for this mounted-tip setup",
+      "position_units": "mm",
+      "robot_type": "OT-2",
+      "slots": {
+        "1": "corning_96_wellplate_360ul_flat",
+        "3": "corning_96_wellplate_360ul_flat",
+        "5": "opentrons_96_tiprack_300ul"
+      },
+      "tip_length_mm": 51.099999999999994
+    },
+    "source_files_sha256": {
+      "opentrons/hardware_control/api.py": "9f4211ceaae9002bf0e9b00a4b4ad59a8164c25c0cf0707fdd59210c6d85484d"
+    }
+  },
+  "system": {
+    "platform": "macOS-15.5-arm64-arm-64bit",
+    "python": "3.12.5"
+  },
+  "thin_obstacle": {
+    "end_intersects": false,
+    "start_intersects": false,
+    "sweep": {
+      "intersects": true,
+      "method": "exact_translational_sweep",
+      "numerical_contact_tolerance_mm": 1e-08
+    }
+  },
+  "timing_ms": {
+    "max": 0.40237512439489365,
+    "samples": 9
+  }
+}

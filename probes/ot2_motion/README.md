@@ -123,3 +123,7 @@ physical validation have not been implemented in this increment.
 
 See the [implementation plan](../../docs/reports/2026-09-21-ot2-motion-simulation-implementation-plan.md)
 and [Phase 0 results](../../docs/reports/2026-09-24-ot2-motion-phase0-results.md).
+
+The [build specification](../../docs/reports/2026-09-26-ot2-motion-build-spec.md)
+details the next implementation stages. A complete
+[example output](examples/reference-result.json) can be inspected without installing dependencies.

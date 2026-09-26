@@ -1,245 +1,99 @@
-# Datalox API Gym
+# Opentrons Motion Simulation
 
-Resettable, verifiable environments for tool-using agents: the high-stakes tool
-use you cannot safely rehearse on real systems, such as lab instruments, billing
-and financial ops, and anything costly or irreversible to run for real.
+An offline prototype for checking movements produced by the Opentrons software
+against modeled obstacles, before attempting them on an instrument.
 
-A "world" is a resettable stateful system the agent acts on through MCP tools,
-with a hidden state-based verifier that grades the final world state and
-workflow invariants, not the transcript. The agent passes because the world
-ended up correct, not because it wrote a plausible answer.
+The current code runs five fixed commands through the official Opentrons 9.1.1
+simulator, records their intermediate movements, and checks the full paths against
+a simple geometric fixture. It has not been validated on a physical robot.
 
-```text
-World = source substrate
-      + mutable episode state
-      + actions (MCP tools)
-      + dynamics
-      + observations
-      + hidden verifier
-      + exported evidence
-```
+## Start Here
 
-## Try It In 60 Seconds
+- [Example output](probes/ot2_motion/examples/reference-result.json): a complete,
+  freshly generated run, including coordinates, geometry results, and versions.
+- [Code and setup](probes/ot2_motion/README.md): supported behavior, dependencies,
+  and reproduction instructions.
+- [Build specification](docs/reports/2026-09-26-ot2-motion-build-spec.md):
+  implementation steps toward an interactive instrument model.
+- [Initial results](docs/reports/2026-09-24-ot2-motion-phase0-results.md):
+  reference-software checks and current limitations.
 
-```bash
-pip install -e '.[dev]'
-python -m pytest -q
-api-gym session create \
-  --world unitelabs_plate_qc_v0 \
-  --scenario plate_transfer_qc --seed 1 \
-  --out runs/demo --json
-api-gym session finalize --run runs/demo --json
-```
+## What You Can Check Today
 
-## What's Real Today
+| Command or check | What it demonstrates |
+| --- | --- |
+| Raised traversal between plates | The native planner supplies the intermediate upward, lateral, and downward movements |
+| Direct traversal | A different native path can intersect an obstacle the raised path clears |
+| Minimum-height option | The requested option changes the native planner's path |
+| Labware-offset update | Updated configuration changes the commanded target |
+| Repeated position request | The same destination is recorded without inventing extra movement |
+| Thin obstacle between clear endpoints | Whole-path checking detects an intersection that endpoint-only checks miss |
 
-- Three complete worlds: a dry-run lab plate-QC world, a billing/support-ops
-  world with HTTP serving, and a shape-grounded Automata LINQ workflow-planning
-  dry-run world.
-- A dry-run API gate over 31 source-grounded providers, 134 operations, and 179
-  sourced response cases. An agent can call an original-shaped API and get a
-  sourced response back instead of hitting the live service.
-- A session lifecycle that plugs into an agent host, with run exports that
-  produce SFT/eval rows, plus a seed post-training packet across three lab/bio
-  task families.
+The collision example uses a **0.5 mm radius sphere and an authored thin wall**.
+These are mathematical fixtures, not accurate pipette or rack geometry. The
+example establishes the connection between native movements and geometric
+checks; it does not establish clearance for a real OT-2.
 
-## What's Early
+## Run It
 
-- The lab world's API semantics are not yet grounded in a real vendor contract.
-- Three worlds and a seed dataset: early, with no model-lift claims.
-- Verifiers check workflow invariants and tool evidence, not scientific
-  correctness.
-
-## Closest Neighbors
-
-tau-bench, WebArena, SWE-bench, and AppWorld. API Gym's bet is high-stakes,
-costly-to-run domains those do not cover, with state-based verification and
-source-grounded APIs.
-
-## Current Worlds
-
-`billing_support_v0`
-
-- deterministic business workflow world
-- SQLite episode state
-- billing, support, CRM, and email tools
-- hidden verifier checks final business state
-
-`unitelabs_plate_qc_v0`
-
-- deterministic dry-run lab workflow world
-- SQLite episode state
-- labware, liquid transfer, plate readout, workflow note, and protocol decision
-  tools
-- hidden verifier checks dry-run workflow invariants
-- API semantics should be grounded from an explicit UniteLabs OpenAPI contract
-
-`automata_linq_workflow_planning_v0`
-
-- shape-grounded dry-run lab-orchestration workflow-planning world
-- SQLite episode state shared by original-shaped HTTP routes and MCP tools
-- workflow authoring, validation, planning, plan polling/result, read-only
-  scheduler, driver, workcell, device, run-history, and log-export surfaces
-- hidden verifier checks final workflow state, planning evidence, stale-plan
-  repair, and live-action boundary enforcement
-- not high-fidelity Automata runtime behavior; no live tenant, workcell, or
-  hardware execution
-
-## Quickstart
-
-Install the package and run the tests:
+With Git and Docker installed:
 
 ```bash
-python -m pip install -e '.[dev]'
-python -m pytest -q
+git clone --branch opentrons-motion-simulation --single-branch \
+  https://github.com/Oshawott324/datalox-api-gym.git
+cd datalox-api-gym
+bash probes/ot2_motion/build_image.sh
+docker run --rm --network none --read-only --cap-drop ALL \
+  --security-opt no-new-privileges --pids-limit 256 --memory 2g \
+  --tmpfs /tmp:rw,nosuid,nodev,size=256m datalox-ot2-motion:phase0
 ```
 
-Create one world session:
+The default container command runs the 31 focused tests. Building the image
+downloads dependencies; execution is network-disabled and uses no robot
+credentials or device mounts.
+
+To execute the combined movement-and-geometry probe in that image:
 
 ```bash
-api-gym session create \
-  --world unitelabs_plate_qc_v0 \
-  --scenario plate_transfer_qc \
-  --seed 1 \
-  --out runs/unitelabs-demo \
-  --json
+docker run --rm --network none --read-only --cap-drop ALL \
+  --security-opt no-new-privileges --pids-limit 256 --memory 2g \
+  --tmpfs /tmp:rw,nosuid,nodev,size=256m datalox-ot2-motion:phase0 \
+  python -m probes.ot2_motion --out /tmp/result.json
 ```
 
-This writes:
+A successful run prints `"feasibility_passed": true`. The temporary result is
+removed with the container; the [checked-in example](probes/ot2_motion/examples/reference-result.json)
+shows the complete record. [Python-only instructions](probes/ot2_motion/README.md#reproduce-on-the-development-host)
+also describe how to retain a local result.
 
-```text
-runs/unitelabs-demo/
-  run.json
-  state.sqlite
-  task.json
-  agent_task.json
-  session_manifest.json
-```
+## Code Map
 
-The session manifest is the integration contract for external agent
-environments. It contains the task package, recommended MCP config,
-`expected_tools`, a tool preflight command, finalization command, and artifact
-paths.
+- [reference.py](probes/ot2_motion/reference.py) calls the official simulator and
+  records its movement segments.
+- [collision.py](api_gym/instrument_models/geometry/collision.py) checks swept
+  boxes and spheres using FCL.
+- [__main__.py](probes/ot2_motion/__main__.py) combines those two parts and writes
+  the result.
+- [Tests](tests/instrument_models) cover reference movements, geometry,
+  reproducibility, and source integrity.
+- [Sources](probes/ot2_motion/sources) pin software and CAD references.
 
-Before rollout:
+## What Comes Next
 
-```bash
-api-gym session check-tools --run runs/unitelabs-demo
-```
+The next implementation adds component-resolved geometry, separate configured
+and physical labware positions, and an interactive command interface. This will
+allow testing new movement sequences rather than only the five reference cases.
 
-The host must also compare its own agent-visible tool registry against
-`expected_tools`. The Datalox check proves the API Gym MCP server has the right
-catalog; the host check proves the agent can actually see those tools.
+A researcher view and agent practice come after those pieces are connected.
+Physical comparisons require an instrument owner and independently checked
+geometry. Forces, tip bending, liquid delivery, and biological outcomes are
+outside the current model.
 
-After the agent stops:
+The [build specification](docs/reports/2026-09-26-ot2-motion-build-spec.md) gives
+the acceptance tests and sequence for each stage.
 
-```bash
-api-gym session finalize --run runs/unitelabs-demo --json
-```
+---
 
-Finalize runs the verifier, writes `run_export.json`, writes
-`session_finalization.json`, and exits nonzero if the verifier fails.
-
-## Integration Contract
-
-Agent hosts should treat API Gym as a world provider:
-
-```ts
-type DataloxWorldSessionAdapter = {
-  createSession(input: {
-    world: string;
-    scenario: string;
-    seed: number;
-    out: string;
-  }): Promise<SessionManifest>;
-
-  attachAdapters(manifest: SessionManifest): Promise<void>;
-  assertToolsVisible(expectedTools: string[]): Promise<void>;
-  runAgent(taskPackagePath: string): Promise<unknown>;
-  finalizeSession(runDir: string): Promise<SessionFinalization>;
-};
-```
-
-MCP is one action channel. For provider-shaped environments, the session
-manifest may also include an `http` surface. Use
-`api-gym serve --run <run_dir>` when the agent or SDK needs original-shaped
-HTTP calls. MCP remains available for hosts that prefer tool calls; both
-adapters must share the same world state and verifier. The session manifest is
-the lifecycle contract.
-
-## Evidence Output
-
-`run_export.json` is upstream evidence for collectors. It contains:
-
-- world and scenario metadata
-- task package
-- captured tool trace
-- verifier result
-- artifact paths
-
-The agent must not receive hidden verifier state or direct access to mutable
-state files such as `state.sqlite`.
-
-## Manual Debug Commands
-
-The lower-level commands are still useful when debugging a world:
-
-```bash
-api-gym sample --world billing_support_v0 --scenario duplicate_payment_refund --seed 1 --out runs/demo
-api-gym task --run runs/demo --out runs/demo/agent_task.json
-api-gym mcp --run runs/demo
-api-gym verify --run runs/demo
-api-gym export --run runs/demo --out runs/demo/run_export.json
-```
-
-Billing-only HTTP/oracle/model-eval surfaces remain available:
-
-```bash
-api-gym serve --run runs/demo --port 8080
-api-gym resolve --run runs/demo --policy oracle
-api-gym run --run runs/demo --model qwen --base-url http://localhost:8000/v1 --api-key EMPTY
-api-gym eval --world billing_support_v0 --scenarios duplicate_payment_refund,failed_invoice_retryable,refund_not_allowed_policy --seeds 1,2,3 --model qwen --base-url http://localhost:8000/v1 --api-key EMPTY --out runs/billing-eval.jsonl
-api-gym report --input runs/billing-eval.jsonl
-```
-
-## Project Boundary
-
-Read [docs/product-definition.md](docs/product-definition.md) for the canonical
-boundary.
-
-API Gym owns:
-
-- API source packs and source references
-- world specs
-- world sessions
-- state backends
-- action contracts
-- dynamics backends
-- observation contracts
-- hidden verifier execution
-- tool traces
-- run exports
-
-API Gym does not own:
-
-- dataset manifests
-- train/dev/test split assignment
-- dataset quality labels
-- dataset validation reports
-- model training recipes
-
-## Layout
-
-```text
-api_gym/                 Python package and world runtime surfaces
-source_packs/apis/       Raw and normalized API source substrate
-worlds/                  World specs, grounding notes, evidence, and policies
-website/                 VitePress documentation
-tests/                   Runtime and contract tests
-```
-
-See [source_packs/apis/README.md](source_packs/apis/README.md) for the source
-pack boundary and schema guidance.
-
-For contributor workflow, see
-[docs/playbooks/api-gym-builder-playbook.md](docs/playbooks/api-gym-builder-playbook.md).
+This branch is part of [Datalox API Gym](https://github.com/Oshawott324/datalox-api-gym/tree/main).
+It focuses on OT-2 movement modeling. It is an independent project, not an
+official Opentrons simulator release.
