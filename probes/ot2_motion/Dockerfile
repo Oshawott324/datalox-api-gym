@@ -10,4 +10,4 @@ COPY api_gym/instrument_models /workspace/api_gym/instrument_models
 COPY probes/ot2_motion /workspace/probes/ot2_motion
 COPY tests/instrument_models /workspace/tests/instrument_models
 USER 65534:65534
-CMD ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests/instrument_models"]
+CMD ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests/instrument_models/test_geometry_collision.py", "tests/instrument_models/test_ot2_motion_reference.py", "tests/instrument_models/test_ot2_motion_sources.py"]

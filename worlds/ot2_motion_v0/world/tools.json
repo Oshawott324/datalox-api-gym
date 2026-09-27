@@ -1,0 +1,254 @@
+{
+  "tools": [
+    {
+      "description": "Inspect the agent-visible configured OT-2 setup and authored model scope.",
+      "id": "ot2.inspect_setup",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "invoke_roles": [
+        "motion_agent"
+      ],
+      "list_roles": [
+        "motion_agent"
+      ],
+      "operation_family": "setup_inspection",
+      "source_refs": [
+        "ot2_motion_api_gym_core"
+      ]
+    },
+    {
+      "description": "Move the mounted-tip native critical point to a configured well reference.",
+      "id": "ot2.move_to_well",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "force_direct": {
+            "default": false,
+            "type": "boolean"
+          },
+          "labware_slot": {
+            "enum": [
+              "1",
+              "3"
+            ],
+            "type": "string"
+          },
+          "minimum_z_height_mm": {
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "offset_mm": {
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ],
+            "type": "object"
+          },
+          "reference": {
+            "enum": [
+              "top",
+              "bottom"
+            ],
+            "type": "string"
+          },
+          "speed_mm_s": {
+            "exclusiveMinimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "well_name": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "labware_slot",
+          "well_name",
+          "reference"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "motion_agent"
+      ],
+      "list_roles": [
+        "motion_agent"
+      ],
+      "operation_family": "native_motion",
+      "source_refs": [
+        "opentrons_9_1_1_native_worker",
+        "authored_sphere_wall_fixture"
+      ]
+    },
+    {
+      "description": "Move the mounted-tip native critical point to an absolute deck coordinate.",
+      "id": "ot2.move_to_deck_point",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "force_direct": {
+            "default": false,
+            "type": "boolean"
+          },
+          "minimum_z_height_mm": {
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "point_mm": {
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ],
+            "type": "object"
+          },
+          "speed_mm_s": {
+            "exclusiveMinimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "point_mm"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "motion_agent"
+      ],
+      "list_roles": [
+        "motion_agent"
+      ],
+      "operation_family": "native_motion",
+      "source_refs": [
+        "opentrons_9_1_1_native_worker",
+        "authored_sphere_wall_fixture"
+      ]
+    },
+    {
+      "description": "Request one explicitly allowed operator observation for the current visible setup epoch.",
+      "id": "ot2.request_operator_observation",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "enum": [
+              "labware_seated",
+              "offset_label_matches_declaration",
+              "mounted_tip_confirmed",
+              "dimension_mm"
+            ],
+            "type": "string"
+          },
+          "subject_id": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "subject_id"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "motion_agent"
+      ],
+      "list_roles": [
+        "motion_agent"
+      ],
+      "operation_family": "operator_observation",
+      "source_refs": [
+        "ot2_motion_api_gym_core"
+      ]
+    },
+    {
+      "description": "Finish with an explicit declared deferral basis when the selected task permits it.",
+      "id": "ot2.defer",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "enum": [
+              "required_geometry_unavailable",
+              "operator_observation_unavailable",
+              "observed_prerequisite_unmet"
+            ],
+            "type": "string"
+          },
+          "cited_observation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "referenced_observation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "referenced_observation_request_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "basis"
+        ],
+        "type": "object"
+      },
+      "invoke_roles": [
+        "motion_agent"
+      ],
+      "list_roles": [
+        "motion_agent"
+      ],
+      "operation_family": "task_completion",
+      "source_refs": [
+        "ot2_motion_api_gym_core"
+      ]
+    }
+  ]
+}

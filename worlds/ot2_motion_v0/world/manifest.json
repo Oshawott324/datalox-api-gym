@@ -1,0 +1,35 @@
+{
+  "bundle_version": "1.0.0",
+  "content_hashes": {
+    "README.md": "sha256:2fa3fe34c9751084616956949e82cf274f1d27915188438b58db765955955b5d",
+    "gate_config.json": "sha256:3a43c135d7192406a47e8759dfdcb9a53790e40cef0f6c2cbb4e4b23ad2ab86a",
+    "replay_script.json": "sha256:06a47cf1fb789f4455b297272f9ec7cf2fd1b612e10a35886ecdbce39669b6b4",
+    "spec.json": "sha256:c819ad3e632d06b339b9568513b35bf6b142782c46a0023c61decac2df9aca49",
+    "task.json": "sha256:719d8b1142000b09bf23d069173e0a453f9bd5255a4647ec414737b217d031d4",
+    "tests/trajectories/raised_move.json": "sha256:bec9ae68fd3bbcdce08a84a925a02deb00a00e6c0191922baaf40f4fa645e33d",
+    "world/episodes.jsonl": "sha256:b589776826c0558e1272dbf69130f85a1190118727013400fae9d74db5405bfc",
+    "world/implementation.py": "sha256:7c7580bd75241af9c1504f3640a1a96c3e8923ec954c7011c6aa4f52fa0d327b",
+    "world/roles.json": "sha256:e1bed9af3597777261cfaa6305f48f08fc87450bc3803a009034b7a7406f18e0",
+    "world/sources.json": "sha256:9b9d99bbe12e9386a2477eabcd49733d7186c4fbe4fe209b65ea6df7bcd252c2",
+    "world/tools.json": "sha256:8b481f096f0522112bf84e754869f7ab4ab5f59a0eb77ad1ff2c8f3d8be03fd0",
+    "world/verifier.json": "sha256:2997b5516c8a666bfd4d158ddda67ec6b08db8eebfa8a8bf098e645cb961fb02"
+  },
+  "default_actor_role": "motion_agent",
+  "episodes_path": "world/episodes.jsonl",
+  "implementation": "world/implementation.py:create_world",
+  "required_runtime_capabilities": [
+    "actors",
+    "role_scoped_tools",
+    "transactions",
+    "managed_worker_lifecycle"
+  ],
+  "roles_path": "world/roles.json",
+  "schema_version": "datalox_world_bundle_v1",
+  "sources_path": "world/sources.json",
+  "tools_path": "world/tools.json",
+  "trajectory_paths": [
+    "tests/trajectories/raised_move.json"
+  ],
+  "verifier_path": "world/verifier.json",
+  "world_id": "ot2_motion_v0"
+}

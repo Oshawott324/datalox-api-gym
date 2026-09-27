@@ -3,9 +3,11 @@
 An offline prototype for checking movements produced by the Opentrons software
 against modeled obstacles, before attempting them on an instrument.
 
-The current code runs five fixed commands through the official Opentrons 9.1.1
-simulator, records their intermediate movements, and checks the full paths against
-a simple geometric fixture. It has not been validated on a physical robot.
+The current code accepts movement commands in a persistent official Opentrons
+9.1.1 simulator, records intermediate movements, and checks their full paths
+against explicitly supplied geometry. Reset creates a fresh simulator process.
+The runnable example uses an authored geometric fixture; it has not been
+validated on a physical robot.
 
 ## Start Here
 
@@ -17,6 +19,17 @@ a simple geometric fixture. It has not been validated on a physical robot.
   implementation steps toward an interactive instrument model.
 - [Initial results](docs/reports/2026-09-24-ot2-motion-phase0-results.md):
   reference-software checks and current limitations.
+- [CAD inspection](docs/reports/2026-09-27-ot2-cad-inspection.md): what the
+  source files contain, and which geometry is still missing.
+- [Interactive example](probes/ot2_motion/interactive_example.py): direct and
+  raised movements evaluated in separate reset episodes, or a supplied sequence
+  of supported movement commands.
+- [Interactive container](docs/ot2-motion-container.md): build and run the
+  native worker, motion world, and MCP integration without network or robot access.
+- [Agent connection](docs/ot2-motion-agent-interface.md): prepare a fresh
+  session and connect an MCP-capable agent through five bounded tools.
+- [Implementation status](docs/reports/2026-09-27-ot2-motion-implementation.md):
+  tested behavior, repository ownership, and remaining physical inputs.
 
 ## What You Can Check Today
 
@@ -34,7 +47,7 @@ These are mathematical fixtures, not accurate pipette or rack geometry. The
 example establishes the connection between native movements and geometric
 checks; it does not establish clearance for a real OT-2.
 
-## Run It
+## Run the Original Reference Probe
 
 With Git and Docker installed:
 
@@ -70,24 +83,41 @@ also describe how to retain a local result.
 
 - [reference.py](probes/ot2_motion/reference.py) calls the official simulator and
   records its movement segments.
-- [collision.py](api_gym/instrument_models/geometry/collision.py) checks swept
-  boxes and spheres using FCL.
+- [Geometry](api_gym/instrument_models/geometry) checks fixed-orientation
+  translations of boxes, spheres, convex polyhedra, and unions of convex pieces.
+- [Instrument model](api_gym/instrument_models/opentrons_ot2_v0) separates
+  configured offsets, modeled physical placement, native movement coordinates,
+  and available operator observations.
+- [Motion world](api_gym/worlds/ot2_motion_v0) evaluates each path once and
+  verifies the resulting episode facts. Final verification does not rerun the
+  collision queries.
 - [__main__.py](probes/ot2_motion/__main__.py) combines those two parts and writes
   the result.
 - [Tests](tests/instrument_models) cover reference movements, geometry,
   reproducibility, and source integrity.
 - [Sources](probes/ot2_motion/sources) pin software and CAD references.
 
-## What Comes Next
+## Current Limits
 
-The next implementation adds component-resolved geometry, separate configured
-and physical labware positions, and an interactive command interface. This will
-allow testing new movement sequences rather than only the five reference cases.
+The STEP inspection found 26 valid source-labeled solids. Their correspondence
+to the selected GEN2 pipette, the motion reference point, and the software deck
+frame is unresolved. Tip, rack, plate, and trash geometry are still missing from
+the admitted scene. An incomplete scene cannot establish whole-instrument
+clearance.
 
-A researcher view and agent practice come after those pieces are connected.
-Physical comparisons require an instrument owner and independently checked
-geometry. Forces, tip bending, liquid delivery, and biological outcomes are
-outside the current model.
+The authored fixture is an engineering control, not a realistic instrument
+benchmark. The model detects geometric intersections; it does not calculate
+contact forces, tip bending, liquid delivery, or biological outcomes. A detected
+intersection ends the modeled episode with an unresolved physical pose.
+
+The first MCP bundle contains one runnable task. Four task definitions exist in
+the world code; they are not four independently integrated instrument scenarios.
+Managed sessions require a fresh native process and do not support resuming from
+the database after shutdown. Researcher visualization exports are separate from
+agent observations and do not control the instrument.
+
+Physical comparisons still require an instrument owner and independently checked
+geometry. No agent-learning or physical-transfer result is claimed.
 
 The [build specification](docs/reports/2026-09-26-ot2-motion-build-spec.md) gives
 the acceptance tests and sequence for each stage.

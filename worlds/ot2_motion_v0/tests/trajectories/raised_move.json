@@ -1,0 +1,25 @@
+{
+  "episode_id": "ot2-motion-engineering-control-02",
+  "id": "raised-move-reference",
+  "kind": "reference",
+  "steps": [
+    {
+      "arguments": {},
+      "tool": "ot2.inspect_setup"
+    },
+    {
+      "arguments": {
+        "force_direct": false,
+        "labware_slot": "3",
+        "offset_mm": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "reference": "top",
+        "well_name": "A1"
+      },
+      "tool": "ot2.move_to_well"
+    }
+  ]
+}

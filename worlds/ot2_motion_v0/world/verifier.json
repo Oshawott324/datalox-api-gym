@@ -1,0 +1,21 @@
+{
+  "assertions": [
+    {
+      "failure_code": "WORKER_STATE_UNKNOWN",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "PATH_CHECK_INCOMPLETE",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "PATH_INTERSECTION",
+      "type": "implementation_check"
+    },
+    {
+      "failure_code": "GOAL_NOT_REACHED",
+      "type": "implementation_check"
+    }
+  ],
+  "schema_version": "api_gym.verifier.ot2_motion_v0.v1"
+}

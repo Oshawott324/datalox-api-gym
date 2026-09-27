@@ -1,0 +1,37 @@
+ARG PHASE0_IMAGE
+FROM ${PHASE0_IMAGE}
+
+ARG SOURCE_BUNDLE_SHA256
+LABEL org.opencontainers.image.title="Datalox OT-2 interactive motion smoke" \
+      org.opencontainers.image.description="Offline native Opentrons worker plus API Gym motion world" \
+      org.datalox.ot2.source-bundle-sha256="${SOURCE_BUNDLE_SHA256}" \
+      org.datalox.ot2.native-opentrons-version="9.1.1"
+
+USER 0:0
+COPY probes/ot2_motion/interactive-requirements.lock /opt/interactive-requirements.lock
+COPY runtime-source /opt/runtime-source
+RUN python -m venv /opt/ot2-controller \
+    && /opt/ot2-controller/bin/python -m pip install --no-cache-dir --only-binary=:all: \
+       --require-hashes -r /opt/interactive-requirements.lock
+
+COPY api_gym /workspace/api_gym
+COPY probes /workspace/probes
+COPY tests /workspace/tests
+COPY worlds /workspace/worlds
+COPY SOURCE-MANIFEST.sha256 /opt/ot2-source-manifest.sha256
+
+ENV PATH=/opt/ot2-controller/bin:$PATH \
+    PYTHONPATH=/workspace:/opt/runtime-source/src \
+    PYTHONNOUSERSITE=1 \
+    DATALOX_OT2_WORKER_PYTHON=/usr/local/bin/python
+
+RUN /usr/local/bin/python -c \
+       "from importlib.metadata import version; assert version('opentrons') == '9.1.1'" \
+    && /opt/ot2-controller/bin/python -c \
+       "from importlib.util import find_spec; assert find_spec('opentrons') is None" \
+    && /opt/ot2-controller/bin/python -c \
+       "import datalox_gated_runtime; import api_gym; import fcl"
+
+WORKDIR /workspace
+USER 65534:65534
+CMD ["bash", "probes/ot2_motion/run_interactive_smoke.sh"]

@@ -1,12 +1,18 @@
-# OT-2 Motion Feasibility Probe
+# OT-2 Motion Probe and Interactive World
 
-Status: Phase 0 implemented. Phase 1 asset inventory started. No physical robot
-has been connected, and no complete instrument scene has been admitted.
+Status: the fixed reference probe and an interactive native-worker/world path
+are implemented. Structured CAD inspection is complete. No physical robot has
+been connected, and no complete instrument collision scene has been admitted.
 
 This probe runs five fixed movements through official Opentrons 9.1.1 software,
 records the intermediate simulator movements, and checks those segments against
 an authored geometric obstacle. It answers whether the software and geometry
-dependencies can support the next implementation phase.
+dependencies can support the next implementation phase. The newer
+`interactive_example.py` keeps the official simulator alive across supplied
+movement commands and evaluates separate reset episodes.
+
+For the interactive path, use the [two-repository container instructions](../../docs/ot2-motion-container.md).
+The fixed probe instructions below remain independently runnable.
 
 ## Implemented Scope
 
@@ -15,8 +21,10 @@ dependencies can support the next implementation phase.
 - Opentrons 300 uL tip rack, definition v1, slot 5; nominal tip length 51.1 mm.
 - Native raised movement, direct movement, minimum-height option, labware-offset
   update, and a repeated same-position request.
-- Fixed-orientation, axis-aligned solid boxes and spheres, translated along a
-  closed straight segment. Meshes and rotating bodies are not admitted.
+- Fixed-orientation boxes, spheres, convex polyhedra, and unions of convex
+  pieces, translated along closed straight segments. Solid unions preserve
+  their declared cavities. Arbitrary meshes and rotation during a segment
+  are not admitted.
 
 The native coordinates are in millimeters relative to the deck, at the native
 critical point. With the attached tip in this setup that point is the tip end.
@@ -108,22 +116,27 @@ To inspect acquired files, save them under the `local_filename` values in
 ```
 
 The inspector verifies every byte digest before processing. The detailed STL has
-42,172 faces and is not watertight. It is not admitted as a collision solid. STEP
-solid import, DXF units, deck alignment, moving-body segmentation, and accurate
-pipette/tip/labware cavities remain pending. No holes are silently filled and no
-asset is rescaled to fit the software coordinates.
+42,172 faces and is not watertight. It is not admitted as a collision solid.
+The subsequent [structured CAD inspection](../../docs/reports/2026-09-27-ot2-cad-inspection.md)
+found 26 valid labeled STEP solids and millimeter units in STEP and DXF. The
+model is flattened, without a retained assembly hierarchy or motion anchors.
+Deck alignment, exact pipette correspondence, and identified tip/labware/trash
+solids remain unresolved. No holes are silently filled and no asset is rescaled
+to fit the software coordinates.
 
 ## Next Gate
 
-Phase 1 must establish one source-backed geometric setup, including explicit
-coordinate transforms and missing-component coverage. Until then, whole-instrument
-collision predictions remain unavailable. Pickup/discard contact mechanics,
-hidden physical placement, agent observations, scene visualization, and paired
-physical validation have not been implemented in this increment.
+A source-backed geometric setup still needs explicit coordinate alignment and
+identified moving/static parts. Until then, whole-instrument collision
+predictions remain unavailable. The new world can separate configured offsets
+from hidden modeled placement and expose scoped operator observations, but its
+current controls use authored geometry. Pickup/discard contact mechanics and
+paired physical validation remain outside the implementation.
 
 See the [implementation plan](../../docs/reports/2026-09-21-ot2-motion-simulation-implementation-plan.md)
 and [Phase 0 results](../../docs/reports/2026-09-24-ot2-motion-phase0-results.md).
 
 The [build specification](../../docs/reports/2026-09-26-ot2-motion-build-spec.md)
-details the next implementation stages. A complete
+details the acceptance criteria. The [implementation status](../../docs/reports/2026-09-27-ot2-motion-implementation.md)
+distinguishes working code from the remaining evidence gaps. A complete
 [example output](examples/reference-result.json) can be inspected without installing dependencies.

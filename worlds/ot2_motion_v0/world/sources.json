@@ -1,0 +1,46 @@
+{
+  "grounding_gaps": [
+    {
+      "claim": "physical collision or clearance prediction",
+      "operation_family": "native_motion",
+      "reason": "The moving body is an authored 0.5 mm sphere and the obstacle is an authored wall. They are not source-backed pipette, tip, labware, deck, or robot geometry, and no physical robot validation has been performed."
+    },
+    {
+      "claim": "restorable native simulator state",
+      "operation_family": "lifecycle",
+      "reason": "The native worker is process-resident and cannot be resumed from SQLite. Every reset creates a fresh worker generation."
+    }
+  ],
+  "sources": [
+    {
+      "derivation": "The runtime worker invokes the pinned device-free Opentrons 9.1.1 simulator and verifies the declared official source-file digest before accepting commands.",
+      "grounding_level": "G1_OFFICIAL_SOURCE",
+      "id": "opentrons_9_1_1_native_worker",
+      "kind": "official_source",
+      "locator": "datalox_gated_runtime.sdk_adapters.opentrons_ot2_motion",
+      "supports": [
+        "operation_family:native_motion"
+      ]
+    },
+    {
+      "derivation": "API Gym composes task, observation, dynamics, and incremental verifier logic over the runtime-owned native manager.",
+      "grounding_level": "G2_LOCAL_EXECUTED",
+      "id": "ot2_motion_api_gym_core",
+      "kind": "local_world_implementation",
+      "locator": "api_gym/worlds/ot2_motion_v0",
+      "supports": [
+        "world:ot2_motion_v0"
+      ]
+    },
+    {
+      "derivation": "A self-authored 0.5 mm sphere and thin box wall provide an honest mathematical control fixture for whole-path checking.",
+      "grounding_level": "G0_AUTHORED_FIXTURE",
+      "id": "authored_sphere_wall_fixture",
+      "kind": "authored_fixture",
+      "locator": "api_gym.worlds.ot2_motion_v0.runtime_adapter:build_authored_fixture",
+      "supports": [
+        "model_scope:authored_fixture_only"
+      ]
+    }
+  ]
+}

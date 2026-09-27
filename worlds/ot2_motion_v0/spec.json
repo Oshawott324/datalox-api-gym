@@ -1,0 +1,10 @@
+{
+  "id": "ot2_motion_v0",
+  "kind": "world_bundle_v1",
+  "native_software": "opentrons 9.1.1 device-free simulator",
+  "physical_validation": "not_performed",
+  "state_policy": "fresh managed worker generation per episode reset",
+  "supported_task_ids": [
+    "engineering_control_02"
+  ]
+}

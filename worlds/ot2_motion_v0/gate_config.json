@@ -1,0 +1,9 @@
+{
+  "audit_rules": [],
+  "config_id": "ot2_motion_v0",
+  "response_cases": [],
+  "world": {
+    "kind": "world_bundle_v1",
+    "seed": 0
+  }
+}

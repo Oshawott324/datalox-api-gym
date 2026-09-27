@@ -2,7 +2,12 @@
 
 Date: 2026-09-26
 
-Status: implementation specification. Phase 0 exists; the stages below are planned.
+Status: implementation specification with partial implementation as of 2026-09-27.
+The persistent native worker, geometric model, observation boundary, and motion
+world are implemented for authored engineering fixtures. Source CAD inspection
+is complete; a full instrument collision scene is not admitted. See the
+[CAD findings](2026-09-27-ot2-cad-inspection.md). The acceptance criteria below
+remain the target, not a statement that every stage has passed.
 
 This expands the [implementation plan](2026-09-21-ot2-motion-simulation-implementation-plan.md)
 into code boundaries, algorithms, operation contracts, and acceptance tests. It

@@ -1,0 +1,8 @@
+{
+  "roles": [
+    {
+      "description": "Inspects declared OT-2 setup information and issues bounded modeled motion actions.",
+      "id": "motion_agent"
+    }
+  ]
+}

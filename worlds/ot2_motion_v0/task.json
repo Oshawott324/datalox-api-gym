@@ -1,0 +1,11 @@
+{
+  "instructions": "Move the mounted tip reference to slot 3 well A1, 5 mm above the well top. Select movement options that satisfy the stated destination and modeled path checks.",
+  "success_criteria": [
+    "The native mounted-tip reference reaches the declared destination.",
+    "Every completed native segment is checked once against the authored fixture.",
+    "No modeled path intersection or indeterminate worker state is counted as completion.",
+    "No conclusion extends beyond the authored sphere-and-wall fixture."
+  ],
+  "task_id": "engineering_control_02",
+  "title": "Reach the modeled OT-2 destination"
+}
