@@ -1,11 +1,25 @@
 {
   "id": "enzyme_activity_v0",
-  "status": "phase_0_and_1_executable_contract",
+  "status": "phase_3_scenario_admission_complete",
   "assay_contract": "contracts/assay_sop.json",
   "reader_profile": "contracts/reader_profile.json",
   "model_assumptions": "contracts/model_assumptions.json",
   "source_refs": "source_refs.json",
   "sources_lock": "sources.lock.json",
+  "scenario_families": [
+    "nominal_measurement",
+    "high_activity_unsuitable_range",
+    "delayed_acquisition",
+    "interrupted_series",
+    "reagent_background",
+    "sample_plate_lineage"
+  ],
+  "report_contract": {
+    "dispositions": ["usable", "unresolved"],
+    "required_controls": ["BLANK", "REF-AP"],
+    "verifier": "api_gym.worlds.enzyme_activity_v0.verifier:verify_experiment",
+    "analysis_independence": "Verifier recomputes fits without calling production reference analysis."
+  },
   "claims": {
     "scientific": "Modeled relative activity only",
     "reader": "Authored offline backend through PyLabRobot 0.2.1",

@@ -1,11 +1,22 @@
 {
-  "task_id": "enzyme-activity-contract-01",
-  "title": "Prepare and measure one modeled enzyme reaction",
-  "instructions": "Prepare SAMPLE-A and a matched blank from the declared stocks, request operator transfer, acquire 405 nm observations, and submit a supported blank-corrected relative rate.",
+  "task_id": "enzyme-activity-v0",
+  "title": "Measure modeled enzyme activity with matched controls",
+  "instructions": "Prepare SAMPLE-A, the matched BLANK, and REF-AP from the declared stocks. Request operator-confirmed transfer of the identified plate, acquire modeled 405 nm observations at 37 degC, and report a supported blank-corrected relative rate or an evidence-backed unresolved disposition.",
   "success_criteria": [
-    "Every liquid mutation has a unique action_id and confirmed native receipt.",
-    "The operator-confirmed plate identity and revision match the reader data.",
-    "The report cites acquired sample and blank observations and uses delta_absorbance_per_minute.",
-    "No uncertain native operation is redispatched."
-  ]
+    "Use confirmed native liquid actions and no more than 1 assay plate, 1 operator transfer, and 900 logical seconds.",
+    "Use at least four acquired numeric observations spanning at least 90 seconds for each fitted well.",
+    "Cite sample, matched blank, and REF-AP measurements from the same plate revision and reader settings.",
+    "Fit each cited well by unweighted ordinary least squares against its actual timestamps; subtract the blank slope, convert seconds to minutes, and apply the lineage dilution factor.",
+    "Combine sample and blank slope standard errors in quadrature and apply the same time and dilution factors.",
+    "Apply only the dilution factor supported by preparation lineage and report delta_absorbance_per_minute.",
+    "A usable result requires a blank-corrected REF-AP rate from 0.01 through 0.08 delta_absorbance_per_minute and relative standard error no greater than 0.25.",
+    "Do not replace missing or overrange observations with numeric values."
+  ],
+  "resources": {
+    "sample_ids": ["SAMPLE-A"],
+    "control_ids": ["BLANK", "REF-AP"],
+    "assay_plates": 1,
+    "maximum_logical_time_s": 900.0,
+    "plate_transfers": 1
+  }
 }

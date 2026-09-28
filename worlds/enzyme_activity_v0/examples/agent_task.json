@@ -1,10 +1,14 @@
 {
-  "task_id": "enzyme-activity-contract-01",
-  "objective": "Measure the modeled relative activity of the supplied sample and reference under the admitted assay procedure. Report supported rates with measurement, blank, dilution-lineage, and fit-window references, or identify evidence-backed unresolved results.",
+  "task_id": "enzyme-activity-nominal-01",
+  "objective": "Measure the modeled relative activity of SAMPLE-A under the admitted assay procedure. Report a supported rate with sample, blank, REF-AP, dilution-lineage, uncertainty, and fit-window evidence, or identify an evidence-backed unresolved result.",
   "constraints": [
     "Plate transfers require operator confirmation.",
-    "Only acquired observations may be used.",
+    "Each fitted well uses at least four acquired numeric observations spanning at least 90 seconds.",
+    "Use unweighted ordinary least squares against actual timestamps; blank-correct and propagate slope standard errors in quadrature before applying time and lineage dilution factors.",
+    "Sample, matched blank, and REF-AP evidence share a plate revision and reader-settings digest.",
+    "A usable result requires REF-AP in the SOP's 0.01 to 0.08 delta_absorbance_per_minute interval and relative standard error no greater than 0.25.",
+    "Use no more than 1 assay plate, 1 operator transfer, and 900 logical seconds.",
     "Missing and overrange measurements are not zeros.",
-    "Fresh repeats use unused stock, substrate, and wells."
+    "No repeat plate is exposed by this admitted scenario set; use sufficient valid evidence or an evidence-backed unresolved disposition."
   ]
 }

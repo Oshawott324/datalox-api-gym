@@ -1,0 +1,87 @@
+{
+  "schema_version": "enzyme_activity_phase3_fixture_v1",
+  "fixture_basis": "Literal hand-calculated linear absorbance traces; no production analysis function generates these values.",
+  "common": {
+    "blank_absorbance": [0.04, 0.043, 0.046, 0.049, 0.052],
+    "sample_absorbance": [0.05, 0.089, 0.128, 0.167, 0.206],
+    "reference_absorbance": [0.045, 0.072, 0.099, 0.126, 0.153],
+    "expected_sample_rate": 0.072,
+    "expected_reference_rate": 0.048,
+    "expected_uncertainty": 0.0,
+    "units": "delta_absorbance_per_minute"
+  },
+  "scenarios": [
+    {
+      "scenario_id": "enzyme-activity-nominal-01",
+      "family": "nominal_measurement",
+      "plate_id": "assay-plate-001",
+      "plate_revision": 7,
+      "times_s": [0.0, 30.0, 60.0, 90.0, 120.0],
+      "selected_indices": [0, 1, 2, 3, 4],
+      "alternative_indices": [0, 1, 3, 4],
+      "targeted_mutant": "short_fit_window",
+      "expected_failure_code": "fit_window_invalid"
+    },
+    {
+      "scenario_id": "enzyme-activity-high-01",
+      "family": "high_activity_unsuitable_range",
+      "plate_id": "assay-plate-002",
+      "plate_revision": 5,
+      "times_s": [0.0, 30.0, 60.0, 90.0, 120.0],
+      "selected_indices": [0, 1, 2, 3, 4],
+      "alternative_indices": [0, 1, 3, 4],
+      "targeted_mutant": "out_of_range_signal",
+      "expected_failure_code": "fit_window_invalid"
+    },
+    {
+      "scenario_id": "enzyme-activity-delayed-01",
+      "family": "delayed_acquisition",
+      "plate_id": "assay-plate-001",
+      "plate_revision": 7,
+      "times_s": [125.0, 155.0, 185.0, 215.0, 245.0],
+      "selected_indices": [0, 1, 2, 3, 4],
+      "alternative_indices": [0, 1, 3, 4],
+      "targeted_mutant": "job_start_as_reaction_start",
+      "expected_failure_code": "fit_window_invalid"
+    },
+    {
+      "scenario_id": "enzyme-activity-interrupted-01",
+      "family": "interrupted_series",
+      "plate_id": "assay-plate-001",
+      "plate_revision": 7,
+      "times_s": [0.0, 30.0, 60.0, 90.0, 120.0, 150.0],
+      "blank_absorbance": [0.04, 0.043, null, 0.049, 0.052, 0.055],
+      "sample_absorbance": [0.05, 0.089, null, 0.167, 0.206, 0.245],
+      "reference_absorbance": [0.045, 0.072, null, 0.126, 0.153, 0.18],
+      "selected_indices": [0, 1, 3, 4, 5],
+      "alternative_indices": [0, 1, 4, 5],
+      "targeted_mutant": "cite_missing_as_zero",
+      "expected_failure_code": "measurement_reference_invalid"
+    },
+    {
+      "scenario_id": "enzyme-activity-background-01",
+      "family": "reagent_background",
+      "plate_id": "assay-plate-001",
+      "plate_revision": 7,
+      "times_s": [0.0, 30.0, 60.0, 90.0, 120.0],
+      "blank_absorbance": [0.04, 0.052, 0.064, 0.076, 0.088],
+      "sample_absorbance": [0.05, 0.098, 0.146, 0.194, 0.242],
+      "reference_absorbance": [0.045, 0.081, 0.117, 0.153, 0.189],
+      "selected_indices": [0, 1, 2, 3, 4],
+      "alternative_indices": [0, 1, 3, 4],
+      "targeted_mutant": "omit_blank",
+      "expected_failure_code": "blank_evidence_missing"
+    },
+    {
+      "scenario_id": "enzyme-activity-lineage-01",
+      "family": "sample_plate_lineage",
+      "plate_id": "assay-plate-resolved",
+      "plate_revision": 3,
+      "times_s": [0.0, 30.0, 60.0, 90.0, 120.0],
+      "selected_indices": [0, 1, 2, 3, 4],
+      "alternative_indices": [0, 1, 3, 4],
+      "targeted_mutant": "relabel_old_plate",
+      "expected_failure_code": "plate_lineage_mismatch"
+    }
+  ]
+}

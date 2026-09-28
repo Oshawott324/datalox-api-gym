@@ -8,6 +8,13 @@ from .chemistry import ReactionParameters
 
 REACTION_PARAMETERS = ReactionParameters(kcat_per_s=0.08, km_mM=0.25)
 
+FINAL_SUBSTRATE_CONCENTRATION_MM = 1.0
+SUBSTRATE_STOCK_CONCENTRATION_MM = 2.0
+UNDILUTED_SAMPLE_FRACTION = 0.5
+MAX_ASSAY_PLATES = 1
+MAX_LOGICAL_TIME_S = 900.0
+MAX_PLATE_TRANSFERS = 1
+
 READER_PROFILE = ReaderProfile(
     profile_id="pylabrobot_0_2_1_authored_absorbance_405_v0",
     wavelength_nm=405,
@@ -32,4 +39,14 @@ ANALYSIS_RULES = AnalysisRules(
     usable_absorbance_max=1.5,
 )
 
-__all__ = ["ANALYSIS_RULES", "REACTION_PARAMETERS", "READER_PROFILE"]
+__all__ = [
+    "ANALYSIS_RULES",
+    "FINAL_SUBSTRATE_CONCENTRATION_MM",
+    "MAX_ASSAY_PLATES",
+    "MAX_LOGICAL_TIME_S",
+    "MAX_PLATE_TRANSFERS",
+    "REACTION_PARAMETERS",
+    "READER_PROFILE",
+    "SUBSTRATE_STOCK_CONCENTRATION_MM",
+    "UNDILUTED_SAMPLE_FRACTION",
+]

@@ -1,14 +1,114 @@
 {
   "tools": [
-    {"id":"lab.inspect","description":"Inspect public inventory, plate identity/location, transfer state, and already acquired reader observations.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{},"additionalProperties":false},"source_refs":["enzyme_activity_v0_coupled_model"],"operation_family":"observation"},
-    {"id":"ot2.pick_up_tip","description":"Pick up one tip through the pinned native simulator.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"},"tip_well":{"type":"string"}},"required":["action_id","tip_well"],"additionalProperties":false},"source_refs":["opentrons_9_1_1_native_liquid_worker"],"operation_family":"native_liquid_handling"},
-    {"id":"ot2.aspirate","description":"Aspirate a bounded volume from a configured source well once.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"},"source":{"type":"string"},"volume_ul":{"type":"number","exclusiveMinimum":0,"maximum":300}},"required":["action_id","source","volume_ul"],"additionalProperties":false},"source_refs":["opentrons_9_1_1_native_liquid_worker"],"operation_family":"native_liquid_handling"},
-    {"id":"ot2.dispense","description":"Dispense a bounded tip volume into a configured well once.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"},"destination":{"type":"string"},"volume_ul":{"type":"number","exclusiveMinimum":0,"maximum":300}},"required":["action_id","destination","volume_ul"],"additionalProperties":false},"source_refs":["opentrons_9_1_1_native_liquid_worker"],"operation_family":"native_liquid_handling"},
-    {"id":"ot2.drop_tip","description":"Drop the attached empty tip through the pinned native simulator.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"}},"required":["action_id"],"additionalProperties":false},"source_refs":["opentrons_9_1_1_native_liquid_worker"],"operation_family":"native_liquid_handling"},
-    {"id":"operator.request_transfer","description":"Request trusted transfer of the identified assay plate from OT-2 slot 3 to the modeled reader.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"},"plate_id":{"type":"string"}},"required":["action_id","plate_id"],"additionalProperties":false},"source_refs":["opentrons_9_1_1_native_liquid_worker"],"operation_family":"operator_transfer"},
-    {"id":"reader.start_series","description":"Schedule modeled 405 nm absorbance observations for the confirmed reader plate.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"},"plate_id":{"type":"string"},"wells":{"type":"array","items":{"type":"string"}}},"required":["action_id","plate_id","wells"],"additionalProperties":false},"source_refs":["pylabrobot_0_2_1_absorbance_interface","enzyme_activity_v0_coupled_model"],"operation_family":"modeled_absorbance"},
-    {"id":"reader.get_data","description":"Return only already acquired immutable measurements for one reader job.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"job_id":{"type":"string"}},"required":["job_id"],"additionalProperties":false},"source_refs":["enzyme_activity_v0_coupled_model"],"operation_family":"observation"},
-    {"id":"lab.wait","description":"Advance bounded logical time and deliver due transfer and reader events.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"},"duration_s":{"type":"number","exclusiveMinimum":0,"maximum":300}},"required":["action_id","duration_s"],"additionalProperties":false},"source_refs":["enzyme_activity_v0_coupled_model"],"operation_family":"logical_time"},
-    {"id":"experiment.submit_report","description":"Submit a blank-corrected modeled relative rate with acquired measurement references.","list_roles":["assay_agent"],"invoke_roles":["assay_agent"],"input_schema":{"type":"object","properties":{"action_id":{"type":"string"},"sample_id":{"type":"string"},"job_id":{"type":"string"},"sample_measurement_ids":{"type":"array","items":{"type":"string"}},"blank_measurement_ids":{"type":"array","items":{"type":"string"}},"dilution_factor":{"type":"number"},"estimated_rate":{"type":"number"},"units":{"type":"string"}},"required":["action_id","sample_id","job_id","sample_measurement_ids","blank_measurement_ids","dilution_factor","estimated_rate","units"],"additionalProperties":false},"source_refs":["enzyme_activity_v0_coupled_model"],"operation_family":"report"}
+    {
+      "id": "lab.inspect",
+      "description": "Inspect public inventory, plate identity/location, transfer state, and already acquired reader observations.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+      "source_refs": ["enzyme_activity_v0_coupled_model"],
+      "operation_family": "observation"
+    },
+    {
+      "id": "ot2.pick_up_tip",
+      "description": "Pick up one tip through the pinned native simulator.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "tip_well": {"type": "string"}}, "required": ["action_id", "tip_well"], "additionalProperties": false},
+      "source_refs": ["opentrons_9_1_1_native_liquid_worker"],
+      "operation_family": "native_liquid_handling"
+    },
+    {
+      "id": "ot2.aspirate",
+      "description": "Aspirate a bounded volume from a configured source well once.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "source": {"type": "string"}, "volume_ul": {"type": "number", "exclusiveMinimum": 0, "maximum": 300}}, "required": ["action_id", "source", "volume_ul"], "additionalProperties": false},
+      "source_refs": ["opentrons_9_1_1_native_liquid_worker"],
+      "operation_family": "native_liquid_handling"
+    },
+    {
+      "id": "ot2.dispense",
+      "description": "Dispense a bounded tip volume into a configured well once.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "destination": {"type": "string"}, "volume_ul": {"type": "number", "exclusiveMinimum": 0, "maximum": 300}}, "required": ["action_id", "destination", "volume_ul"], "additionalProperties": false},
+      "source_refs": ["opentrons_9_1_1_native_liquid_worker"],
+      "operation_family": "native_liquid_handling"
+    },
+    {
+      "id": "ot2.drop_tip",
+      "description": "Drop the attached empty tip through the pinned native simulator.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}}, "required": ["action_id"], "additionalProperties": false},
+      "source_refs": ["opentrons_9_1_1_native_liquid_worker"],
+      "operation_family": "native_liquid_handling"
+    },
+    {
+      "id": "operator.request_transfer",
+      "description": "Request trusted transfer of the identified assay plate from OT-2 slot 3 to the modeled reader.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "plate_id": {"type": "string"}}, "required": ["action_id", "plate_id"], "additionalProperties": false},
+      "source_refs": ["opentrons_9_1_1_native_liquid_worker"],
+      "operation_family": "operator_transfer"
+    },
+    {
+      "id": "reader.start_series",
+      "description": "Schedule modeled 405 nm absorbance observations for the confirmed reader plate.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "plate_id": {"type": "string"}, "wells": {"type": "array", "items": {"type": "string"}}}, "required": ["action_id", "plate_id", "wells"], "additionalProperties": false},
+      "source_refs": ["pylabrobot_0_2_1_absorbance_interface", "enzyme_activity_v0_coupled_model"],
+      "operation_family": "modeled_absorbance"
+    },
+    {
+      "id": "reader.get_data",
+      "description": "Return only already acquired immutable measurements for one reader job.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"job_id": {"type": "string"}}, "required": ["job_id"], "additionalProperties": false},
+      "source_refs": ["enzyme_activity_v0_coupled_model"],
+      "operation_family": "observation"
+    },
+    {
+      "id": "lab.wait",
+      "description": "Advance bounded logical time and deliver due transfer and reader events.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "duration_s": {"type": "number", "exclusiveMinimum": 0, "maximum": 300}}, "required": ["action_id", "duration_s"], "additionalProperties": false},
+      "source_refs": ["enzyme_activity_v0_coupled_model"],
+      "operation_family": "logical_time"
+    },
+    {
+      "id": "experiment.submit_report",
+      "description": "Submit a usable or evidence-backed unresolved modeled relative-rate result with immutable measurement references.",
+      "list_roles": ["assay_agent"],
+      "invoke_roles": ["assay_agent"],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action_id": {"type": "string"},
+          "sample_id": {"type": "string"},
+          "job_id": {"type": "string"},
+          "disposition": {"enum": ["usable", "unresolved"]},
+          "sample_measurement_ids": {"type": "array", "items": {"type": "string"}},
+          "blank_measurement_ids": {"type": "array", "items": {"type": "string"}},
+          "reference_measurement_ids": {"type": "array", "items": {"type": "string"}},
+          "fit_window_s": {"oneOf": [{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, {"type": "null"}]},
+          "dilution_factor": {"type": "number", "exclusiveMinimum": 0},
+          "estimated_rate": {"type": ["number", "null"]},
+          "uncertainty": {"type": ["number", "null"], "minimum": 0},
+          "units": {"type": "string"},
+          "unresolved_reason_code": {"type": ["string", "null"]},
+          "evidence_refs": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["action_id", "sample_id", "job_id", "disposition", "sample_measurement_ids", "blank_measurement_ids", "reference_measurement_ids", "fit_window_s", "dilution_factor", "estimated_rate", "uncertainty", "units", "unresolved_reason_code", "evidence_refs"],
+        "additionalProperties": false
+      },
+      "source_refs": ["enzyme_activity_v0_coupled_model"],
+      "operation_family": "report"
+    }
   ]
 }

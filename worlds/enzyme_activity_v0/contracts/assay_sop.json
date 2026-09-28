@@ -25,6 +25,13 @@
       "basis": "provisional_authored_model",
       "evidence_ref": "enzyme_activity_v0_authored_model",
       "rationale": "A bounded synthetic concentration for model testing; physical plate concentration requires scientific review."
+    },
+    "substrate_stock_concentration": {
+      "value": 2.0,
+      "unit": "mM",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Defines the public stock needed to prepare the admitted 1:1 reaction mixture; physical formulation requires scientific review."
     }
   },
   "reaction_volume_interval": {
@@ -51,9 +58,39 @@
   "controls": {
     "blank": "substrate and buffer without enzyme",
     "reference_control": "REF-AP coded reference stock",
-    "blank_matching_rule": "Same plate revision and reader-settings digest with a time window overlapping the sample fit window."
+    "blank_matching_rule": "Same plate revision and reader-settings digest with a time window overlapping the sample fit window.",
+    "reference_rate_interval": {
+      "minimum": {
+        "value": 0.01,
+        "unit": "delta_absorbance_per_minute",
+        "basis": "provisional_authored_model",
+        "evidence_ref": "enzyme_activity_v0_authored_model",
+        "rationale": "A synthetic lower bound around the modeled REF-AP response; physical control limits require calibration runs."
+      },
+      "maximum": {
+        "value": 0.08,
+        "unit": "delta_absorbance_per_minute",
+        "basis": "provisional_authored_model",
+        "evidence_ref": "enzyme_activity_v0_authored_model",
+        "rationale": "A synthetic upper bound around the modeled REF-AP response; physical control limits require calibration runs."
+      }
+    }
+  },
+  "sample_dilution": {
+    "undiluted_sample_fraction": {
+      "value": 0.5,
+      "unit": "fraction_of_final_reaction_volume",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "The admitted 1:1 sample-to-substrate preparation defines dilution factor 1 for this modeled plate adaptation."
+    },
+    "correction_rule": "Divide the undiluted sample fraction by the actual SAMPLE-A-stock lineage fraction in the final reaction. Assay reagent volume is part of this declared baseline, while added assay buffer increases the reported sample dilution."
   },
   "fit": {
+    "method": "Unweighted ordinary least-squares slope with an intercept, using each cited well's actual acquisition timestamps and absorbance values.",
+    "rate_rule": "Subtract the matched blank slope from the sample slope, multiply seconds by 60 to obtain per-minute units, then apply the preparation-lineage dilution factor.",
+    "uncertainty_rule": "Use the ordinary least-squares slope standard error for sample and blank, combine them in quadrature, then apply the same seconds-to-minutes and dilution factors. Relative standard error is this value divided by the absolute corrected rate.",
+    "reference_rule": "Subtract the matched blank slope from the REF-AP slope. REF-AP receives no SAMPLE-A dilution correction.",
     "minimum_observations": {
       "value": 4,
       "unit": "observations_per_well",
@@ -84,7 +121,30 @@
         "rationale": "Synthetic linear-analysis ceiling below modeled detector overload."
       }
     },
-    "window_rule": "Use acquired numeric observations only; sample and blank must share plate revision and settings; do not insert zeros for missing or overrange observations."
+    "maximum_relative_standard_error": {
+      "value": 0.25,
+      "unit": "fraction_of_absolute_rate",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "A synthetic precision gate for a usable modeled result; physical acceptance requires empirical repeatability data."
+    },
+    "window_rule": "Use acquired numeric observations only. Each fitted sample, blank and reference-control well must independently span at least the minimum window. Their acquisition intervals must overlap, and all must share plate revision and settings. Do not insert zeros for missing or overrange observations."
+  },
+  "report_comparison": {
+    "relative_tolerance": {
+      "value": 0.01,
+      "unit": "fraction",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Allows ordinary reported rounding while still rejecting numerically inconsistent calculations."
+    },
+    "absolute_tolerance": {
+      "value": 0.000001,
+      "unit": "delta_absorbance_per_minute",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Defines comparison behavior near zero where a relative tolerance alone is undefined."
+    }
   },
   "repeat_precision": {
     "maximum_relative_difference": {

@@ -12,7 +12,9 @@ from api_gym.worlds.enzyme_activity_v0.analysis import (
 RULES = AnalysisRules(4, 90, 0.02, 1.5)
 
 
-def readings(prefix: str, slope_per_s: float, *, revision: int = 1) -> tuple[ObservedReading, ...]:
+def readings(
+    prefix: str, slope_per_s: float, *, revision: int = 1
+) -> tuple[ObservedReading, ...]:
     return tuple(
         ObservedReading(
             measurement_id=f"{prefix}-{index}",
@@ -64,3 +66,19 @@ def test_reference_fit_rejects_unsuitable_signal_and_short_window() -> None:
         rules=RULES,
     )
     assert result.reason_code == "fit_window_signal_invalid"
+
+
+def test_reference_fit_accepts_interleaved_wells_that_each_span_minimum_window() -> (
+    None
+):
+    blank = tuple(
+        item.__class__(**{**item.__dict__, "acquired_at_s": item.acquired_at_s + 0.2})
+        for item in readings("blank", 0.0001)[:4]
+    )
+    result = fit_blank_corrected_rate(
+        sample_readings=readings("sample", 0.002)[:4],
+        blank_readings=blank,
+        dilution_factor=1,
+        rules=RULES,
+    )
+    assert result.disposition == "usable"

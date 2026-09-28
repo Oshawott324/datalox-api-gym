@@ -16,9 +16,13 @@ from api_gym.instrument_models.plate_reader_v0.pylabrobot_backend import (
 )
 from api_gym.worlds.enzyme_activity_v0.defaults import (
     ANALYSIS_RULES,
+    FINAL_SUBSTRATE_CONCENTRATION_MM,
     REACTION_PARAMETERS,
     READER_PROFILE,
+    SUBSTRATE_STOCK_CONCENTRATION_MM,
+    UNDILUTED_SAMPLE_FRACTION,
 )
+from api_gym.worlds.enzyme_activity_v0.verifier import VerificationRules
 
 
 ROOT = Path(__file__).parents[2] / "worlds" / "enzyme_activity_v0"
@@ -84,14 +88,53 @@ def test_json_contract_and_executable_defaults_are_identical() -> None:
         "blank_intercept_abs": authored["blank_intercept_abs"],
         "blank_drift_abs_per_s": authored["blank_drift_abs_per_s"],
         "noise_sd_abs": authored["noise_sd_abs"],
-        "detector_interval_abs": [authored["detector_min_abs"], authored["detector_max_abs"]],
+        "detector_interval_abs": [
+            authored["detector_min_abs"],
+            authored["detector_max_abs"],
+        ],
         "per_well_delay_s": authored["per_well_delay_s"],
         "evidence_level": "provisional_authored_model",
     }
     assert REACTION_PARAMETERS.kcat_per_s == model["reaction"]["kcat_per_s"]
     assert REACTION_PARAMETERS.km_mM == model["reaction"]["Km_mM"]
-    assert ANALYSIS_RULES.minimum_observations == sop["fit"]["minimum_observations"]["value"]
+    assert (
+        ANALYSIS_RULES.minimum_observations
+        == sop["fit"]["minimum_observations"]["value"]
+    )
     assert ANALYSIS_RULES.minimum_window_s == sop["fit"]["minimum_window"]["value"]
+    assert (
+        FINAL_SUBSTRATE_CONCENTRATION_MM
+        == sop["fixed_conditions"]["final_substrate_concentration"]["value"]
+    )
+    assert (
+        SUBSTRATE_STOCK_CONCENTRATION_MM
+        == sop["fixed_conditions"]["substrate_stock_concentration"]["value"]
+    )
+    assert (
+        UNDILUTED_SAMPLE_FRACTION
+        == sop["sample_dilution"]["undiluted_sample_fraction"]["value"]
+    )
+    verification = VerificationRules()
+    assert (
+        verification.reference_rate_min
+        == sop["controls"]["reference_rate_interval"]["minimum"]["value"]
+    )
+    assert (
+        verification.reference_rate_max
+        == sop["controls"]["reference_rate_interval"]["maximum"]["value"]
+    )
+    assert (
+        verification.maximum_relative_uncertainty
+        == sop["fit"]["maximum_relative_standard_error"]["value"]
+    )
+    assert (
+        verification.numeric_relative_tolerance
+        == sop["report_comparison"]["relative_tolerance"]["value"]
+    )
+    assert (
+        verification.numeric_absolute_tolerance
+        == sop["report_comparison"]["absolute_tolerance"]["value"]
+    )
 
 
 def test_pinned_reader_interface_signatures_match_the_audited_contract() -> None:
@@ -143,7 +186,9 @@ def test_authored_backend_uses_native_structured_and_legacy_shapes() -> None:
 
 def test_authored_backend_rejects_an_invalid_native_cell_shape() -> None:
     async def exercise() -> None:
-        backend = AuthoredAbsorbanceBackend(lambda plate, wells, wavelength: [[float("nan")]])
+        backend = AuthoredAbsorbanceBackend(
+            lambda plate, wells, wavelength: [[float("nan")]]
+        )
         reader = PlateReader(
             name="authored-reader",
             size_x=0,

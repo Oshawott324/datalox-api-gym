@@ -47,7 +47,9 @@ class RateEstimate:
             "units": self.units,
             "sample_measurement_ids": list(self.sample_measurement_ids),
             "blank_measurement_ids": list(self.blank_measurement_ids),
-            "fit_window_s": None if self.fit_window_s is None else list(self.fit_window_s),
+            "fit_window_s": None
+            if self.fit_window_s is None
+            else list(self.fit_window_s),
             "dilution_factor": self.dilution_factor,
             "reason_code": self.reason_code,
         }
@@ -100,13 +102,20 @@ def _validate_fit_inputs(
     dilution_factor: float,
     rules: AnalysisRules,
 ) -> str | None:
-    if type(dilution_factor) not in (int, float) or not math.isfinite(float(dilution_factor)):
+    if type(dilution_factor) not in (int, float) or not math.isfinite(
+        float(dilution_factor)
+    ):
         return "dilution_factor_invalid"
     if dilution_factor < 1:
         return "dilution_factor_invalid"
-    if len(sample) < rules.minimum_observations or len(blank) < rules.minimum_observations:
+    if (
+        len(sample) < rules.minimum_observations
+        or len(blank) < rules.minimum_observations
+    ):
         return "insufficient_observations"
-    if len({item.measurement_id for item in sample + blank}) != len(sample) + len(blank):
+    if len({item.measurement_id for item in sample + blank}) != len(sample) + len(
+        blank
+    ):
         return "measurement_reference_invalid"
     sample_identity = {
         (item.plate_id, item.plate_revision, item.settings_digest) for item in sample
@@ -125,7 +134,11 @@ def _validate_fit_inputs(
         return "fit_window_signal_invalid"
     overlap_start = max(sample[0].acquired_at_s, blank[0].acquired_at_s)
     overlap_end = min(sample[-1].acquired_at_s, blank[-1].acquired_at_s)
-    if overlap_end - overlap_start < rules.minimum_window_s:
+    if (
+        sample[-1].acquired_at_s - sample[0].acquired_at_s < rules.minimum_window_s
+        or blank[-1].acquired_at_s - blank[0].acquired_at_s < rules.minimum_window_s
+        or overlap_end < overlap_start
+    ):
         return "fit_window_invalid"
     return None
 
@@ -138,21 +151,18 @@ def _linear_slope(readings: tuple[ObservedReading, ...]) -> tuple[float, float]:
     denominator = sum((value - mean_t) ** 2 for value in times)
     if denominator == 0:
         raise ValueError("fit timestamps must not all be equal")
-    slope = sum(
-        (time_s - mean_t) * (absorbance - mean_y)
-        for time_s, absorbance in zip(times, values, strict=True)
-    ) / denominator
+    slope = (
+        sum(
+            (time_s - mean_t) * (absorbance - mean_y)
+            for time_s, absorbance in zip(times, values, strict=True)
+        )
+        / denominator
+    )
     if len(readings) <= 2:
         return slope, math.inf
     residual_sum_squares = sum(
-        (
-            absorbance
-            - (mean_y + slope * (time_s - mean_t))
-        )
-        ** 2
+        (absorbance - (mean_y + slope * (time_s - mean_t))) ** 2
         for time_s, absorbance in zip(times, values, strict=True)
     )
-    standard_error = math.sqrt(
-        residual_sum_squares / (len(readings) - 2) / denominator
-    )
+    standard_error = math.sqrt(residual_sum_squares / (len(readings) - 2) / denominator)
     return slope, standard_error

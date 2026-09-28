@@ -1,9 +1,23 @@
 {
-  "schema_version": "api_gym.verifier.enzyme_activity_v0.v1",
+  "schema_version": "api_gym.verifier.enzyme_activity_v0.v2",
+  "implementation": "api_gym.worlds.enzyme_activity_v0.verifier:verify_experiment",
   "assertions": [
-    {"type": "implementation_check", "failure_code": "UNCERTAIN_NATIVE_OPERATION"},
-    {"type": "implementation_check", "failure_code": "OPERATOR_TRANSFER_UNCONFIRMED"},
-    {"type": "implementation_check", "failure_code": "READER_SERIES_INCOMPLETE"},
-    {"type": "implementation_check", "failure_code": "SUPPORTED_REPORT_MISSING"}
+    {"type": "state_check", "failure_code": "uncertain_native_operation"},
+    {"type": "state_check", "failure_code": "operator_transfer_unconfirmed"},
+    {"type": "state_check", "failure_code": "resource_limit_exceeded"},
+    {"type": "report_check", "failure_code": "report_missing"},
+    {"type": "report_check", "failure_code": "sample_coverage_invalid"},
+    {"type": "evidence_check", "failure_code": "measurement_reference_invalid"},
+    {"type": "evidence_check", "failure_code": "blank_evidence_missing"},
+    {"type": "evidence_check", "failure_code": "reference_control_invalid"},
+    {"type": "evidence_check", "failure_code": "plate_lineage_mismatch"},
+    {"type": "analysis_check", "failure_code": "rate_units_inconsistent"},
+    {"type": "analysis_check", "failure_code": "dilution_lineage_mismatch"},
+    {"type": "analysis_check", "failure_code": "assay_preparation_invalid"},
+    {"type": "analysis_check", "failure_code": "fit_window_invalid"},
+    {"type": "analysis_check", "failure_code": "reported_rate_inconsistent"},
+    {"type": "analysis_check", "failure_code": "uncertainty_invalid"},
+    {"type": "disposition_check", "failure_code": "unresolved_without_evidence"},
+    {"type": "disposition_check", "failure_code": "all_samples_unresolved"}
   ]
 }
