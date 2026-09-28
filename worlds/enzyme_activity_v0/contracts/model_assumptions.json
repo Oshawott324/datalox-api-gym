@@ -1,0 +1,47 @@
+{
+  "schema_version": "enzyme_activity_model_assumptions_v0",
+  "canonical_units": {
+    "volume": "uL",
+    "component_amount": "nmol",
+    "concentration": "mM",
+    "logical_time": "s",
+    "kcat": "1/s",
+    "Km": "mM",
+    "absorbance": "dimensionless",
+    "reported_rate": "delta_absorbance_per_minute"
+  },
+  "reaction": {
+    "equation": "rate_nmol_s = kcat_per_s * enzyme_nmol * substrate_mM / (Km_mM + substrate_mM)",
+    "kcat_per_s": 0.08,
+    "Km_mM": 0.25,
+    "solver": "scipy.integrate.solve_ivp",
+    "solver_method": "DOP853",
+    "relative_tolerance": 1e-9,
+    "absolute_tolerance_nmol": 1e-12,
+    "substrate_exhaustion": "terminal zero-crossing event",
+    "basis": "provisional_authored_model",
+    "evidence_ref": "enzyme_activity_v0_authored_model"
+  },
+  "mixing": {
+    "model": "instantaneous ideal mixing after confirmed dispense or mix",
+    "excluded_effects": [
+      "mixing inefficiency",
+      "adsorption",
+      "precipitation",
+      "inhibition",
+      "evaporation",
+      "enzyme decay"
+    ]
+  },
+  "rng_streams": {
+    "sample_variability": "independent seed stream",
+    "reader_noise": "independent seed stream",
+    "job_faults": "independent seed stream"
+  },
+  "action_completion": {
+    "contract": "managed_worker_at_most_once_v1",
+    "caller_key": "action_id",
+    "rule": "Commit intent before native dispatch. Apply scientific state only after a validated native receipt. On post-dispatch failure, invalidate the episode, forbid redispatch, and require trusted reset."
+  },
+  "evidence_status": "All numerical kinetics, detector, noise, and timing parameters are provisional until paired physical calibration."
+}

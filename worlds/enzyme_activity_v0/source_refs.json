@@ -1,0 +1,42 @@
+{
+  "schema_version": "datalox_source_refs_v1",
+  "sources": [
+    {
+      "id": "pylabrobot_0_2_1_plate_reading_docs",
+      "type": "documented_interface",
+      "title": "PyLabRobot 0.2.1 plate reading",
+      "url": "https://docs.pylabrobot.org/stable/user_guide/02_analytical/plate-reading/plate-reading.html",
+      "scope": "Plate assignment, absorbance primitive, and optional-float matrix presentation; not physical reader validation."
+    },
+    {
+      "id": "pylabrobot_0_2_1_installed_source",
+      "type": "native_software_observation",
+      "title": "Installed PyLabRobot 0.2.1 interface audit",
+      "scope": "PlateReader.read_absorbance delegates to PlateReaderBackend.read_absorbance and structured mode returns wavelength, time, temperature, and data.",
+      "evidence": {
+        "machine.py_sha256": "8920342938eb62a0a2bd39495f96320a953f2abbb4f2e9dd293a68755b9f287b",
+        "backend.py_sha256": "3c735ad278519e750aef166118bbe524581380e7732becf449183dc0311f1970"
+      }
+    },
+    {
+      "id": "sigma_ap0100_bulletin",
+      "type": "published_assay_procedure",
+      "title": "Alkaline Phosphatase, Diethanolamine Detection, AP0100",
+      "url": "https://www.sigmaaldrich.com/deepweb/assets/sigmaaldrich/product/documents/165/628/ap0100bul.pdf",
+      "scope": "pNPP alkaline-phosphatase method, absorbance increase at 405 nm, blank correction, and relative-rate basis. The cuvette method is not treated as a validated plate adaptation."
+    },
+    {
+      "id": "scipy_solve_ivp_1_13_1",
+      "type": "documented_interface",
+      "title": "SciPy solve_ivp",
+      "url": "https://docs.scipy.org/doc/scipy-1.13.1/reference/generated/scipy.integrate.solve_ivp.html",
+      "scope": "Numerical integration and terminal events; not biological calibration."
+    },
+    {
+      "id": "enzyme_activity_v0_authored_model",
+      "type": "authored_model",
+      "title": "Enzyme activity v0 provisional model",
+      "scope": "Synthetic kinetics, optical path, detector interval, noise, timing, plate-volume adaptation, fit thresholds, and repeat criterion."
+    }
+  ]
+}

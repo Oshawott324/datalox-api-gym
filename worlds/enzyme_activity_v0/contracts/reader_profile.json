@@ -1,0 +1,41 @@
+{
+  "schema_version": "modeled_plate_reader_profile_v0",
+  "profile_id": "pylabrobot_0_2_1_authored_absorbance_405_v0",
+  "native_interface": {
+    "package": "pylabrobot",
+    "version": "0.2.1",
+    "method": "PlateReader.read_absorbance",
+    "signature": "(wavelength: int, wells: Optional[List[Well]] = None, use_new_return_type: bool = False, **backend_kwargs) -> List[Dict]",
+    "structured_return_fields": ["wavelength", "time", "temperature", "data"],
+    "cell_shape": "finite float or null",
+    "evidence_ref": "pylabrobot_0_2_1_installed_source"
+  },
+  "supported_settings": {
+    "wavelength_nm": 405,
+    "temperature_c": 37.0,
+    "compatible_plate_load_name": "corning_96_wellplate_360ul_flat",
+    "reaction_volume_min_ul": 80.0,
+    "reaction_volume_max_ul": 200.0
+  },
+  "authored_parameters": {
+    "optical_path_cm": 0.5,
+    "product_extinction_per_mM_cm": 18.5,
+    "blank_intercept_abs": 0.04,
+    "blank_drift_abs_per_s": 0.00001,
+    "noise_sd_abs": 0.002,
+    "detector_min_abs": 0.0,
+    "detector_max_abs": 2.0,
+    "per_well_delay_s": 0.2,
+    "basis": "provisional_authored_model",
+    "evidence_ref": "enzyme_activity_v0_authored_model",
+    "rationale": "Synthetic optical, timing, and noise parameters used only to exercise causal workflow behavior."
+  },
+  "unsupported": [
+    "native kinetic orchestration",
+    "physical CLARIOstar performance",
+    "hardware error-code emulation",
+    "wavelengths other than 405 nm",
+    "temperatures other than 37 degC"
+  ],
+  "observation_claim": "Modeled absorbance through the PyLabRobot interface; not a physical instrument capture."
+}

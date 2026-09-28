@@ -1,0 +1,9 @@
+{
+  "audit_rules": [],
+  "config_id": "enzyme_activity_v0",
+  "response_cases": [],
+  "world": {
+    "kind": "world_bundle_v1",
+    "seed": 0
+  }
+}

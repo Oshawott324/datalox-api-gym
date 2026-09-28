@@ -1,0 +1,8 @@
+{
+  "roles": [
+    {
+      "id": "assay_agent",
+      "description": "Prepares modeled reactions, requests operator transfer, reads acquired observations, and submits evidence-backed relative rates."
+    }
+  ]
+}

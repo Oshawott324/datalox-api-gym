@@ -1,0 +1,40 @@
+{
+  "schema_version": "datalox_sources_lock_v1",
+  "python": {
+    "tested_version": "3.12.5",
+    "requires": ">=3.11"
+  },
+  "packages": [
+    {
+      "name": "pylabrobot",
+      "version": "0.2.1",
+      "index": "https://pypi.org/simple",
+      "wheel": "pylabrobot-0.2.1-py3-none-any.whl",
+      "sha256": "8b7b58d1c31a7b19b9d6a11f10ba1303c6222b6a582a8a95f18c6abcf41408cd"
+    },
+    {
+      "name": "scipy",
+      "version": "1.13.1",
+      "index": "https://pypi.org/simple",
+      "wheel": "scipy-1.13.1-cp312-cp312-macosx_12_0_arm64.whl",
+      "sha256": "017367484ce5498445aade74b1d5ab377acdc65e27095155e448c88497755a5d",
+      "platform_scope": "CPython 3.12, macOS 12+, arm64 acceptance environment"
+    },
+    {
+      "name": "opentrons",
+      "version": "9.1.1",
+      "native_api_level": "2.26",
+      "trusted_source_file": "opentrons/hardware_control/api.py",
+      "trusted_source_sha256": "9f4211ceaae9002bf0e9b00a4b4ad59a8164c25c0cf0707fdd59210c6d85484d"
+    },
+    {
+      "name": "opentrons-shared-data",
+      "version": "9.1.1"
+    }
+  ],
+  "repositories": {
+    "api_gym_start_commit": "8c922bdf",
+    "gated_runtime_protocol_viewer_commit": "7466cf8",
+    "gated_runtime_liquid_contract_commit": "c0cdcd538af89733971cbb4cc7b314c367aac015"
+  }
+}

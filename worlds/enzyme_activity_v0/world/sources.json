@@ -1,0 +1,40 @@
+{
+  "sources": [
+    {
+      "id": "opentrons_9_1_1_native_liquid_worker",
+      "kind": "official_source",
+      "grounding_level": "G1_OFFICIAL_SOURCE",
+      "locator": "datalox_gated_runtime.sdk_adapters.opentrons_ot2_motion",
+      "derivation": "Pinned device-free Opentrons 9.1.1 simulator calls with validated before/after volume receipts.",
+      "supports": ["operation_family:native_liquid_handling", "operation_family:plate_exchange"]
+    },
+    {
+      "id": "pylabrobot_0_2_1_absorbance_interface",
+      "kind": "documented_interface",
+      "grounding_level": "G1_OFFICIAL_SOURCE",
+      "locator": "worlds/enzyme_activity_v0/contracts/reader_profile.json",
+      "derivation": "Exact installed 0.2.1 signatures and device-free structured return shape are contract tested.",
+      "supports": ["operation_family:modeled_absorbance"]
+    },
+    {
+      "id": "enzyme_activity_v0_coupled_model",
+      "kind": "authored_model",
+      "grounding_level": "G0_AUTHORED_FIXTURE",
+      "locator": "api_gym/worlds/enzyme_activity_v0",
+      "derivation": "Provisional mass-balance, kinetics, optical, timing, noise, and analysis assumptions declared in model_assumptions.json.",
+      "supports": ["world:enzyme_activity_v0"]
+    }
+  ],
+  "grounding_gaps": [
+    {
+      "operation_family": "modeled_absorbance",
+      "claim": "physical plate-reader fidelity",
+      "reason": "No physical reader captures or paired calibration are admitted."
+    },
+    {
+      "operation_family": "assay_science",
+      "claim": "validated plate-format AP0100 assay",
+      "reason": "The plate adaptation and all numerical model parameters remain provisional pending bounded scientific review."
+    }
+  ]
+}

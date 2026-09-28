@@ -1,0 +1,32 @@
+{
+  "schema_version": "datalox_world_bundle_v1",
+  "world_id": "enzyme_activity_v0",
+  "bundle_version": "0.1.0",
+  "implementation": "world/implementation.py:create_world",
+  "episodes_path": "world/episodes.jsonl",
+  "roles_path": "world/roles.json",
+  "tools_path": "world/tools.json",
+  "verifier_path": "world/verifier.json",
+  "sources_path": "world/sources.json",
+  "default_actor_role": "assay_agent",
+  "required_runtime_capabilities": ["actors", "role_scoped_tools", "transactions", "managed_worker_lifecycle"],
+  "trajectory_paths": [],
+  "content_hashes": {
+    "README.md": "sha256:d11eb366965158af644181f02dfccef10374632c11cfbe0f834ff6a0bd60316f",
+    "contracts/assay_sop.json": "sha256:f8deb76dace77eef44364b410a4435f1d60c7a3b949ae215d25450b18c7ce548",
+    "contracts/model_assumptions.json": "sha256:eb61c655530290691de072a74cf45f37bb4f78e63a4a7e3aa2d8d420c4cc0298",
+    "contracts/reader_profile.json": "sha256:5b577ca0816f9cf3443f582dc9adbe133c9bc936b2e73d7e155b52b94940a31c",
+    "examples/agent_task.json": "sha256:a70fc4babf46f67728e1da8db185113d24ce0a7c1445dc50558151acc16a069f",
+    "gate_config.json": "sha256:17c6b28071ba756bb1282d7bebaca4d152c0996eee64e04c6fd5d53b1608b5b6",
+    "source_refs.json": "sha256:cff4fc8538141c6fc058c7f89119cc0be3c4519f1b35d0bab8fa5e7cd272cae6",
+    "sources.lock.json": "sha256:8990210bcee59aaf8be827e568f29c9fe59181143f02e7d73a8b4ea95721d02f",
+    "spec.json": "sha256:f169e5c9a8057263ebe7574bfc3d7f1a4773fbf0e38eaded46d8e22d0532771c",
+    "task.json": "sha256:4eadb03dd04b523414cbcd35ba823d633a4c4d585e342e103ba4b63b60119147",
+    "world/episodes.jsonl": "sha256:4eedefa6f5f0c52bee41f4c7dc83d6c247c786e5fa550221ebd512bb4b43f882",
+    "world/implementation.py": "sha256:e42ca25a4946e8ca1882c58052fb54f2343d336c66791694bc3e59ea6a972a3b",
+    "world/roles.json": "sha256:6fddcf0638373d82813284ce80f8271918204fb76d6b63981005a827d67fb04d",
+    "world/sources.json": "sha256:1816c54b5ea60eda8be04b18234f76fef6ee03165861dd12ca3c1a932bd9658c",
+    "world/tools.json": "sha256:f910e6aa7b54e3ded7f87c8e88e50420086c9673bb1c0d87f21cd39d9cb18d70",
+    "world/verifier.json": "sha256:41849f255207270eb4f442ff697cb7682ed19634e6bf0623e01af0f05a64c994"
+  }
+}

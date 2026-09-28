@@ -1,0 +1,14 @@
+{
+  "id": "enzyme_activity_v0",
+  "status": "phase_0_and_1_executable_contract",
+  "assay_contract": "contracts/assay_sop.json",
+  "reader_profile": "contracts/reader_profile.json",
+  "model_assumptions": "contracts/model_assumptions.json",
+  "source_refs": "source_refs.json",
+  "sources_lock": "sources.lock.json",
+  "claims": {
+    "scientific": "Modeled relative activity only",
+    "reader": "Authored offline backend through PyLabRobot 0.2.1",
+    "physical_validation": "not established"
+  }
+}

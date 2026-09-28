@@ -20,6 +20,10 @@ dependencies = [
 api-gym = "api_gym.cli:app"
 
 [project.optional-dependencies]
+enzyme-activity = [
+  "pylabrobot==0.2.1",
+  "scipy==1.13.1",
+]
 dev = [
   "pytest>=8.2",
 ]

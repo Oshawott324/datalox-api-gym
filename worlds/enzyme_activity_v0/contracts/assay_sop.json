@@ -1,0 +1,101 @@
+{
+  "schema_version": "enzyme_activity_assay_sop_v0",
+  "assay_id": "alkaline_phosphatase_pnpp_relative_rate_v0",
+  "claim_scope": "Modeled relative activity only; this is not a physically validated plate adaptation and does not report absolute or specific activity.",
+  "signal": {
+    "wavelength": {
+      "value": 405,
+      "unit": "nm",
+      "basis": "published_method",
+      "evidence_ref": "sigma_ap0100_bulletin"
+    },
+    "direction": "increase"
+  },
+  "fixed_conditions": {
+    "temperature": {
+      "value": 37.0,
+      "unit": "degC",
+      "basis": "published_method",
+      "evidence_ref": "sigma_ap0100_bulletin"
+    },
+    "buffer": "diethanolamine alkaline-phosphatase assay condition; exact plate formulation remains provisional",
+    "final_substrate_concentration": {
+      "value": 1.0,
+      "unit": "mM",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "A bounded synthetic concentration for model testing; physical plate concentration requires scientific review."
+    }
+  },
+  "reaction_volume_interval": {
+    "minimum": {
+      "value": 80.0,
+      "unit": "uL",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Keeps the test inside the selected 360 uL plate and p300 execution slice."
+    },
+    "maximum": {
+      "value": 200.0,
+      "unit": "uL",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Keeps the test inside the selected 360 uL plate and p300 execution slice."
+    }
+  },
+  "compatible_plate": {
+    "load_name": "corning_96_wellplate_360ul_flat",
+    "basis": "native_software_observation",
+    "evidence_ref": "pylabrobot_0_2_1_plate_reading_docs"
+  },
+  "controls": {
+    "blank": "substrate and buffer without enzyme",
+    "reference_control": "REF-AP coded reference stock",
+    "blank_matching_rule": "Same plate revision and reader-settings digest with a time window overlapping the sample fit window."
+  },
+  "fit": {
+    "minimum_observations": {
+      "value": 4,
+      "unit": "observations_per_well",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Leaves two residual degrees of freedom for a linear fit."
+    },
+    "minimum_window": {
+      "value": 90.0,
+      "unit": "s",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Synthetic coverage threshold for controlled scenarios."
+    },
+    "usable_signal_interval": {
+      "minimum": {
+        "value": 0.02,
+        "unit": "absorbance",
+        "basis": "provisional_authored_model",
+        "evidence_ref": "enzyme_activity_v0_authored_model",
+        "rationale": "Synthetic analysis threshold above modeled background."
+      },
+      "maximum": {
+        "value": 1.5,
+        "unit": "absorbance",
+        "basis": "provisional_authored_model",
+        "evidence_ref": "enzyme_activity_v0_authored_model",
+        "rationale": "Synthetic linear-analysis ceiling below modeled detector overload."
+      }
+    },
+    "window_rule": "Use acquired numeric observations only; sample and blank must share plate revision and settings; do not insert zeros for missing or overrange observations."
+  },
+  "repeat_precision": {
+    "maximum_relative_difference": {
+      "value": 0.15,
+      "unit": "fraction",
+      "basis": "provisional_authored_model",
+      "evidence_ref": "enzyme_activity_v0_authored_model",
+      "rationale": "Synthetic repeat-decision threshold pending physical assay review."
+    }
+  },
+  "permitted_reporting_units": [
+    "delta_absorbance_per_minute"
+  ]
+}

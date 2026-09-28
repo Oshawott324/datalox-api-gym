@@ -1,0 +1,9 @@
+{
+  "schema_version": "api_gym.verifier.enzyme_activity_v0.v1",
+  "assertions": [
+    {"type": "implementation_check", "failure_code": "UNCERTAIN_NATIVE_OPERATION"},
+    {"type": "implementation_check", "failure_code": "OPERATOR_TRANSFER_UNCONFIRMED"},
+    {"type": "implementation_check", "failure_code": "READER_SERIES_INCOMPLETE"},
+    {"type": "implementation_check", "failure_code": "SUPPORTED_REPORT_MISSING"}
+  ]
+}

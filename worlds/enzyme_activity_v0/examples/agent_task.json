@@ -1,0 +1,10 @@
+{
+  "task_id": "enzyme-activity-contract-01",
+  "objective": "Measure the modeled relative activity of the supplied sample and reference under the admitted assay procedure. Report supported rates with measurement, blank, dilution-lineage, and fit-window references, or identify evidence-backed unresolved results.",
+  "constraints": [
+    "Plate transfers require operator confirmation.",
+    "Only acquired observations may be used.",
+    "Missing and overrange measurements are not zeros.",
+    "Fresh repeats use unused stock, substrate, and wells."
+  ]
+}
