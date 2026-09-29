@@ -51,8 +51,8 @@ def test_agent_tasks_state_every_requirement_used_by_verifier() -> None:
             "delta_absorbance_per_minute",
             "0.01 through 0.08",
             "relative standard error no greater than 0.25",
-            "1 assay plate",
-            "1 operator transfer",
+            "2 assay plates",
+            "2 operator transfers",
             "900 logical seconds",
             "missing or overrange",
         ):

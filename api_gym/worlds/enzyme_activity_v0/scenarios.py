@@ -52,7 +52,9 @@ SCENARIOS: tuple[ScenarioDefinition, ...] = (
         family="nominal_measurement",
         seed=1729,
         public_title="Measure modeled enzyme activity",
-        public_context=("One assay plate and one reader run are available.",),
+        public_context=(
+            "A second fresh assay plate and transfer are available when the first reaction is unsuitable.",
+        ),
         private_initial_conditions=_COMMON_INITIAL,
         private_events={"transfer_delay_s": 5.0, "missing_measurement_indices": ()},
         expected_mutant_failure_code="fit_window_invalid",

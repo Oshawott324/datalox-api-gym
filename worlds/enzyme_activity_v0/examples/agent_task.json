@@ -7,8 +7,8 @@
     "Use unweighted ordinary least squares against actual timestamps; blank-correct and propagate slope standard errors in quadrature before applying time and lineage dilution factors.",
     "Sample, matched blank, and REF-AP evidence share a plate revision and reader-settings digest.",
     "A usable result requires REF-AP in the SOP's 0.01 to 0.08 delta_absorbance_per_minute interval and relative standard error no greater than 0.25.",
-    "Use no more than 1 assay plate, 1 operator transfer, and 900 logical seconds.",
+    "Use no more than 2 assay plates, 2 operator transfers, and 900 logical seconds.",
     "Missing and overrange measurements are not zeros.",
-    "No repeat plate is exposed by this admitted scenario set; use sufficient valid evidence or an evidence-backed unresolved disposition."
+    "Use a fresh second reaction only when the first reaction is unsuitable; never reuse a spent reaction as a repeat."
   ]
 }

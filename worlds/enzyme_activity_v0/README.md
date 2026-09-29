@@ -1,8 +1,9 @@
 # Enzyme activity v0
 
-This slice freezes the Phase 0 interface, implements the Phase 1 coupled
-scientific model, and admits the Phase 3 analysis and scenario-verification
-contract for an alkaline-phosphatase/pNPP relative-rate workflow.
+This slice freezes the Phase 0 interface, implements the coupled scientific
+model and native execution contract, admits the Phase 3 scenario verifier, and
+exports Phase 4 completed-run evidence for an alkaline-phosphatase/pNPP
+relative-rate workflow.
 Readings are synthetic modeled observations routed through the exact
 PyLabRobot 0.2.1 absorbance interface. They are not physical CLARIOstar data.
 
@@ -21,10 +22,12 @@ Six frozen families exercise nominal measurement, unsuitable high activity,
 delayed acquisition, an interrupted series, changing reagent background, and
 sample/plate lineage. Their public tasks contain the SOP requirements but omit
 private concentrations, fault indices, future observations, and oracle choices.
-The admitted v0 instances provide one assay plate and retain enough valid
-evidence for a supported result when handled correctly. A native fresh-repeat
-plate lifecycle is outside this bundle and must be added before admitting a
-scenario whose only valid resolution is re-preparation.
+The admitted v0 instances provide at most two assay plates and two confirmed
+operator transfers. A completed transfer leaves the measured plate in the
+reader and a separately identified fresh plate on the OT-2 deck. A recovery
+therefore prepares a new reaction from remaining stock, transfers that new
+plate, and retains the first plate's immutable readings under their original
+lineage.
 
 The report contract requires a disposition, immutable SAMPLE-A, BLANK, and
 REF-AP measurement IDs, an explicit fit window, preparation-supported dilution,
@@ -39,11 +42,29 @@ alternative-valid fit for every family, plus targeted scientific, provenance,
 and resource mutants. These fixtures establish correctness inside the authored
 model only; they do not establish physical assay fidelity.
 
+## Phase 4 completed-run view
+
+`api_gym.worlds.enzyme_activity_v0.visualization` maps immutable world run
+evidence into the runtime's `datalox_visualization_run_v1` contract. The world
+records one public snapshot after every completed operation, including its
+public result and all observations acquired by that logical time. The exporter
+does not read `trusted_summary`, private scenario conditions, seeds, or future
+reader schedule.
+
+The `enzyme_assay_v1` runtime renderer shows native preparation volumes on the
+OT-2 deck, explicit operator handoff state, a 96-well acquisition heatmap and
+growing raw-absorbance series, then the submitted fit window and selected
+sample/blank/reference points. Its nominal and fresh-reaction recovery
+documents upload through the existing visualization endpoint. Browser QA checks
+every step at desktop, tablet, and 439 px app-panel widths, with the timeline on
+the left and plate identity, latest data timestamp, and all 96 wells aligned to
+the evidence.
+
 ## Reproducible integration bundle
 
 The tested repositories are this API Gym checkout starting from `8c922bdf` and
 `datalox-gated-runtime` commit
-`c0cdcd538af89733971cbb4cc7b314c367aac015`. The native worker uses a separate
+`87691ba1417c6ae8eab46b46588158798d3a2d3b`. The native worker uses a separate
 Python environment containing exactly `opentrons==9.1.1` and
 `opentrons-shared-data==9.1.1`; its absolute interpreter path is supplied in
 `DATALOX_OT2_WORKER_PYTHON`. The application/test environment installs this
@@ -64,6 +85,7 @@ runtime's private run database and worker process. Agent observations are the
 explicit `agent_observation` projection; the agent must not receive the run
 database or simulator source tree.
 
-The native integration test exercises the nominal episode. Phase 3 scenario
-admission is tested deterministically at the scientific verifier boundary; an
+Native integration tests exercise both the nominal episode and a high-activity
+fresh-dilution recovery across two native plate exchanges. Phase 3 scenario
+admission remains deterministic at the scientific verifier boundary; an
 external model rollout over all six families remains Phase 5 work.

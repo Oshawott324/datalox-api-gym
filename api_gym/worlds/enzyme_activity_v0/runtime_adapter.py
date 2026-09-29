@@ -232,6 +232,9 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
         self._reader_plate_id: str | None = None
         self._reader_plate_revision: int | None = None
         self._transfer: dict[str, Any] | None = None
+        self._transfers: list[dict[str, Any]] = []
+        self._prepared_plate_ids: set[str] = set()
+        self._next_plate_number = 2
         self._report: dict[str, Any] | None = None
         self._native_receipts: list[dict[str, Any]] = []
         self._scenario: ScenarioDefinition | None = None
@@ -309,6 +312,9 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
         self._reader_plate_id = None
         self._reader_plate_revision = None
         self._transfer = None
+        self._transfers = []
+        self._prepared_plate_ids = set()
+        self._next_plate_number = 2
         self._report = None
         self._native_receipts = []
         self._scenario = scenario
@@ -317,6 +323,17 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
             initial_state=self._projection(),
             initial_time=_string(episode.get("initial_time"), "episode.initial_time"),
         )
+        with session.transaction(operation_id="enzyme_activity.initial_observation"):
+            session.append_event(
+                "enzyme_activity_observation_snapshot",
+                {
+                    "operation": "world.reset",
+                    "operation_id": "world.reset",
+                    "arguments": {},
+                    "result": None,
+                    "observation": self._observation(),
+                },
+            )
 
     def tool_schemas(self, *, actor: ActorContext) -> dict[str, dict[str, Any]]:
         del actor
@@ -373,6 +390,16 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
             body = self._dispatch(operation, arguments, session=session)
             if operation in _MUTATIONS:
                 self._remember(operation, arguments, body)
+            session.append_event(
+                "enzyme_activity_observation_snapshot",
+                {
+                    "operation": operation,
+                    "operation_id": arguments.get("action_id", operation),
+                    "arguments": deepcopy(arguments),
+                    "result": deepcopy(body),
+                    "observation": self._observation(),
+                },
+            )
             self._persist(session)
             return self._response(
                 operation,
@@ -499,6 +526,8 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
             )
             _volume_agreement(receipt.after.current_volume_ul, state.tip.volume_ul)
             self._plate_revision += 1 if destination.startswith("3:") else 0
+            if destination.startswith("3:"):
+                self._prepared_plate_ids.add(self._plate_id)
             body = {"action_id": arguments["action_id"], "receipt": receipt.to_dict()}
             return self._record_native_receipt(session, body)
         if operation == DROP_TIP:
@@ -521,10 +550,14 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
                 or self._plate_location != "ot2_slot_3"
             ):
                 raise ValueError("requested plate is not available in OT-2 slot 3")
-            if self._transfer is not None:
-                raise ValueError("a transfer request already exists")
+            if self._transfer is not None and self._transfer["status"] == "pending":
+                raise ValueError("a transfer request is already pending")
+            if self._plate_id not in self._prepared_plate_ids:
+                raise ValueError("the requested plate has not been prepared")
+            if len(self._transfers) >= MAX_PLATE_TRANSFERS:
+                raise ValueError("the assay plate-transfer limit is exhausted")
             self._transfer = {
-                "request_id": "transfer-0001",
+                "request_id": f"transfer-{len(self._transfers) + 1:04d}",
                 "plate_id": self._plate_id,
                 "source": "ot2_slot_3",
                 "destination": "modeled_reader",
@@ -534,6 +567,7 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
                 + float(self._scenario_required().private_events["transfer_delay_s"]),
                 "operator_confirmation": None,
             }
+            self._transfers.append(self._transfer)
             return deepcopy(self._transfer)
         if operation == START_SERIES:
             _fields(
@@ -541,10 +575,7 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
                 {"action_id", "plate_id", "wells"},
                 {"action_id", "plate_id", "wells"},
             )
-            if (
-                arguments["plate_id"] != self._reader_plate_id
-                or self._plate_location != "modeled_reader"
-            ):
+            if arguments["plate_id"] != self._reader_plate_id:
                 raise ValueError("plate is not confirmed inside the modeled reader")
             wells_raw = arguments["wells"]
             if not isinstance(wells_raw, list) or not wells_raw:
@@ -633,22 +664,27 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
         }
         for address in [key for key in state.wells if key.startswith("3:")]:
             del state.wells[address]
+        for address in [key for key in state.wells if key.startswith("reader:")]:
+            del state.wells[address]
+        transferred_plate_revision = self._plate_revision
         for well, mixture in moved.items():
             state.wells[f"reader:{well}"] = mixture
         observed_plate_id = self._scenario_required().private_events.get(
             "observed_transfer_plate_id", self._plate_id
         )
-        self._plate_id = _string(observed_plate_id, "observed_transfer_plate_id")
-        self._reader_plate_id = self._plate_id
-        self._reader_plate_revision = self._plate_revision
-        self._plate_location = "modeled_reader"
+        self._reader_plate_id = _string(observed_plate_id, "observed_transfer_plate_id")
+        self._reader_plate_revision = transferred_plate_revision
+        self._plate_id = f"assay-plate-{self._next_plate_number:03d}"
+        self._next_plate_number += 1
+        self._plate_revision = 1
+        self._plate_location = "ot2_slot_3"
         self._transfer.update(
             {
                 "status": "completed",
                 "completed_at_s": state.clock_s,
                 "operator_confirmation": {
                     "confirmed": True,
-                    "observed_plate_id": self._plate_id,
+                    "observed_plate_id": self._reader_plate_id,
                     "retired_native_plate_id": native_receipt["retired_plate_id"],
                     "replacement_native_plate_id": native_receipt[
                         "replacement_plate_id"
@@ -768,9 +804,11 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
             if transfer_confirmed
             else (),
             resource_usage={
-                "assay_plates": 1,
+                "assay_plates": len(self._prepared_plate_ids),
                 "logical_time_s": self._state_required().clock_s,
-                "plate_transfers": 1 if transfer_confirmed else 0,
+                "plate_transfers": sum(
+                    item["status"] == "completed" for item in self._transfers
+                ),
             },
             resource_limits={
                 "assay_plates": MAX_ASSAY_PLATES,
@@ -815,6 +853,23 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
             self._reader_required().get_job(job_id)
             for job_id in self._reader_required().job_ids
         )
+        plates = [
+            {
+                "plate_id": self._plate_id,
+                "revision": self._plate_revision,
+                "location": self._plate_location,
+                "prepared": self._plate_id in self._prepared_plate_ids,
+            }
+        ]
+        if self._reader_plate_id is not None:
+            plates.append(
+                {
+                    "plate_id": self._reader_plate_id,
+                    "revision": self._reader_plate_revision_required(),
+                    "location": "modeled_reader",
+                    "prepared": True,
+                }
+            )
         return public_experiment_observation(
             logical_time_s=state.clock_s,
             inventory={
@@ -840,11 +895,12 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
                 },
                 "well_volumes_ul": public_wells,
                 "tip_volume_ul": state.tip.volume_ul,
+                "plates": plates,
             },
             plate_id=self._reader_plate_id or self._plate_id,
             plate_revision=self._reader_plate_revision or self._plate_revision,
             plate_location=self._plate_location,
-            operator_requests=() if self._transfer is None else (self._transfer,),
+            operator_requests=tuple(self._transfers),
             reader_jobs=jobs,
         )
 

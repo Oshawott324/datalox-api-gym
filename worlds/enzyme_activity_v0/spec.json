@@ -1,6 +1,6 @@
 {
   "id": "enzyme_activity_v0",
-  "status": "phase_3_scenario_admission_complete",
+  "status": "phase_4_completed_run_visualization_complete",
   "assay_contract": "contracts/assay_sop.json",
   "reader_profile": "contracts/reader_profile.json",
   "model_assumptions": "contracts/model_assumptions.json",
@@ -19,6 +19,12 @@
     "required_controls": ["BLANK", "REF-AP"],
     "verifier": "api_gym.worlds.enzyme_activity_v0.verifier:verify_experiment",
     "analysis_independence": "Verifier recomputes fits without calling production reference analysis."
+  },
+  "visualization": {
+    "exporter": "api_gym.worlds.enzyme_activity_v0.visualization:export_enzyme_assay_visualization",
+    "renderer": "enzyme_assay_v1",
+    "visibility": "researcher_only",
+    "completed_run_cases": ["nominal", "fresh_reaction_recovery"]
   },
   "claims": {
     "scientific": "Modeled relative activity only",

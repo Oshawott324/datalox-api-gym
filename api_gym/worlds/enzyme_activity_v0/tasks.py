@@ -31,7 +31,7 @@ def task_for_scenario(scenario: ScenarioDefinition) -> AssayTask:
             f"{context}"
         ),
         success_criteria=(
-            "Use confirmed native liquid actions and no more than 1 assay plate, 1 operator transfer, and 900 logical seconds.",
+            "Use confirmed native liquid actions and no more than 2 assay plates, 2 operator transfers, and 900 logical seconds.",
             "Use at least four acquired numeric observations spanning at least 90 seconds for each fitted well.",
             "Cite sample, matched blank, and REF-AP measurements from the same plate revision and reader settings.",
             "Fit each cited well by unweighted ordinary least squares against its actual timestamps; subtract the blank slope, convert seconds to minutes, and apply the lineage dilution factor.",

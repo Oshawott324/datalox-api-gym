@@ -13,6 +13,14 @@ from datalox_gated_runtime.world_v1.backend import (
     initialize_world_bundle_session,
 )
 from datalox_gated_runtime.world_v1.errors import WorldSessionError
+from datalox_gated_runtime.visualizations.contracts import normalize_visualization_run
+from datalox_gated_runtime.visualizations.renderers.enzyme_assay import (
+    EnzymeAssayRenderer,
+)
+
+from api_gym.worlds.enzyme_activity_v0.visualization import (
+    export_enzyme_assay_visualization,
+)
 
 
 WORLD = Path(__file__).parents[2] / "worlds" / "enzyme_activity_v0"
@@ -123,6 +131,51 @@ def prepare_plate(backend: WorldBundleBackend, *, prefix: str) -> None:
     )
     for path, body in steps:
         invoke(backend, method="POST", path=path, body=body)
+
+
+def prepare_diluted_plate(backend: WorldBundleBackend, *, prefix: str) -> None:
+    transfers = (
+        ("1:A1", "3:A1", 25.0, "C1"),
+        ("1:A3", "3:A1", 25.0, "C2"),
+        ("1:A2", "3:A1", 50.0, "C3"),
+        ("1:A3", "3:A2", 50.0, "C4"),
+        ("1:A2", "3:A2", 50.0, "C5"),
+        ("1:A4", "3:A3", 50.0, "C6"),
+        ("1:A2", "3:A3", 50.0, "C7"),
+    )
+    for index, (source, destination, volume, tip_well) in enumerate(transfers, start=1):
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/tips/pick-up",
+            body={"action_id": f"{prefix}-pick-{index}", "tip_well": tip_well},
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/aspirate",
+            body={
+                "action_id": f"{prefix}-asp-{index}",
+                "source": source,
+                "volume_ul": volume,
+            },
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/dispense",
+            body={
+                "action_id": f"{prefix}-dsp-{index}",
+                "destination": destination,
+                "volume_ul": volume,
+            },
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/tips/drop",
+            body={"action_id": f"{prefix}-drop-{index}"},
+        )
 
 
 def slope(readings: list[dict]) -> float:
@@ -474,5 +527,185 @@ def test_each_scenario_has_a_native_reference_plan(
                 ]
                 == "assay-plate-unexpected"
             )
+    finally:
+        backend.close()
+
+
+def test_high_activity_can_recover_on_a_fresh_native_plate_and_export_view(
+    tmp_path: Path, native_python: Path
+) -> None:
+    del native_python
+    backend = open_backend(tmp_path, episode_id="enzyme-activity-high-01")
+    try:
+        prepare_plate(backend, prefix="first")
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/operator/transfers",
+            body={"action_id": "first-transfer", "plate_id": "assay-plate-001"},
+        )
+        after_first_transfer = invoke(
+            backend,
+            method="POST",
+            path="/v1/lab/wait",
+            body={"action_id": "first-transfer-wait", "duration_s": 5},
+        )
+        fresh_plate = next(
+            plate
+            for plate in after_first_transfer["inventory"]["plates"]
+            if plate["location"] == "ot2_slot_3"
+        )
+        assert fresh_plate == {
+            "plate_id": "assay-plate-002",
+            "revision": 1,
+            "location": "ot2_slot_3",
+            "prepared": False,
+        }
+        first_job = invoke(
+            backend,
+            method="POST",
+            path="/v1/reader/series",
+            body={
+                "action_id": "first-series",
+                "plate_id": "assay-plate-001",
+                "wells": ["A1", "A2", "A3"],
+            },
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/lab/wait",
+            body={"action_id": "first-read-wait", "duration_s": 120.4},
+        )
+        first_data = invoke(
+            backend,
+            method="POST",
+            path="/v1/reader/data",
+            body={"job_id": first_job["job_id"]},
+        )["measurements"]
+        assert any(
+            item["well"] == "A1"
+            and (
+                item["status"] == "overrange"
+                or (item["absorbance"] is not None and item["absorbance"] > 1.5)
+            )
+            for item in first_data
+        )
+
+        prepare_diluted_plate(backend, prefix="second")
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/operator/transfers",
+            body={"action_id": "second-transfer", "plate_id": "assay-plate-002"},
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/lab/wait",
+            body={"action_id": "second-transfer-wait", "duration_s": 5},
+        )
+        second_job = invoke(
+            backend,
+            method="POST",
+            path="/v1/reader/series",
+            body={
+                "action_id": "second-series",
+                "plate_id": "assay-plate-002",
+                "wells": ["A1", "A2", "A3"],
+            },
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/lab/wait",
+            body={"action_id": "second-read-wait", "duration_s": 120.4},
+        )
+        second_data = invoke(
+            backend,
+            method="POST",
+            path="/v1/reader/data",
+            body={"job_id": second_job["job_id"]},
+        )["measurements"]
+
+        def usable(well: str) -> list[dict]:
+            return [
+                item
+                for item in second_data
+                if item["well"] == well
+                and item["status"] == "acquired"
+                and item["absorbance"] is not None
+                and 0.02 <= item["absorbance"] <= 1.5
+            ]
+
+        sample, blank, reference = usable("A1"), usable("A2"), usable("A3")
+        assert all(len(series) >= 4 for series in (sample, blank, reference))
+        estimated_rate = (slope(sample) - slope(blank)) * 60 * 2
+        uncertainty = (
+            (slope_standard_error(sample) ** 2 + slope_standard_error(blank) ** 2)
+            ** 0.5
+            * 60
+            * 2
+        )
+        report = invoke(
+            backend,
+            method="POST",
+            path="/v1/experiment/report",
+            body={
+                "action_id": "recovery-report",
+                "sample_id": "SAMPLE-A",
+                "job_id": second_job["job_id"],
+                "disposition": "usable",
+                "sample_measurement_ids": [item["measurement_id"] for item in sample],
+                "blank_measurement_ids": [item["measurement_id"] for item in blank],
+                "reference_measurement_ids": [
+                    item["measurement_id"] for item in reference
+                ],
+                "fit_window_s": [
+                    min(item["acquired_at_s"] for item in sample + blank + reference),
+                    max(item["acquired_at_s"] for item in sample + blank + reference),
+                ],
+                "dilution_factor": 2,
+                "estimated_rate": estimated_rate,
+                "uncertainty": uncertainty,
+                "units": "delta_absorbance_per_minute",
+                "unresolved_reason_code": None,
+                "evidence_refs": [],
+            },
+        )
+        assert report["accepted"] is True
+        verification = backend.verify().to_dict()
+        assert verification["passed"] is True
+        document = export_enzyme_assay_visualization(
+            {
+                "run_id": "native-high-activity-recovery",
+                "world": {
+                    "world_id": "enzyme_activity_v0",
+                    **backend.session.export(),
+                    "verification": verification,
+                },
+            }
+        )
+        renderer = EnzymeAssayRenderer()
+        normalized = normalize_visualization_run(
+            document, renderer_validators={renderer.id: renderer.validate}
+        )
+        operations = normalized["renderer"]["payload"]["operations"]
+        assert (
+            operations[-1]["snapshot"]["analysis"]["repeat_decision"]
+            == "fresh reaction used"
+        )
+        completed_transfers = [
+            operation
+            for operation in operations
+            if operation["snapshot"]["mode"] == "transfer"
+            and operation["snapshot"]["transfer"]["status"] == "completed"
+        ]
+        assert len(completed_transfers) == 2
+        assert all(
+            operation["snapshot"]["active_plate"]["plate_id"]
+            == operation["snapshot"]["transfer"]["observed_plate_id"]
+            for operation in completed_transfers
+        )
     finally:
         backend.close()
