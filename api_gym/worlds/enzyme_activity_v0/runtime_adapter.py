@@ -100,33 +100,49 @@ _MUTATIONS = frozenset(
 
 
 def _object_schema(
-    properties: Mapping[str, Any], required: tuple[str, ...]
+    properties: Mapping[str, Any], required: tuple[str, ...] | None
 ) -> dict[str, Any]:
-    return {
+    schema: dict[str, Any] = {
         "type": "object",
         "properties": deepcopy(dict(properties)),
-        "required": list(required),
         "additionalProperties": False,
     }
+    if required is not None:
+        schema["required"] = list(required)
+    return schema
 
 
-_ACTION_ID = {"type": "string", "minLength": 1, "maxLength": 128}
-_WELL = {"type": "string", "pattern": "^[13]:[A-H](?:[1-9]|1[0-2])$"}
+_ACTION_ID = {"type": "string"}
+_WELL = {"type": "string"}
+_TIP_WELL = {"type": "string", "pattern": "^[A-H](?:[1-9]|1[0-2])$"}
+_TIP_WELLS = tuple(f"{row}{column}" for row in "ABCDEFGH" for column in range(1, 13))
 TOOL_SCHEMAS = {
-    INSPECT: _object_schema({}, ()),
+    INSPECT: _object_schema({}, None),
     PICK_UP_TIP: _object_schema(
-        {"action_id": _ACTION_ID, "tip_well": {"type": "string"}},
+        {"action_id": _ACTION_ID, "tip_well": _TIP_WELL},
         ("action_id", "tip_well"),
     ),
     ASPIRATE: _object_schema(
-        {"action_id": _ACTION_ID, "source": _WELL, "volume_ul": {"type": "number"}},
+        {
+            "action_id": _ACTION_ID,
+            "source": _WELL,
+            "volume_ul": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 300,
+            },
+        },
         ("action_id", "source", "volume_ul"),
     ),
     DISPENSE: _object_schema(
         {
             "action_id": _ACTION_ID,
             "destination": _WELL,
-            "volume_ul": {"type": "number"},
+            "volume_ul": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 300,
+            },
         },
         ("action_id", "destination", "volume_ul"),
     ),
@@ -145,7 +161,14 @@ TOOL_SCHEMAS = {
     ),
     GET_DATA: _object_schema({"job_id": {"type": "string"}}, ("job_id",)),
     WAIT: _object_schema(
-        {"action_id": _ACTION_ID, "duration_s": {"type": "number"}},
+        {
+            "action_id": _ACTION_ID,
+            "duration_s": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 300,
+            },
+        },
         ("action_id", "duration_s"),
     ),
     SUBMIT_REPORT: _object_schema(
@@ -171,9 +194,9 @@ TOOL_SCHEMAS = {
                     {"type": "null"},
                 ]
             },
-            "dilution_factor": {"type": "number"},
+            "dilution_factor": {"type": "number", "exclusiveMinimum": 0},
             "estimated_rate": {"type": ["number", "null"]},
-            "uncertainty": {"type": ["number", "null"]},
+            "uncertainty": {"type": ["number", "null"], "minimum": 0},
             "units": {"type": "string"},
             "unresolved_reason_code": {"type": ["string", "null"]},
             "evidence_refs": {"type": "array", "items": {"type": "string"}},
@@ -237,6 +260,7 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
         self._next_plate_number = 2
         self._report: dict[str, Any] | None = None
         self._native_receipts: list[dict[str, Any]] = []
+        self._used_tip_wells: set[str] = set()
         self._scenario: ScenarioDefinition | None = None
 
     def reset_managed_resources(self) -> None:
@@ -317,6 +341,7 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
         self._next_plate_number = 2
         self._report = None
         self._native_receipts = []
+        self._used_tip_wells = set()
         self._scenario = scenario
         session.reset(
             episode_id=scenario.scenario_id,
@@ -467,12 +492,20 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
         if operation == PICK_UP_TIP:
             _fields(arguments, {"action_id", "tip_well"}, {"action_id", "tip_well"})
             tip_well = _string(arguments["tip_well"], "tip_well")
+            if tip_well not in _TIP_WELLS:
+                raise ValueError(
+                    "tip_well must identify an available tip as '<row><column>', "
+                    "for example 'A1'"
+                )
+            if tip_well in self._used_tip_wells:
+                raise ValueError("tip_well has already been used")
             self._state_required().wait(2)
             receipt = self._manager_required().execute_liquid(PickUpTip(tip_well))
             if receipt.before.has_tip or not receipt.after.has_tip:
                 raise RuntimeError(
                     "native tip receipt disagrees with the requested transition"
                 )
+            self._used_tip_wells.add(tip_well)
             body = {"action_id": arguments["action_id"], "receipt": receipt.to_dict()}
             return self._record_native_receipt(session, body)
         if operation == ASPIRATE:
@@ -895,6 +928,9 @@ class EnzymeActivityRuntimeAdapter(WorldImplementationV1):
                 },
                 "well_volumes_ul": public_wells,
                 "tip_volume_ul": state.tip.volume_ul,
+                "available_tip_wells": [
+                    well for well in _TIP_WELLS if well not in self._used_tip_wells
+                ],
                 "plates": plates,
             },
             plate_id=self._reader_plate_id or self._plate_id,

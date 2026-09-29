@@ -17,7 +17,7 @@
   ],
   "trajectory_paths": [],
   "content_hashes": {
-    "README.md": "sha256:f2fc95ef73c5a366de7e0a1500931c7dcb8b39521ab51a7f58aa0f1424a0bb81",
+    "README.md": "sha256:bb564c9a6a4d994885f77187da3cb99563cc84fa10a0076cc67bc7f0c2fa7fb2",
     "contracts/assay_sop.json": "sha256:b5569eca43cdb47d971691e4791bbfed8392aa2eec4a75b54b018b135e3e72fd",
     "contracts/model_assumptions.json": "sha256:eb61c655530290691de072a74cf45f37bb4f78e63a4a7e3aa2d8d420c4cc0298",
     "contracts/reader_profile.json": "sha256:5b577ca0816f9cf3443f582dc9adbe133c9bc936b2e73d7e155b52b94940a31c",
@@ -25,13 +25,13 @@
     "gate_config.json": "sha256:17c6b28071ba756bb1282d7bebaca4d152c0996eee64e04c6fd5d53b1608b5b6",
     "source_refs.json": "sha256:cff4fc8538141c6fc058c7f89119cc0be3c4519f1b35d0bab8fa5e7cd272cae6",
     "sources.lock.json": "sha256:8990210bcee59aaf8be827e568f29c9fe59181143f02e7d73a8b4ea95721d02f",
-    "spec.json": "sha256:59e3ccaa529487af40fa58f84cd7d7d29ae7c8ac476bea547bd391b837e34a20",
+    "spec.json": "sha256:d9f2520d86e8b25ea52453b7b9f5b425d084e762bf39fbb6df60af906044b23f",
     "task.json": "sha256:e82c67412d3b9a887e6b471ae2431d2642d897bba7557393278ac1d8d8264631",
     "world/episodes.jsonl": "sha256:243c91cebfb08c3c720628c851a2ceb63807091185acf267cd788b63fc861727",
     "world/implementation.py": "sha256:e42ca25a4946e8ca1882c58052fb54f2343d336c66791694bc3e59ea6a972a3b",
     "world/roles.json": "sha256:6fddcf0638373d82813284ce80f8271918204fb76d6b63981005a827d67fb04d",
     "world/sources.json": "sha256:1816c54b5ea60eda8be04b18234f76fef6ee03165861dd12ca3c1a932bd9658c",
-    "world/tools.json": "sha256:d0e50a1425ebc909bcd35fcbf5fd3a2e5d850c73202dfc2e60cafe188c4da618",
+    "world/tools.json": "sha256:0e4f10aa85be38a4bcf58c88fcd694fe4547c3cb5c9b0762696f8020eeedc76b",
     "world/verifier.json": "sha256:01ecf2b5d7e3feec9023c36db6033ea87bd8763bf7079a501f6cc5f13894ffa7"
   }
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -64,6 +65,62 @@ def invoke(
     assert response.status_code == 200, response.body
     assert isinstance(response.body, dict)
     return response.body
+
+
+def test_agent_tool_catalog_matches_the_frozen_public_contract(
+    tmp_path: Path, native_python: Path
+) -> None:
+    del native_python
+    backend = open_backend(tmp_path)
+    try:
+        declared = json.loads((WORLD / "world" / "tools.json").read_text())["tools"]
+        expected = {
+            tool["id"]: {
+                "description": tool["description"],
+                "inputSchema": tool["input_schema"],
+            }
+            for tool in declared
+        }
+
+        assert backend.tool_schemas() == expected
+    finally:
+        backend.close()
+
+
+def test_tip_inventory_is_public_and_invalid_addresses_do_not_reach_native_worker(
+    tmp_path: Path, native_python: Path
+) -> None:
+    del native_python
+    backend = open_backend(tmp_path)
+    try:
+        initial = invoke(backend, method="GET", path="/v1/lab")
+        assert initial["inventory"]["available_tip_wells"][:3] == ["A1", "A2", "A3"]
+
+        rejected = backend.handle(
+            CallRequest(
+                method="POST",
+                path="/v1/ot2/tips/pick-up",
+                body={"action_id": "bad-tip", "tip_well": "1:A1"},
+                operation_id="bad-tip",
+            )
+        )
+        assert rejected is not None
+        assert rejected.status_code == 422
+        assert not any(
+            event["type"] == "world_operation_invalidated"
+            for event in backend.session.list_events()
+        )
+
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/tips/pick-up",
+            body={"action_id": "good-tip", "tip_well": "A1"},
+        )
+        after_pickup = invoke(backend, method="GET", path="/v1/lab")
+        assert "A1" not in after_pickup["inventory"]["available_tip_wells"]
+    finally:
+        backend.close()
 
 
 def prepare_plate(backend: WorldBundleBackend, *, prefix: str) -> None:
@@ -168,6 +225,52 @@ def prepare_diluted_plate(backend: WorldBundleBackend, *, prefix: str) -> None:
                 "action_id": f"{prefix}-dsp-{index}",
                 "destination": destination,
                 "volume_ul": volume,
+            },
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/tips/drop",
+            body={"action_id": f"{prefix}-drop-{index}"},
+        )
+
+
+def prepare_plate_with_sample_substrate_last(
+    backend: WorldBundleBackend, *, prefix: str
+) -> None:
+    transfers = (
+        ("1:A1", "3:A1", "A1"),
+        ("1:A3", "3:A2", "A2"),
+        ("1:A4", "3:A3", "B1"),
+        ("1:A2", "3:A2", "B2"),
+        ("1:A2", "3:A3", "B3"),
+        ("1:A2", "3:A1", "B4"),
+    )
+    for index, (source, destination, tip_well) in enumerate(transfers, start=1):
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/tips/pick-up",
+            body={"action_id": f"{prefix}-pick-{index}", "tip_well": tip_well},
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/aspirate",
+            body={
+                "action_id": f"{prefix}-asp-{index}",
+                "source": source,
+                "volume_ul": 50.0,
+            },
+        )
+        invoke(
+            backend,
+            method="POST",
+            path="/v1/ot2/dispense",
+            body={
+                "action_id": f"{prefix}-dsp-{index}",
+                "destination": destination,
+                "volume_ul": 50.0,
             },
         )
         invoke(
@@ -483,14 +586,13 @@ def test_post_dispense_persistence_failure_forbids_redispatch_and_reset_recovers
     "episode_id",
     [
         "enzyme-activity-nominal-01",
-        "enzyme-activity-high-01",
         "enzyme-activity-delayed-01",
         "enzyme-activity-interrupted-01",
         "enzyme-activity-background-01",
         "enzyme-activity-lineage-01",
     ],
 )
-def test_each_scenario_has_a_native_reference_plan(
+def test_each_single_plate_scenario_has_a_native_reference_plan(
     tmp_path: Path, native_python: Path, episode_id: str
 ) -> None:
     del native_python
@@ -501,16 +603,7 @@ def test_each_scenario_has_a_native_reference_plan(
         data = result["measurements"]
         assert report["accepted"] is True, report["verification"]
         assert backend.verify().passed is True
-        if episode_id == "enzyme-activity-high-01":
-            assert any(
-                item["well"] == "A1"
-                and (
-                    item["status"] == "overrange"
-                    or (item["absorbance"] is not None and item["absorbance"] > 1.5)
-                )
-                for item in data
-            )
-        elif episode_id == "enzyme-activity-delayed-01":
+        if episode_id == "enzyme-activity-delayed-01":
             transfer = result["transfer"]
             assert transfer["complete_at_s"] - transfer["requested_at_s"] == 125
         elif episode_id == "enzyme-activity-interrupted-01":
@@ -537,7 +630,7 @@ def test_high_activity_can_recover_on_a_fresh_native_plate_and_export_view(
     del native_python
     backend = open_backend(tmp_path, episode_id="enzyme-activity-high-01")
     try:
-        prepare_plate(backend, prefix="first")
+        prepare_plate_with_sample_substrate_last(backend, prefix="first")
         invoke(
             backend,
             method="POST",
@@ -590,6 +683,19 @@ def test_high_activity_can_recover_on_a_fresh_native_plate_and_export_view(
                 or (item["absorbance"] is not None and item["absorbance"] > 1.5)
             )
             for item in first_data
+        )
+        usable_first_sample = [
+            item
+            for item in first_data
+            if item["well"] == "A1"
+            and item["status"] == "acquired"
+            and item["absorbance"] is not None
+            and 0.02 <= item["absorbance"] <= 1.5
+        ]
+        assert len(usable_first_sample) < 4 or (
+            usable_first_sample[-1]["acquired_at_s"]
+            - usable_first_sample[0]["acquired_at_s"]
+            < 90
         )
 
         prepare_diluted_plate(backend, prefix="second")

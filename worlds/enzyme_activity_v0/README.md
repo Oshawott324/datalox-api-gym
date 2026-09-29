@@ -1,9 +1,9 @@
 # Enzyme activity v0
 
 This slice freezes the Phase 0 interface, implements the coupled scientific
-model and native execution contract, admits the Phase 3 scenario verifier, and
-exports Phase 4 completed-run evidence for an alkaline-phosphatase/pNPP
-relative-rate workflow.
+model and native execution contract, admits the Phase 3 scenario verifier,
+exports Phase 4 completed-run evidence, and records a Phase 5 external-agent
+pilot for an alkaline-phosphatase/pNPP relative-rate workflow.
 Readings are synthetic modeled observations routed through the exact
 PyLabRobot 0.2.1 absorbance interface. They are not physical CLARIOstar data.
 
@@ -62,7 +62,7 @@ the evidence.
 
 ## Reproducible integration bundle
 
-The tested repositories are this API Gym checkout starting from `8c922bdf` and
+The tested repositories are this API Gym checkout starting from `f39ec165` and
 `datalox-gated-runtime` commit
 `87691ba1417c6ae8eab46b46588158798d3a2d3b`. The native worker uses a separate
 Python environment containing exactly `opentrons==9.1.1` and
@@ -87,5 +87,24 @@ database or simulator source tree.
 
 Native integration tests exercise both the nominal episode and a high-activity
 fresh-dilution recovery across two native plate exchanges. Phase 3 scenario
-admission remains deterministic at the scientific verifier boundary; an
-external model rollout over all six families remains Phase 5 work.
+admission remains deterministic at the scientific verifier boundary.
+
+## Phase 5 external-agent pilot
+
+One `gpt-5.5` low-reasoning model ran all six families through actual MCP tool
+selection from an isolated arithmetic workspace. Five episodes passed: nominal,
+delayed acquisition, interrupted acquisition, reagent background, and observed
+plate-lineage substitution. Their submitted rates exactly matched the
+independent verifier at stored precision.
+
+Fresh-reaction recovery failed without an infrastructure fault. The agent
+correctly rejected an overrange first trace and began the declared factor-2
+reaction on the fresh plate, then stopped after one of seven required transfers
+despite remaining below its call and token limits. That failure is preserved;
+it is not replaced by the scripted reference plan. The full bounded pilot,
+resource accounting, contract fixes, and evidence paths are documented in
+`docs/reports/2026-09-29-enzyme-assay-phase5-agent-pilot.md`.
+
+Phase 5 establishes functional agent execution inside the modeled environment
+only. It does not establish physical fidelity, physical time savings,
+statistical success rate, or training value.

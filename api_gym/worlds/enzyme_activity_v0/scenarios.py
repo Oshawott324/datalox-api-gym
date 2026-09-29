@@ -70,7 +70,7 @@ SCENARIOS: tuple[ScenarioDefinition, ...] = (
         ),
         private_initial_conditions={
             **_COMMON_INITIAL,
-            "sample_enzyme_concentration_mM": 0.035,
+            "sample_enzyme_concentration_mM": 0.06,
         },
         private_events={"transfer_delay_s": 5.0, "missing_measurement_indices": ()},
         expected_mutant_failure_code="fit_window_invalid",

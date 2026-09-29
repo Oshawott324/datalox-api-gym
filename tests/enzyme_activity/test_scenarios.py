@@ -45,6 +45,8 @@ def test_agent_tasks_state_every_requirement_used_by_verifier() -> None:
             "same plate revision",
             "four acquired numeric observations",
             "90 seconds",
+            "0.02 through 1.5",
+            "fresh reaction",
             "ordinary least squares",
             "standard errors in quadrature",
             "dilution factor",
@@ -55,11 +57,25 @@ def test_agent_tasks_state_every_requirement_used_by_verifier() -> None:
             "2 operator transfers",
             "900 logical seconds",
             "missing or overrange",
+            "Report submission is terminal",
         ):
             assert requirement in visible
         assert task.public_resources["assay_plates"] == MAX_ASSAY_PLATES
         assert task.public_resources["maximum_logical_time_s"] == MAX_LOGICAL_TIME_S
         assert task.public_resources["plate_transfers"] == MAX_PLATE_TRANSFERS
+        assert task.public_resources["usable_absorbance_interval"] == [0.02, 1.5]
+        preparation = task.public_resources["preparation_constraints"]
+        assert preparation["reaction_volume_interval_ul"] == [80.0, 200.0]
+        assert preparation["standard_reaction_composition_ul"]["SAMPLE-A"] == {
+            "SAMPLE-A-stock": 50.0,
+            "substrate-stock": 50.0,
+        }
+        assert preparation["standard_sample_reporting_dilution_factor"] == 1.0
+        assert "declared undiluted baseline" in preparation["dilution_interpretation"]
+        assert (
+            preparation["fresh_diluted_sample_example_ul"]["supported_dilution_factor"]
+            == 2.0
+        )
 
 
 def test_private_scenario_truth_is_not_rendered_into_agent_task() -> None:

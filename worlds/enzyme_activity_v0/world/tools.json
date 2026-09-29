@@ -14,7 +14,7 @@
       "description": "Pick up one tip through the pinned native simulator.",
       "list_roles": ["assay_agent"],
       "invoke_roles": ["assay_agent"],
-      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "tip_well": {"type": "string"}}, "required": ["action_id", "tip_well"], "additionalProperties": false},
+      "input_schema": {"type": "object", "properties": {"action_id": {"type": "string"}, "tip_well": {"type": "string", "pattern": "^[A-H](?:[1-9]|1[0-2])$"}}, "required": ["action_id", "tip_well"], "additionalProperties": false},
       "source_refs": ["opentrons_9_1_1_native_liquid_worker"],
       "operation_family": "native_liquid_handling"
     },
