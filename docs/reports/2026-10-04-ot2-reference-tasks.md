@@ -61,11 +61,12 @@ the rest. Steps of 10 / 3 / 1 mm cannot skip the very-close level and passed 200
 
 Fixed-script baseline, seeds 0–5: 24 of 24 episodes passed.
 
-## 5. Not yet done
+## 5. Scope and limitations
 
-- No model runs: no DeepSeek or OpenAI key is configured here.
-- Results describe default Opentrons configuration, not this robot, until the missing calibration
-  inputs reproduce all five recorded outcomes.
-- The slot-3 labware definition is an approximation (standard rack, measured column pitch).
+- This change includes no model runs.
+- Results describe the default Opentrons configuration. Matching this robot needs its tip-length
+  calibration, its software version and the command log of run `ac20a023`.
+- The slot-3 labware definition is an approximation (standard rack, measured column pitch); the
+  original definition is not in the records.
 - The source repository declares no license; its records are used with attribution at the author's
   invitation and will be removed on request.

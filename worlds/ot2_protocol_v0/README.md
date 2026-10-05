@@ -19,7 +19,7 @@ runs/ot2-analysis-8.8.2/bin/pip install "opentrons==8.8.2"
 export DATALOX_OT2_ANALYSIS_PYTHON=$PWD/runs/ot2-analysis-8.8.2/bin/python
 ```
 
-The robot's own software version is not recorded yet; pin the analyzer to it once known.
+The robot's software version is not in the records; the analyzer version should match it.
 
 ## Task families
 
@@ -36,8 +36,8 @@ that is rendered as an official protocol.
 
 Slot 3 uses an approximate custom definition
 ([`labware/`](labware/custom_24_tuberack_eppendorf_2ml_slot3_pitch19p69.json)): the standard 2 mL
-tube rack with the measured 19.69 mm column pitch. Replace it with the original definition when
-supplied. Timestamps in the `stale_offsets` variants are authored where the records give only a date.
+tube rack with the measured 19.69 mm column pitch; the original definition is not in the records.
+Timestamps in the `stale_offsets` variants are authored where the records give only a date.
 
 ## Run
 
