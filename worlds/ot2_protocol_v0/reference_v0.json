@@ -1,0 +1,96 @@
+{
+  "schema_version": "api_gym.ot2_protocol_reference.v0",
+  "source": {
+    "repository": "https://github.com/Jiantao-Zhao/ot2-reference-trajectories",
+    "commit": "00767f82bbabe7a67965177047c594be27445dbb",
+    "files": ["README.md", "ORIGINAL-RECORDS.md", "trajectories.json"],
+    "retrieved_at": "2026-10-04",
+    "license": "none declared; records shared by the author for this work, attributed here, removed on request",
+    "record_window": "2026-09-29 to 2026-10-01"
+  },
+  "robot": {
+    "robot_type": "OT-2",
+    "api_level": "2.16",
+    "robot_software_version": null,
+    "z_travel_limit_mm": 172.15,
+    "z_travel_limit_source": "serial log M365.0 Z172.15 (machine coordinates)",
+    "pipettes": {
+      "left": {"name": "p20_single_gen2", "tip_rack_slot": "2", "tip_rack": "opentrons_96_tiprack_20ul"},
+      "right": {"name": "p300_single_gen2", "name_note": "record says p300; generation not recorded", "tip_rack_slot": "5", "tip_rack": "opentrons_96_tiprack_300ul"}
+    }
+  },
+  "deck": {
+    "1": {"load_name": "corning_96_wellplate_360ul_flat"},
+    "2": {"load_name": "opentrons_96_tiprack_20ul"},
+    "3": {"load_name": "custom_24_tuberack_eppendorf_2ml_slot3_pitch19p69", "namespace": "custom_beta", "custom": true,
+          "note": "Measured column pitch 19.69 mm; standard definition 19.89 mm. Original JSON not supplied; approximated from opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap v1."},
+    "4": {"load_name": "opentrons_15_tuberack_falcon_15ml_conical"},
+    "5": {"load_name": "opentrons_96_tiprack_300ul"},
+    "6": {"load_name": "opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap"},
+    "7": {"load_name": "opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap"},
+    "8": {"load_name": "opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap"}
+  },
+  "real_arc_outcomes": [
+    {"slot": "3", "minimum_z_height_mm": 180.0, "outcome": "rejected", "failing_command": "moveToAddressableAreaForDropTip", "run": "ac20a023"},
+    {"slot": "3", "minimum_z_height_mm": 150.0, "outcome": "accepted", "failing_command": null, "run": "ac20a023"},
+    {"slot": "7", "minimum_z_height_mm": 150.0, "outcome": "rejected", "failing_command": "not recorded", "run": "ac20a023"},
+    {"slot": "7", "minimum_z_height_mm": 130.0, "outcome": "accepted", "failing_command": null, "run": "ac20a023"},
+    {"slot": "6", "minimum_z_height_mm": 130.0, "outcome": "accepted", "failing_command": null, "run": "ee3a249b"}
+  ],
+  "arc_error": {"exception": "FailedToPlanMoveError", "error_code": "4000", "detail": "Arc out of bounds in the Z-axis"},
+  "labware_offset_versions": {
+    "worktree_A_2026-09-29": {
+      "recorded_at": "2026-09-29",
+      "method": "jog accumulation",
+      "status_in_records": "later judged erroneous accumulation for slots 3/6/7/8",
+      "offsets_mm": {
+        "1": [0.0, 0.6, 0.0], "2": [0.2, 0.5, 0.0], "3": [0.2, 0.0, -30.0], "4": [-1.2, 4.1, 25.5],
+        "5": [0.3, 0.0, 0.0], "6": [-1.5, 1.0, 1.0], "7": [2.1, 0.5, 1.0], "8": [2.0, -0.3, 1.5]
+      }
+    },
+    "worktree_B_2026-09-30": {
+      "recorded_at": "2026-09-30",
+      "recorded_time_of_day": null,
+      "method": "absolute position readings",
+      "status_in_records": "used for the 15-point check run 1b1a710d; afterwards judged invalid because deck calibration and pipette offsets had changed",
+      "offsets_mm": {
+        "1": [-0.3, -5.7, 0.8], "2": [0.1, 0.5, 0.0], "3": [0.0, 0.0, 0.0], "4": [-2.0, 2.0, -5.45],
+        "5": [0.3, 0.0, 0.0], "6": [0.0, 0.0, 0.0], "7": [0.0, 0.0, 0.0], "8": [0.0, 0.0, 0.0]
+      }
+    }
+  },
+  "calibration": {
+    "deck_attitude_at_annotation": [[0.9992, 0.004, 0.0], [0.0, 1.0016, 0.0], [0.0, 0.0, 1.0]],
+    "deck_attitude_current": [[0.9989, 0.0032, 0.0], [-0.0008, 1.0016, 0.0], [0.0, 0.0, 1.0]],
+    "deck_attitude_last_modified": "2026-09-30T13:48:12Z",
+    "pipette_offset_at_annotation_mm": {"left": [0.2, -5.7, 0.1], "right": [-0.3, -6.8, 0.0]},
+    "pipette_offset_current_mm": {"left": [0.0, -5.2, -0.8], "right": [-0.2, -5.8, -0.9]},
+    "tip_length_calibration": null,
+    "conclusion_in_records": "all recorded labware offsets are invalid until re-measured"
+  },
+  "slot3_measurements": {
+    "physical_tube_top_z_mm": 49.37,
+    "physical_bottom_plus_2_z_mm": 12.27,
+    "model_vs_physical_bottom_plus_2_mm": -31.0,
+    "tube_top_absolute_z_status": "unresolved; two visual readings from the same start were 52.00 and 106.50 mm",
+    "probe_steps_mm": [10, 10, 5, 5, 1]
+  },
+  "probe_feedback_bins_mm": [
+    {"label": "far", "label_zh": "远", "min_exclusive": 20.0, "max_inclusive": null},
+    {"label": "near", "label_zh": "近", "min_exclusive": 5.0, "max_inclusive": 20.0},
+    {"label": "very close", "label_zh": "很近了", "min_exclusive": 2.0, "max_inclusive": 5.0},
+    {"label": "almost touching", "label_zh": "快贴底", "min_exclusive": 1.0, "max_inclusive": 2.0},
+    {"label": "contact risk", "label_zh": "触底风险", "min_exclusive": null, "max_inclusive": 1.0}
+  ],
+  "probe_rules": {"max_step_mm": 10.0, "accept_window_mm": [1.0, 3.0], "step_must_not_grow_after_closer_level": true},
+  "operation_rules": {
+    "allowed_actions": ["load_labware", "load_labware_from_definition", "load_instrument", "define_liquid", "load_liquid",
+                        "pick_up_tip", "drop_tip", "aspirate", "dispense", "blow_out", "air_gap", "touch_tip", "mix",
+                        "move_to", "delay", "comment", "home", "pause"],
+    "allowed_geometry": ["top", "bottom", "center", "diameter", "depth", "move", "Point"],
+    "forbidden": ["inventing actions from raw coordinates", "bypassing the library to send motion commands",
+                  "modifying or copying the library", "undocumented interfaces",
+                  "recomputing well positions, depths or radii from labware definitions"],
+    "judged_with": ["opentrons analyze", "opentrons simulate"]
+  }
+}
