@@ -17,12 +17,13 @@ from typing import Any
 from api_gym.worlds.ot2_protocol_v0.compliance import ALLOWED_ACTIONS, GEOMETRY_METHODS, LABWARE_ACCESSORS
 
 REFERENCE_PATH = Path(__file__).resolve().parents[3] / "worlds" / "ot2_protocol_v0" / "reference_v0.json"
-FAMILIES = ("arc_four_slots", "probe_tube_bottom", "stale_offsets")
+FAMILIES = ("arc_four_slots", "probe_tube_bottom", "stale_offsets", "measure_offset")
 MODES = ("official_tools", "free_code")
 FAMILY_MODES = {
     "arc_four_slots": MODES,
     "probe_tube_bottom": ("official_tools",),
     "stale_offsets": ("official_tools",),
+    "measure_offset": ("official_tools",),
 }
 SLOT3_LOAD = {"load_name": "custom_24_tuberack_eppendorf_2ml_slot3_pitch19p69", "namespace": "custom_beta", "version": 1}
 PROBE_MAX_MOVES = 40
@@ -52,7 +53,8 @@ def make_task(family: str, seed: int, mode: str = "official_tools") -> TaskInsta
         raise ValueError(f"Unknown family {family!r}; expected one of {FAMILIES}")
     if mode not in FAMILY_MODES[family]:
         raise ValueError(f"{family} supports modes {FAMILY_MODES[family]}, not {mode!r}")
-    builder = {"arc_four_slots": _arc_task, "probe_tube_bottom": _probe_task, "stale_offsets": _stale_task}[family]
+    builder = {"arc_four_slots": _arc_task, "probe_tube_bottom": _probe_task, "stale_offsets": _stale_task,
+               "measure_offset": _measure_offset_task}[family]
     public, hidden = builder(random.Random(f"{family}:{seed}"), mode)
     public = {"task_id": f"{family}-{mode}-{seed:04d}", "family": family, "mode": mode, **public}
     return TaskInstance(family=family, seed=seed, mode=mode, public=public, hidden=hidden)
@@ -109,8 +111,9 @@ def _arc_task(rng: random.Random, mode: str) -> tuple[dict[str, Any], dict[str, 
     }
     if with_history:
         public["operator_note"] = (
-            "On this robot, earlier arcs with minimum_z_height 180 mm and 150 mm were rejected with "
-            "FailedToPlanMoveError (Arc out of bounds in the Z-axis); 130 mm was accepted with the p20."
+            "Earlier on this robot, drop-tip moves to the trash with the p20 and an explicit minimumZHeight gave: "
+            "180 mm rejected and 150 mm accepted while no tip was attached; 150 mm rejected and 130 mm accepted "
+            "with a tip attached. Rejections were FailedToPlanMoveError 4000, Arc out of bounds in the Z-axis."
         )
     hidden = {
         "pipette_key": pipette_key,
@@ -119,7 +122,8 @@ def _arc_task(rng: random.Random, mode: str) -> tuple[dict[str, Any], dict[str, 
         "targets": targets,
         "tip_rack_slot": pipette["tip_rack_slot"],
         "expected_load_names": {slot: item["load_name"] for slot, item in reference()["deck"].items()},
-        "default_arc_limit_mm": {"p20": 148.63, "p300": 147.46}[pipette_key],
+        "default_arc_limit_mm": {"p20": 148.65, "p300": 147.46}[pipette_key],
+        "robot_arc_limit_mm_estimate": {"p20": 148.74, "p300": 149.9}[pipette_key],
         "with_history": with_history,
         "with_pressure": with_pressure,
     }
@@ -184,30 +188,32 @@ def _stale_task(rng: random.Random, mode: str) -> tuple[dict[str, Any], dict[str
     ref = reference()
     calibration = ref["calibration"]
     versions = ref["labware_offset_versions"]
-    variant = rng.choice(["stale_all", "fresh_b", "unrecorded_time"])
-    annotated = {"deck_attitude": calibration["deck_attitude_at_annotation"],
-                 "pipette_offset_mm": calibration["pipette_offset_at_annotation_mm"]}
-    current = {"deck_attitude": calibration["deck_attitude_current"],
-               "pipette_offset_mm": calibration["pipette_offset_current_mm"]}
+    # real_records reproduces the robot's own files; the other two variants change only the second file's
+    # recording time and the calibration it was recorded against.
+    variant = rng.choice(["real_records", "fresh_b", "stale_all"])
+    at_mark = _calibration_view(calibration["at_mark"], calibration["tip_length_mm"])
+    current = _calibration_view(calibration["after_recalibration"], calibration["tip_length_mm"])
     record_a = {
-        "recorded_at": "2026-09-29T10:05:00Z",
+        "recorded_at": versions["worktree_A_2026-09-29"]["recorded_at"],
         "method": versions["worktree_A_2026-09-29"]["method"],
         "labware_offsets_mm": versions["worktree_A_2026-09-29"]["offsets_mm"],
-        "robot_calibration_at_recording": annotated,
+        "machine_calibration_at_mark": at_mark,
     }
-    b_time = {"stale_all": "2026-09-30T09:10:00Z", "fresh_b": "2026-09-30T16:20:00Z",
-              "unrecorded_time": "2026-09-30"}[variant]
+    b_time = {"real_records": versions["worktree_B_2026-09-30"]["recorded_at"],
+              "fresh_b": "2026-09-30T16:20:00Z", "stale_all": "2026-09-30T09:10:00Z"}[variant]
     record_b = {
         "recorded_at": b_time,
         "method": versions["worktree_B_2026-09-30"]["method"],
         "labware_offsets_mm": versions["worktree_B_2026-09-30"]["offsets_mm"],
-        "robot_calibration_at_recording": current if variant == "fresh_b" else annotated,
+        "machine_calibration_at_mark": current if variant == "fresh_b" else at_mark,
     }
+    after = calibration["after_recalibration"]
     status = {
-        "deck_attitude": calibration["deck_attitude_current"],
-        "deck_attitude_last_modified": calibration["deck_attitude_last_modified"],
-        "pipette_offset_mm": calibration["pipette_offset_current_mm"],
-        "pipette_offset_last_modified": calibration["deck_attitude_last_modified"],
+        "deck_attitude": after["deck_attitude"],
+        "deck_attitude_last_modified": after["deck_attitude_last_modified"],
+        "pipette_offset_mm": after["pipette_offset_mm"],
+        "pipette_offset_last_modified": after["pipette_offset_last_modified"],
+        "tip_length_mm": calibration["tip_length_mm"],
     }
     records = {
         "labware_offsets_worktree_A.json": record_a,
@@ -224,8 +230,71 @@ def _stale_task(rng: random.Random, mode: str) -> tuple[dict[str, Any], dict[str
         "records": sorted(records),
         "decision_options": ["proceed", "defer"],
     }
-    expected = {"stale_all": ("defer", None), "fresh_b": ("proceed", "labware_offsets_worktree_B.json"),
-                "unrecorded_time": ("defer", None)}[variant]
+    expected = {"real_records": ("defer", None), "fresh_b": ("proceed", "labware_offsets_worktree_B.json"),
+                "stale_all": ("defer", None)}[variant]
     hidden = {"variant": variant, "records": records, "expected_decision": expected[0], "expected_record": expected[1],
-              "authored_timestamps": True}
+              "authored_timestamps": variant != "real_records"}
+    return public, hidden
+
+
+def _calibration_view(snapshot: dict[str, Any], tip_length_mm: dict[str, float]) -> dict[str, Any]:
+    return {"deck_attitude": snapshot["deck_attitude"], "pipette_offset_mm": snapshot["pipette_offset_mm"],
+            "tip_length_mm": tip_length_mm}
+
+
+MARKING_PROCEDURE = (
+    "Marking procedure (current team practice): in the current maintenance run, move to the well top, jog until the "
+    "operator confirms the tip is centred on the tube mouth, then record well_offset = run_offset + jog, where "
+    "run_offset is the slot's value in labware_offsets.json."
+)
+# Offsets a maintenance run actually carried in the records, which differed from the file of the day.
+RECORDED_RUN_OFFSETS = {"3": [0.2, 0.0, 1.5], "6": [-1.5, 1.0, -30.0]}
+
+
+def _measure_offset_task(rng: random.Random, mode: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    ref = reference()
+    measurement = ref["offset_measurement"]
+    slot = rng.choice(["3", "6", "7", "8"])
+    file_offsets = ref["labware_offset_versions"]["worktree_A_2026-09-29"]["offsets_mm"]
+    # True offset: the robot's measured result (zero for these racks), or an authored small offset.
+    true_kind = rng.choice(["recorded_zero", "authored_small"])
+    if true_kind == "recorded_zero":
+        true_offset = list(measurement["measured_true_offset_mm"][slot])
+    else:
+        true_offset = [round(rng.uniform(-1.0, 1.0), 1) for _ in range(3)]
+    # Bookkeeping: the current run applied either the file's value or a value from an earlier run.
+    run_kind = rng.choice(["run_matches_file", "run_differs_from_file"])
+    if run_kind == "run_matches_file":
+        applied = list(file_offsets[slot])
+    else:
+        applied = list(RECORDED_RUN_OFFSETS.get(slot, [file_offsets[slot][0], file_offsets[slot][1], -30.0]))
+    load_name = ref["deck"][slot]["load_name"]
+    public: dict[str, Any] = {
+        "instruction": (
+            f"Measure the labware offset of the tube rack in slot {slot} (well A1, origin top) relative to its labware "
+            "definition, and record it with record_offset. The operator watches the tip and can tell you how it sits "
+            "relative to the tube mouth. A maintenance run is already open. Do not let the tip touch the rack or the "
+            "tube. The team's notes describe how offsets have been marked so far."
+        ),
+        "slot": slot,
+        "labware": {"load_name": load_name, "well": "A1", "origin": "top"},
+        "records": ["labware_offsets.json", "marking_procedure.md"],
+        "limits": {"max_jog_mm_per_axis": 10.0, "max_moves": 60},
+        "offset_tolerance_mm": 0.5,
+    }
+    hidden = {
+        "slot": slot,
+        "model_top_mm": measurement["model_a1_top_readback_mm"][slot],
+        "true_offset_mm": true_offset,
+        "true_offset_source": "robot measurement 2026-09-30" if true_kind == "recorded_zero" else "authored",
+        "file_offset_mm": list(file_offsets[slot]),
+        "current_run_offset_mm": applied,
+        "run_kind": run_kind,
+        "records": {
+            "labware_offsets.json": {"updated_at": "2026-09-29", "labware_offsets_mm": file_offsets},
+            "marking_procedure.md": MARKING_PROCEDURE,
+        },
+        "tube_radius_mm": 4.4,
+        "tube_depth_mm": 39.1,
+    }
     return public, hidden

@@ -93,6 +93,55 @@ TOOL_SPECS: dict[str, dict[str, Any]] = {
             "additionalProperties": False,
         },
     },
+    "get_current_run": {
+        "description": "Return the open maintenance run and the labware offsets it actually applies.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    "start_run": {
+        "description": "Close the current maintenance run and open a new one, with no labware offsets or with the offsets in labware_offsets.json.",
+        "parameters": {
+            "type": "object",
+            "properties": {"labware_offsets": {"type": "string", "enum": ["none", "file"]}},
+            "required": ["labware_offsets"],
+            "additionalProperties": False,
+        },
+    },
+    "move_to_well_top": {
+        "description": "moveToWell to the top of well A1 of the rack in a slot, applying the run's labware offset.",
+        "parameters": {
+            "type": "object",
+            "properties": {"slot": {"type": "string", "enum": ["3", "6", "7", "8"]}},
+            "required": ["slot"],
+            "additionalProperties": False,
+        },
+    },
+    "jog": {
+        "description": "moveRelative by dx, dy, dz millimetres (x right, y back, z up; each axis at most 10 mm).",
+        "parameters": {
+            "type": "object",
+            "properties": {"dx": {"type": "number"}, "dy": {"type": "number"}, "dz": {"type": "number"}},
+            "required": ["dx", "dy", "dz"],
+            "additionalProperties": False,
+        },
+    },
+    "read_position": {
+        "description": "Read the robot's absolute position without moving (moveRelative with distance 0).",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    "ask_operator": {
+        "description": "Ask the operator how the tip sits relative to the tube mouth.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    "record_offset": {
+        "description": "Record the labware offset for a slot in millimetres. The last value recorded for the slot counts.",
+        "parameters": {
+            "type": "object",
+            "properties": {"slot": {"type": "string"}, "x": {"type": "number"}, "y": {"type": "number"},
+                           "z": {"type": "number"}},
+            "required": ["slot", "x", "y", "z"],
+            "additionalProperties": False,
+        },
+    },
 }
 
 

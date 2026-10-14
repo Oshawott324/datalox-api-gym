@@ -34,7 +34,9 @@ Each millimetre of effective tip length moves the limit by one millimetre.
 | slot 7, 130 mm, accepted | accepted | yes |
 | slot 6, 130 mm, accepted | accepted | yes |
 
-Four of five match. The robot accepted 150 mm at slot 3, at least 1.37 mm above the default limit,
+Four of five match with this comparison. (Update 2026-10-14: all five reproduce once the engine's tip
+state is replayed; the tip-length explanation below was wrong. See `2026-10-14-ot2-records-replay.md`.)
+The robot accepted 150 mm at slot 3, at least 1.37 mm above the default limit,
 which a tip-length calibration about 1.4 mm shorter than nominal would explain. The same run then
 rejected 150 mm at slot 7 with the same tip; a fixed limit cannot produce both, so either the slot-7
 failure came from a different command or something changed between the two moves. The missing

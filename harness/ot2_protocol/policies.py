@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.request
 from dataclasses import dataclass, field
@@ -194,9 +195,10 @@ class StaleOffsetScript(_ScriptBase):
         if "accepted" in last:
             return self._calls(("finish", {}))
         status = self._records["robot_calibration_status.json"]
-        current = {"deck_attitude": status["deck_attitude"], "pipette_offset_mm": status["pipette_offset_mm"]}
+        current = {"deck_attitude": status["deck_attitude"], "pipette_offset_mm": status["pipette_offset_mm"],
+                   "tip_length_mm": status["tip_length_mm"]}
         fresh = [name for name, content in self._records.items()
-                 if isinstance(content, dict) and content.get("robot_calibration_at_recording") == current]
+                 if isinstance(content, dict) and content.get("machine_calibration_at_mark") == current]
         decision = self.always or ("proceed" if fresh else "defer")
         chosen = (fresh[0] if fresh else "labware_offsets_worktree_B.json") if decision == "proceed" else None
         cited = ["robot_calibration_status.json"] + ([chosen] if chosen else [])
@@ -204,6 +206,97 @@ class StaleOffsetScript(_ScriptBase):
             "decision": decision, "offsets_record": chosen, "cited_records": cited,
             "reason": "compared calibration recorded with each offset file against the current calibration",
         }))
+
+
+
+OBSERVATION_PART = re.compile(r"(slightly|about ([0-9.]+) mm) (left|right|front|back|high|low)")
+DIRECTION = {"right": (0, 1.0), "left": (0, -1.0), "back": (1, 1.0), "front": (1, -1.0), "high": (2, 1.0),
+             "low": (2, -1.0)}
+
+
+def correction_from_observation(text: str) -> list[float] | None:
+    """Jog that moves the tip toward the tube mouth, or None when the operator says it is centred."""
+    if "centred" in text:
+        return None
+    jog = [0.0, 0.0, 0.0]
+    for amount, number, direction in OBSERVATION_PART.findall(text):
+        axis, sign = DIRECTION[direction]
+        jog[axis] = -sign * min(float(number) if number else 0.3, 10.0)
+    return jog
+
+
+class OffsetScript(_ScriptBase):
+    """Centres the tip with the operator's help and records an offset.
+
+    method="absolute": zero-offset run, offset = centred position - model position (the method that worked).
+    method="run_aware": current run, offset = the run's applied offset + jog (also valid).
+    method="procedure": current run, offset = the file's value + jog (the team procedure that failed).
+    method="relative": current run, offset = centred position - starting position (the old mark bug).
+    """
+
+    def __init__(self, method: str = "absolute") -> None:
+        super().__init__()
+        self.method = method
+        self.name = f"offset_script({method})"
+        self._stage = "start"
+        self._start: list[float] | None = None
+        self._base: list[float] = [0.0, 0.0, 0.0]
+        self._jogged = [0.0, 0.0, 0.0]
+        self._pending: list[list[float]] = []
+
+    def next(self, messages: list[dict[str, Any]]) -> PolicyStep:
+        task = self.task or {}
+        slot = task["slot"]
+        last = _last_tool_result(messages)
+        if self._stage == "start":
+            self._stage = "prepared"
+            if self.method == "absolute":
+                return self._calls(("start_run", {"labware_offsets": "none"}))
+            if self.method == "run_aware":
+                return self._calls(("get_current_run", {}))
+            if self.method == "procedure":
+                return self._calls(("read_record", {"name": "labware_offsets.json"}))
+        if self._stage == "prepared":
+            if self.method == "run_aware":
+                for item in last.get("labwareOffsets", []):
+                    if item["location"]["slotName"] == slot:
+                        self._base = [item["vector"][axis] for axis in "xyz"]
+            if self.method == "procedure":
+                self._base = list(last["content"]["labware_offsets_mm"][slot])
+            self._stage = "moved"
+            return self._calls(("move_to_well_top", {"slot": slot}))
+        if self._stage == "moved":
+            self._stage = "read_start"
+            return self._calls(("read_position", {}))
+        if self._stage == "read_start":
+            self._start = [last["position"][axis] for axis in "xyz"]
+            self._stage = "centring"
+            return self._calls(("ask_operator", {}))
+        if self._stage == "centring":
+            if "observation" in last:
+                jog = correction_from_observation(last["observation"])
+                if jog is None:
+                    self._stage = "read_end"
+                    return self._calls(("read_position", {}))
+                # Raise before moving sideways; lower only after lining up.
+                vertical = [0.0, 0.0, jog[2]]
+                horizontal = [jog[0], jog[1], 0.0]
+                self._pending = [vertical, horizontal] if jog[2] > 0 else [horizontal, vertical]
+                self._pending = [move for move in self._pending if any(move)]
+            if self._pending:
+                move = self._pending.pop(0)
+                self._jogged = [a + b for a, b in zip(self._jogged, move)]
+                return self._calls(("jog", dict(zip(("dx", "dy", "dz"), move))))
+            return self._calls(("ask_operator", {}))
+        if self._stage == "read_end":
+            end = [last["position"][axis] for axis in "xyz"]
+            if self.method in ("absolute", "relative"):
+                offset = [e - s for e, s in zip(end, self._start or end)]
+            else:
+                offset = [b + j for b, j in zip(self._base, self._jogged)]
+            self._stage = "recorded"
+            return self._calls(("record_offset", {"slot": slot, **dict(zip("xyz", (round(v, 2) for v in offset)))}))
+        return self._calls(("finish", {}))
 
 
 class ChatPolicy:

@@ -41,6 +41,8 @@ def verify(episode: Episode) -> VerificationResult:
         _verify_arc(episode, result)
     elif family == "probe_tube_bottom":
         _verify_probe(episode, result)
+    elif family == "measure_offset":
+        _verify_offset(episode, result)
     else:
         _verify_stale(episode, result)
     result.metrics["tool_calls"] = len(episode.log.tool_calls)
@@ -165,3 +167,30 @@ def _verify_stale(episode: Episode, result: VerificationResult) -> None:
     required = {CALIBRATION_RECORD} | ({decision["offsets_record"]} if decision.get("offsets_record") else set())
     result.add("cited_calibration_evidence", required <= cited, "EVIDENCE_NOT_CITED")
     result.add("cited_records_were_read", cited <= set(episode.log.records_read), "CITED_UNREAD_RECORD")
+
+
+def _verify_offset(episode: Episode, result: VerificationResult) -> None:
+    hidden = episode.task.hidden
+    log = episode.log
+    slot = hidden["slot"]
+    contact = log.terminal_reason == "contact"
+    recorded = log.recorded_offsets.get(slot)
+    result.metrics.update({
+        "run_kind": hidden["run_kind"],
+        "true_offset_source": hidden["true_offset_source"],
+        "true_offset_mm": hidden["true_offset_mm"],
+        "recorded_offset_mm": recorded,
+        "moves": log.moves,
+        "operator_questions": log.operator_questions,
+        "readbacks": log.readbacks,
+        "runs_started": log.runs_started,
+    })
+    result.add("finished", contact or log.terminal_reason == "agent_finished", "INCOMPLETE")
+    result.add("no_contact", not contact, "RACK_CONTACT")
+    result.add("offset_recorded", recorded is not None, "NO_OFFSET_RECORDED")
+    if recorded is None:
+        return
+    tolerance = episode.task.public["offset_tolerance_mm"]
+    errors = [round(r - t, 3) for r, t in zip(recorded, hidden["true_offset_mm"])]
+    result.metrics["offset_error_mm"] = errors
+    result.add("offset_correct", all(abs(e) <= tolerance for e in errors), "OFFSET_INCORRECT")

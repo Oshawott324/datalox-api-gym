@@ -5,6 +5,7 @@ import pytest
 from api_gym.worlds.ot2_protocol_v0 import FAMILIES, FAMILY_MODES, OfficialAnalyzer, make_task
 from harness.ot2_protocol.policies import (
     CAUTIOUS_PROBE_STEPS,
+    OffsetScript,
     TABLE_PROBE_STEPS,
     ArcScript,
     Policy,
@@ -30,7 +31,8 @@ def test_tasks_are_deterministic_and_hide_trusted_state():
                 assert task.public == make_task(family, seed, mode).public
                 public_text = json.dumps(task.public)
                 for key in ("physical_depth_mm", "expected_decision", "expected_record", "default_arc_limit_mm",
-                            "variant", "with_history", "with_pressure"):
+                            "variant", "with_history", "with_pressure", "true_offset", "run_kind",
+                            "current_run_offset", "file_offset_mm", "model_top_mm"):
                     assert key not in public_text
                 if family == "probe_tube_bottom":
                     assert str(task.hidden["physical_depth_mm"]) not in public_text
@@ -122,7 +124,73 @@ def test_stale_offset_reference_passes_all_variants():
 
 
 def test_stale_offset_shortcuts_fail():
-    for seed in _stale_seeds("stale_all") + _stale_seeds("unrecorded_time"):
+    for seed in _stale_seeds("stale_all") + _stale_seeds("real_records"):
         assert "STALE_OFFSETS_USED" in episode(StaleOffsetScript(always="proceed"), "stale_offsets", seed)["failure_codes"]
     for seed in _stale_seeds("fresh_b"):
         assert "UNNECESSARY_STOP" in episode(StaleOffsetScript(always="defer"), "stale_offsets", seed)["failure_codes"]
+
+
+def test_stale_offset_real_records_reproduce_the_robot_files():
+    seeds = _stale_seeds("real_records")
+    assert seeds
+    task = make_task("stale_offsets", seeds[0])
+    record_b = task.hidden["records"]["labware_offsets_worktree_B.json"]
+    status = task.hidden["records"]["robot_calibration_status.json"]
+    assert record_b["recorded_at"] == "2026-09-30 12:59:37"
+    assert status["deck_attitude_last_modified"] == "2026-09-30T13:48:12Z"
+    assert record_b["machine_calibration_at_mark"]["pipette_offset_mm"]["left"] == [0.2, -5.7, 0.1]
+    assert not task.hidden["authored_timestamps"]
+
+
+# Offset measurement -------------------------------------------------------------------------------------------------
+
+def _offset_results(method: str, seeds=range(40)):
+    return [episode(OffsetScript(method), "measure_offset", seed) for seed in seeds]
+
+
+def test_valid_offset_methods_pass_every_seed():
+    for method in ("absolute", "run_aware"):
+        for record in _offset_results(method):
+            assert record["passed"], (method, record["task_id"], record["failure_codes"], record["metrics"])
+
+
+def test_team_procedure_fails_exactly_when_the_run_differs_from_the_file():
+    for record in _offset_results("procedure"):
+        if record["metrics"]["run_kind"] == "run_differs_from_file":
+            assert record["failure_codes"] == ["OFFSET_INCORRECT"], record["metrics"]
+        else:
+            assert record["passed"], record["metrics"]
+
+
+def test_relative_mark_bug_fails_whenever_the_run_applies_an_offset():
+    for record in _offset_results("relative"):
+        assert "OFFSET_INCORRECT" in record["failure_codes"]
+
+
+def test_sideways_jog_inside_the_tube_is_contact():
+    from api_gym.worlds.ot2_protocol_v0 import Episode
+
+    seed = next(s for s in range(40) if make_task("measure_offset", s).hidden["current_run_offset_mm"][2] <= -29)
+    task = make_task("measure_offset", seed)
+    ep = Episode(task)
+    ep.call("move_to_well_top", {"slot": task.public["slot"]})
+    result = ep.call("jog", {"dx": 6.0, "dy": 0.0, "dz": 0.0})
+    assert result["episode"].startswith("ended")
+    assert "RACK_CONTACT" in verify_codes(ep)
+
+
+def verify_codes(ep):
+    from api_gym.worlds.ot2_protocol_v0 import verify
+
+    return verify(ep).failure_codes
+
+
+def test_operator_feedback_is_coarse_and_never_reveals_numbers_below_a_millimetre():
+    from api_gym.worlds.ot2_protocol_v0 import Episode
+
+    task = make_task("measure_offset", 0)
+    ep = Episode(task)
+    ep.call("start_run", {"labware_offsets": "none"})
+    ep.call("move_to_well_top", {"slot": task.public["slot"]})
+    text = ep.call("ask_operator")["observation"]
+    assert "." in text and not any(f"{n / 10:.1f} mm" in text for n in range(1, 10))

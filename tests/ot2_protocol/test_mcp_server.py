@@ -7,6 +7,8 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from api_gym.worlds.ot2_protocol_v0 import make_task
+
 REPO = Path(__file__).resolve().parents[2]
 
 
@@ -26,9 +28,13 @@ async def _drive(out_dir: Path) -> tuple[set[str], dict]:
             for name in task["records"]:
                 await session.call_tool("read_record", {"name": name})
             assert not (out_dir / "verification.json").exists()
-            await session.call_tool("submit_decision", {
-                "decision": "defer", "reason": "calibration changed after the offsets were recorded",
-                "cited_records": ["robot_calibration_status.json"]})
+            expected = make_task("stale_offsets", 0).hidden
+            decision = {"decision": expected["expected_decision"], "reason": "compared calibration at mark with current",
+                        "cited_records": ["robot_calibration_status.json"]}
+            if expected["expected_record"]:
+                decision["offsets_record"] = expected["expected_record"]
+                decision["cited_records"].append(expected["expected_record"])
+            await session.call_tool("submit_decision", decision)
             await session.call_tool("finish", {})
     return tools, json.loads((out_dir / "verification.json").read_text())
 

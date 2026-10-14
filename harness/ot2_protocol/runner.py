@@ -30,6 +30,7 @@ from harness.ot2_protocol.policies import (
     CAUTIOUS_PROBE_STEPS,
     ArcScript,
     ChatPolicy,
+    OffsetScript,
     Policy,
     ProbeScript,
     StaleOffsetScript,
@@ -123,6 +124,7 @@ def _script_factory(family: str) -> Callable[[], Policy]:
         "arc_four_slots": lambda: ArcScript(),
         "probe_tube_bottom": lambda: ProbeScript(CAUTIOUS_PROBE_STEPS),
         "stale_offsets": lambda: StaleOffsetScript(),
+        "measure_offset": lambda: OffsetScript("absolute"),
     }[family]
 
 

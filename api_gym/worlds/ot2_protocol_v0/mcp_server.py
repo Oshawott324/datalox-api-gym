@@ -76,6 +76,35 @@ def build_server(episode: Episode, out_dir: Path) -> FastMCP:
             return call("submit_decision", {"decision": decision, "reason": reason,
                                             "cited_records": cited_records, "offsets_record": offsets_record})
 
+    if "get_current_run" in episode.tool_names:
+        @server.tool(name="get_current_run", description=TOOL_SPECS["get_current_run"]["description"])
+        def get_current_run() -> str:
+            return call("get_current_run", {})
+
+        @server.tool(name="start_run", description=TOOL_SPECS["start_run"]["description"])
+        def start_run(labware_offsets: str) -> str:
+            return call("start_run", {"labware_offsets": labware_offsets})
+
+        @server.tool(name="move_to_well_top", description=TOOL_SPECS["move_to_well_top"]["description"])
+        def move_to_well_top(slot: str) -> str:
+            return call("move_to_well_top", {"slot": slot})
+
+        @server.tool(name="jog", description=TOOL_SPECS["jog"]["description"])
+        def jog(dx: float, dy: float, dz: float) -> str:
+            return call("jog", {"dx": dx, "dy": dy, "dz": dz})
+
+        @server.tool(name="read_position", description=TOOL_SPECS["read_position"]["description"])
+        def read_position() -> str:
+            return call("read_position", {})
+
+        @server.tool(name="ask_operator", description=TOOL_SPECS["ask_operator"]["description"])
+        def ask_operator() -> str:
+            return call("ask_operator", {})
+
+        @server.tool(name="record_offset", description=TOOL_SPECS["record_offset"]["description"])
+        def record_offset(slot: str, x: float, y: float, z: float) -> str:
+            return call("record_offset", {"slot": slot, "x": x, "y": y, "z": z})
+
     return server
 
 
