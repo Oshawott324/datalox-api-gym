@@ -1,0 +1,516 @@
+{
+  "schema_version": "api_gym.ot2_protocol_reference.v0",
+  "source": {
+    "repository": "https://github.com/Jiantao-Zhao/ot2-reference-trajectories",
+    "commit": "e71d4eb6",
+    "files": [
+      "README.md",
+      "ORIGINAL-RECORDS.md",
+      "trajectories.json",
+      "robot-exports-20261012/"
+    ],
+    "retrieved_at": "2026-10-14",
+    "license": "MIT",
+    "record_window": "2026-09-07 to 2026-10-01"
+  },
+  "robot": {
+    "robot_type": "OT-2",
+    "api_level": "2.16",
+    "robot_software_version": "26.6.0",
+    "z_travel_limit_mm": 172.15,
+    "z_travel_limit_source": "serial log M365.0 Z172.15 (machine coordinates)",
+    "pipettes": {
+      "left": {
+        "name": "p20_single_gen2",
+        "tip_rack_slot": "2",
+        "tip_rack": "opentrons_96_tiprack_20ul"
+      },
+      "right": {
+        "name": "p300_single_gen2",
+        "tip_rack_slot": "5",
+        "tip_rack": "opentrons_96_tiprack_300ul"
+      }
+    },
+    "robot_software_line": "opentrons-ot2 releases (not on PyPI)",
+    "firmware_version": "v1.1.0-25e5cea",
+    "max_protocol_api": "2.28"
+  },
+  "deck": {
+    "1": {
+      "load_name": "corning_96_wellplate_360ul_flat"
+    },
+    "2": {
+      "load_name": "opentrons_96_tiprack_20ul"
+    },
+    "3": {
+      "load_name": "custom_24_tuberack_eppendorf_2ml_slot3_pitch19p69",
+      "namespace": "custom_beta",
+      "custom": true,
+      "note": "Measured column pitch 19.69 mm; standard definition 19.89 mm. Definition supplied in the robot export; identical to the standard rack except for column x positions."
+    },
+    "4": {
+      "load_name": "opentrons_15_tuberack_falcon_15ml_conical"
+    },
+    "5": {
+      "load_name": "opentrons_96_tiprack_300ul"
+    },
+    "6": {
+      "load_name": "opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap"
+    },
+    "7": {
+      "load_name": "opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap"
+    },
+    "8": {
+      "load_name": "opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap"
+    }
+  },
+  "real_arc_outcomes": [
+    {
+      "slot": "3",
+      "minimum_z_height_mm": 180.0,
+      "outcome": "rejected",
+      "run": "ac20a023",
+      "command": "moveToAddressableAreaForDropTip",
+      "tip_attached_in_engine": false,
+      "error_id": "ac23d822-32a7-4aef-a734-5b216822acee",
+      "error_created_at": "2026-09-30T08:35:40.840033Z"
+    },
+    {
+      "slot": "3",
+      "minimum_z_height_mm": 150.0,
+      "outcome": "accepted",
+      "run": "ac20a023",
+      "command": "moveToAddressableAreaForDropTip",
+      "tip_attached_in_engine": false
+    },
+    {
+      "slot": "7",
+      "minimum_z_height_mm": 150.0,
+      "outcome": "rejected",
+      "run": "ac20a023",
+      "command": "moveToAddressableAreaForDropTip",
+      "tip_attached_in_engine": true,
+      "error_id": "1a8861f6-5411-4ff7-b850-0393a30ec9a5",
+      "error_created_at": "2026-09-30T08:40:53.937525Z"
+    },
+    {
+      "slot": "7",
+      "minimum_z_height_mm": 130.0,
+      "outcome": "accepted",
+      "run": "ac20a023",
+      "command": "moveToAddressableAreaForDropTip",
+      "tip_attached_in_engine": true
+    },
+    {
+      "slot": "6",
+      "minimum_z_height_mm": 130.0,
+      "outcome": "accepted",
+      "run": "ee3a249b",
+      "command": "moveToAddressableAreaForDropTip",
+      "tip_attached_in_engine": false
+    }
+  ],
+  "arc_error": {
+    "exception": "FailedToPlanMoveError",
+    "error_code": "4000",
+    "detail": "Arc out of bounds in the Z-axis"
+  },
+  "labware_offset_versions": {
+    "worktree_A_2026-09-29": {
+      "recorded_at": "2026-09-29",
+      "method": "jog accumulation",
+      "status_in_records": "recorded by jog accumulation on top of earlier offsets; judged wrong on 2026-09-30 (relative accumulation, lost jog history, basis drift)",
+      "offsets_mm": {
+        "1": [
+          0.0,
+          0.6,
+          0.0
+        ],
+        "2": [
+          0.2,
+          0.5,
+          0.0
+        ],
+        "3": [
+          0.2,
+          0.0,
+          -30.0
+        ],
+        "4": [
+          -1.2,
+          4.1,
+          25.5
+        ],
+        "5": [
+          0.3,
+          0.0,
+          0.0
+        ],
+        "6": [
+          -1.5,
+          1.0,
+          1.0
+        ],
+        "7": [
+          2.1,
+          0.5,
+          1.0
+        ],
+        "8": [
+          2.0,
+          -0.3,
+          1.5
+        ]
+      }
+    },
+    "worktree_B_2026-09-30": {
+      "recorded_at": "2026-09-30 12:59:37",
+      "method": "absolute position readings",
+      "status_in_records": "correct for the calibration in force when marked; used by the 15-point check run 1b1a710d on 2026-10-01, after the 2026-09-30 13:48 UTC recalibration, which made them invalid",
+      "offsets_mm": {
+        "1": [
+          -0.3,
+          -5.7,
+          0.8
+        ],
+        "2": [
+          0.1,
+          0.5,
+          0.0
+        ],
+        "3": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "4": [
+          -2.0,
+          2.0,
+          -5.45
+        ],
+        "5": [
+          0.3,
+          0.0,
+          0.0
+        ],
+        "6": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "7": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "8": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "recorded_time_zone": "not stated (local clock)",
+      "recorded_against_calibration_snapshot": "calib_prerecal_20260930_111800"
+    }
+  },
+  "calibration": {
+    "at_mark": {
+      "deck_attitude": [
+        [
+          0.9992,
+          0.004,
+          0.0
+        ],
+        [
+          0.0,
+          1.0016,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "deck_attitude_last_modified": "2026-02-25T09:32:00Z",
+      "pipette_offset_mm": {
+        "left": [
+          0.2,
+          -5.7,
+          0.1
+        ],
+        "right": [
+          -0.3,
+          -6.8,
+          0.0
+        ]
+      },
+      "pipette_offset_last_modified": {
+        "left": "2026-06-02T12:24:27Z",
+        "right": "2026-06-15T14:35:11Z"
+      }
+    },
+    "after_recalibration": {
+      "deck_attitude": [
+        [
+          0.9989,
+          0.0032,
+          0.0
+        ],
+        [
+          -0.0008,
+          1.0016,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "deck_attitude_last_modified": "2026-09-30T13:48:12Z",
+      "pipette_offset_mm": {
+        "left": [
+          0.0,
+          -5.2,
+          -0.8
+        ],
+        "right": [
+          -0.2,
+          -5.8,
+          -0.9
+        ]
+      },
+      "pipette_offset_last_modified": {
+        "left": "2026-09-30T13:50:52Z",
+        "right": "2026-09-30T13:57:13Z"
+      }
+    },
+    "tip_length_mm": {
+      "opentrons_96_tiprack_20ul": 30.85,
+      "opentrons_96_tiprack_300ul": 48.7
+    },
+    "tip_length_last_modified": {
+      "opentrons_96_tiprack_20ul": "2026-02-25T09:35:13Z",
+      "opentrons_96_tiprack_300ul": "2026-06-15T14:24:14Z"
+    },
+    "conclusion_in_records": "all recorded labware offsets are invalid until re-measured"
+  },
+  "slot3_measurements": {
+    "physical_tube_top_z_mm": 49.37,
+    "physical_bottom_plus_2_z_mm": 12.27,
+    "model_vs_physical_bottom_plus_2_mm": -31.0,
+    "tube_top_absolute_z_status": "unresolved; two visual readings from the same start were 52.00 and 106.50 mm",
+    "probe_steps_mm": [
+      10,
+      10,
+      5,
+      5,
+      1
+    ]
+  },
+  "probe_feedback_bins_mm": [
+    {
+      "label": "far",
+      "label_zh": "远",
+      "min_exclusive": 20.0,
+      "max_inclusive": null
+    },
+    {
+      "label": "near",
+      "label_zh": "近",
+      "min_exclusive": 5.0,
+      "max_inclusive": 20.0
+    },
+    {
+      "label": "very close",
+      "label_zh": "很近了",
+      "min_exclusive": 2.0,
+      "max_inclusive": 5.0
+    },
+    {
+      "label": "almost touching",
+      "label_zh": "快贴底",
+      "min_exclusive": 1.0,
+      "max_inclusive": 2.0
+    },
+    {
+      "label": "contact risk",
+      "label_zh": "触底风险",
+      "min_exclusive": null,
+      "max_inclusive": 1.0
+    }
+  ],
+  "probe_rules": {
+    "max_step_mm": 10.0,
+    "accept_window_mm": [
+      1.0,
+      3.0
+    ],
+    "step_must_not_grow_after_closer_level": true
+  },
+  "operation_rules": {
+    "allowed_actions": [
+      "load_labware",
+      "load_labware_from_definition",
+      "load_instrument",
+      "define_liquid",
+      "load_liquid",
+      "pick_up_tip",
+      "drop_tip",
+      "aspirate",
+      "dispense",
+      "blow_out",
+      "air_gap",
+      "touch_tip",
+      "mix",
+      "move_to",
+      "delay",
+      "comment",
+      "home",
+      "pause"
+    ],
+    "allowed_geometry": [
+      "top",
+      "bottom",
+      "center",
+      "diameter",
+      "depth",
+      "move",
+      "Point"
+    ],
+    "forbidden": [
+      "inventing actions from raw coordinates",
+      "bypassing the library to send motion commands",
+      "modifying or copying the library",
+      "undocumented interfaces",
+      "recomputing well positions, depths or radii from labware definitions"
+    ],
+    "judged_with": [
+      "opentrons analyze",
+      "opentrons simulate"
+    ]
+  },
+  "arc_replay": {
+    "result": "5/5 recorded outcomes reproduced (opentrons 8.8.2), with definition and calibrated tip lengths",
+    "script": "probes/ot2_reference/replay_arc_records.py",
+    "cause": "each script call issued the drop-tip move before picking up a tip; the slot-3 call was the first in run ac20a023 (no tip in the engine), the slot-7 call followed with the slot-3 tip attached",
+    "highest_accepted_minimum_z_height_mm": {
+      "p20_no_tip": 179.59,
+      "p20_tip_engine_length_30p95": 148.65,
+      "p20_tip_calibrated_30p85": 148.74,
+      "p300_tip_engine_length_51p10": 147.46,
+      "p300_tip_calibrated_48p70_estimate": 149.9
+    },
+    "note": "opentrons analyze uses definition tip lengths, not the robot's calibration; on this robot the P300 limit is about 2.4 mm higher than the analyzer's"
+  },
+  "offset_measurement": {
+    "slot_origins_mm": {
+      "1": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "2": [
+        132.5,
+        0.0,
+        0.0
+      ],
+      "3": [
+        265.0,
+        0.0,
+        0.0
+      ],
+      "4": [
+        0.0,
+        90.5,
+        0.0
+      ],
+      "5": [
+        132.5,
+        90.5,
+        0.0
+      ],
+      "6": [
+        265.0,
+        90.5,
+        0.0
+      ],
+      "7": [
+        0.0,
+        181.0,
+        0.0
+      ],
+      "8": [
+        132.5,
+        181.0,
+        0.0
+      ]
+    },
+    "model_a1_top_readback_mm": {
+      "3": [
+        283.21,
+        75.43,
+        80.37
+      ],
+      "6": [
+        283.21,
+        165.93,
+        80.37
+      ],
+      "7": [
+        18.21,
+        256.43,
+        80.37
+      ],
+      "8": [
+        150.71,
+        256.43,
+        80.37
+      ]
+    },
+    "measured_true_offset_mm": {
+      "3": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "6": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "7": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "8": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "method_that_worked": "zero-offset maintenance run, move to the model well top, jog until the operator sees the tip centred on the tube mouth, read the absolute position with moveRelative(distance=0), offset = absolute - model",
+    "method_that_failed": "offset = run_offset + jog, where run_offset and jog history came from bookkeeping that had drifted from what the engine applied",
+    "source": "robot-exports-20261012/calibration_log.md"
+  },
+  "other_recorded_incidents": [
+    {
+      "date": "2026-09-11",
+      "run": "5ab0f022",
+      "event": "ALARM: Hard limit +X",
+      "details_available": false
+    },
+    {
+      "date": "2026-09-29",
+      "event": "recovery protocol for wells A7-H12 references undefined ASPIRATE_ABOVE_BOTTOM_MM (line 434)",
+      "details_available": false
+    },
+    {
+      "date": "2026-10-01",
+      "run": "1b1a710d",
+      "event": "15-point check used offsets marked before the 2026-09-30 recalibration"
+    }
+  ]
+}
